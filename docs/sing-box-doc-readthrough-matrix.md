@@ -2,6 +2,8 @@
 
 This is the implementation gate for SBC. Do not mark a Library item as writable until its row here has a concrete owner, domain command, Inspector schema, fixture, and matching stable/testing CLI validation.
 
+For the user-facing product interpretation of this matrix, read [sing-box Canvas Configuration Guide](sing-box-canvas-configuration-guide.md).
+
 Sources read on 2026-05-26:
 
 - `SagerNet/sing-box` `stable/docs/configuration`: 94 English Markdown docs.

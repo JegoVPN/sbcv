@@ -8,6 +8,7 @@ Read these before changing product behavior, schema, validation, or node UI:
 
 - [SBC React Flow R&D Plan](docs/sbc-react-flow-rd-plan.md)
 - [sing-box Config Document Inventory](docs/sing-box-config-doc-inventory.md)
+- [sing-box Canvas Configuration Guide](docs/sing-box-canvas-configuration-guide.md)
 - [Goal-Driven Development](docs/goal-driven-development.md)
 - `vercel-react-best-practices` skill when writing, reviewing, or refactoring React/Next.js code.
 
