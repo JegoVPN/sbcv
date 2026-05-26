@@ -809,6 +809,20 @@ export function validateConfig(
     }
   });
 
+  const dnsTop = config.dns;
+  if (dnsTop && typeof dnsTop === "object") {
+    const legacyFakeip = (dnsTop as Record<string, unknown>).fakeip;
+    if (legacyFakeip && typeof legacyFakeip === "object" && !Array.isArray(legacyFakeip)) {
+      push(
+        diagnostics,
+        "warning",
+        "legacy-fakeip-deprecated",
+        "/dns/fakeip",
+        "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
+      );
+    }
+  }
+
   listItems(config.dns?.servers).forEach((server, index) => {
     if (channel === "stable" && server.type === "tailscale") {
       const obj = server as Record<string, unknown>;
