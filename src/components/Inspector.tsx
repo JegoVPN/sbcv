@@ -167,6 +167,13 @@ const outboundHandledFields = new Set([
   "username",
   "password",
   "auth_str",
+  "user",
+  "private_key",
+  "private_key_path",
+  "private_key_passphrase",
+  "host_key",
+  "host_key_algorithms",
+  "client_version",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2391,6 +2398,72 @@ export function Inspector() {
               value={String(entity.auth_str ?? "")}
               onChange={(next) => updateField(ref, "auth_str", next || undefined)}
             />
+          ) : null}
+          {entityType === "ssh" ? (
+            <>
+              <label className="field">
+                <span>SSH User</span>
+                <input
+                  value={String(entity.user ?? "")}
+                  onChange={(event) => updateField(ref, "user", event.target.value || undefined)}
+                />
+              </label>
+              <SensitiveTextField
+                label="Password"
+                value={String(entity.password ?? "")}
+                onChange={(next) => updateField(ref, "password", next || undefined)}
+              />
+              <label className="field">
+                <span>Private Key Path</span>
+                <input
+                  value={String(entity.private_key_path ?? "")}
+                  onChange={(event) =>
+                    updateField(ref, "private_key_path", event.target.value || undefined)
+                  }
+                  placeholder="~/.ssh/id_ed25519"
+                />
+              </label>
+              <SensitiveTextField
+                label="Private Key (PEM)"
+                value={String(entity.private_key ?? "")}
+                onChange={(next) => updateField(ref, "private_key", next || undefined)}
+              />
+              <SensitiveTextField
+                label="Private Key Passphrase"
+                value={String(entity.private_key_passphrase ?? "")}
+                onChange={(next) => updateField(ref, "private_key_passphrase", next || undefined)}
+              />
+              <label className="field">
+                <span>Host Key (newline-separated SHA256)</span>
+                <textarea
+                  value={Array.isArray(entity.host_key) ? (entity.host_key as string[]).join("\n") : ""}
+                  onChange={(event) => {
+                    const lines = event.target.value
+                      .split(/\r?\n/)
+                      .map((line) => line.trim())
+                      .filter(Boolean);
+                    updateField(ref, "host_key", lines.length ? lines : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Host Key Algorithms</span>
+                <input
+                  value={Array.isArray(entity.host_key_algorithms) ? (entity.host_key_algorithms as string[]).join(", ") : ""}
+                  onChange={(event) =>
+                    updateField(ref, "host_key_algorithms", fromList(event.target.value).length ? fromList(event.target.value) : undefined)
+                  }
+                  placeholder="ssh-ed25519, ssh-rsa"
+                />
+              </label>
+              <label className="field">
+                <span>Client Version</span>
+                <input
+                  value={String(entity.client_version ?? "")}
+                  onChange={(event) => updateField(ref, "client_version", event.target.value || undefined)}
+                />
+              </label>
+            </>
           ) : null}
           {entityType === "shadowsocks" ? (
             <>
