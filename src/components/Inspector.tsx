@@ -197,6 +197,8 @@ const outboundHandledFields = new Set([
   "extra_args",
   "torrc",
   "extra_headers",
+  "server_ports",
+  "hop_interval",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2931,6 +2933,29 @@ export function Inspector() {
                 </fieldset>
               );
             })()
+          ) : null}
+          {entityType === "hysteria2" ? (
+            <>
+              <label className="field">
+                <span>Server Ports (port hopping)</span>
+                <input
+                  value={toList(entity.server_ports)}
+                  placeholder="2080:3000, 4000:5000"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "server_ports", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Hop Interval</span>
+                <input
+                  value={String(entity.hop_interval ?? "")}
+                  placeholder="30s"
+                  onChange={(event) => updateField(ref, "hop_interval", event.target.value || undefined)}
+                />
+              </label>
+            </>
           ) : null}
           {entityType === "hysteria2" ? (
             (() => {
