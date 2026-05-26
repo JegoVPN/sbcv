@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"mixed","listen":"::","listen_port":10000}],"outbounds":[{"type":"shadowsocks","server":"example.com","server_port":80,"method":"2022-blake3-aes-128-gcm","password":"sbc-test-password","multiplex":{"enabled":true}}]}

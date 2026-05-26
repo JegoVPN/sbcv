@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"mixed","listen":"::","listen_port":10000}],"outbounds":[{"type":"vmess","server":"example.com","server_port":80,"uuid":"00000000-0000-4000-8000-000000000000","security":"aes-128-gcm","alter_id":0,"packet_encoding":"packetaddr"}]}

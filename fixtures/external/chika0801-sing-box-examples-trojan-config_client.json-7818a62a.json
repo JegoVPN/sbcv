@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"mixed","listen":"::","listen_port":10000}],"outbounds":[{"type":"trojan","server":"example.com","server_port":443,"password":"sbc-test-password","tls":{"enabled":true,"server_name":"","utls":{"enabled":true,"fingerprint":"chrome"}},"multiplex":{"enabled":true}}]}

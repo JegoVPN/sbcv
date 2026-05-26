@@ -1,6 +1,10 @@
 import { buildTagIndex, getDnsServerTags, getOutboundTags } from "./indexes";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
+function listItems<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 function push(
   diagnostics: Diagnostic[],
   level: Diagnostic["level"],
@@ -32,6 +36,9 @@ export function validateConfig(
 
   const outboundTags = getOutboundTags(config);
   const dnsServerTags = getDnsServerTags(config);
+  const outbounds = listItems(config.outbounds);
+  const routeRules = listItems(config.route?.rules);
+  const dnsRules = listItems(config.dns?.rules);
 
   const routeFinal = config.route?.final;
   if (routeFinal && !outboundTags.has(routeFinal)) {
@@ -44,7 +51,7 @@ export function validateConfig(
     );
   }
 
-  config.route?.rules?.forEach((rule, index) => {
+  routeRules.forEach((rule, index) => {
     if (rule.outbound && !outboundTags.has(rule.outbound)) {
       push(
         diagnostics,
@@ -56,8 +63,8 @@ export function validateConfig(
     }
   });
 
-  config.outbounds?.forEach((outbound, index) => {
-    if ((outbound.type === "selector" || outbound.type === "urltest") && outbound.outbounds) {
+  outbounds.forEach((outbound, index) => {
+    if ((outbound.type === "selector" || outbound.type === "urltest") && Array.isArray(outbound.outbounds)) {
       outbound.outbounds.forEach((tag, candidateIndex) => {
         if (!outboundTags.has(tag)) {
           push(
@@ -83,7 +90,7 @@ export function validateConfig(
     );
   }
 
-  config.dns?.rules?.forEach((rule, index) => {
+  dnsRules.forEach((rule, index) => {
     if (rule.server && !dnsServerTags.has(rule.server)) {
       push(
         diagnostics,
@@ -96,7 +103,7 @@ export function validateConfig(
   });
 
   if (channel === "stable") {
-    if ((config.certificate_providers?.length ?? 0) > 0) {
+    if (listItems(config.certificate_providers).length > 0) {
       push(
         diagnostics,
         "warning",
@@ -105,7 +112,7 @@ export function validateConfig(
         "certificate_providers is version-gated for stable targets; verify with sing-box-stable.",
       );
     }
-    if ((config.http_clients?.length ?? 0) > 0) {
+    if (listItems(config.http_clients).length > 0) {
       push(
         diagnostics,
         "warning",
@@ -116,7 +123,7 @@ export function validateConfig(
     }
   }
 
-  if (!config.outbounds?.length) {
+  if (outbounds.length === 0) {
     push(diagnostics, "warning", "no-outbounds", "/outbounds", "No outbounds are configured.");
   }
 

@@ -56,11 +56,25 @@ function diagnosticStatus(pathPrefix: string, diagnostics: Diagnostic[]): SbcNod
   return "valid";
 }
 
+function listLabel(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value.join(", ");
+  return value;
+}
+
+function listItems<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
   const nodes: SbcFlowNode[] = [];
   const edges: Edge[] = [];
+  const inbounds = listItems(config.inbounds);
+  const outbounds = listItems(config.outbounds);
+  const routeRules = listItems(config.route?.rules);
+  const dnsServers = listItems(config.dns?.servers);
+  const dnsRules = listItems(config.dns?.rules);
 
-  config.inbounds?.forEach((inbound, index) => {
+  inbounds.forEach((inbound, index) => {
     const id = `inbound:${inbound.tag}`;
     nodes.push(
       makeNode(
@@ -98,7 +112,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "route",
           type: "route",
           title: "Route",
-          subtitle: `${config.route.rules?.length ?? 0} ordered rules`,
+          subtitle: `${routeRules.length} ordered rules`,
           status: diagnosticStatus("/route", diagnostics),
           compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
         },
@@ -107,12 +121,14 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    config.route.rules?.forEach((rule, index) => {
+    routeRules.forEach((rule, index) => {
       const id = `route-rule:${index}`;
       const label =
-        rule.domain_suffix?.join(", ") ??
-        rule.domain_keyword?.join(", ") ??
-        rule.rule_set?.join(", ") ??
+        listLabel(rule.domain_suffix) ??
+        listLabel(rule.domain_keyword) ??
+        listLabel(rule.domain) ??
+        listLabel(rule.rule_set) ??
+        rule.action ??
         "match rule";
       nodes.push(
         makeNode(
@@ -157,7 +173,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   }
 
-  config.outbounds?.forEach((outbound, index) => {
+  outbounds.forEach((outbound, index) => {
     const id = `outbound:${outbound.tag}`;
     nodes.push(
       makeNode(
@@ -168,7 +184,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           type: outbound.type,
           title: outbound.tag,
           subtitle:
-            outbound.outbounds?.length && (outbound.type === "selector" || outbound.type === "urltest")
+      Array.isArray(outbound.outbounds) && outbound.outbounds.length && (outbound.type === "selector" || outbound.type === "urltest")
               ? `${outbound.type}: ${outbound.outbounds.join(", ")}`
               : outbound.server
                 ? `${outbound.type} ${outbound.server}:${outbound.server_port ?? ""}`
@@ -184,7 +200,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    if (outbound.outbounds) {
+    if (Array.isArray(outbound.outbounds)) {
       outbound.outbounds.forEach((tag) => {
         edges.push({
           id: `edge:${outbound.type}:${outbound.tag}:${tag}`,
@@ -205,7 +221,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "dns",
           type: "dns",
           title: "DNS",
-          subtitle: `${config.dns.rules?.length ?? 0} ordered rules`,
+          subtitle: `${dnsRules.length} ordered rules`,
           status: diagnosticStatus("/dns", diagnostics),
           compatible: ["DNS Server"],
         },
@@ -214,7 +230,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    config.dns.servers?.forEach((server, index) => {
+    dnsServers.forEach((server, index) => {
       const id = `dns-server:${server.tag}`;
       nodes.push(
         makeNode(
@@ -234,7 +250,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       );
     });
 
-    config.dns.rules?.forEach((rule, index) => {
+    dnsRules.forEach((rule, index) => {
       const id = `dns-rule:${index}`;
       nodes.push(
         makeNode(
@@ -244,7 +260,13 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             kind: "dns-rule",
             type: "dns-rule",
             title: `DNS Rule ${index + 1}`,
-            subtitle: rule.domain_suffix?.join(", ") ?? rule.domain_keyword?.join(", ") ?? "dns match",
+            subtitle:
+              listLabel(rule.domain_suffix) ??
+              listLabel(rule.domain_keyword) ??
+              listLabel(rule.domain) ??
+              listLabel(rule.rule_set) ??
+              rule.action ??
+              "dns match",
             status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
             compatible: ["DNS Server"],
           },

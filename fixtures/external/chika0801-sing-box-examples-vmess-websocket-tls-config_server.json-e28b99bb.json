@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"vmess","listen":"127.0.0.1","listen_port":8001,"users":[{"uuid":"00000000-0000-4000-8000-000000000000","alterId":0}],"transport":{"type":"ws","path":"","max_early_data":2048,"early_data_header_name":"Sec-WebSocket-Protocol"}}],"outbounds":[{"type":"direct"}]}

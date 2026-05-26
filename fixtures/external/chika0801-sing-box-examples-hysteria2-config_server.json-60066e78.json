@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"hysteria2","listen":"::","listen_port":443,"up_mbps":100,"down_mbps":20,"users":[{"password":"sbc-test-password"}],"tls":{"enabled":true,"alpn":["h3"],"certificate_path":"/root/fullchain.cer","key_path":"/root/private.key"}}],"outbounds":[{"type":"direct"}]}

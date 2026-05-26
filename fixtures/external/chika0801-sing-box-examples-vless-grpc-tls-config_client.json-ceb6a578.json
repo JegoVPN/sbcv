@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"mixed","listen":"::","listen_port":10000}],"outbounds":[{"type":"vless","server":"example.com","server_port":443,"uuid":"00000000-0000-4000-8000-000000000000","tls":{"enabled":true,"server_name":"","utls":{"enabled":true,"fingerprint":"chrome"}},"packet_encoding":"xudp","transport":{"type":"grpc","service_name":""}}]}
