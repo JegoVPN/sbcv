@@ -617,6 +617,36 @@ describe("SBC editor shell", () => {
     expect(derp?.verify_client_endpoint).toBeUndefined();
   });
 
+  it("surfaces first-class UUID / Password / Auth credentials for proxy outbound types", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("vmess-out");
+    });
+    render(<App />);
+    let inspector = within(screen.getByLabelText("Node inspector"));
+    const uuidInput = inspector.getByLabelText("UUID") as HTMLInputElement;
+    expect(uuidInput.type).toBe("password");
+    fireEvent.click(inspector.getByRole("button", { name: /Generate UUID/ }));
+    const after = useProjectStore.getState().config.outbounds?.at(-1);
+    expect(typeof after?.uuid).toBe("string");
+    expect((after?.uuid as string).length).toBeGreaterThan(10);
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("trojan-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    const trojanPassword = inspector.getByLabelText("Password") as HTMLInputElement;
+    expect(trojanPassword.type).toBe("password");
+    expect(trojanPassword.value).toBe("change-me");
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    const hysteriaAuth = inspector.getByLabelText("Auth (string)") as HTMLInputElement;
+    expect(hysteriaAuth.type).toBe("password");
+  });
+
   it("renders entityType-specific enum selects for outbound protocols", () => {
     useProjectStore.getState().loadMinimal();
 
@@ -657,7 +687,7 @@ describe("SBC editor shell", () => {
     expect(inspector.getByLabelText("SOCKS Version")).toBeInTheDocument();
   });
 
-  it("masks sensitive fields in AdvancedScalarFields and toggles visibility", () => {
+  it("masks sensitive fields (first-class Password input) and toggles visibility", () => {
     useProjectStore.getState().loadMinimal();
 
     act(() => {
@@ -667,7 +697,6 @@ describe("SBC editor shell", () => {
     render(<App />);
 
     const inspector = within(screen.getByLabelText("Node inspector"));
-    fireEvent.click(inspector.getByText(/Advanced fields/));
 
     const passwordInput = inspector.getByLabelText("Password") as HTMLInputElement;
     expect(passwordInput).toBeInTheDocument();
