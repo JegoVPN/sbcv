@@ -33,6 +33,8 @@ A goal is done only when all of these are true:
 
 For docs-only goals, E2E can be replaced by a traceability review: every claim must map to a source document or local policy. For app goals, E2E means opening/running the app path and verifying the workflow, not only passing typecheck.
 
+For frontend goals, implementation and review must apply the `vercel-react-best-practices` skill in the same session. The goal is not review-complete until the frontend diff has been checked for bundle size, rerender scope, derived-state cost, async/data waterfalls, and unnecessary global subscriptions.
+
 ## Goal R&D Doc Template
 
 Create one doc per non-trivial goal:
@@ -81,6 +83,7 @@ One paragraph describing what is true when the goal is done.
 - Source-of-truth checks:
 - Diff scope checks:
 - Design/UX checks if UI is touched:
+- Frontend skill gate if UI is touched: `vercel-react-best-practices`
 
 ## E2E Plan
 
@@ -149,7 +152,7 @@ Once the app exists:
 
 - package manager install/build check
 - TypeScript check
-- React implementation/review against `vercel-react-best-practices`
+- React implementation/review against `vercel-react-best-practices` in the same work session
 - unit tests for domain commands
 - round-trip tests for config fixtures
 - E2E/smoke test for the user path covered by the goal

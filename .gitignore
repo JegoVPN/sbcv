@@ -1,11 +1,16 @@
 # dependencies
 node_modules/
+.tools/
 
 # build output
 .next/
 dist/
 build/
 out/
+*.tsbuildinfo
+test-results/
+playwright-report/
+.playwright-mcp/
 
 # local env
 .env
@@ -21,4 +26,3 @@ pnpm-debug.log*
 
 # system
 .DS_Store
-

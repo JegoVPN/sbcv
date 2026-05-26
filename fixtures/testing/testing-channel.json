@@ -1,0 +1,20 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "http_clients": [
+    {
+      "tag": "remote-client",
+      "engine": "go"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

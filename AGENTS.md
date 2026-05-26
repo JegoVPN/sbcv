@@ -27,6 +27,25 @@ The canvas is never the config source file. `SingBoxConfig` / domain model is th
 10. **No unrelated cleanup**: do not refactor unrelated files while implementing a goal.
 11. **React performance discipline**: frontend implementation and review must apply the `vercel-react-best-practices` skill, especially bundle size, rerender control, and async/data waterfall avoidance.
 
+## Frontend Skill Gate
+
+Any change that touches frontend implementation, frontend architecture, UI tests, or frontend review must use the `vercel-react-best-practices` skill in that same work session.
+
+This is a hard gate for files such as `src/**/*.tsx`, `src/**/*.ts` used by UI state/rendering, `src/styles.css`, React Flow canvas code, component tests, Playwright UI tests, and build/bundle configuration.
+
+Before editing frontend code:
+
+- load/read the `vercel-react-best-practices` skill;
+- identify the frontend-specific performance risks for the atomic, especially bundle size, rerender scope, expensive derived state, and async/data waterfalls;
+- keep transient hover/drag/canvas interaction state out of broad canonical config subscriptions.
+
+Before marking frontend work reviewed or done:
+
+- explicitly review the diff against `vercel-react-best-practices`;
+- verify heavy editors or optional panels are deferred where practical;
+- prefer narrow Zustand/selectors and memoized derived graph data over broad rerender paths;
+- record any intentional deviation in the goal doc or final milestone report.
+
 ## Development Protocol
 
 Before editing:

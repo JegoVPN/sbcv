@@ -182,3 +182,26 @@
 | official configuration navigation | https://sing-box.sagernet.org/configuration/ |
 | stable configuration docs | https://github.com/SagerNet/sing-box/tree/stable/docs/configuration |
 | testing configuration docs | https://github.com/SagerNet/sing-box/tree/testing/docs/configuration |
+
+## Release-Critical Field Traceability
+
+These fields are used by the first release template, fixtures, Inspector, and E2E path. Stable fields must pass `sing-box-stable check`; testing-only fields must pass `sing-box-testing check`.
+
+| Config path / field | Official entry | SBC usage |
+| --- | --- | --- |
+| `inbounds[].type`, `inbounds[].tag` | https://sing-box.sagernet.org/configuration/inbound/ | Inbound node identity |
+| `inbounds[type=tun].address`, `auto_route` | https://sing-box.sagernet.org/configuration/inbound/tun/ | TUN node stable template and Inspector |
+| removed legacy `inbounds[].sniff` | https://sing-box.sagernet.org/configuration/shared/listen/ | Not emitted in stable templates; sniff belongs in route rule actions for 1.13+ |
+| `dns.servers[type=local].tag` | https://sing-box.sagernet.org/configuration/dns/server/local/ | Local DNS Server node |
+| `dns.servers[type=https].server`, `server_port`, `path` | https://sing-box.sagernet.org/configuration/dns/server/https/ | Remote DoH DNS Server node and Inspector |
+| `dns.servers[].detour` | https://sing-box.sagernet.org/configuration/shared/dial/ | DNS server outbound detour reference |
+| `dns.rules[].domain_suffix`, `server` | https://sing-box.sagernet.org/configuration/dns/rule/ | DNS Rules ordered table |
+| `dns.final` | https://sing-box.sagernet.org/configuration/dns/ | DNS Hub final server reference |
+| `outbounds[type=direct]` | https://sing-box.sagernet.org/configuration/outbound/direct/ | Direct outbound node |
+| `outbounds[type=block]` | https://sing-box.sagernet.org/configuration/outbound/block/ | Block outbound node |
+| `outbounds[type=socks].server`, `server_port` | https://sing-box.sagernet.org/configuration/outbound/socks/ | Proxy placeholder outbound node and Inspector |
+| `outbounds[type=selector].outbounds`, `default` | https://sing-box.sagernet.org/configuration/outbound/selector/ | Selector group node candidate references |
+| `outbounds[type=urltest].outbounds`, `url`, `interval` | https://sing-box.sagernet.org/configuration/outbound/urltest/ | URLTest group node candidate references |
+| `route.rules[].domain_suffix`, `domain_keyword`, `outbound` | https://sing-box.sagernet.org/configuration/route/rule/ | Route Rules ordered table |
+| `route.final`, `auto_detect_interface`, `default_domain_resolver` | https://sing-box.sagernet.org/configuration/route/ | Route Hub node and stable template |
+| `http_clients[].tag`, `engine` | https://sing-box.sagernet.org/configuration/shared/http-client/ | testing channel fixture only |
