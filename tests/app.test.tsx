@@ -972,8 +972,14 @@ describe("SBC editor shell", () => {
     expect(inspector.getByLabelText("Certificate (PEM lines or list)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Client Authentication (server)")).toBeInTheDocument();
     expect(inspector.getByLabelText("uTLS Enabled (client, 1.10+)")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("uTLS Fingerprint")).not.toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("uTLS Enabled (client, 1.10+)"));
     expect(inspector.getByLabelText("uTLS Fingerprint")).toBeInTheDocument();
     expect(inspector.getByLabelText("Reality Enabled")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("Reality Public Key (client)")).not.toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("Reality Enabled"));
+    expect(inspector.getByLabelText("Reality Public Key (client)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reality Short ID (client)")).toBeInTheDocument();
     expect(inspector.getByLabelText("ECH Enabled")).toBeInTheDocument();
     expect(inspector.getByLabelText("Fragment (client, 1.12+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Record Fragment (client, 1.12+)")).toBeInTheDocument();
