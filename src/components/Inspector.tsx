@@ -2378,16 +2378,45 @@ export function Inspector() {
                   onChange={(event) => updateField(ref, "config_path", event.target.value)}
                 />
               </label>
-              <label className="field">
-                <span>Verify Tailscale Endpoints</span>
-                <input
-                  value={listishToText(entity.verify_client_endpoint)}
-                  onChange={(event) =>
-                    updateField(ref, "verify_client_endpoint", textToRuleList(event.target.value, entity.verify_client_endpoint))
-                  }
-                  placeholder={endpointTags(config, "tailscale").join(", ")}
-                />
-              </label>
+              {(() => {
+                const tailscaleEndpoints = endpointTags(config, "tailscale");
+                const rawValue = entity.verify_client_endpoint;
+                const currentEndpoints = Array.isArray(rawValue)
+                  ? (rawValue as unknown[]).filter((item): item is string => typeof item === "string")
+                  : typeof rawValue === "string" && rawValue.length > 0
+                    ? [rawValue]
+                    : [];
+                const toggleEndpoint = (candidate: string) => {
+                  const next = currentEndpoints.includes(candidate)
+                    ? currentEndpoints.filter((item) => item !== candidate)
+                    : [...currentEndpoints, candidate];
+                  updateField(ref, "verify_client_endpoint", next.length ? next : undefined);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="derp-endpoint-checklist">
+                    <legend>Verify Tailscale Endpoints</legend>
+                    {tailscaleEndpoints.length === 0 ? (
+                      <p className="field__hint">Add a Tailscale endpoint first to authorize DERP clients.</p>
+                    ) : null}
+                    {tailscaleEndpoints.map((endpoint) => (
+                      <label key={endpoint} className="toggle-row toggle-row--inline">
+                        <input
+                          type="checkbox"
+                          checked={currentEndpoints.includes(endpoint)}
+                          onChange={() => toggleEndpoint(endpoint)}
+                        />
+                        <span>{endpoint}</span>
+                      </label>
+                    ))}
+                    {currentEndpoints.filter((tag) => !tailscaleEndpoints.includes(tag)).map((stale) => (
+                      <label key={`stale-${stale}`} className="toggle-row toggle-row--inline toggle-row--stale">
+                        <input type="checkbox" checked readOnly />
+                        <span>{stale} <em>(missing)</em></span>
+                      </label>
+                    ))}
+                  </fieldset>
+                );
+              })()}
               <label className="field">
                 <span>Home</span>
                 <input

@@ -337,6 +337,31 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders DERP verify_client_endpoint as a multiselect over tailscale endpoint tags", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("endpoint-tailscale");
+    });
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-derp");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const checklist = inspector.getByTestId("derp-endpoint-checklist");
+    const tsCheckbox = within(checklist).getByLabelText("ts-ep") as HTMLInputElement;
+    expect(tsCheckbox.checked).toBe(false);
+
+    fireEvent.click(tsCheckbox);
+    let derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp");
+    expect(derp?.verify_client_endpoint).toEqual(["ts-ep"]);
+
+    fireEvent.click(tsCheckbox);
+    derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp");
+    expect(derp?.verify_client_endpoint).toBeUndefined();
+  });
+
   it("renders entityType-specific enum selects for outbound protocols", () => {
     useProjectStore.getState().loadMinimal();
 
