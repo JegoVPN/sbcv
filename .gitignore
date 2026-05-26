@@ -8,6 +8,7 @@ dist/
 build/
 out/
 *.tsbuildinfo
+.tmp/
 test-results/
 playwright-report/
 .playwright-mcp/
