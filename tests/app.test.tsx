@@ -1071,6 +1071,68 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders TUN-specific stack, route_address, and platform.http_proxy controls", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tun");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const stack = inspector.getByLabelText("Stack") as HTMLSelectElement;
+    expect(stack.tagName).toBe("SELECT");
+    expect(within(stack).getByRole("option", { name: "system" })).toBeInTheDocument();
+    expect(within(stack).getByRole("option", { name: "gvisor" })).toBeInTheDocument();
+    expect(within(stack).getByRole("option", { name: "mixed" })).toBeInTheDocument();
+    fireEvent.change(stack, { target: { value: "gvisor" } });
+    let tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.stack).toBe("gvisor");
+
+    const einat = inspector.getByLabelText("Endpoint-independent NAT (gvisor only)") as HTMLInputElement;
+    fireEvent.click(einat);
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.endpoint_independent_nat).toBe(true);
+
+    fireEvent.change(stack, { target: { value: "system" } });
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.stack).toBe("system");
+    expect(tun.endpoint_independent_nat).toBeUndefined();
+    expect(inspector.queryByLabelText("Endpoint-independent NAT (gvisor only)")).not.toBeInTheDocument();
+
+    const routeAddress = inspector.getByLabelText("Route address (CIDR)") as HTMLInputElement;
+    fireEvent.change(routeAddress, { target: { value: "0.0.0.0/1, 128.0.0.0/1" } });
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.route_address).toEqual(["0.0.0.0/1", "128.0.0.0/1"]);
+
+    const routeSet = inspector.getByLabelText("Route address set (rule-set tags)") as HTMLInputElement;
+    fireEvent.change(routeSet, { target: { value: "geosite-cn, cn-ips" } });
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.route_address_set).toEqual(["geosite-cn", "cn-ips"]);
+
+    const loopback = inspector.getByLabelText("Loopback address") as HTMLInputElement;
+    fireEvent.change(loopback, { target: { value: "10.7.0.1, fdfe:dcba:9876::2" } });
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    expect(tun.loopback_address).toEqual(["10.7.0.1", "fdfe:dcba:9876::2"]);
+
+    const proxyServer = within(inspector.getByTestId("tun-platform-http-proxy"));
+    const enabled = proxyServer.getByLabelText("Enabled") as HTMLInputElement;
+    fireEvent.click(enabled);
+    const serverInput = proxyServer.getByLabelText("Server") as HTMLInputElement;
+    fireEvent.change(serverInput, { target: { value: "127.0.0.1" } });
+    const portInput = proxyServer.getByLabelText("Server port") as HTMLInputElement;
+    fireEvent.change(portInput, { target: { value: "8080" } });
+    const bypass = proxyServer.getByLabelText("Bypass domain") as HTMLInputElement;
+    fireEvent.change(bypass, { target: { value: "*.local, 192.168.0.0/16" } });
+
+    tun = useProjectStore.getState().config.inbounds?.find((i) => i.type === "tun") as Record<string, unknown>;
+    const platform = tun.platform as Record<string, unknown>;
+    const httpProxy = platform.http_proxy as Record<string, unknown>;
+    expect(httpProxy.enabled).toBe(true);
+    expect(httpProxy.server).toBe("127.0.0.1");
+    expect(httpProxy.server_port).toBe(8080);
+    expect(httpProxy.bypass_domain).toEqual(["*.local", "192.168.0.0/16"]);
+  });
+
   it("surfaces non-scalar entity fields under Advanced JSON fields", () => {
     useProjectStore.getState().loadMinimal();
 

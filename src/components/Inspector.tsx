@@ -142,6 +142,14 @@ const inboundHandledFields = new Set([
   "multiplex",
   "transport",
   "handshake",
+  "stack",
+  "route_address",
+  "route_exclude_address",
+  "route_address_set",
+  "route_exclude_address_set",
+  "loopback_address",
+  "endpoint_independent_nat",
+  "platform",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2223,6 +2231,173 @@ export function Inspector() {
             />
             <span>Auto route</span>
           </label>
+          {entityType === "tun" ? (
+            <>
+              <label className="field" data-testid="tun-stack-field">
+                <span>Stack</span>
+                <select
+                  value={typeof entity.stack === "string" ? entity.stack : ""}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (!next) {
+                      updateField(ref, "stack", undefined);
+                      if (entity.endpoint_independent_nat) updateField(ref, "endpoint_independent_nat", undefined);
+                      return;
+                    }
+                    updateField(ref, "stack", next);
+                    if (next !== "gvisor" && entity.endpoint_independent_nat) {
+                      updateField(ref, "endpoint_independent_nat", undefined);
+                    }
+                  }}
+                >
+                  <option value="">(default)</option>
+                  <option value="system">system</option>
+                  <option value="gvisor">gvisor</option>
+                  <option value="mixed">mixed</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Route address (CIDR)</span>
+                <input
+                  value={toList(entity.route_address)}
+                  placeholder="0.0.0.0/1, 128.0.0.0/1, ::/1, 8000::/1"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "route_address", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Route exclude address (CIDR)</span>
+                <input
+                  value={toList(entity.route_exclude_address)}
+                  placeholder="192.168.0.0/16, fc00::/7"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "route_exclude_address", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Route address set (rule-set tags)</span>
+                <input
+                  value={toList(entity.route_address_set)}
+                  placeholder="cn-ips, geosite-cn"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "route_address_set", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Route exclude address set (rule-set tags)</span>
+                <input
+                  value={toList(entity.route_exclude_address_set)}
+                  placeholder="private-ip"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "route_exclude_address_set", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Loopback address</span>
+                <input
+                  value={toList(entity.loopback_address)}
+                  placeholder="10.7.0.1, fdfe:dcba:9876::2"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "loopback_address", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              {entity.stack === "gvisor" ? (
+                <label className="toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(entity.endpoint_independent_nat)}
+                    onChange={(event) =>
+                      updateField(ref, "endpoint_independent_nat", event.target.checked || undefined)
+                    }
+                  />
+                  <span>Endpoint-independent NAT (gvisor only)</span>
+                </label>
+              ) : null}
+              {(() => {
+                const platform = objectField(entity.platform);
+                const httpProxy = objectField(platform.http_proxy);
+                const writeProxy = (patch: InspectorEntity) => {
+                  const merged: InspectorEntity = { ...httpProxy, ...patch };
+                  const cleaned: InspectorEntity = {};
+                  for (const [k, v] of Object.entries(merged)) {
+                    if (v === undefined || v === "" || (Array.isArray(v) && v.length === 0)) continue;
+                    cleaned[k] = v;
+                  }
+                  const nextPlatform: InspectorEntity = { ...platform };
+                  if (Object.keys(cleaned).length) nextPlatform.http_proxy = cleaned;
+                  else delete nextPlatform.http_proxy;
+                  updateField(ref, "platform", Object.keys(nextPlatform).length ? nextPlatform : undefined);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="tun-platform-http-proxy">
+                    <legend>Platform · HTTP Proxy</legend>
+                    <label className="toggle-row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(httpProxy.enabled)}
+                        onChange={(event) =>
+                          writeProxy({ enabled: event.target.checked ? true : undefined })
+                        }
+                      />
+                      <span>Enabled</span>
+                    </label>
+                    <label className="field">
+                      <span>Server</span>
+                      <input
+                        value={typeof httpProxy.server === "string" ? httpProxy.server : ""}
+                        placeholder="127.0.0.1"
+                        onChange={(event) => writeProxy({ server: event.target.value || undefined })}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Server port</span>
+                      <input
+                        type="number"
+                        value={typeof httpProxy.server_port === "number" ? httpProxy.server_port : ""}
+                        placeholder="8080"
+                        onChange={(event) => {
+                          const next = Number(event.target.value);
+                          writeProxy({ server_port: Number.isFinite(next) && next > 0 ? next : undefined });
+                        }}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Bypass domain</span>
+                      <input
+                        value={toList(httpProxy.bypass_domain)}
+                        placeholder="*.local, 192.168.0.0/16"
+                        onChange={(event) => {
+                          const list = fromList(event.target.value);
+                          writeProxy({ bypass_domain: list.length ? list : undefined });
+                        }}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Match domain (Apple GUI only)</span>
+                      <input
+                        value={toList(httpProxy.match_domain)}
+                        placeholder="*.example.com"
+                        onChange={(event) => {
+                          const list = fromList(event.target.value);
+                          writeProxy({ match_domain: list.length ? list : undefined });
+                        }}
+                      />
+                    </label>
+                  </fieldset>
+                );
+              })()}
+            </>
+          ) : null}
           {(() => {
             const schema = INBOUND_USER_SCHEMAS[entityType ?? ""];
             if (!schema) return null;
