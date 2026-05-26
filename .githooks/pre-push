@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+set -eu
+
+zero_sha="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$local_sha" = "$zero_sha" ]; then
+    continue
+  fi
+
+  if [ "$remote_sha" = "$zero_sha" ]; then
+    range="$local_sha"
+  else
+    range="$remote_sha..$local_sha"
+  fi
+
+  for commit in $(git rev-list "$range"); do
+    if ! git verify-commit "$commit" >/dev/null 2>&1; then
+      echo "pre-push: commit $commit is not signed or failed signature verification" >&2
+      echo "pre-push: fix it with a signed commit before pushing $local_ref -> $remote_ref" >&2
+      exit 1
+    fi
+  done
+done
+
