@@ -2789,8 +2789,106 @@ export function Inspector() {
                   ))}
                 </select>
               </label>
-              <JsonField label="Users JSON" value={entity.users ?? []} onChange={(value) => updateField(ref, "users", value)} />
-              <JsonField label="Headers JSON" value={entity.headers ?? {}} onChange={(value) => updateField(ref, "headers", value)} />
+              {(() => {
+                const users = Array.isArray(entity.users) ? (entity.users as Record<string, unknown>[]) : [];
+                const writeUsers = (next: Record<string, unknown>[]) =>
+                  updateField(ref, "users", next.length ? next : undefined);
+                const patchUser = (index: number, patch: Record<string, unknown>) =>
+                  writeUsers(users.map((user, i) => (i === index ? { ...user, ...patch } : user)));
+                const removeUser = (index: number) => writeUsers(users.filter((_, i) => i !== index));
+                const addUser = () =>
+                  writeUsers([...users, { name: `user${users.length + 1}`, token: "" }]);
+                return (
+                  <fieldset className="field field--checklist" data-testid={`${entityType}-users-editor`}>
+                    <legend>Users</legend>
+                    {users.length === 0 ? (
+                      <p className="field__hint">No users yet. Click Add to create one.</p>
+                    ) : null}
+                    {users.map((user, index) => (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>Name</span>
+                          <input
+                            value={String(user.name ?? "")}
+                            onChange={(event) => patchUser(index, { name: event.target.value })}
+                          />
+                        </label>
+                        <SensitiveTextField
+                          label="Token"
+                          value={String(user.token ?? "")}
+                          onChange={(next) => patchUser(index, { token: next })}
+                        />
+                        <button type="button" className="icon-danger" onClick={() => removeUser(index)} aria-label={`Remove user ${index + 1}`}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="palette-action" onClick={addUser}>
+                      Add user
+                    </button>
+                  </fieldset>
+                );
+              })()}
+              {(() => {
+                const headers = objectField(entity.headers);
+                const entries = Object.entries(headers);
+                const writeHeaders = (next: Record<string, unknown>) =>
+                  updateField(ref, "headers", Object.keys(next).length ? next : undefined);
+                const renameHeader = (oldKey: string, newKey: string) => {
+                  if (oldKey === newKey) return;
+                  const next: Record<string, unknown> = {};
+                  for (const [k, v] of entries) {
+                    next[k === oldKey ? newKey : k] = v;
+                  }
+                  writeHeaders(next);
+                };
+                const setHeaderValue = (key: string, value: string) => {
+                  const next: Record<string, unknown> = {};
+                  for (const [k, v] of entries) {
+                    next[k] = k === key ? value : v;
+                  }
+                  writeHeaders(next);
+                };
+                const removeHeader = (key: string) => {
+                  const next = Object.fromEntries(entries.filter(([k]) => k !== key));
+                  writeHeaders(next);
+                };
+                const addHeader = () => {
+                  let candidate = "X-Header";
+                  let suffix = 1;
+                  while (Object.prototype.hasOwnProperty.call(headers, candidate)) {
+                    suffix += 1;
+                    candidate = `X-Header-${suffix}`;
+                  }
+                  writeHeaders({ ...headers, [candidate]: "" });
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid={`${entityType}-headers-editor`}>
+                    <legend>Headers</legend>
+                    {entries.length === 0 ? (
+                      <p className="field__hint">No custom HTTP headers.</p>
+                    ) : null}
+                    {entries.map(([key, value]) => (
+                      <div key={key} className="rule-row">
+                        <label className="field">
+                          <span>Name</span>
+                          <input value={key} onChange={(event) => renameHeader(key, event.target.value)} />
+                        </label>
+                        <label className="field">
+                          <span>Value</span>
+                          <input value={String(value ?? "")} onChange={(event) => setHeaderValue(key, event.target.value)} />
+                        </label>
+                        <button type="button" className="icon-danger" onClick={() => removeHeader(key)} aria-label={`Remove header ${key}`}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="palette-action" onClick={addHeader}>
+                      Add header
+                    </button>
+                  </fieldset>
+                );
+              })()}
             </>
           ) : null}
 
