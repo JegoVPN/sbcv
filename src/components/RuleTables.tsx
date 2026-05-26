@@ -88,51 +88,57 @@ export function RouteRulesTable() {
         </button>
       </div>
       <RulePager {...routeBounds} total={rules.length} setPage={setRoutePage} />
-      <div className="rules-grid rules-grid--route">
-        <div>#</div>
-        <div>Domain suffix</div>
-        <div>Keyword</div>
-        <div>Outbound</div>
-        <div>Order</div>
+      <div className="rule-list">
         {visibleRules.map((rule, index) => {
           const ruleIndex = routeBounds.start + index;
           return (
-          <div className="rules-row" key={`${ruleIndex}-${rule.outbound ?? "none"}`}>
-            <div className="rule-index">{ruleIndex + 1}</div>
-            <input
-              aria-label={`Route rule ${ruleIndex + 1} domain suffix`}
-              value={listToText(rule.domain_suffix)}
-              onChange={(event) => updateRouteRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
-            />
-            <input
-              aria-label={`Route rule ${ruleIndex + 1} keyword`}
-              value={listToText(rule.domain_keyword)}
-              onChange={(event) => updateRouteRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
-            />
-            <select
-              aria-label={`Route rule ${ruleIndex + 1} outbound`}
-              value={rule.outbound ?? ""}
-              onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
-            >
-              <option value="">Missing</option>
-              {outbounds.map((outbound) => (
-                <option key={outbound.tag} value={outbound.tag}>
-                  {outbound.tag}
-                </option>
-              ))}
-            </select>
-            <div className="row-actions">
-              <button type="button" aria-label={`Move route rule ${ruleIndex + 1} up`} onClick={() => moveRouteRule(ruleIndex, -1)}>
-                <ArrowUp size={14} />
-              </button>
-              <button type="button" aria-label={`Move route rule ${ruleIndex + 1} down`} onClick={() => moveRouteRule(ruleIndex, 1)}>
-                <ArrowDown size={14} />
-              </button>
-              <button type="button" aria-label={`Delete route rule ${ruleIndex + 1}`} onClick={() => deleteRouteRule(ruleIndex)}>
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
+            <article className="rule-card" key={`${ruleIndex}-${rule.outbound ?? "none"}`}>
+              <div className="rule-card__header">
+                <span>Rule {ruleIndex + 1}</span>
+                <div className="row-actions">
+                  <button type="button" aria-label={`Move route rule ${ruleIndex + 1} up`} onClick={() => moveRouteRule(ruleIndex, -1)}>
+                    <ArrowUp size={14} />
+                  </button>
+                  <button type="button" aria-label={`Move route rule ${ruleIndex + 1} down`} onClick={() => moveRouteRule(ruleIndex, 1)}>
+                    <ArrowDown size={14} />
+                  </button>
+                  <button type="button" aria-label={`Delete route rule ${ruleIndex + 1}`} onClick={() => deleteRouteRule(ruleIndex)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+              <label className="rule-field">
+                <span>Domain suffix</span>
+                <input
+                  aria-label={`Route rule ${ruleIndex + 1} domain suffix`}
+                  value={listToText(rule.domain_suffix)}
+                  onChange={(event) => updateRouteRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
+                />
+              </label>
+              <label className="rule-field">
+                <span>Keyword</span>
+                <input
+                  aria-label={`Route rule ${ruleIndex + 1} keyword`}
+                  value={listToText(rule.domain_keyword)}
+                  onChange={(event) => updateRouteRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
+                />
+              </label>
+              <label className="rule-field">
+                <span>Outbound</span>
+                <select
+                  aria-label={`Route rule ${ruleIndex + 1} outbound`}
+                  value={rule.outbound ?? ""}
+                  onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
+                >
+                  <option value="">Missing</option>
+                  {outbounds.map((outbound) => (
+                    <option key={outbound.tag} value={outbound.tag}>
+                      {outbound.tag}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </article>
           );
         })}
       </div>
@@ -164,51 +170,57 @@ export function DnsRulesTable() {
         </button>
       </div>
       <RulePager {...dnsBounds} total={rules.length} setPage={setDnsPage} />
-      <div className="rules-grid rules-grid--dns">
-        <div>#</div>
-        <div>Domain suffix</div>
-        <div>Keyword</div>
-        <div>Server</div>
-        <div>Order</div>
+      <div className="rule-list">
         {visibleRules.map((rule, index) => {
           const ruleIndex = dnsBounds.start + index;
           return (
-          <div className="rules-row" key={`${ruleIndex}-${rule.server ?? "none"}`}>
-            <div className="rule-index">{ruleIndex + 1}</div>
-            <input
-              aria-label={`DNS rule ${ruleIndex + 1} domain suffix`}
-              value={listToText(rule.domain_suffix)}
-              onChange={(event) => updateDnsRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
-            />
-            <input
-              aria-label={`DNS rule ${ruleIndex + 1} keyword`}
-              value={listToText(rule.domain_keyword)}
-              onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
-            />
-            <select
-              aria-label={`DNS rule ${ruleIndex + 1} server`}
-              value={rule.server ?? ""}
-              onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
-            >
-              <option value="">Missing</option>
-              {servers.map((server) => (
-                <option key={server.tag} value={server.tag}>
-                  {server.tag}
-                </option>
-              ))}
-            </select>
-            <div className="row-actions">
-              <button type="button" aria-label={`Move DNS rule ${ruleIndex + 1} up`} onClick={() => moveDnsRule(ruleIndex, -1)}>
-                <ArrowUp size={14} />
-              </button>
-              <button type="button" aria-label={`Move DNS rule ${ruleIndex + 1} down`} onClick={() => moveDnsRule(ruleIndex, 1)}>
-                <ArrowDown size={14} />
-              </button>
-              <button type="button" aria-label={`Delete DNS rule ${ruleIndex + 1}`} onClick={() => deleteDnsRule(ruleIndex)}>
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
+            <article className="rule-card" key={`${ruleIndex}-${rule.server ?? "none"}`}>
+              <div className="rule-card__header">
+                <span>DNS Rule {ruleIndex + 1}</span>
+                <div className="row-actions">
+                  <button type="button" aria-label={`Move DNS rule ${ruleIndex + 1} up`} onClick={() => moveDnsRule(ruleIndex, -1)}>
+                    <ArrowUp size={14} />
+                  </button>
+                  <button type="button" aria-label={`Move DNS rule ${ruleIndex + 1} down`} onClick={() => moveDnsRule(ruleIndex, 1)}>
+                    <ArrowDown size={14} />
+                  </button>
+                  <button type="button" aria-label={`Delete DNS rule ${ruleIndex + 1}`} onClick={() => deleteDnsRule(ruleIndex)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+              <label className="rule-field">
+                <span>Domain suffix</span>
+                <input
+                  aria-label={`DNS rule ${ruleIndex + 1} domain suffix`}
+                  value={listToText(rule.domain_suffix)}
+                  onChange={(event) => updateDnsRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
+                />
+              </label>
+              <label className="rule-field">
+                <span>Keyword</span>
+                <input
+                  aria-label={`DNS rule ${ruleIndex + 1} keyword`}
+                  value={listToText(rule.domain_keyword)}
+                  onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
+                />
+              </label>
+              <label className="rule-field">
+                <span>Server</span>
+                <select
+                  aria-label={`DNS rule ${ruleIndex + 1} server`}
+                  value={rule.server ?? ""}
+                  onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
+                >
+                  <option value="">Missing</option>
+                  {servers.map((server) => (
+                    <option key={server.tag} value={server.tag}>
+                      {server.tag}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </article>
           );
         })}
       </div>

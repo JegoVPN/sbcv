@@ -10,8 +10,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { EntityRef } from "../domain/types";
+import type { EntityRef, SingBoxConfig } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
+import { InspectorPanels } from "./InspectorPanels";
 
 type InspectorEntity = Record<string, unknown>;
 type InspectorKind = EntityRef["kind"];
@@ -38,7 +39,22 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   if (kind === "dns") return { kind: "dns", id: "main" };
   if (kind === "route-rule" && value) return { kind: "route-rule", index: Number(value) };
   if (kind === "dns-rule" && value) return { kind: "dns-rule", index: Number(value) };
+  if (kind === "settings" && value) return { kind: "settings", path: value as keyof SingBoxConfig };
   return null;
+}
+
+function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server") {
+  const prefix = `untagged-${kind}-`;
+  if (!value.startsWith(prefix)) return -1;
+  const index = Number(value.slice(prefix.length)) - 1;
+  return Number.isInteger(index) && index >= 0 ? index : -1;
+}
+
+function findTaggedOrGenerated<T extends { tag?: string }>(items: T[] | undefined, tag: string, kind: "inbound" | "outbound" | "dns-server") {
+  const byTag = items?.find((item) => item.tag === tag);
+  if (byTag) return byTag;
+  const index = generatedIndex(tag, kind);
+  return index >= 0 ? items?.[index] : undefined;
 }
 
 function toList(value: unknown): string {
@@ -67,20 +83,25 @@ export function Inspector() {
   const updateField = useProjectStore((state) => state.updateField);
   const renameTag = useProjectStore((state) => state.renameTag);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
-  const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const ref = useMemo(() => selectedRefFromId(selectedId), [selectedId]);
   const entity = useMemo<InspectorEntity | null>(() => {
     if (!ref) return null;
-    if (ref.kind === "inbound") return (config.inbounds?.find((item) => item.tag === ref.tag) as InspectorEntity | undefined) ?? null;
-    if (ref.kind === "outbound") return (config.outbounds?.find((item) => item.tag === ref.tag) as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "inbound") return (findTaggedOrGenerated(config.inbounds, ref.tag, "inbound") as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "outbound") return (findTaggedOrGenerated(config.outbounds, ref.tag, "outbound") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns-server") {
-      return (config.dns?.servers?.find((item) => item.tag === ref.tag) as InspectorEntity | undefined) ?? null;
+      return (findTaggedOrGenerated(config.dns?.servers, ref.tag, "dns-server") as InspectorEntity | undefined) ?? null;
     }
     if (ref.kind === "route") return (config.route as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns") return (config.dns as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route-rule") return (config.route?.rules?.[ref.index] as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns-rule") return (config.dns?.rules?.[ref.index] as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "settings") {
+      const entity = config[ref.path];
+      return entity && typeof entity === "object" && !Array.isArray(entity)
+        ? (entity as InspectorEntity)
+        : null;
+    }
     return null;
   }, [config, ref]);
   const [tagDraft, setTagDraft] = useState("");
@@ -90,19 +111,7 @@ export function Inspector() {
     else setTagDraft("");
   }, [entity]);
 
-  if (!ref || !entity) {
-    return (
-      <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">
-        <div className="inspector__header">
-          <div className="inspector__title">
-            <Braces size={18} />
-            <span>Inspector</span>
-          </div>
-        </div>
-        <div className="empty-state">Select a node to edit its canonical sing-box entity.</div>
-      </aside>
-    );
-  }
+  if (!ref || !entity) return null;
 
   const tagValue = typeof entity.tag === "string" ? entity.tag : null;
   const entityType = typeof entity.type === "string" ? entity.type : null;
@@ -155,6 +164,42 @@ export function Inspector() {
           <span>Type</span>
           <input value={entityType} disabled />
         </label>
+      ) : null}
+
+      {ref.kind === "settings" && ref.path === "log" ? (
+        <>
+          <label className="field">
+            <span>Level</span>
+            <select
+              value={String(entity.level ?? "info")}
+              onChange={(event) => updateField(ref, "level", event.target.value)}
+            >
+              <option value="trace">trace</option>
+              <option value="debug">debug</option>
+              <option value="info">info</option>
+              <option value="warn">warn</option>
+              <option value="error">error</option>
+              <option value="fatal">fatal</option>
+              <option value="panic">panic</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Output</span>
+            <input
+              value={String(entity.output ?? "")}
+              onChange={(event) => updateField(ref, "output", event.target.value || undefined)}
+              placeholder="stdout or file path"
+            />
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.disabled)}
+              onChange={(event) => updateField(ref, "disabled", event.target.checked || undefined)}
+            />
+            <span>Disable log</span>
+          </label>
+        </>
       ) : null}
 
       {ref.kind === "inbound" ? (
@@ -268,31 +313,7 @@ export function Inspector() {
         </>
       ) : null}
 
-      {ref.kind === "route" ? (
-        <button type="button" className="wide-action" onClick={() => setPanelTab("rules")}>
-          Edit ordered route rules
-        </button>
-      ) : null}
-
-      {ref.kind === "dns" ? (
-        <button type="button" className="wide-action" onClick={() => setPanelTab("dns")}>
-          Edit ordered DNS rules
-        </button>
-      ) : null}
-
-      {ref.kind === "route-rule" || ref.kind === "dns-rule" ? (
-        <button
-          type="button"
-          className="wide-action"
-          onClick={() => setPanelTab(ref.kind === "route-rule" ? "rules" : "dns")}
-        >
-          Open ordered table
-        </button>
-      ) : null}
-
-      <button type="button" className="wide-action inspector__primary-action" onClick={() => setPanelTab("diagnostics")}>
-        Open diagnostics
-      </button>
+      <InspectorPanels />
     </aside>
   );
 }

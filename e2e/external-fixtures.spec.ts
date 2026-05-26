@@ -90,7 +90,13 @@ function readFixture(entry: ManifestEntry) {
 
 async function importFixture(page: Page, entry: ManifestEntry) {
   await page.goto("/");
-  await page.getByLabel("Channel").selectOption(entry.channel);
+  const target =
+    entry.channel === "testing"
+      ? "1.14-testing"
+      : entry.detected_version === "1.12" || entry.detected_version === "1.11"
+        ? "1.12-stable"
+        : "1.13-stable";
+  await page.getByLabel("Sing-box target").selectOption(target);
   await page.getByLabel("Import JSON file").setInputFiles(path.join(process.cwd(), entry.fixture_path));
   await page.locator(".sbc-node-shell").first().waitFor({ state: "visible" });
 }
@@ -165,11 +171,13 @@ test("representative external fixtures import, render, inspect, export, and re-i
     }
     if (config.route) {
       await expect(page.getByTestId("node-route:main")).toBeVisible();
+      await page.getByTestId("node-route:main").click();
       await page.getByRole("button", { name: "Route Rules", exact: true }).click();
       await expect(page.getByLabel("Route rules")).toBeVisible();
     }
     if (config.dns) {
       await expect(page.getByTestId("node-dns:main")).toBeVisible();
+      await page.getByTestId("node-dns:main").click();
       await page.getByRole("button", { name: "DNS Rules", exact: true }).click();
       await expect(page.getByLabel("DNS rules")).toBeVisible();
     }
@@ -190,6 +198,8 @@ test("representative external fixtures import, render, inspect, export, and re-i
     if (!exportedPath) throw new Error(`Export download path unavailable for ${entry.id}`);
 
     await page.getByLabel("Import JSON file").setInputFiles(exportedPath);
+    const reimportedNode = await firstInspectableNode(page);
+    await reimportedNode.click();
     await page.getByRole("button", { name: "JSON", exact: true }).click();
     JSON.parse(await page.getByLabel("Advanced JSON editor").inputValue());
 
@@ -201,7 +211,7 @@ test("representative external fixtures import, render, inspect, export, and re-i
 test("selected node and floating inspector fit mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await importFixture(page, requiredByPath("config_template/config_template_groups_rule_set_tun.json"));
-  await page.getByLabel("Close inspector").click();
+  await expect(page.getByLabel("Node inspector")).toHaveCount(0);
   const selectedNode = await firstInspectableNode(page);
   await selectedNode.click();
 

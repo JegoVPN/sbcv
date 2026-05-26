@@ -1,7 +1,6 @@
 import { CanvasWorkspace } from "./components/CanvasWorkspace";
 import { Inspector } from "./components/Inspector";
 import { Palette } from "./components/Palette";
-import { BottomPanel } from "./components/BottomPanel";
 import { TopBar } from "./components/TopBar";
 import "./styles.css";
 
@@ -14,7 +13,6 @@ export function App() {
         <CanvasWorkspace />
         <Inspector />
       </main>
-      <BottomPanel />
     </div>
   );
 }
