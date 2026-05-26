@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   connectSelectorCandidate,
+  createDnsServer,
   createInbound,
   createOutbound,
   createStableTunSplitConfig,
@@ -199,6 +200,17 @@ describe("canonical sing-box domain model", () => {
 
       expect(inbound.type).toBe(type);
       expect(inbound.tag).toBe(`${type}-in`);
+    }
+  });
+
+  it("creates DNS server setup drafts with the requested official server type", () => {
+    const setupTypes = ["hosts", "tcp", "udp", "tls", "quic", "https", "h3", "dhcp", "fakeip", "tailscale", "resolved"];
+
+    for (const type of setupTypes) {
+      const server = createDnsServer(type, `${type}-dns`);
+
+      expect(server.type).toBe(type);
+      expect(server.tag).toBe(`${type}-dns`);
     }
   });
 

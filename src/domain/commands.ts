@@ -1,5 +1,5 @@
 import { getUniqueTag } from "./indexes";
-import { preferredInboundTag } from "./protocols";
+import { preferredDnsServerTag, preferredInboundTag } from "./protocols";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -395,23 +395,106 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
   return { type, tag };
 }
 
-export function addDnsServer(config: SingBoxConfig, type: "local" | "https" = "local"): SingBoxConfig {
+export function addDnsServer(config: SingBoxConfig, type = "local", preferredTag?: string): SingBoxConfig {
   const next = cloneConfig(config);
   next.dns = next.dns ?? {};
-  const tag = getUniqueTag(next, type === "local" ? "local-dns" : "remote-doh");
-  const server: DnsServerConfig =
-    type === "local"
-      ? { type: "local", tag }
-      : {
-          type: "https",
-          tag,
-          address: "https://1.1.1.1/dns-query",
-          server: "1.1.1.1",
-          server_port: 443,
-        };
-  next.dns.servers = [...(next.dns.servers ?? []), server];
+  const tag = getUniqueTag(next, preferredTag ?? preferredDnsServerTag(type));
+  next.dns.servers = [...(next.dns.servers ?? []), createDnsServer(type, tag)];
   next.dns.final = next.dns.final ?? tag;
   return next;
+}
+
+export function createDnsServer(type: string, tag: string): DnsServerConfig {
+  if (type === "local") return { type, tag };
+  if (type === "legacy") {
+    return {
+      type,
+      tag,
+      address: "8.8.8.8",
+      strategy: "prefer_ipv4",
+    };
+  }
+  if (type === "hosts") {
+    return {
+      type,
+      tag,
+      path: "/etc/hosts",
+    };
+  }
+  if (type === "tcp" || type === "udp") {
+    return {
+      type,
+      tag,
+      server: "1.1.1.1",
+      server_port: 53,
+    };
+  }
+  if (type === "tls" || type === "quic") {
+    return {
+      type,
+      tag,
+      server: "1.1.1.1",
+      server_port: 853,
+    };
+  }
+  if (type === "https") {
+    return {
+      type,
+      tag,
+      address: "https://1.1.1.1/dns-query",
+      server: "1.1.1.1",
+      server_port: 443,
+      path: "/dns-query",
+    };
+  }
+  if (type === "h3") {
+    return {
+      type,
+      tag,
+      server: "1.1.1.1",
+      server_port: 443,
+      path: "/dns-query",
+    };
+  }
+  if (type === "dhcp") {
+    return {
+      type,
+      tag,
+      interface: "auto",
+    };
+  }
+  if (type === "fakeip") {
+    return {
+      type,
+      tag,
+      inet4_range: "198.18.0.0/15",
+      inet6_range: "fc00::/18",
+    };
+  }
+  if (type === "mdns") {
+    return {
+      type,
+      tag,
+      interface: [],
+    };
+  }
+  if (type === "tailscale") {
+    return {
+      type,
+      tag,
+      endpoint: "tailscale-ep",
+      accept_default_resolvers: false,
+    };
+  }
+  if (type === "resolved") {
+    return {
+      type,
+      tag,
+      service: "resolved",
+      accept_default_resolvers: false,
+    };
+  }
+  return { type, tag };
 }
 
 export function addRouteRule(config: SingBoxConfig, rule?: RouteRule): SingBoxConfig {

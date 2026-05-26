@@ -46,6 +46,25 @@ export const INBOUND_PALETTE_TYPES = {
 
 export type InboundPaletteKind = keyof typeof INBOUND_PALETTE_TYPES;
 
+export const DNS_SERVER_PALETTE_TYPES = {
+  "dns-legacy": "legacy",
+  "dns-local": "local",
+  "dns-hosts": "hosts",
+  "dns-tcp": "tcp",
+  "dns-udp": "udp",
+  "dns-tls": "tls",
+  "dns-quic": "quic",
+  "dns-https": "https",
+  "dns-http3": "h3",
+  "dns-dhcp": "dhcp",
+  "dns-fakeip-server": "fakeip",
+  "dns-mdns": "mdns",
+  "dns-tailscale": "tailscale",
+  "dns-resolved": "resolved",
+} as const;
+
+export type DnsServerPaletteKind = keyof typeof DNS_SERVER_PALETTE_TYPES;
+
 const preferredOutboundTags: Record<string, string> = {
   direct: "direct",
   block: "block",
@@ -90,6 +109,23 @@ const preferredInboundTags: Record<string, string> = {
   cloudflared: "cloudflared-in",
 };
 
+const preferredDnsServerTags: Record<string, string> = {
+  legacy: "legacy-dns",
+  local: "local-dns",
+  hosts: "hosts-dns",
+  tcp: "tcp-dns",
+  udp: "udp-dns",
+  tls: "tls-dns",
+  quic: "quic-dns",
+  https: "remote-doh",
+  h3: "h3-dns",
+  dhcp: "dhcp-dns",
+  fakeip: "fakeip-dns",
+  mdns: "mdns-dns",
+  tailscale: "tailscale-dns",
+  resolved: "resolved-dns",
+};
+
 export function outboundTypeForPaletteKind(kind: string): string | undefined {
   return OUTBOUND_PALETTE_TYPES[kind as OutboundPaletteKind];
 }
@@ -104,4 +140,12 @@ export function inboundTypeForPaletteKind(kind: string): string | undefined {
 
 export function preferredInboundTag(type: string): string {
   return preferredInboundTags[type] ?? `${type}-in`;
+}
+
+export function dnsServerTypeForPaletteKind(kind: string): string | undefined {
+  return DNS_SERVER_PALETTE_TYPES[kind as DnsServerPaletteKind];
+}
+
+export function preferredDnsServerTag(type: string): string {
+  return preferredDnsServerTags[type] ?? `${type}-dns`;
 }

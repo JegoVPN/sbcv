@@ -73,4 +73,20 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().selectedId).toBe("inbound:http-in");
     expect(screen.getByText("Listen Port")).toBeInTheDocument();
   });
+
+  it("adds DNS server setup drafts from the Library and opens editable DNS fields", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^DNS/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup TCP Server" }));
+
+    const created = useProjectStore.getState().config.dns?.servers?.at(-1);
+
+    expect(created?.type).toBe("tcp");
+    expect(created?.tag).toBe("tcp-dns");
+    expect(useProjectStore.getState().selectedId).toBe("dns-server:tcp-dns");
+    expect(screen.getByText("Server")).toBeInTheDocument();
+  });
 });
