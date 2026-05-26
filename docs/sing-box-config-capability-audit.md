@@ -48,6 +48,15 @@ Remaining Palette surface gaps reported by the audit:
 - DNS server `fakeip`.
 - Rule-set source/headless/adguard docs.
 
+Remaining writable object gaps reported by the expanded audit:
+
+- DNS server types except Local and HTTPS.
+- NTP, Certificate, Experimental independent settings.
+- Endpoint WireGuard and Tailscale.
+- Rule Set resource editor.
+- Service resources.
+- Outbound WireGuard and DNS migration/special entries.
+
 ## Release Gate
 
 Do not mark an entry `ADD` or `SETUP` unless all of these exist:
