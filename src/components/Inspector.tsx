@@ -137,6 +137,7 @@ const inboundHandledFields = new Set([
   "type",
   "address",
   "auto_route",
+  "users",
   "tls",
   "multiplex",
   "transport",
@@ -2049,6 +2050,52 @@ export function Inspector() {
             />
             <span>Auto route</span>
           </label>
+          {entityType === "socks" || entityType === "http" || entityType === "naive" || entityType === "mixed" ? (
+            (() => {
+              const users = Array.isArray(entity.users) ? (entity.users as Record<string, unknown>[]) : [];
+              const writeUsers = (next: Record<string, unknown>[]) =>
+                updateField(ref, "users", next.length ? next : undefined);
+              const patchUser = (index: number, patch: Record<string, unknown>) =>
+                writeUsers(users.map((user, i) => (i === index ? { ...user, ...patch } : user)));
+              const removeUser = (index: number) => writeUsers(users.filter((_, i) => i !== index));
+              const addUser = () => writeUsers([...users, { username: `user${users.length + 1}`, password: "" }]);
+              return (
+                <fieldset className="field field--checklist" data-testid={`${entityType}-inbound-users-editor`}>
+                  <legend>Users</legend>
+                  {users.length === 0 ? (
+                    <p className="field__hint">No users yet. Click Add to require Basic auth on this inbound.</p>
+                  ) : null}
+                  {users.map((user, index) => (
+                    <div key={index} className="rule-row">
+                      <label className="field">
+                        <span>Username</span>
+                        <input
+                          value={String(user.username ?? "")}
+                          onChange={(event) => patchUser(index, { username: event.target.value })}
+                        />
+                      </label>
+                      <SensitiveTextField
+                        label="Password"
+                        value={String(user.password ?? "")}
+                        onChange={(next) => patchUser(index, { password: next })}
+                      />
+                      <button
+                        type="button"
+                        className="icon-danger"
+                        onClick={() => removeUser(index)}
+                        aria-label={`Remove user ${index + 1}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="palette-action" onClick={addUser}>
+                    Add user
+                  </button>
+                </fieldset>
+              );
+            })()
+          ) : null}
           <AdvancedScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={ref} updateField={updateField} />
         </>
