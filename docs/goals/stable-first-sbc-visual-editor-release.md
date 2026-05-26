@@ -344,6 +344,14 @@ Ask the user only for true product direction decisions, secrets, paid external s
 
 ## Notes And Deviations
 
-- Date:
-- Decision:
-- Reason:
+- Date: 2026-05-26
+- Decision: The release template uses sing-box stable 1.13+ DNS and TUN fields: DoH DNS servers emit `server` / `server_port` / `path`, TUN defaults no longer emit legacy `sniff`, and the TUN split template sets `route.default_domain_resolver`.
+- Reason: Official `sing-box-stable check` against v1.13.12 rejected the earlier DoH `address` field, removed legacy inbound `sniff`, and required the domain resolver migration for URLTest/domain resolution.
+
+- Date: 2026-05-26
+- Decision: `validate:fixtures` resolves binaries from repo-local `.tools/bin/` before `PATH`.
+- Reason: This keeps stable/testing official validation reproducible locally without committing platform binaries.
+
+- Date: 2026-05-26
+- Decision: Top-bar JSON import is implemented with a hidden file input and canonical JSON parse/apply command, while the bottom JSON panel remains the advanced direct editor.
+- Reason: Release acceptance requires both import/export and Advanced JSON editing without making React Flow the config source.
