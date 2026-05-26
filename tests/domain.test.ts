@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   connectSelectorCandidate,
+  createInbound,
   createOutbound,
   createStableTunSplitConfig,
   disconnectEdge,
@@ -171,6 +172,33 @@ describe("canonical sing-box domain model", () => {
       expect(outbound.type).toBe(type);
       expect(outbound.tag).toBe(`${type}-out`);
       expect(outbound.type).not.toBe("socks");
+    }
+  });
+
+  it("creates inbound setup drafts with the requested official protocol type", () => {
+    const setupTypes = [
+      "direct",
+      "socks",
+      "http",
+      "shadowsocks",
+      "vmess",
+      "trojan",
+      "naive",
+      "hysteria",
+      "shadowtls",
+      "vless",
+      "tuic",
+      "hysteria2",
+      "anytls",
+      "redirect",
+      "tproxy",
+    ];
+
+    for (const type of setupTypes) {
+      const inbound = createInbound(type, `${type}-in`);
+
+      expect(inbound.type).toBe(type);
+      expect(inbound.tag).toBe(`${type}-in`);
     }
   });
 

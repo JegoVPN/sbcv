@@ -23,6 +23,29 @@ export const OUTBOUND_PALETTE_TYPES = {
 
 export type OutboundPaletteKind = keyof typeof OUTBOUND_PALETTE_TYPES;
 
+export const INBOUND_PALETTE_TYPES = {
+  "inbound-direct": "direct",
+  mixed: "mixed",
+  "inbound-socks": "socks",
+  "inbound-http": "http",
+  "inbound-shadowsocks": "shadowsocks",
+  "inbound-vmess": "vmess",
+  "inbound-trojan": "trojan",
+  "inbound-naive": "naive",
+  "inbound-hysteria": "hysteria",
+  "inbound-shadowtls": "shadowtls",
+  "inbound-vless": "vless",
+  "inbound-tuic": "tuic",
+  "inbound-hysteria2": "hysteria2",
+  "inbound-anytls": "anytls",
+  tun: "tun",
+  "inbound-redirect": "redirect",
+  "inbound-tproxy": "tproxy",
+  "inbound-cloudflared": "cloudflared",
+} as const;
+
+export type InboundPaletteKind = keyof typeof INBOUND_PALETTE_TYPES;
+
 const preferredOutboundTags: Record<string, string> = {
   direct: "direct",
   block: "block",
@@ -46,10 +69,39 @@ const preferredOutboundTags: Record<string, string> = {
   urltest: "auto",
 };
 
+const preferredInboundTags: Record<string, string> = {
+  direct: "direct-in",
+  mixed: "mixed-in",
+  socks: "socks-in",
+  http: "http-in",
+  shadowsocks: "ss-in",
+  vmess: "vmess-in",
+  trojan: "trojan-in",
+  naive: "naive-in",
+  hysteria: "hysteria-in",
+  shadowtls: "st-in",
+  vless: "vless-in",
+  tuic: "tuic-in",
+  hysteria2: "hy2-in",
+  anytls: "anytls-in",
+  tun: "tun-in",
+  redirect: "redirect-in",
+  tproxy: "tproxy-in",
+  cloudflared: "cloudflared-in",
+};
+
 export function outboundTypeForPaletteKind(kind: string): string | undefined {
   return OUTBOUND_PALETTE_TYPES[kind as OutboundPaletteKind];
 }
 
 export function preferredOutboundTag(type: string): string {
   return preferredOutboundTags[type] ?? `${type}-out`;
+}
+
+export function inboundTypeForPaletteKind(kind: string): string | undefined {
+  return INBOUND_PALETTE_TYPES[kind as InboundPaletteKind];
+}
+
+export function preferredInboundTag(type: string): string {
+  return preferredInboundTags[type] ?? `${type}-in`;
 }

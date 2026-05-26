@@ -57,4 +57,20 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().selectedId).toBe("outbound:http-out");
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
+
+  it("adds inbound setup drafts from the Library and opens editable listen fields", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Inbounds/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+
+    const created = useProjectStore.getState().config.inbounds?.at(-1);
+
+    expect(created?.type).toBe("http");
+    expect(created?.tag).toBe("http-in");
+    expect(useProjectStore.getState().selectedId).toBe("inbound:http-in");
+    expect(screen.getByText("Listen Port")).toBeInTheDocument();
+  });
 });

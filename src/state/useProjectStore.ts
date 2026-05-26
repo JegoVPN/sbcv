@@ -25,7 +25,12 @@ import {
 } from "../domain/commands";
 import { validateConfig } from "../domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
-import { outboundTypeForPaletteKind, preferredOutboundTag } from "../domain/protocols";
+import {
+  inboundTypeForPaletteKind,
+  outboundTypeForPaletteKind,
+  preferredInboundTag,
+  preferredOutboundTag,
+} from "../domain/protocols";
 import { targetById } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
@@ -201,8 +206,12 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         layout = pinLayout(layout, "settings:log", -300, 40);
         selectedId = "settings:log";
       }
-      if (kind === "tun") config = addInbound(config, "tun");
-      if (kind === "mixed") config = addInbound(config, "mixed");
+      const inboundType = inboundTypeForPaletteKind(kind);
+      if (inboundType && inboundType !== "cloudflared") {
+        config = addInbound(config, inboundType, preferredInboundTag(inboundType));
+        const created = config.inbounds?.[config.inbounds.length - 1];
+        if (created) selectedId = `inbound:${created.tag}`;
+      }
       if (kind === "route") config = ensureRoute(config);
       if (kind === "route-rule") config = addRouteRule(config);
       const outboundType = outboundTypeForPaletteKind(kind);
