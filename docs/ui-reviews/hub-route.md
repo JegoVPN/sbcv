@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/route/index.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 route.final select (constrained to outbound tags) and top-level toggles (auto_detect_interface, override_android_vpn) now editable from Inspector. Outstanding: P0 platform-scoped fields (default_interface, default_mark, find_process, default_interface_address, default_network_strategy/type conflict guard), P1 testing-1.14 fields channel gate, P1 default_domain_resolver object-form support. -->
 # Route Hub UI Review
 
 ## Scope

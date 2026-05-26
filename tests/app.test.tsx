@@ -337,6 +337,39 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("exposes route and DNS hub final selectors plus top-level toggles in the Inspector", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    // Route hub
+    fireEvent.click(screen.getByTestId("node-route:main"));
+    let inspector = within(screen.getByLabelText("Node inspector"));
+
+    const routeFinal = inspector.getByLabelText("Final Outbound") as HTMLSelectElement;
+    expect(routeFinal).toBeInTheDocument();
+    const routeFinalOptions = Array.from(routeFinal.options).map((option) => option.value);
+    expect(routeFinalOptions).toContain("");
+    expect(routeFinalOptions.length).toBeGreaterThan(1);
+
+    const autoDetect = inspector.getByLabelText("Auto detect interface") as HTMLInputElement;
+    const initialAutoDetect = useProjectStore.getState().config.route?.auto_detect_interface;
+    fireEvent.click(autoDetect);
+    expect(useProjectStore.getState().config.route?.auto_detect_interface).not.toBe(initialAutoDetect);
+
+    // DNS hub
+    fireEvent.click(screen.getByTestId("node-dns:main"));
+    inspector = within(screen.getByLabelText("Node inspector"));
+
+    expect(inspector.getByLabelText("Final DNS Server")).toBeInTheDocument();
+    const strategy = inspector.getByLabelText("Strategy") as HTMLSelectElement;
+    fireEvent.change(strategy, { target: { value: "prefer_ipv4" } });
+    expect(useProjectStore.getState().config.dns?.strategy).toBe("prefer_ipv4");
+
+    const disableCache = inspector.getByLabelText("Disable cache") as HTMLInputElement;
+    fireEvent.click(disableCache);
+    expect(useProjectStore.getState().config.dns?.disable_cache).toBe(true);
+  });
+
   it("renders extended TLS shared fields including server key, Reality, uTLS, ECH and fragment", () => {
     useProjectStore.getState().loadMinimal();
 

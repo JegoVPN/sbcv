@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/dns/index.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). Inspector now exposes final (constrained to dns-server tags), strategy select, disable_cache / disable_expire / independent_cache / reverse_mapping toggles, cache_capacity number, client_subnet text. Outstanding: P0 fakeip nested editor migration, P1 testing-only optimistic/timeout fields channel gate. -->
 # DNS Hub UI Review
 
 ## Scope
