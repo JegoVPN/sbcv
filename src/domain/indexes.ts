@@ -1,7 +1,9 @@
 import type {
   DnsServerConfig,
+  EndpointConfig,
   InboundConfig,
   OutboundConfig,
+  ServiceConfig,
   SingBoxConfig,
   TaggedConfig,
   TaggedResourceConfig,
@@ -27,7 +29,7 @@ export type TaggedEntityRef = {
 function pushTagged(
   result: TaggedEntityRef[],
   kind: TaggedEntityKind,
-  item: TaggedConfig | TaggedResourceConfig | InboundConfig | OutboundConfig | DnsServerConfig,
+  item: TaggedConfig | TaggedResourceConfig | InboundConfig | OutboundConfig | DnsServerConfig | ServiceConfig,
   path: string,
 ) {
   if (item.tag) {
@@ -88,6 +90,10 @@ export function getInboundTags(config: SingBoxConfig): Set<string> {
 
 export function getDnsServerTags(config: SingBoxConfig): Set<string> {
   return new Set(listItems(config.dns?.servers).map((item) => item.tag));
+}
+
+export function getEndpointTags(config: SingBoxConfig): Set<string> {
+  return new Set(listItems<EndpointConfig>(config.endpoints).map((item) => item.tag));
 }
 
 export function getRuleSetTags(config: SingBoxConfig): Set<string> {

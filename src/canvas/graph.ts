@@ -1,5 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { Diagnostic, EntityRef, OutboundConfig, SingBoxConfig } from "../domain/types";
+import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
 export type SbcNodeKind =
@@ -9,6 +9,8 @@ export type SbcNodeKind =
   | "dns"
   | "dns-server"
   | "dns-rule"
+  | "endpoint"
+  | "service"
   | "outbound"
   | "rule-set"
   | "settings";
@@ -98,9 +100,17 @@ function diagnosticStatus(pathPrefix: string, diagnostics: Diagnostic[]): SbcNod
   return "valid";
 }
 
+function truncateLabel(value: string) {
+  return value.length > 78 ? `${value.slice(0, 76)}...` : value;
+}
+
 function listLabel(value: string | string[] | undefined): string | undefined {
-  if (Array.isArray(value)) return value.join(", ");
-  return value;
+  if (Array.isArray(value)) {
+    if (!value.length) return undefined;
+    const visible = value.slice(0, 4).join(", ");
+    return truncateLabel(value.length > 4 ? `${visible} +${value.length - 4}` : visible);
+  }
+  return value ? truncateLabel(value) : undefined;
 }
 
 function listItems<T>(value: T[] | undefined): T[] {
@@ -155,6 +165,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const routeRules = listItems(config.route?.rules);
   const dnsServers = listItems(config.dns?.servers);
   const dnsRules = listItems(config.dns?.rules);
+  const endpoints = listItems(config.endpoints);
+  const services = listItems(config.services);
   const ruleSets = listItems(config.route?.rule_set);
   const visualizeRuleSets = ruleSets.length <= MAX_VISUAL_RULE_SET_NODES;
   let visualCandidateEdges = 0;
@@ -166,6 +178,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const outboundY = new Map<string, number>();
   const memberY = new Map<string, number>();
   const memberTags = new Set<string>();
+  const endpointTargetY = new Map<string, number>();
+  const endpointY = new Map<string, number>();
 
   SETTINGS_NODE_IDS.forEach((id, index) => {
     if (!layout.positions[id]) return;
@@ -197,6 +211,18 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
     const detour = outboundDetourTag(outbound);
     if (detour) memberTags.add(detour);
+  });
+
+  endpoints.forEach((endpoint, index) => {
+    const tag = entityTag(endpoint.tag, "endpoint", index);
+    if (typeof endpoint.detour === "string" && endpoint.detour) {
+      memberTags.add(endpoint.detour);
+    }
+    if (endpoint.type === "tailscale") endpointTargetY.set(tag, DNS_LANE_MIN_Y + index * NODE_SLOT_Y);
+  });
+
+  services.forEach((service) => {
+    if (typeof service.detour === "string" && service.detour) memberTags.add(service.detour);
   });
 
   inbounds.forEach((inbound, index) => {
@@ -497,6 +523,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     dnsServers.forEach((server, index) => {
       const tag = entityTag(server.tag, "dns-server", index);
       const id = `dns-server:${tag}`;
+      const y = columnLayout.reserve("target", dnsY + index * NODE_SLOT_Y);
       nodes.push(
         makeNode(
           id,
@@ -510,11 +537,15 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             compatible: [],
           },
           layout,
-          { x: COLUMNS.target, y: columnLayout.reserve("target", dnsY + index * NODE_SLOT_Y) },
+          { x: COLUMNS.target, y },
         ),
       );
       if (server.detour) {
         edges.push(makeEdge(`edge:dns-server-detour:${tag}:${server.detour}`, id, `outbound:${server.detour}`, "outbound", "dns-detour"));
+      }
+      if (server.type === "tailscale" && server.endpoint) {
+        endpointTargetY.set(server.endpoint, y);
+        edges.push(makeEdge(`edge:dns-server-endpoint:${tag}:${server.endpoint}`, id, `endpoint:${server.endpoint}`, "endpoint", "dns-server"));
       }
     });
 
@@ -565,5 +596,101 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   }
 
+  endpoints.forEach((endpoint, index) => {
+    const tag = entityTag(endpoint.tag, "endpoint", index);
+    const desiredY = endpointTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + dnsServers.length + 1) * NODE_SLOT_Y;
+    endpointY.set(tag, columnLayout.reserve("member", desiredY));
+  });
+
+  endpoints.forEach((endpoint, index) => {
+    const tag = entityTag(endpoint.tag, "endpoint", index);
+    nodes.push(
+      makeNode(
+        `endpoint:${tag}`,
+        {
+          ref: { kind: "endpoint", tag },
+          kind: "endpoint",
+          type: endpoint.type,
+          title: tag,
+          subtitle: endpointSubtitle(endpoint),
+          status: diagnosticStatus(`/endpoints/${index}`, diagnostics),
+          compatible: endpoint.type === "tailscale" ? ["DNS Tailscale Server"] : [],
+        },
+        layout,
+        { x: COLUMNS.member, y: endpointY.get(tag) ?? DNS_LANE_MIN_Y + index * NODE_SLOT_Y },
+      ),
+    );
+    if (typeof endpoint.detour === "string" && endpoint.detour) {
+      edges.push(makeEdge(`edge:endpoint-detour:${tag}:${endpoint.detour}`, `endpoint:${tag}`, `outbound:${endpoint.detour}`, "dial-detour", "detour-target"));
+    }
+  });
+
+  services.forEach((service, index) => {
+    const tag = entityTag(service.tag, "service", index);
+    const id = `service:${tag}`;
+    const y = columnLayout.reserve(
+      "hub",
+      DNS_LANE_MIN_Y + (dnsServers.length + dnsRules.length + endpoints.length + index + 2) * NODE_SLOT_Y,
+    );
+    nodes.push(
+      makeNode(
+        id,
+        {
+          ref: { kind: "service", tag },
+          kind: "service",
+          type: service.type,
+          title: tag,
+          subtitle: serviceSubtitle(service),
+          status: diagnosticStatus(`/services/${index}`, diagnostics),
+          compatible: service.type === "ssm-api" ? ["Shadowsocks Inbound"] : service.type === "derp" ? ["Tailscale Endpoint"] : [],
+        },
+        layout,
+        { x: COLUMNS.hub, y },
+      ),
+    );
+
+    if (service.detour) {
+      edges.push(makeEdge(`edge:service-detour:${tag}:${service.detour}`, id, `outbound:${service.detour}`, "detour", "service-detour"));
+    }
+
+    const verifyEndpoints = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
+    verifyEndpoints.forEach((endpointTag) => {
+      endpointTargetY.set(endpointTag, y);
+      edges.push(makeEdge(`edge:service-verify-endpoint:${tag}:${endpointTag}`, id, `endpoint:${endpointTag}`, "verify-client-endpoint", "derp-service"));
+    });
+
+    if (service.servers && typeof service.servers === "object" && !Array.isArray(service.servers)) {
+      Object.entries(service.servers).forEach(([path, inboundTag]) => {
+        edges.push(makeEdge(`edge:service-ssm-inbound:${tag}:${path}:${inboundTag}`, `inbound:${inboundTag}`, id, "service", "managed-inbound"));
+      });
+    }
+  });
+
   return { nodes, edges };
+}
+
+function endpointSubtitle(endpoint: EndpointConfig) {
+  if (endpoint.type === "wireguard") {
+    const address = Array.isArray(endpoint.address) ? endpoint.address.join(", ") : "";
+    return address ? `wireguard ${address}` : "wireguard endpoint";
+  }
+  if (endpoint.type === "tailscale") {
+    return typeof endpoint.hostname === "string" && endpoint.hostname
+      ? `tailscale ${endpoint.hostname}`
+      : "tailscale endpoint";
+  }
+  return `${endpoint.type} endpoint`;
+}
+
+function serviceSubtitle(service: ServiceConfig) {
+  if (service.type === "ssm-api") {
+    const count = service.servers && typeof service.servers === "object" ? Object.keys(service.servers).length : 0;
+    return `ssm-api ${count} managed servers`;
+  }
+  if (service.type === "derp") return "tailscale derp service";
+  if (service.type === "resolved") return "systemd-resolved service";
+  if (service.type === "ccm") return "Claude Code multiplexer";
+  if (service.type === "ocm") return "OpenAI Codex multiplexer";
+  if (service.type === "hysteria-realm") return "hysteria2 realm service";
+  return `${service.type} service`;
 }

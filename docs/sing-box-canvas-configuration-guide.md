@@ -39,9 +39,16 @@ Current completeness checkpoint, from `pnpm audit:config-docs` on 2026-05-26:
 - Matrix rows: 105.
 - Palette entries: 107.
 - Remaining docs without a Palette surface: 5 base docs.
-- Remaining writable docs without a complete write path: 13, including source-format/conversion helper docs that are not direct config objects.
+- Remaining writable docs without a complete write path: 11, including source-format/conversion helper docs that are not direct config objects.
 
-The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set source/conversion helpers, and Service resources.
+UI review checkpoint, from [SBC Editable Node UI Reviews](index-ui-reviews.md) on 2026-05-27:
+
+- Editable node review documents: 66.
+- `official-read`: 66 / 66.
+- `baseline`: 0 / 66.
+- Each editable node document records official Markdown sources, writable fields, required fields, reference fields, target/version gates, and left/middle/right UI implications.
+
+The remaining implementation gaps from audit or UI review are intentional blockers, not permission to improvise JSON from the canvas. If a domain command, Inspector schema, fixture, or target-matched binary check is missing, the UI may document the path and display imported data, but it must not claim that the path is fully writable or officially validated.
 
 ## Product Principle
 
@@ -54,7 +61,13 @@ Every user action must follow this path:
 3. React Flow nodes and edges are re-derived from that canonical config.
 4. JSON Preview renders the canonical config.
 5. Semantic validation runs in the browser.
-6. Official `sing-box check` validates fixtures/export through the target-matched binary.
+6. Official validation runs outside the browser through the target-matched binary:
+   - `1.13 stable` uses `sing-box-stable`.
+   - `1.12 Legacy` uses `sing-box-1.12`.
+   - `1.14 testing` uses `sing-box-testing`.
+   - A clean official pass requires exit code `0` and no stdout/stderr warning, deprecation, legacy, or "will be removed" lines.
+
+The toolbar `Check` button is a fast browser semantic check. It must not be described as a guaranteed official `sing-box check` pass unless a local/native/backend runner executes the matching binary and returns the clean official result.
 
 Never infer final JSON from canvas node positions, edge order, or React Flow node data.
 
@@ -205,7 +218,7 @@ They must live inside the owning parent Inspector or ordered rule table.
 | `outbounds[]` | Library > Outbounds | Traffic target/group nodes | Outbound Inspector |
 | `route` | Route Hub / template/import | Route hub node | Route Inspector + Route Rules table |
 | `services[]` | Library > Services | Service resource nodes | Service Inspector |
-| `experimental` | Library > Settings > Experimental | Independent card | Experimental Inspector |
+| `experimental` | Library > Settings > Experimental | Independent card | Experimental module cards |
 
 ## Library Design
 
@@ -224,7 +237,7 @@ Templates should include:
 
 Library groups should be broad enough to scan and narrow enough to explain ownership:
 
-- `Log`, `NTP`, `Certificate`, and `Experimental` are settings groups. Items create settings cards or open settings Inspectors.
+- `Log`, `NTP`, `Certificate`, and `Experimental` are settings groups. Items create settings cards; Experimental child entries focus collapsed module cards instead of dumping every field.
 - `DNS`, `Route`, and `Rule Set` are logic groups. Rules open ordered tables; hubs are add/reveal nodes.
 - `Inbounds`, `Outbounds`, `DNS Server`, `Endpoints`, and `Services` are object groups. Writable items add nodes or setup drafts.
 - `Certificate Providers` and `HTTP Clients` are target-gated resource groups until stable support is proven.
@@ -312,7 +325,7 @@ Route rules must support common first-match fields first:
 
 Advanced route fields such as `auto_detect_interface`, default network strategy, default domain resolver, and target-specific fields belong on the Route Inspector.
 
-Current implementation rule: Rule Set creates stable-safe remote `source` entries under `route.rule_set[]`; route and DNS rules reference those entries through ordered table fields and canvas edges. When an imported config has more than 24 rule sets, the canvas suppresses individual Rule Set resource nodes and leaves editing to the Route/DNS rule tables plus JSON/Inspector, so large subscription configs remain renderable. Inline headless rule editing and AdGuard conversion remain documentation/helper surfaces until a dedicated rule-set table/compiler flow exists.
+Product rule: Rule Set creates entries under `route.rule_set[]`; route rules, DNS rules, and TUN route-set fields reference those entries by tag. Remote rule-sets own `url`, `format`, `download_detour`, and `update_interval`; local rule-sets own `path` and `format`; inline rule-sets own structured Headless Rule rows. When an imported config has many rule sets, the canvas may suppress individual resource cards and leave editing to the Route/DNS rule tables plus Inspector so large subscription configs remain renderable. AdGuard filter docs are conversion guidance, not direct source-format editing.
 
 ## DNS
 
@@ -349,7 +362,7 @@ Endpoints are resource/chain nodes, not ordinary outbounds.
 
 Endpoint Inspector owns Dial/TLS-like shared sections where supported.
 
-Current implementation rule: until endpoint graph derivation and reference commands are implemented, endpoint docs stay `DOCS` even though the target product action is `ADD SETUP`. Do not create endpoint JSON from a generic placeholder.
+Product rule: WireGuard and Tailscale endpoints are resource nodes backed by `endpoints[]`. Endpoint Dial Fields live in the Endpoint Inspector; Tailscale DNS servers and Tailscale certificate-provider flows must reference endpoint tags explicitly instead of inventing standalone shared nodes.
 
 ## Services
 
@@ -364,7 +377,7 @@ Services are runtime resources. They should not be shown as if they are route ou
 | OCM | `ADD SETUP` | Service card/node, Listen Fields, users, headers, detour, TLS |
 | Hysteria Realm | `TARGET GATED` | Testing service card/node, Listen Fields, HTTP2, users |
 
-Current implementation rule: services are runtime resources, not route targets. They stay `DOCS` until service create/update/delete commands and Inspector schemas exist. Hysteria Realm is additionally target-gated because it is testing-only.
+Product rule: services are runtime resources, not route targets. A writable service entry requires a domain create/update/delete command, Inspector schema, fixture, and matching binary validation just like other resources. DERP, Resolved, SSM API, CCM, and OCM are stable docs; Hysteria Realm is target-gated because it is testing-only. Service detours, endpoint links, and managed inbound references must be explicit tag fields, not canvas-only edges.
 
 ## Settings And Advanced Resources
 
@@ -373,9 +386,9 @@ Current implementation rule: services are runtime resources, not route targets. 
 | Log | `ADD READY` | Independent settings card; level/output/timestamp/disabled |
 | NTP | `ADD SETUP` | Independent settings card; enabled/server/port/interval plus Dial Fields |
 | Certificate | `ADD SETUP` | Independent settings card; store/certificate paths |
-| Experimental cache file | `INSPECTOR` | Experimental settings section |
-| Clash API | `INSPECTOR` | Experimental settings section |
-| V2Ray API | `INSPECTOR` | Experimental settings section |
+| Experimental cache file | `INSPECTOR` | Experimental module card; fields hidden until expanded |
+| Clash API | `INSPECTOR` | Experimental module card; fields hidden until expanded |
+| V2Ray API | `INSPECTOR` | Experimental module card; fields hidden until expanded |
 | HTTP Client | `TARGET GATED` | Testing top-level resource or embedded object |
 | Certificate Provider | `TARGET GATED` | Testing top-level resource |
 
@@ -385,21 +398,21 @@ Certificate providers:
 - Tailscale provider references a Tailscale endpoint.
 - Cloudflare Origin CA owns API/origin CA fields and optional HTTP Client fields.
 
-Current implementation rule: Log, NTP, Certificate, and Experimental are writable independent settings cards. Experimental defaults must stay stable-safe; testing-only fields such as cache-file `store_dns` require target-gated handling before emission.
+Product rule: Log, NTP, Certificate, and Experimental are independent settings cards. Experimental defaults must stay stable-safe; the Inspector shows Cache File, Clash API, and V2Ray API as collapsed module cards so users see the visual ownership first and only open fields when they intentionally configure a module. Testing-only fields such as cache-file `store_dns` require target-gated handling before emission.
 
 ## Shared Field Placement
 
 | Shared doc | User-facing location |
 | --- | --- |
 | Listen Fields | Inbound and Service Inspectors |
-| Dial Fields | Outbound, Endpoint, NTP, DNS Server, and some nested handshake Inspectors |
-| TLS | Inbound, Outbound, Endpoint, Service, and Certificate-related Inspectors |
+| Dial Fields | Outbound, Endpoint, NTP, Route, Remote Rule Set, DNS Server, and some nested handshake Inspectors |
+| TLS | Inbound, Outbound, TLS-capable DNS Server, Service, HTTP Client, and Certificate-related Inspectors |
 | HTTP2 Fields | HTTP Client and Hysteria Realm Inspectors |
 | QUIC Fields | QUIC-capable protocol Inspectors |
 | DNS01 Challenge Fields | ACME Certificate Provider Inspector |
-| Pre-match | Route/DNS rule action help, not a node |
+| Pre-match | Route rule action help, not a node |
 | Multiplex | Protocol parent Inspector |
-| V2Ray Transport | VMess/VLESS/Trojan/Shadowsocks parent Inspector |
+| V2Ray Transport | VMess/VLESS/Trojan parent Inspector |
 | UDP over TCP | SOCKS/Shadowsocks/Naive/TUIC compatible parent Inspector |
 | TCP Brutal | Multiplex/transport nested subform |
 | Wi-Fi State | Route/DNS rule matcher fields |
@@ -434,7 +447,9 @@ Node side icons are not decorative and must not simply repeat the node's own typ
 | DNS | DNS query source | DNS Rule, DNS final server | `dns.rules[]`, `dns.final` |
 | DNS Rule | DNS ordered list, inbound matcher | DNS server target, Rule Set matcher | `dns.rules[index].inbound`, `dns.rules[index].server`, `dns.rules[index].rule_set` |
 | DNS Server | DNS final, DNS Rule server | Detour outbound | `dns.final`, `dns.rules[].server`, `dns.servers[].detour` |
-| Rule Set | Route/DNS rules that match it | Download detour outbound | `route.rules[].rule_set`, `dns.rules[].rule_set`, `route.rule_set[].download_detour` |
+| Endpoint | DNS/service/provider/resource references | Dial detour outbound when supported | `endpoints[].tag`, `endpoints[].detour`, endpoint-specific reference fields |
+| Service | Service-specific references, not route traffic | Detour outbound or managed resource references where documented | `services[].detour`, service-specific tag fields |
+| Rule Set | Route/DNS/TUN rules that match it | Remote download detour outbound only | `route.rules[].rule_set`, `dns.rules[].rule_set`, `inbounds[type=tun].route_address_set`, `inbounds[type=tun].route_exclude_address_set`, `route.rule_set[].download_detour` |
 | Settings | none | none | Top-level `log`, `ntp`, `certificate`, `experimental` |
 
 When a user adds an outbound from Library without connecting it, the Inspector must still expose the full upstream path:
@@ -503,6 +518,8 @@ Before changing an item from `PENDING`, `DOCS`, or `TARGET GATED` to a writable 
 6. Matching official binary check runs:
    - stable/legacy with `sing-box-stable` or the explicit legacy binary when applicable;
    - testing with `sing-box-testing`.
+   - fail on non-zero exit;
+   - fail or downgrade the fixture to display-only on warning/deprecation output.
 7. React Flow graph derives from JSON and renders the node/edge relation.
 8. E2E imports, edits, exports, reimports, and inspects the result.
 9. Docs and UI labels tell normal users where to configure the object.

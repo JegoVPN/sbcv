@@ -2,10 +2,13 @@ import { create } from "zustand";
 import {
   addDnsRule,
   addDnsServer,
+  addEndpoint,
   addInbound,
   addOutbound,
   addRouteRule,
   addRuleSet,
+  addService,
+  changeEntityType,
   connectSelectorCandidate,
   createMinimalConfig,
   createStableTunSplitConfig,
@@ -28,14 +31,18 @@ import { validateConfig } from "../domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
 import {
   dnsServerTypeForPaletteKind,
+  endpointTypeForPaletteKind,
   inboundTypeForPaletteKind,
   outboundTypeForPaletteKind,
   preferredDnsServerTag,
+  preferredEndpointTag,
   preferredInboundTag,
   preferredOutboundTag,
   preferredRuleSetTag,
+  preferredServiceTag,
+  serviceTypeForPaletteKind,
 } from "../domain/protocols";
-import { targetById } from "../domain/targets";
+import { targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
 import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfig, SingBoxTargetId } from "../domain/types";
@@ -55,6 +62,12 @@ type NodePortAction = {
   nodeType?: string;
   label: string;
 };
+type PortConnection = {
+  source?: string | null;
+  target?: string | null;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+};
 
 type ProjectStore = {
   channel: SingBoxChannel;
@@ -64,10 +77,15 @@ type ProjectStore = {
   selectedId: string | null;
   jsonDraft: string;
   panelTab: PanelTab;
+  globalPanelOpen: boolean;
   diagnostics: Diagnostic[];
   officialValidationMessage: string;
+  checkNotice: string;
+  isChecking: boolean;
   setSelectedId: (id: string | null) => void;
   setPanelTab: (tab: PanelTab) => void;
+  openGlobalPanel: (tab: PanelTab) => void;
+  closeGlobalPanel: () => void;
   setChannel: (channel: SingBoxChannel) => void;
   setTarget: (id: SingBoxTargetId) => void;
   loadTemplate: () => void;
@@ -76,8 +94,10 @@ type ProjectStore = {
   createFromPalette: (kind: string) => void;
   createCompatible: (sourceId: string, kind: string) => void;
   connectOutboundReference: (outboundTag: string, reference: OutboundReferenceKind, parentTag?: string) => void;
+  connectPorts: (connection: PortConnection) => void;
   togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
   updateField: (ref: EntityRef, field: string, value: unknown) => void;
+  changeEntityType: (ref: EntityRef, nextType: string) => void;
   renameTag: (oldTag: string, newTag: string) => void;
   deleteEntity: (ref: EntityRef) => void;
   disconnectEdge: (edgeId: string) => void;
@@ -200,6 +220,10 @@ function firstOutboundDetouringThrough(config: SingBoxConfig, outboundTag: strin
   return config.outbounds?.find((outbound) => outbound.tag !== outboundTag && outbound.detour === outboundTag);
 }
 
+function firstEndpointDetouringThrough(config: SingBoxConfig, outboundTag: string) {
+  return config.endpoints?.find((endpoint) => endpoint.detour === outboundTag);
+}
+
 function firstRuleSetDownloadingThrough(config: SingBoxConfig, outboundTag: string) {
   return config.route?.rule_set?.find((ruleSet) => ruleSet.download_detour === outboundTag);
 }
@@ -208,12 +232,69 @@ function firstRuleSetTag(config: SingBoxConfig) {
   return config.route?.rule_set?.find((ruleSet) => typeof ruleSet.tag === "string" && ruleSet.tag)?.tag;
 }
 
+function firstTailscaleEndpointTag(config: SingBoxConfig) {
+  return config.endpoints?.find((endpoint) => endpoint.type === "tailscale" && typeof endpoint.tag === "string")?.tag;
+}
+
+function firstTailscaleDnsServer(config: SingBoxConfig) {
+  return config.dns?.servers?.find((server) => server.type === "tailscale");
+}
+
+function firstDnsServerUsingEndpoint(config: SingBoxConfig, endpointTag: string) {
+  return config.dns?.servers?.find((server) => server.type === "tailscale" && server.endpoint === endpointTag);
+}
+
 function firstDirectOutboundTag(config: SingBoxConfig, excludedTag: string) {
   return config.outbounds?.find((outbound) => outbound.tag !== excludedTag && outbound.type === "direct")?.tag;
 }
 
+function firstSsmServiceUsingInbound(config: SingBoxConfig, inboundTag: string) {
+  return config.services?.find(
+    (service) =>
+      service.type === "ssm-api" &&
+      service.servers &&
+      Object.values(service.servers).includes(inboundTag),
+  );
+}
+
+function firstServiceDetouringThrough(config: SingBoxConfig, outboundTag: string) {
+  return config.services?.find((service) => service.detour === outboundTag);
+}
+
+function firstDerpServiceVerifyingEndpoint(config: SingBoxConfig, endpointTag: string) {
+  return config.services?.find((service) => {
+    if (service.type !== "derp") return false;
+    const refs = tagRefs(service.verify_client_endpoint as string | string[] | undefined);
+    return refs.includes(endpointTag);
+  });
+}
+
+function firstServiceTagByType(config: SingBoxConfig, type: string) {
+  return config.services?.find((service) => service.type === type && typeof service.tag === "string")?.tag;
+}
+
+function ensureManagedShadowsocksInbound(config: SingBoxConfig) {
+  const existing = config.inbounds?.find((inbound) => inbound.type === "shadowsocks" && inbound.managed && inbound.tag);
+  if (existing?.tag) return { config, tag: existing.tag };
+
+  let next = addInbound(config, "shadowsocks", "ss-managed-in");
+  const created = next.inbounds?.[next.inbounds.length - 1];
+  if (!created?.tag) return { config: next, tag: "" };
+  next = updateEntityField(next, { kind: "inbound", tag: created.tag }, "method", "2022-blake3-aes-128-gcm");
+  next = updateEntityField(next, { kind: "inbound", tag: created.tag }, "password", "Q7WI7Eid7AOHSdFDw3bkdA==");
+  next = updateEntityField(next, { kind: "inbound", tag: created.tag }, "managed", true);
+  return { config: next, tag: created.tag };
+}
+
+function ensureService(config: SingBoxConfig, type: string) {
+  const existingTag = firstServiceTagByType(config, type);
+  if (existingTag) return { config, tag: existingTag };
+  const next = addService(config, type, preferredServiceTag(type));
+  return { config: next, tag: next.services?.[next.services.length - 1]?.tag ?? "" };
+}
+
 function supportsOutboundDetour(type: string | undefined) {
-  return Boolean(type && !["direct", "block", "selector", "urltest", "dns"].includes(type));
+  return Boolean(type && !["block", "selector", "urltest", "dns"].includes(type));
 }
 
 function connectCreatedOutboundForSelection(
@@ -250,6 +331,10 @@ function connectCreatedOutboundForSelection(
     return updateEntityField(config, { kind: "dns-server", tag: selected.value }, "detour", createdTag);
   }
 
+  if (selected.kind === "endpoint") {
+    return updateEntityField(config, { kind: "endpoint", tag: selected.value }, "detour", createdTag);
+  }
+
   if (selected.kind === "rule-set") {
     return updateEntityField(config, { kind: "rule-set", tag: selected.value }, "download_detour", createdTag);
   }
@@ -259,6 +344,129 @@ function connectCreatedOutboundForSelection(
 
 function disconnectSelectorMember(config: SingBoxConfig, parentTag: string, childTag: string, parentType: string) {
   return disconnectEdge(config, `edge:${parentType}:${parentTag}:${childTag}`);
+}
+
+function numberedNodeIndex(node: { value: string }) {
+  const index = Number(node.value);
+  return Number.isInteger(index) ? index : -1;
+}
+
+function connectDirectedPortReference(
+  config: SingBoxConfig,
+  outputNode: { kind: string; value: string },
+  outputHandle: string | null | undefined,
+  inputNode: { kind: string; value: string },
+  inputHandle: string | null | undefined,
+): SingBoxConfig | null {
+  if (!outputHandle || !inputHandle) return null;
+  if (outputNode.kind === inputNode.kind && outputNode.value === inputNode.value) return null;
+
+  if (outputNode.kind === "inbound" && outputHandle === "route" && inputNode.kind === "route" && inputHandle === "inbound") {
+    return ensureRoute(config);
+  }
+
+  if (outputNode.kind === "inbound" && outputHandle === "route-rule-match" && inputNode.kind === "route-rule" && inputHandle === "inbound") {
+    const index = numberedNodeIndex(inputNode);
+    const current = index >= 0 ? config.route?.rules?.[index] : undefined;
+    return index >= 0 ? updateRouteRule(config, index, { inbound: addTagRef(current?.inbound, outputNode.value) }) : null;
+  }
+
+  if (outputNode.kind === "inbound" && outputHandle === "dns-rule-match" && inputNode.kind === "dns-rule" && inputHandle === "inbound") {
+    const index = numberedNodeIndex(inputNode);
+    const current = index >= 0 ? config.dns?.rules?.[index] : undefined;
+    return index >= 0 ? updateDnsRule(config, index, { inbound: addTagRef(current?.inbound, outputNode.value) }) : null;
+  }
+
+  if (outputNode.kind === "inbound" && outputHandle === "service" && inputNode.kind === "service" && inputHandle === "managed-inbound") {
+    const service = config.services?.find((item) => item.tag === inputNode.value);
+    const inbound = config.inbounds?.find((item) => item.tag === outputNode.value);
+    if (service?.type !== "ssm-api" || inbound?.type !== "shadowsocks") return null;
+    const currentServers = service.servers && typeof service.servers === "object" ? service.servers : {};
+    return updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", { ...currentServers, "/": outputNode.value });
+  }
+
+  if (outputNode.kind === "route" && outputHandle === "route-rule" && inputNode.kind === "route-rule" && inputHandle === "route") {
+    return ensureRoute(config);
+  }
+
+  if (outputNode.kind === "route" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "route") {
+    return setRouteFinal(config, inputNode.value);
+  }
+
+  if (outputNode.kind === "route-rule" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "route-rule") {
+    const index = numberedNodeIndex(outputNode);
+    return index >= 0 ? updateRouteRule(config, index, { outbound: inputNode.value }) : null;
+  }
+
+  if (outputNode.kind === "route-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "route-rule") {
+    const index = numberedNodeIndex(outputNode);
+    const current = index >= 0 ? config.route?.rules?.[index] : undefined;
+    return index >= 0 ? updateRouteRule(config, index, { rule_set: addTagRef(current?.rule_set, inputNode.value) }) : null;
+  }
+
+  if (outputNode.kind === "dns" && outputHandle === "dns-rule" && inputNode.kind === "dns-rule" && inputHandle === "dns") {
+    return config.dns ? config : addDnsServer(config, "local");
+  }
+
+  if (outputNode.kind === "dns" && outputHandle === "dns-server" && inputNode.kind === "dns-server" && inputHandle === "dns") {
+    return setDnsFinal(config, inputNode.value);
+  }
+
+  if (outputNode.kind === "dns-rule" && outputHandle === "dns-server" && inputNode.kind === "dns-server" && inputHandle === "dns-rule") {
+    const index = numberedNodeIndex(outputNode);
+    return index >= 0 ? updateDnsRule(config, index, { server: inputNode.value }) : null;
+  }
+
+  if (outputNode.kind === "dns-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "dns-rule") {
+    const index = numberedNodeIndex(outputNode);
+    const current = index >= 0 ? config.dns?.rules?.[index] : undefined;
+    return index >= 0 ? updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, inputNode.value) }) : null;
+  }
+
+  if (outputNode.kind === "dns-server" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "dns-detour") {
+    return updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "dns-server" && outputHandle === "endpoint" && inputNode.kind === "endpoint" && inputHandle === "dns-server") {
+    return updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "endpoint", inputNode.value);
+  }
+
+  if (outputNode.kind === "endpoint" && outputHandle === "dial-detour" && inputNode.kind === "outbound" && inputHandle === "detour-target") {
+    return updateEntityField(config, { kind: "endpoint", tag: outputNode.value }, "detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "service" && outputHandle === "verify-client-endpoint" && inputNode.kind === "endpoint" && inputHandle === "derp-service") {
+    const service = config.services?.find((item) => item.tag === outputNode.value);
+    const endpoint = config.endpoints?.find((item) => item.tag === inputNode.value);
+    if (service?.type !== "derp" || endpoint?.type !== "tailscale") return null;
+    return updateEntityField(
+      config,
+      { kind: "service", tag: outputNode.value },
+      "verify_client_endpoint",
+      addTagRef(service.verify_client_endpoint as string | string[] | undefined, inputNode.value),
+    );
+  }
+
+  if (outputNode.kind === "service" && outputHandle === "detour" && inputNode.kind === "outbound" && inputHandle === "service-detour") {
+    const service = config.services?.find((item) => item.tag === outputNode.value);
+    if (service?.type !== "ccm" && service?.type !== "ocm") return null;
+    return updateEntityField(config, { kind: "service", tag: outputNode.value }, "detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "rule-set" && outputHandle === "download-detour" && inputNode.kind === "outbound" && inputHandle === "rule-set-download") {
+    return updateEntityField(config, { kind: "rule-set", tag: outputNode.value }, "download_detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "outbound" && inputNode.kind === "outbound") {
+    if (outputHandle === "outbound-member" && (inputHandle === "selector-group" || inputHandle === "urltest-group")) {
+      return connectSelectorCandidate(config, outputNode.value, inputNode.value);
+    }
+    if (outputHandle === "dial-detour" && inputHandle === "detour-target") {
+      return updateEntityField(config, { kind: "outbound", tag: outputNode.value }, "detour", inputNode.value);
+    }
+  }
+
+  return null;
 }
 
 const initialConfig = createStableTunSplitConfig();
@@ -271,12 +479,17 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   selectedId: null,
   jsonDraft: stringifyConfig(initialConfig),
   panelTab: "rules",
+  globalPanelOpen: false,
   diagnostics: computeDiagnostics(initialConfig, "stable"),
   officialValidationMessage:
-    "Browser validation is semantic. Run pnpm validate:fixtures for sing-box-stable / sing-box-testing CLI checks.",
+    "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.",
+  checkNotice: "",
+  isChecking: false,
 
   setSelectedId: (id) => set({ selectedId: id }),
   setPanelTab: (tab) => set({ panelTab: tab }),
+  openGlobalPanel: (tab) => set({ panelTab: tab, globalPanelOpen: true, selectedId: null }),
+  closeGlobalPanel: () => set({ globalPanelOpen: false }),
   setChannel: (channel) =>
     set((state) => ({
       channel,
@@ -298,6 +511,8 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       ...sync(createStableTunSplitConfig(), state.channel),
       layout: { positions: {} },
       selectedId: null,
+      globalPanelOpen: false,
+      checkNotice: "",
     })),
   loadTemplatePreset: (id) =>
     set(() => {
@@ -308,6 +523,8 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         version: preset.version,
         layout: { positions: {} },
         selectedId: null,
+        globalPanelOpen: false,
+        checkNotice: "",
       };
     }),
   loadMinimal: () =>
@@ -315,6 +532,8 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       ...sync(createMinimalConfig(), state.channel),
       layout: { positions: {} },
       selectedId: null,
+      globalPanelOpen: false,
+      checkNotice: "",
     })),
 
   createFromPalette: (kind) =>
@@ -355,6 +574,24 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         const created = config.route?.rule_set?.[config.route.rule_set.length - 1];
         if (created) selectedId = `rule-set:${created.tag}`;
       }
+      const endpointType = endpointTypeForPaletteKind(kind);
+      if (endpointType) {
+        config = addEndpoint(config, endpointType, preferredEndpointTag(endpointType));
+        const created = config.endpoints?.[config.endpoints.length - 1];
+        if (created) {
+          const selected = parseNodeId(state.selectedId ?? "");
+          if (selected.kind === "dns-server" && endpointType === "tailscale") {
+            config = updateEntityField(config, { kind: "dns-server", tag: selected.value }, "endpoint", created.tag);
+          }
+          selectedId = `endpoint:${created.tag}`;
+        }
+      }
+      const serviceType = serviceTypeForPaletteKind(kind);
+      if (serviceType && (serviceType !== "hysteria-realm" || state.channel === "testing")) {
+        config = addService(config, serviceType, preferredServiceTag(serviceType));
+        const created = config.services?.[config.services.length - 1];
+        if (created) selectedId = `service:${created.tag}`;
+      }
       const outboundType = outboundTypeForPaletteKind(kind);
       if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
         config = addOutbound(config, outboundType, preferredOutboundTag(outboundType));
@@ -369,7 +606,13 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       if (dnsServerType && dnsServerType !== "legacy" && dnsServerType !== "mdns") {
         config = addDnsServer(config, dnsServerType, preferredDnsServerTag(dnsServerType));
         const created = config.dns?.servers?.[config.dns.servers.length - 1];
-        if (created) selectedId = `dns-server:${created.tag}`;
+        if (created) {
+          const selected = parseNodeId(state.selectedId ?? "");
+          if (selected.kind === "endpoint" && dnsServerType === "tailscale") {
+            config = updateEntityField(config, { kind: "dns-server", tag: created.tag }, "endpoint", selected.value);
+          }
+          selectedId = `dns-server:${created.tag}`;
+        }
       }
       if (kind === "dns-rule") config = addDnsRule(config);
       return { ...sync(config, state.channel), layout, selectedId };
@@ -385,6 +628,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       if (kind === "URLTest") config = addOutbound(config, "urltest", "auto");
       if (kind === "SOCKS") config = addOutbound(config, "socks", "proxy-out");
       if (kind === "DNS Server") config = addDnsServer(config, "local");
+      if (kind === "DNS Tailscale Server") config = addDnsServer(config, "tailscale");
 
       const outbounds = config.outbounds ?? [];
       const latestOutbound = outbounds[outbounds.length - 1];
@@ -399,6 +643,9 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       const latestServer = servers[servers.length - 1];
       if (latestServer && sourceId === "dns:main") {
         config = setDnsFinal(config, latestServer.tag);
+      }
+      if (latestServer && sourceParts[0] === "endpoint") {
+        config = updateEntityField(config, { kind: "dns-server", tag: latestServer.tag }, "endpoint", sourceParts[1]);
       }
 
       let layout = state.layout;
@@ -472,6 +719,17 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       }
 
       return { ...sync(config, state.channel), layout, selectedId: `outbound:${outboundTag}` };
+    }),
+
+  connectPorts: (connection) =>
+    set((state) => {
+      if (!connection.source || !connection.target) return state;
+      const source = parseNodeId(connection.source);
+      const target = parseNodeId(connection.target);
+      const connected =
+        connectDirectedPortReference(state.config, source, connection.sourceHandle, target, connection.targetHandle) ??
+        connectDirectedPortReference(state.config, target, connection.targetHandle, source, connection.sourceHandle);
+      return connected ? sync(connected, state.channel) : state;
     }),
 
   togglePortConnection: (nodeId, direction, port) =>
@@ -588,12 +846,73 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 
         if (node.kind === "outbound" && port.key === "detour-target") {
           const child = firstOutboundDetouringThrough(config, node.value);
+          const endpoint = firstEndpointDetouringThrough(config, node.value);
           if (child) {
             config = updateEntityField(config, { kind: "outbound", tag: child.tag }, "detour", undefined);
+          } else if (endpoint) {
+            config = updateEntityField(config, { kind: "endpoint", tag: endpoint.tag }, "detour", undefined);
           } else {
             config = addOutbound(config, "socks", preferredOutboundTag("socks"));
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = updateEntityField(config, { kind: "outbound", tag: created.tag }, "detour", node.value);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "service-detour") {
+          const service = firstServiceDetouringThrough(config, node.value);
+          if (service?.tag) {
+            config = updateEntityField(config, { kind: "service", tag: service.tag }, "detour", undefined);
+          } else {
+            const ensured = ensureService(config, "ocm");
+            config = ensured.config;
+            if (ensured.tag) config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "detour", node.value);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "endpoint" && port.key === "dns-server") {
+          const endpoint = config.endpoints?.find((item) => item.tag === node.value);
+          if (endpoint?.type !== "tailscale") return state;
+          const server = firstDnsServerUsingEndpoint(config, node.value);
+          if (server) {
+            config = updateEntityField(config, { kind: "dns-server", tag: server.tag }, "endpoint", undefined);
+          } else {
+            const existing = firstTailscaleDnsServer(config);
+            if (existing) {
+              config = updateEntityField(config, { kind: "dns-server", tag: existing.tag }, "endpoint", node.value);
+            } else {
+              config = addDnsServer(config, "tailscale", preferredDnsServerTag("tailscale"));
+              const created = config.dns?.servers?.[config.dns.servers.length - 1];
+              if (created) config = updateEntityField(config, { kind: "dns-server", tag: created.tag }, "endpoint", node.value);
+            }
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "endpoint" && port.key === "derp-service") {
+          const endpoint = config.endpoints?.find((item) => item.tag === node.value);
+          if (endpoint?.type !== "tailscale") return state;
+          const service = firstDerpServiceVerifyingEndpoint(config, node.value);
+          if (service?.tag) {
+            config = updateEntityField(
+              config,
+              { kind: "service", tag: service.tag },
+              "verify_client_endpoint",
+              removeTagRef(service.verify_client_endpoint as string | string[] | undefined, node.value),
+            );
+          } else {
+            const ensured = ensureService(config, "derp");
+            config = ensured.config;
+            const created = config.services?.find((item) => item.tag === ensured.tag);
+            if (created?.tag) {
+              config = updateEntityField(
+                config,
+                { kind: "service", tag: created.tag },
+                "verify_client_endpoint",
+                addTagRef(created.verify_client_endpoint as string | string[] | undefined, node.value),
+              );
+            }
           }
           return sync(config, state.channel);
         }
@@ -609,6 +928,20 @@ export const useProjectStore = create<ProjectStore>((set) => ({
               ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
             }
             if (ruleSetTag) config = updateEntityField(config, { kind: "rule-set", tag: ruleSetTag }, "download_detour", node.value);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "service" && port.key === "managed-inbound") {
+          const service = config.services?.find((item) => item.tag === node.value);
+          if (service?.type !== "ssm-api") return state;
+          const servers = service.servers && typeof service.servers === "object" ? service.servers : {};
+          if (Object.values(servers).length > 0) {
+            config = updateEntityField(config, { kind: "service", tag: node.value }, "servers", {});
+          } else {
+            const ensured = ensureManagedShadowsocksInbound(config);
+            config = ensured.config;
+            if (ensured.tag) config = updateEntityField(config, { kind: "service", tag: node.value }, "servers", { "/": ensured.tag });
           }
           return sync(config, state.channel);
         }
@@ -658,6 +991,27 @@ export const useProjectStore = create<ProjectStore>((set) => ({
             config = updateDnsRule(config, index, { inbound: removeTagRef(current?.inbound, node.value) });
           } else {
             config = addDnsRule(config, { inbound: node.value, server: config.dns?.final });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "inbound" && port.key === "service") {
+          const inbound = config.inbounds?.find((item) => item.tag === node.value);
+          if (inbound?.type !== "shadowsocks") return state;
+          const service = firstSsmServiceUsingInbound(config, node.value);
+          if (service?.tag) {
+            const servers = Object.fromEntries(
+              Object.entries(service.servers ?? {}).filter(([, inboundTag]) => inboundTag !== node.value),
+            );
+            config = updateEntityField(config, { kind: "service", tag: service.tag }, "servers", servers);
+          } else {
+            const ensured = ensureService(config, "ssm-api");
+            config = ensured.config;
+            const targetService = config.services?.find((item) => item.tag === ensured.tag);
+            const currentServers = targetService?.servers && typeof targetService.servers === "object" ? targetService.servers : {};
+            if (ensured.tag) {
+              config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "servers", { ...currentServers, "/": node.value });
+            }
           }
           return sync(config, state.channel);
         }
@@ -802,6 +1156,69 @@ export const useProjectStore = create<ProjectStore>((set) => ({
           }
           return sync(config, state.channel);
         }
+
+        if (node.kind === "dns-server" && port.key === "endpoint") {
+          const server = config.dns?.servers?.find((item) => item.tag === node.value);
+          if (server?.endpoint) {
+            config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "endpoint", undefined);
+          } else {
+            let endpointTag = firstTailscaleEndpointTag(config);
+            if (!endpointTag) {
+              config = addEndpoint(config, "tailscale", preferredEndpointTag("tailscale"));
+              endpointTag = config.endpoints?.[config.endpoints.length - 1]?.tag;
+            }
+            if (endpointTag) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "endpoint", endpointTag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "endpoint" && port.key === "dial-detour") {
+          const endpoint = config.endpoints?.find((item) => item.tag === node.value);
+          if (endpoint?.detour) {
+            config = updateEntityField(config, { kind: "endpoint", tag: node.value }, "detour", undefined);
+          } else {
+            let targetTag = firstDirectOutboundTag(config, node.value);
+            if (!targetTag) {
+              config = addOutbound(config, "direct", preferredOutboundTag("direct"));
+              targetTag = config.outbounds?.[config.outbounds.length - 1]?.tag;
+            }
+            if (targetTag) config = updateEntityField(config, { kind: "endpoint", tag: node.value }, "detour", targetTag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "service" && port.key === "verify-client-endpoint") {
+          const service = config.services?.find((item) => item.tag === node.value);
+          if (service?.type !== "derp") return state;
+          const refs = tagRefs(service.verify_client_endpoint as string | string[] | undefined);
+          if (refs.length > 0) {
+            config = updateEntityField(config, { kind: "service", tag: node.value }, "verify_client_endpoint", undefined);
+          } else {
+            let endpointTag = firstTailscaleEndpointTag(config);
+            if (!endpointTag) {
+              config = addEndpoint(config, "tailscale", preferredEndpointTag("tailscale"));
+              endpointTag = config.endpoints?.[config.endpoints.length - 1]?.tag;
+            }
+            if (endpointTag) config = updateEntityField(config, { kind: "service", tag: node.value }, "verify_client_endpoint", endpointTag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "service" && port.key === "detour") {
+          const service = config.services?.find((item) => item.tag === node.value);
+          if (service?.type !== "ccm" && service?.type !== "ocm") return state;
+          if (service.detour) {
+            config = updateEntityField(config, { kind: "service", tag: node.value }, "detour", undefined);
+          } else {
+            let targetTag = firstDirectOutboundTag(config, node.value);
+            if (!targetTag) {
+              config = addOutbound(config, "direct", preferredOutboundTag("direct"));
+              targetTag = config.outbounds?.[config.outbounds.length - 1]?.tag;
+            }
+            if (targetTag) config = updateEntityField(config, { kind: "service", tag: node.value }, "detour", targetTag);
+          }
+          return sync(config, state.channel);
+        }
       }
 
       return state;
@@ -809,6 +1226,20 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 
   updateField: (ref, field, value) =>
     set((state) => sync(updateEntityField(state.config, ref, field, value), state.channel)),
+  changeEntityType: (ref, nextType) =>
+    set((state) => {
+      if (
+        ref.kind !== "inbound" &&
+        ref.kind !== "outbound" &&
+        ref.kind !== "dns-server" &&
+        ref.kind !== "endpoint" &&
+        ref.kind !== "service" &&
+        ref.kind !== "rule-set"
+      ) {
+        return state;
+      }
+      return sync(changeEntityType(state.config, ref, nextType), state.channel);
+    }),
   renameTag: (oldTag, newTag) => set((state) => sync(renameTag(state.config, oldTag, newTag), state.channel)),
   deleteEntity: (ref) => set((state) => sync(deleteEntity(state.config, ref), state.channel)),
   disconnectEdge: (edgeId) => set((state) => sync(disconnectEdge(state.config, edgeId), state.channel)),
@@ -844,7 +1275,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   importJson: (value) =>
     set((state) => {
       try {
-        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} } };
+        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} }, globalPanelOpen: false, checkNotice: "" };
       } catch (error) {
         return {
           jsonDraft: value,
@@ -861,12 +1292,26 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       }
     }),
   refreshJson: () => set((state) => ({ jsonDraft: stringifyConfig(state.config) })),
-  validateNow: () =>
-    set((state) => ({
-      diagnostics: computeDiagnostics(state.config, state.channel),
-      officialValidationMessage:
-        "Semantic validation complete in browser. Official CLI validation runs through pnpm validate:fixtures.",
-    })),
+  validateNow: () => {
+    set({ isChecking: true, checkNotice: "" });
+    globalThis.setTimeout(() => {
+      set((state) => {
+        const diagnostics = computeDiagnostics(state.config, state.channel);
+        const errors = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
+        const warnings = diagnostics.filter((diagnostic) => diagnostic.level === "warning").length;
+        const checkedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        const result = errors ? `${errors} errors` : warnings ? `${warnings} warnings` : "valid";
+        const target = targetFromVersion(state.channel, state.version);
+        return {
+          diagnostics,
+          officialValidationMessage:
+            `Semantic validation complete in browser. Official fixture validation for ${target.label} uses ${target.binaryName}.`,
+          checkNotice: `Checked ${checkedAt}: ${result}`,
+          isChecking: false,
+        };
+      });
+    }, 250);
+  },
   setNodePosition: (id, position) =>
     set((state) => ({
       layout: {
@@ -886,6 +1331,8 @@ export function getSelectedRef(): EntityRef | null {
   if (kind === "inbound" && rest) return { kind: "inbound", tag: rest };
   if (kind === "outbound" && rest) return { kind: "outbound", tag: rest };
   if (kind === "dns-server" && rest) return { kind: "dns-server", tag: rest };
+  if (kind === "endpoint" && rest) return { kind: "endpoint", tag: rest };
+  if (kind === "service" && rest) return { kind: "service", tag: rest };
   if (kind === "rule-set" && rest) return { kind: "rule-set", tag: rest };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };

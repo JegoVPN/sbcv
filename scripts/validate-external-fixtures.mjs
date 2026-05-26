@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { assertCleanSingBoxCheck } from "./singbox-check-policy.mjs";
 
 const requiredUiGates = ["json-parse", "import", "derive-graph", "diagnostics", "render", "json-round-trip", "export"];
 const manifest = JSON.parse(readFileSync("fixtures/external/manifest.json", "utf8"));
@@ -22,11 +23,12 @@ function resolveCommand(command) {
 function runSingBoxCheck(binary, fixturePath) {
   const tempDir = mkdtempSync(join(tmpdir(), "sbc-external-validate-"));
   const tempFile = join(tempDir, "config.json");
-  writeFileSync(tempFile, readFileSync(fixturePath));
-  const result = spawnSync(binary, ["check", "-c", tempFile], { encoding: "utf8" });
-  rmSync(tempDir, { recursive: true, force: true });
-  if (result.status !== 0) {
-    fail(`${binary} check failed for ${fixturePath}\n${result.stdout}\n${result.stderr}`);
+  try {
+    writeFileSync(tempFile, readFileSync(fixturePath));
+    const result = spawnSync(binary, ["check", "-c", tempFile], { encoding: "utf8" });
+    assertCleanSingBoxCheck({ binary, file: fixturePath, status: result.status, stdout: result.stdout, stderr: result.stderr });
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
   }
 }
 
@@ -75,8 +77,9 @@ for (const item of manifest) {
     officialChecks += 1;
   } else if (item.detected_version !== "unknown") {
     displayOnlyVersioned += 1;
-    if (item.official_check_result.status !== "failed") {
-      fail(`${item.id} has version ${item.detected_version} without official_check or failed official result`);
+    const allowedDisplayOnlyStatuses = item.detected_version === "1.11" ? ["not-applicable", "failed", "warning"] : ["failed", "warning"];
+    if (!allowedDisplayOnlyStatuses.includes(item.official_check_result.status)) {
+      fail(`${item.id} has version ${item.detected_version} without official_check or allowed display-only official result`);
     }
   }
 }

@@ -1,0 +1,109 @@
+<!-- Status: official-read. Source: stable docs/configuration/outbound/naive.md, shared/dial.md, shared/tls.md, and shared/udp-over-tcp.md; reviewed against current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+# Outbound / naive UI Review
+
+## Scope
+
+- Editable node: `outbound:naive`
+- Official doc: `outbound/naive.md`
+- Source-of-truth rule: canonical sing-box JSON/domain state, not React Flow nodes or edges.
+- Review shape follows `docs/experimental-ui-review.md`: Left Add Library, Middle Canvas Node, Right Inspector.
+
+## Official Model
+
+This node writes one object in `outbounds[]` with `type: "naive"`.
+
+Official writable fields from `outbound/naive.md`:
+
+- `type`: `naive`
+- `tag`
+- `server`: required.
+- `server_port`: required.
+- `username`
+- `password`
+- `insecure_concurrency`
+- `extra_headers`
+- `udp_over_tcp`: embedded UDP over TCP settings.
+- `quic`
+- `quic_congestion_control`: `bbr`, `bbr2`, `cubic`, or `reno`; `bbr` is default.
+- `tls`: required outbound TLS object. Only `server_name`, `certificate`, `certificate_path`, and `ech` are supported.
+- Dial Fields from `shared/dial.md`.
+
+Relationship model:
+
+- This outbound can be referenced by route final/rules, selector/urltest groups, DNS detours where supported, service/rule-set Dial Fields, and other outbound Dial Fields.
+- Dial Fields `detour` references another outbound tag; if set, other Dial Fields are ignored by sing-box.
+- TLS and UDP over TCP are embedded Inspector sections, not standalone nodes.
+- NaiveProxy outbound is platform/build-variant constrained; support depends on Apple/Android/Windows or Linux builds with Cronet support.
+- The feature exists since sing-box 1.13.
+
+## Left: Add Library
+
+Current expected action: `SETUP`.
+
+Review:
+
+- The Library entry must say what happens: add a node, open a settings module, or edit an ordered table.
+- The Docs link must open the matching official configuration doc, not act as a disabled status badge.
+- If this item is target-gated, the disabled/gated state must name the target instead of silently doing nothing.
+
+Node-specific concern:
+
+- Outbounds category entry should add a target or group candidate.
+
+Recommendation:
+
+- Keep the primary action short and explicit: `ADD`, `SETUP`, `OPEN`, or `TABLE`.
+- Avoid showing implementation statuses such as internal kind names to ordinary users.
+
+## Middle: Canvas Node
+
+Review:
+
+- The canvas node should show the human object name first and the internal type only as a small secondary label.
+- Status should mean semantic validity for this object, not that the full exported config passed official binary validation.
+- The large `+` affordance should only exist when it creates an obvious next object of the correct type.
+- The bottom pill row is too dense for many nodes; repeated type/status/count controls should be reduced when Inspector already provides the same action.
+
+Port semantics:
+
+- Left ports: route final, route rule outbound, selector candidate, URLTest candidate, DNS detour where applicable, Dial detour target, service detour target, and rule-set download detour.
+- Right ports: optional Dial Fields `detour` outbound only.
+- TLS and UDP over TCP are Inspector sections, not ports.
+
+Recommendation:
+
+- Keep ports type-specific and visually explainable. Hover/click/drag should add or remove a canonical tag reference, never create hidden canvas-only state.
+
+## Right: Inspector
+
+Review:
+
+- Inspector must expose required `server`, `server_port`, and TLS status first.
+- Authentication fields should be grouped and treat `password` as sensitive.
+- `extra_headers` should be a structured key/value repeater.
+- `quic` should reveal `quic_congestion_control` only when relevant.
+- TLS must be required and constrained to the subset supported by NaiveProxy.
+- Platform/build support warning must be visible before Check.
+- Dial Fields should include tag-select `detour`.
+- Type switching, if available, must preserve tag references or deliberately clear incompatible fields with diagnostics.
+- Shared fields should appear only where official docs say the owner supports them.
+- Ordered list fields such as route rules and DNS rules must stay table-owned.
+
+Recommendation:
+
+- Prefer selects/multiselects for tag references and enums. Text inputs are acceptable for scalar protocol values, but raw JSON textareas should be reserved for advanced array/object fields until structured repeaters exist.
+
+## Priority Findings
+
+- P0 required server/port/TLS fields need first-class validation.
+- P0 platform/build support warning must be visible; Naive is not universally available.
+- P0 TLS UI must be restricted to Naive-supported outbound TLS fields.
+- P1 `extra_headers` needs a structured key/value editor.
+
+## Done Criteria
+
+- Adding/opening this node from Library updates canonical JSON.
+- Canvas ports represent only real sing-box references.
+- Inspector edits round-trip to JSON export.
+- Semantic diagnostics catch missing tags and target/version hazards.
+- Fixture or smoke coverage proves the node can be imported, rendered, edited, and exported.

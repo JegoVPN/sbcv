@@ -1,0 +1,27 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "services": [
+    {
+      "type": "ocm",
+      "tag": "ocm",
+      "listen": "127.0.0.1",
+      "listen_port": 8081,
+      "detour": "direct"
+    },
+    {
+      "type": "ccm",
+      "tag": "ccm",
+      "listen": "127.0.0.1",
+      "listen_port": 8080,
+      "detour": "direct"
+    }
+  ]
+}

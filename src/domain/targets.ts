@@ -1,16 +1,17 @@
-import type { SingBoxChannel, SingBoxTargetId } from "./types";
+import type { SingBoxBinaryName, SingBoxChannel, SingBoxTargetId } from "./types";
 
 export type SingBoxTargetOption = {
   id: SingBoxTargetId;
   label: string;
   channel: SingBoxChannel;
   version: string;
+  binaryName: SingBoxBinaryName;
 };
 
 export const SING_BOX_TARGETS: SingBoxTargetOption[] = [
-  { id: "1.13-stable", label: "1.13 stable", channel: "stable", version: "1.13" },
-  { id: "1.12-stable", label: "1.12 Legacy", channel: "stable", version: "1.12" },
-  { id: "1.14-testing", label: "1.14 testing", channel: "testing", version: "1.14" },
+  { id: "1.13-stable", label: "1.13 stable", channel: "stable", version: "1.13", binaryName: "sing-box-stable" },
+  { id: "1.12-stable", label: "1.12 Legacy", channel: "stable", version: "1.12", binaryName: "sing-box-1.12" },
+  { id: "1.14-testing", label: "1.14 testing", channel: "testing", version: "1.14", binaryName: "sing-box-testing" },
 ];
 
 export function targetFromVersion(channel: SingBoxChannel, version: string): SingBoxTargetOption {

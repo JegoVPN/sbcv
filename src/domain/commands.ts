@@ -1,13 +1,15 @@
 import { getUniqueTag } from "./indexes";
-import { preferredDnsServerTag, preferredInboundTag } from "./protocols";
+import { preferredDnsServerTag, preferredEndpointTag, preferredInboundTag, preferredServiceTag } from "./protocols";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
   DnsServerConfig,
+  EndpointConfig,
   EntityRef,
   InboundConfig,
   OutboundConfig,
   RouteRule,
+  ServiceConfig,
   SingBoxConfig,
   TaggedConfig,
 } from "./types";
@@ -441,6 +443,144 @@ export function addDnsServer(config: SingBoxConfig, type = "local", preferredTag
   return next;
 }
 
+export function addEndpoint(config: SingBoxConfig, type = "wireguard", preferredTag?: string): SingBoxConfig {
+  const next = cloneConfig(config);
+  const tag = getUniqueTag(next, preferredTag ?? preferredEndpointTag(type));
+  next.endpoints = [...(next.endpoints ?? []), createEndpoint(type, tag)];
+  return next;
+}
+
+export function addService(config: SingBoxConfig, type = "resolved", preferredTag?: string): SingBoxConfig {
+  const next = cloneConfig(config);
+  let service = createService(type, getUniqueTag(next, preferredTag ?? preferredServiceTag(type)));
+
+  if (type === "ssm-api") {
+    let inboundTag = next.inbounds?.find((inbound) => inbound.type === "shadowsocks" && inbound.managed)?.tag;
+    if (!inboundTag) {
+      inboundTag = getUniqueTag(next, "ss-managed-in");
+      next.inbounds = [
+        ...(next.inbounds ?? []),
+        {
+          ...createInbound("shadowsocks", inboundTag),
+          method: "2022-blake3-aes-128-gcm",
+          password: "Q7WI7Eid7AOHSdFDw3bkdA==",
+          managed: true,
+        },
+      ];
+    }
+    service = { ...service, servers: { "/": inboundTag } };
+  }
+
+  next.services = [...(next.services ?? []), service];
+  return next;
+}
+
+export function createService(type: string, tag: string): ServiceConfig {
+  if (type === "resolved") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.53",
+      listen_port: 53,
+    };
+  }
+  if (type === "derp") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 8443,
+      config_path: "derper.key",
+      home: "",
+      verify_client_endpoint: [],
+      mesh_with: [],
+      stun: { enabled: false, listen: "::", listen_port: 3478 },
+    };
+  }
+  if (type === "ssm-api") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 9090,
+      servers: {},
+      cache_path: "",
+    };
+  }
+  if (type === "ccm") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 8080,
+      credential_path: "",
+      usages_path: "",
+      users: [],
+      headers: {},
+    };
+  }
+  if (type === "ocm") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 8081,
+      credential_path: "",
+      usages_path: "",
+      users: [],
+      headers: {},
+    };
+  }
+  if (type === "hysteria-realm") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 8444,
+      users: [{ name: "user", token: "change-me", max_realms: 1 }],
+    };
+  }
+  return { type, tag };
+}
+
+export function createEndpoint(type: string, tag: string): EndpointConfig {
+  if (type === "wireguard") {
+    return {
+      type,
+      tag,
+      system: false,
+      name: "wg0",
+      mtu: 1408,
+      address: ["172.16.0.2/32"],
+      private_key: "EEKlAzKfS87ShJPnvEF3AiJjGS9JHEzgn2jB3J7yMkY=",
+      peers: [
+        {
+          address: "127.0.0.1",
+          port: 51820,
+          public_key: "tM4NaeCZrzxQ6BfhyeuQMy5jDReji4o8h5LVAGpI1HQ=",
+          allowed_ips: ["0.0.0.0/0"],
+        },
+      ],
+      udp_timeout: "5m",
+    };
+  }
+  if (type === "tailscale") {
+    return {
+      type,
+      tag,
+      state_directory: "$HOME/.tailscale",
+      control_url: "https://controlplane.tailscale.com",
+      accept_routes: false,
+      advertise_routes: [],
+      advertise_exit_node: false,
+      advertise_tags: [],
+      system_interface: false,
+      udp_timeout: "5m",
+    };
+  }
+  return { type, tag };
+}
+
 export function createDnsServer(type: string, tag: string): DnsServerConfig {
   if (type === "local") return { type, tag };
   if (type === "legacy") {
@@ -708,17 +848,108 @@ export function updateEntityField(
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "endpoint") {
+    next.endpoints = (next.endpoints ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
+  if (ref.kind === "service") {
+    next.services = (next.services ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
   if (ref.kind === "rule-set") {
     next.route = next.route ?? {};
     next.route.rule_set = (next.route.rule_set ?? []).map((item) =>
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "route") {
+    next.route = { ...(next.route ?? {}), [field]: value };
+  }
+  if (ref.kind === "dns") {
+    next.dns = { ...(next.dns ?? {}), [field]: value };
+  }
   if (ref.kind === "settings") {
     const current = next[ref.path];
     const objectValue =
       current && typeof current === "object" && !Array.isArray(current) ? current : {};
     next[ref.path] = { ...objectValue, [field]: value };
+  }
+  return next;
+}
+
+export function changeEntityType(
+  config: SingBoxConfig,
+  ref: Extract<EntityRef, { kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" }>,
+  nextType: string,
+): SingBoxConfig {
+  const next = cloneConfig(config);
+  if (ref.kind === "inbound") {
+    next.inbounds = (next.inbounds ?? []).map((item) =>
+      item.tag === ref.tag ? { ...createInbound(nextType, ref.tag), tag: ref.tag } : item,
+    );
+  }
+  if (ref.kind === "outbound") {
+    next.outbounds = (next.outbounds ?? []).map((item) => {
+      if (item.tag !== ref.tag) return item;
+      const replacement = createOutbound(nextType, ref.tag);
+      const detour = item.detour;
+      return detour ? { ...replacement, detour } : replacement;
+    });
+  }
+  if (ref.kind === "dns-server") {
+    next.dns = next.dns ?? {};
+    next.dns.servers = (next.dns.servers ?? []).map((item) => {
+      if (item.tag !== ref.tag) return item;
+      const replacement = createDnsServer(nextType, ref.tag);
+      const detour = item.detour;
+      const endpoint = item.endpoint;
+      return {
+        ...replacement,
+        ...(detour ? { detour } : {}),
+        ...(nextType === "tailscale" && endpoint ? { endpoint } : {}),
+      };
+    });
+  }
+  if (ref.kind === "endpoint") {
+    next.endpoints = (next.endpoints ?? []).map((item) => {
+      if (item.tag !== ref.tag) return item;
+      const replacement = createEndpoint(nextType, ref.tag);
+      const detour = item.detour;
+      return detour ? { ...replacement, detour } : replacement;
+    });
+    if (nextType !== "tailscale") {
+      next.dns?.servers?.forEach((server) => {
+        if (server.endpoint === ref.tag) server.endpoint = undefined;
+      });
+      next.certificate_providers = next.certificate_providers?.map((provider) => ({
+        ...provider,
+        endpoint: provider.endpoint === ref.tag ? undefined : provider.endpoint,
+      }));
+    }
+  }
+  if (ref.kind === "service") {
+    next.services = (next.services ?? []).map((item) => {
+      if (item.tag !== ref.tag) return item;
+      const replacement = createService(nextType, ref.tag);
+      const listen = item.listen;
+      const listenPort = item.listen_port;
+      return {
+        ...replacement,
+        ...(listen ? { listen } : {}),
+        ...(typeof listenPort === "number" ? { listen_port: listenPort } : {}),
+      };
+    });
+  }
+  if (ref.kind === "rule-set") {
+    next.route = next.route ?? {};
+    next.route.rule_set = (next.route.rule_set ?? []).map((item) => {
+      if (item.tag !== ref.tag) return item;
+      const replacement = createRuleSet(nextType, ref.tag);
+      const downloadDetour = item.download_detour;
+      return nextType === "remote" && downloadDetour ? { ...replacement, download_detour: downloadDetour } : replacement;
+    });
   }
   return next;
 }
@@ -760,7 +991,9 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
         ...next.dns,
         final: next.dns.final === oldTag ? newTag : next.dns.final,
         servers: next.dns.servers?.map((item) =>
-          item.tag === oldTag ? { ...item, tag: newTag } : item,
+          item.tag === oldTag
+            ? { ...item, tag: newTag, endpoint: item.endpoint === oldTag ? newTag : item.endpoint }
+            : { ...item, endpoint: item.endpoint === oldTag ? newTag : item.endpoint },
         ),
         rules: next.dns.rules?.map((rule) => ({
           ...rule,
@@ -784,6 +1017,22 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
         })),
       }
     : next.route;
+  next.endpoints = next.endpoints?.map((item) =>
+    item.tag === oldTag ? { ...item, tag: newTag, detour: item.detour === oldTag ? newTag : item.detour } : item,
+  );
+  next.services = next.services?.map((item) => ({
+    ...item,
+    verify_client_endpoint: replaceTagRef(item.verify_client_endpoint as string | string[] | undefined, oldTag, newTag),
+    detour: item.detour === oldTag ? newTag : item.detour,
+    servers:
+      item.servers && typeof item.servers === "object" && !Array.isArray(item.servers)
+        ? Object.fromEntries(Object.entries(item.servers).map(([path, tag]) => [path, tag === oldTag ? newTag : tag]))
+        : item.servers,
+  }));
+  next.certificate_providers = next.certificate_providers?.map((item) => ({
+    ...item,
+    endpoint: item.endpoint === oldTag ? newTag : item.endpoint,
+  }));
   if (next.dns?.rules) {
     next.dns.rules = next.dns.rules.map((rule) => ({
       ...rule,
@@ -803,6 +1052,13 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
     next.dns?.rules?.forEach((rule) => {
       rule.inbound = removeTagRef(rule.inbound, ref.tag);
     });
+    next.services = next.services?.map((service) => {
+      if (!service.servers || typeof service.servers !== "object" || Array.isArray(service.servers)) return service;
+      return {
+        ...service,
+        servers: Object.fromEntries(Object.entries(service.servers).filter(([, tag]) => tag !== ref.tag)),
+      };
+    });
   }
   if (ref.kind === "outbound") {
     next.outbounds = (next.outbounds ?? []).filter((item) => item.tag !== ref.tag);
@@ -815,6 +1071,10 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
       outbounds: item.outbounds?.filter((tag) => tag !== ref.tag),
       default: item.default === ref.tag ? undefined : item.default,
     }));
+    next.services = next.services?.map((item) => ({
+      ...item,
+      detour: item.detour === ref.tag ? undefined : item.detour,
+    }));
   }
   if (ref.kind === "dns-server") {
     if (next.dns?.servers) {
@@ -824,6 +1084,23 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
     next.dns?.rules?.forEach((rule) => {
       if (rule.server === ref.tag) rule.server = undefined;
     });
+  }
+  if (ref.kind === "endpoint") {
+    next.endpoints = (next.endpoints ?? []).filter((item) => item.tag !== ref.tag);
+    next.dns?.servers?.forEach((server) => {
+      if (server.endpoint === ref.tag) server.endpoint = undefined;
+    });
+    next.services = next.services?.map((item) => ({
+      ...item,
+      verify_client_endpoint: removeTagRef(item.verify_client_endpoint as string | string[] | undefined, ref.tag),
+    }));
+    next.certificate_providers = next.certificate_providers?.map((item) => ({
+      ...item,
+      endpoint: item.endpoint === ref.tag ? undefined : item.endpoint,
+    }));
+  }
+  if (ref.kind === "service") {
+    next.services = (next.services ?? []).filter((item) => item.tag !== ref.tag);
   }
   if (ref.kind === "rule-set") {
     if (next.route?.rule_set) {
@@ -901,6 +1178,23 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     const tag = parts[3];
     if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
       next.dns.rules[index].rule_set = removeRuleSetRef(next.dns.rules[index].rule_set, tag);
+    }
+  }
+  if (relation === "dns-server-endpoint") {
+    const serverTag = parts[2];
+    const endpointTag = parts[3];
+    if (serverTag && endpointTag) {
+      next.dns?.servers?.forEach((server) => {
+        if (server.tag === serverTag && server.endpoint === endpointTag) server.endpoint = undefined;
+      });
+    }
+  }
+  if (relation === "endpoint-detour") {
+    const endpointTag = parts[2];
+    if (endpointTag) {
+      next.endpoints = next.endpoints?.map((endpoint) =>
+        endpoint.tag === endpointTag ? { ...endpoint, detour: undefined } : endpoint,
+      );
     }
   }
   return next;

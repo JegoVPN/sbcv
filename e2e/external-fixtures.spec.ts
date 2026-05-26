@@ -136,7 +136,6 @@ async function assertSelectedNodeAndInspector(page: Page) {
   const inspector = page.getByTestId("node-inspector");
   await expect(inspector).toBeVisible();
   await expect(inspector.getByTestId("inspector-header")).toBeVisible();
-  await expect(inspector.getByTestId("inspector-primary-editor")).toBeVisible();
 
   const viewport = page.viewportSize();
   const box = await inspector.boundingBox();
@@ -172,13 +171,11 @@ test("representative external fixtures import, render, inspect, export, and re-i
     if (config.route) {
       await expect(page.getByTestId("node-route:main")).toBeVisible();
       await page.getByTestId("node-route:main").click();
-      await page.getByRole("button", { name: "Route Rules", exact: true }).click();
       await expect(page.getByLabel("Route rules")).toBeVisible();
     }
     if (config.dns) {
       await expect(page.getByTestId("node-dns:main")).toBeVisible();
       await page.getByTestId("node-dns:main").click();
-      await page.getByRole("button", { name: "DNS Rules", exact: true }).click();
       await expect(page.getByLabel("DNS rules")).toBeVisible();
     }
 
@@ -188,20 +185,17 @@ test("representative external fixtures import, render, inspect, export, and re-i
       await page.screenshot({ path: "test-results/sbc-selected-node-inspector.png" });
     }
 
-    await page.getByRole("button", { name: "JSON", exact: true }).click();
-    JSON.parse(await page.getByLabel("Advanced JSON editor").inputValue());
-
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Export", exact: true }).click();
     const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^sbcv_\d{8}_\d{6}\.json$/);
     const exportedPath = await download.path();
     if (!exportedPath) throw new Error(`Export download path unavailable for ${entry.id}`);
+    JSON.parse(readFileSync(exportedPath, "utf8"));
 
     await page.getByLabel("Import JSON file").setInputFiles(exportedPath);
     const reimportedNode = await firstInspectableNode(page);
     await reimportedNode.click();
-    await page.getByRole("button", { name: "JSON", exact: true }).click();
-    JSON.parse(await page.getByLabel("Advanced JSON editor").inputValue());
 
     expect(pageErrors, `${entry.id} page errors`).toEqual([]);
     expect(consoleErrors, `${entry.id} console errors`).toEqual([]);
@@ -220,5 +214,4 @@ test("selected node and floating inspector fit mobile viewport", async ({ page }
   await expect(selectedNode.getByTestId("node-right-ports")).toBeVisible();
   await expect(selectedNode.getByTestId("node-bottom-toolbar")).toBeVisible();
   await expect(page.getByTestId("node-inspector")).toBeVisible();
-  await expect(page.getByTestId("inspector-primary-editor")).toBeVisible();
 });

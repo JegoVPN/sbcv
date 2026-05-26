@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   addRuleSet,
+  changeEntityType,
   connectSelectorCandidate,
   createDnsServer,
+  createEndpoint,
   createInbound,
   createOutbound,
   createStableTunSplitConfig,
+  deleteEntity,
   disconnectEdge,
   ensureSettings,
   moveRouteRule,
@@ -15,7 +18,7 @@ import {
 import { deriveGraph } from "../src/canvas/graph";
 import { validateConfig } from "../src/domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../src/domain/serialization";
-import { createTemplatePreset } from "../src/domain/templates";
+import { createTemplatePreset, TEMPLATE_PRESETS, TEMPLATE_PRESET_IDS } from "../src/domain/templates";
 
 describe("canonical sing-box domain model", () => {
   it("round-trips stable TUN split config without layout metadata", () => {
@@ -45,6 +48,17 @@ describe("canonical sing-box domain model", () => {
     const config = connectSelectorCandidate(createStableTunSplitConfig(), "proxy", "missing");
     const diagnostics = validateConfig(config, "stable");
     expect(diagnostics.some((diagnostic) => diagnostic.code === "missing-outbound-candidate")).toBe(true);
+  });
+
+  it("warns for official sing-box testing deprecations that can still exit zero", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      independent_cache: true,
+    };
+
+    expect(validateConfig(config, "stable").some((diagnostic) => diagnostic.code === "deprecated-dns-independent-cache")).toBe(false);
+    expect(validateConfig(config, "testing").some((diagnostic) => diagnostic.code === "deprecated-dns-independent-cache")).toBe(true);
   });
 
   it("keeps selector candidate graph edge ids unique when candidate tags repeat", () => {
@@ -164,17 +178,32 @@ describe("canonical sing-box domain model", () => {
     expect(candidateEdges).toHaveLength(96);
   });
 
-  it("loads curated 1.12, 1.13, and 1.14 template presets with explicit channels", () => {
+  it("loads curated and official client template presets with explicit channels", () => {
     const legacy = createTemplatePreset("template-1.12");
     const stable = createTemplatePreset("template-1.13");
     const testing = createTemplatePreset("template-1.14");
+    const officialFakeIp = createTemplatePreset("template-official-client-tun-fakeip");
+    const officialRouteRules = createTemplatePreset("template-official-client-bypass-route-rules");
 
+    expect(TEMPLATE_PRESETS).toHaveLength(TEMPLATE_PRESET_IDS.length);
     expect(legacy.channel).toBe("stable");
     expect(stable.channel).toBe("stable");
     expect(testing.channel).toBe("testing");
+    expect(officialFakeIp.channel).toBe("stable");
+    expect(officialRouteRules.channel).toBe("stable");
     expect(legacy.version).toBe("1.12");
     expect(stable.config.route?.final).toBe("proxy");
     expect(testing.config.http_clients?.[0]?.tag).toBe("remote-client");
+    expect(officialFakeIp.config.dns?.servers?.some((server) => server.type === "fakeip")).toBe(true);
+    expect(officialRouteRules.config.route?.rules).toHaveLength(6);
+    expect(TEMPLATE_PRESET_IDS).toContain("template-official-client-bypass-no-leak");
+  });
+
+  it("keeps every template preset semantically valid for its channel", () => {
+    for (const preset of TEMPLATE_PRESETS) {
+      const diagnostics = validateConfig(preset.config, preset.channel);
+      expect(diagnostics.filter((diagnostic) => diagnostic.level === "error"), preset.id).toEqual([]);
+    }
   });
 
   it("creates outbound setup drafts with the requested official protocol type", () => {
@@ -201,6 +230,42 @@ describe("canonical sing-box domain model", () => {
       expect(outbound.tag).toBe(`${type}-out`);
       expect(outbound.type).not.toBe("socks");
     }
+  });
+
+  it("changes inbound and outbound protocol type while preserving tags and references", () => {
+    const config = createStableTunSplitConfig();
+    const changedOutbound = changeEntityType(config, { kind: "outbound", tag: "hk" }, "http");
+    const outbound = changedOutbound.outbounds?.find((item) => item.tag === "hk");
+
+    expect(outbound).toMatchObject({
+      type: "http",
+      tag: "hk",
+      server: "127.0.0.1",
+      server_port: 1080,
+    });
+    expect(changedOutbound.outbounds?.find((item) => item.tag === "proxy")?.outbounds).toContain("hk");
+
+    const changedInbound = changeEntityType(changedOutbound, { kind: "inbound", tag: "tun-in" }, "mixed");
+    expect(changedInbound.inbounds?.[0]).toMatchObject({
+      type: "mixed",
+      tag: "tun-in",
+      listen: "127.0.0.1",
+    });
+  });
+
+  it("changes rule-set resource type while preserving the canonical tag references", () => {
+    let config = addRuleSet(createStableTunSplitConfig(), "remote", "geo-rules");
+    config = updateRouteRule(config, 0, { rule_set: "geo-rules" });
+
+    const changed = changeEntityType(config, { kind: "rule-set", tag: "geo-rules" }, "local");
+
+    expect(changed.route?.rule_set?.[0]).toMatchObject({
+      type: "local",
+      tag: "geo-rules",
+      format: "source",
+      path: "./rules.json",
+    });
+    expect(changed.route?.rules?.[0]?.rule_set).toBe("geo-rules");
   });
 
   it("creates inbound setup drafts with the requested official protocol type", () => {
@@ -239,6 +304,77 @@ describe("canonical sing-box domain model", () => {
       expect(server.type).toBe(type);
       expect(server.tag).toBe(`${type}-dns`);
     }
+  });
+
+  it("creates endpoint setup drafts from official Endpoint docs", () => {
+    const wireguard = createEndpoint("wireguard", "wg-ep");
+    const tailscale = createEndpoint("tailscale", "ts-ep");
+
+    expect(wireguard).toMatchObject({
+      type: "wireguard",
+      tag: "wg-ep",
+      address: ["172.16.0.2/32"],
+      mtu: 1408,
+    });
+    expect(tailscale).toMatchObject({
+      type: "tailscale",
+      tag: "ts-ep",
+      state_directory: "$HOME/.tailscale",
+    });
+  });
+
+  it("renders and validates DNS Tailscale endpoint references", () => {
+    const config = createStableTunSplitConfig();
+    config.endpoints = [createEndpoint("tailscale", "ts-ep")];
+    config.dns = {
+      ...config.dns,
+      servers: [
+        ...(config.dns?.servers ?? []),
+        { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", accept_default_resolvers: false },
+      ],
+    };
+
+    const { nodes, edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(validateConfig(config, "stable").some((diagnostic) => diagnostic.code === "missing-dns-server-endpoint")).toBe(false);
+    expect(nodes.some((node) => node.id === "endpoint:ts-ep" && node.data.kind === "endpoint")).toBe(true);
+    expect(edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "edge:dns-server-endpoint:ts-dns:ts-ep",
+          source: "dns-server:ts-dns",
+          target: "endpoint:ts-ep",
+          sourceHandle: "endpoint",
+          targetHandle: "dns-server",
+        }),
+      ]),
+    );
+  });
+
+  it("renames and deletes endpoint tag references", () => {
+    const config = createStableTunSplitConfig();
+    config.endpoints = [createEndpoint("tailscale", "ts-ep")];
+    config.dns = {
+      ...config.dns,
+      servers: [{ type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", accept_default_resolvers: false }],
+    };
+
+    const renamed = renameTag(config, "ts-ep", "tailnet");
+    expect(renamed.endpoints?.[0]?.tag).toBe("tailnet");
+    expect(renamed.dns?.servers?.[0]?.endpoint).toBe("tailnet");
+
+    const deleted = deleteEntity(renamed, { kind: "endpoint", tag: "tailnet" });
+    expect(deleted.endpoints).toEqual([]);
+    expect(deleted.dns?.servers?.[0]?.endpoint).toBeUndefined();
+
+    const missing = {
+      ...renamed,
+      dns: {
+        ...renamed.dns,
+        servers: [{ type: "tailscale", tag: "ts-dns", endpoint: "missing" }],
+      },
+    };
+    expect(validateConfig(missing, "stable").some((diagnostic) => diagnostic.code === "missing-dns-server-endpoint")).toBe(true);
   });
 
   it("creates route rule-set resources and renders rule references from canonical JSON", () => {

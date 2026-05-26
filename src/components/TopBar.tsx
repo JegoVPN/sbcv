@@ -1,4 +1,4 @@
-import { Download, FileCheck2, FolderOpen, RotateCcw } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, LoaderCircle } from "lucide-react";
 import { useRef } from "react";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
@@ -6,6 +6,16 @@ import { summarizeDiagnostics } from "../domain/diagnostics";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import type { SingBoxTargetId } from "../domain/types";
+
+function padTimestampPart(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+export function createSbcvFileName(now = new Date()) {
+  const date = `${now.getFullYear()}${padTimestampPart(now.getMonth() + 1)}${padTimestampPart(now.getDate())}`;
+  const time = `${padTimestampPart(now.getHours())}${padTimestampPart(now.getMinutes())}${padTimestampPart(now.getSeconds())}`;
+  return `sbcv_${date}_${time}.json`;
+}
 
 export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,10 +25,16 @@ export function TopBar() {
   const config = useProjectStore((state) => state.config);
   const diagnostics = useProjectStore((state) => state.diagnostics);
   const validateNow = useProjectStore((state) => state.validateNow);
-  const loadMinimal = useProjectStore((state) => state.loadMinimal);
   const importJson = useProjectStore((state) => state.importJson);
+  const checkNotice = useProjectStore((state) => state.checkNotice);
+  const isChecking = useProjectStore((state) => state.isChecking);
   const status = summarizeDiagnostics(diagnostics);
+  const pillState = isChecking ? "checking" : status;
   const target = targetFromVersion(channel, version);
+  const StatusIcon =
+    pillState === "checking" ? LoaderCircle : pillState === "error" ? CircleX : pillState === "warning" ? CircleAlert : CheckCircle2;
+  const statusLabel =
+    pillState === "checking" ? "Checking" : pillState === "error" ? "Invalid" : pillState === "warning" ? "Warning" : "Valid";
 
   function exportConfig() {
     const exportedConfig = createConfigExport(config);
@@ -26,7 +42,7 @@ export function TopBar() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = exportedConfig.fileName;
+    link.download = createSbcvFileName();
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -43,7 +59,7 @@ export function TopBar() {
       <div className="brand">
         <div className="brand-mark">S</div>
         <div>
-          <div className="brand-title">SBC</div>
+          <div className="brand-title">sbcv.app</div>
           <div className="brand-subtitle">sing-box visual config</div>
         </div>
       </div>
@@ -62,10 +78,6 @@ export function TopBar() {
             ))}
           </select>
         </label>
-        <button type="button" onClick={loadMinimal}>
-          <RotateCcw size={15} />
-          Minimal
-        </button>
         <button type="button" onClick={validateNow}>
           <FileCheck2 size={15} />
           Check
@@ -76,7 +88,7 @@ export function TopBar() {
         </button>
         <button type="button" onClick={() => fileInputRef.current?.click()}>
           <FolderOpen size={15} />
-          Import via JSON
+          Import
         </button>
         <input
           ref={fileInputRef}
@@ -86,7 +98,15 @@ export function TopBar() {
           className="visually-hidden"
           onChange={handleImport}
         />
-        <span className={`status-pill status-pill--${status}`}>{status}</span>
+        <span
+          key={isChecking ? "checking" : checkNotice || pillState}
+          className={`status-pill status-pill--${pillState} ${checkNotice && !isChecking && pillState === "valid" ? "status-pill--checked" : ""}`}
+          title={checkNotice || statusLabel}
+          aria-label={statusLabel}
+        >
+          <StatusIcon className={pillState === "checking" ? "status-pill__spinner" : undefined} size={14} />
+          {statusLabel}
+        </span>
       </div>
     </header>
   );

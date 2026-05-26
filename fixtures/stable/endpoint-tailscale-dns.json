@@ -1,0 +1,39 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "endpoints": [
+    {
+      "type": "tailscale",
+      "tag": "ts-ep",
+      "state_directory": "$HOME/.tailscale",
+      "control_url": "https://controlplane.tailscale.com",
+      "accept_routes": false,
+      "advertise_routes": [],
+      "advertise_exit_node": false,
+      "advertise_tags": [],
+      "system_interface": false,
+      "udp_timeout": "5m"
+    }
+  ],
+  "dns": {
+    "servers": [
+      {
+        "type": "tailscale",
+        "tag": "ts-dns",
+        "endpoint": "ts-ep",
+        "accept_default_resolvers": false
+      }
+    ],
+    "final": "ts-dns"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

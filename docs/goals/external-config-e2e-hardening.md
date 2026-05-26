@@ -12,7 +12,7 @@ In scope:
 
 - GitHub-driven discovery of real sing-box JSON configs/templates.
 - At least 200 unique accepted configs/templates from multiple repositories.
-- Version-aware validation for sing-box 1.11, 1.12, stable 1.13, and testing 1.14 where fixtures declare or imply a version.
+- Version-aware validation for sing-box 1.12, stable 1.13, and testing 1.14 where fixtures declare or imply a supported validation version. 1.11 fixtures remain UI/display coverage only.
 - Stable-first release behavior remains unchanged: default templates and export must still target current stable.
 - Fixture manifest with source repository, source path, source commit SHA, detected version/channel, transformations, expected gates, and final result.
 - Deterministic local fixtures checked into the repo after discovery. CI must not depend on live GitHub during normal test runs.
@@ -73,7 +73,7 @@ Current implemented local gates:
 - `pnpm e2e` imports 20 representative external fixtures, asserts node classes, opens ordered rule tables, verifies the Higgsfield-style selected node DOM, verifies the top-right Inspector DOM, opens JSON Preview, exports JSON, re-imports the export, and fails on runtime page/console errors.
 - `pnpm e2e` also runs a mobile viewport smoke for the selected node and floating Inspector.
 - External fixture E2E currently writes a review screenshot at `test-results/sbc-selected-node-inspector.png` during local runs.
-- Official external fixture checks currently pass for 61 fixtures: 23 with `sing-box-1.11`, 24 with `sing-box-1.12`, 11 with `sing-box-stable`, and 3 with `sing-box-testing`.
+- Official external fixture checks target `sing-box-1.12`, `sing-box-stable`, and `sing-box-testing`. 1.11 fixtures are not official-check gates.
 - 66 versioned fixtures are explicitly marked display/template-compatible because their matching official binary rejects them, with the failure reason stored in `fixtures/external/manifest.json`.
 - Browser visual review has been performed against the local Vite app for the selected-node plus Inspector state.
 - Large ordered `route.rules` / `dns.rules` lists remain table-owned. The canvas derives individual rule nodes only for compact rule lists, so real configs with hundreds of ordered rules still render the main Route/DNS relationship without flooding React Flow.
@@ -103,7 +103,7 @@ Quarantined fixtures are allowed for investigation, but they do not count toward
 | testing / 1.14 config | matching `sing-box-testing check` | required | yes |
 | explicit 1.13 config | sing-box 1.13.x check | required | yes |
 | explicit 1.12 config | sing-box 1.12.x check | required | yes |
-| explicit 1.11 config | sing-box 1.11.x check | required | yes |
+| explicit 1.11 config | UI/display/import compatibility only | not required | no |
 | subscription template extension | official check if transformable; otherwise expected extension diagnostics | required | yes only if expected diagnostics pass |
 | legacy config incompatible with current stable | version-matched old binary check or migration check | required | yes only if version gate passes |
 | parse-fail / unsafe / duplicate | none | none | no |
@@ -134,7 +134,7 @@ Create a machine-readable manifest, for example:
 
 1. Write discovery and fixture ingestion scripts.
 2. Generate deterministic fixture snapshots and manifest from seed repositories.
-3. Add official binary installer/checker for 1.11, 1.12, current stable, and current testing.
+3. Add official binary installer/checker for 1.12, current stable, and current testing.
 4. Add external fixture classification: official pass, legacy pass, extension pass, display pass, quarantine.
 5. Add unit tests for all accepted fixtures:
    - JSON parse

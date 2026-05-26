@@ -74,10 +74,10 @@
 
 | Entry | 官方入口 | SBC 表达方式 |
 | --- | --- | --- |
-| Experimental | https://sing-box.sagernet.org/configuration/experimental/ | Settings 面板 |
-| Cache File | https://sing-box.sagernet.org/configuration/experimental/cache-file/ | Experimental 子表单 |
-| Clash API | https://sing-box.sagernet.org/configuration/experimental/clash-api/ | Experimental 子表单 |
-| V2Ray API | https://sing-box.sagernet.org/configuration/experimental/v2ray-api/ | Experimental 子表单 |
+| Experimental | https://sing-box.sagernet.org/configuration/experimental/ | 独立 Settings 节点 + 折叠模块卡片 |
+| Cache File | https://sing-box.sagernet.org/configuration/experimental/cache-file/ | Experimental 模块卡片 |
+| Clash API | https://sing-box.sagernet.org/configuration/experimental/clash-api/ | Experimental 模块卡片 |
+| V2Ray API | https://sing-box.sagernet.org/configuration/experimental/v2ray-api/ | Experimental 模块卡片 |
 
 ## Shared
 
@@ -90,8 +90,8 @@
 | Entry | 官方入口 | SBC 表达方式 |
 | --- | --- | --- |
 | Listen Fields | https://sing-box.sagernet.org/configuration/shared/listen/ | Inbound Inspector 嵌入字段族 |
-| Dial Fields | https://sing-box.sagernet.org/configuration/shared/dial/ | Outbound、Endpoint、DNS Server detour Inspector 嵌入字段族 |
-| TLS | https://sing-box.sagernet.org/configuration/shared/tls/ | Inbound/Outbound/Endpoint TLS 子表单 |
+| Dial Fields | https://sing-box.sagernet.org/configuration/shared/dial/ | Outbound、Endpoint、NTP、Route、Rule Set、DNS Server detour Inspector 嵌入字段族 |
+| TLS | https://sing-box.sagernet.org/configuration/shared/tls/ | Inbound/Outbound/TLS-capable DNS Server/Service/HTTP Client TLS 子表单 |
 | HTTP Client | https://sing-box.sagernet.org/configuration/shared/http-client/ | `http_clients[]` 资源对象；testing ready、stable gated |
 | HTTP2 Fields | https://sing-box.sagernet.org/configuration/shared/http2/ | HTTP/TLS 子表单字段族 |
 | QUIC Fields | https://sing-box.sagernet.org/configuration/shared/quic/ | QUIC/Hysteria/TUIC 子表单字段族 |
@@ -100,9 +100,9 @@
 | Certificate Provider / Tailscale | https://sing-box.sagernet.org/configuration/shared/certificate-provider/tailscale/ | Certificate Provider 类型 |
 | Certificate Provider / Cloudflare Origin CA | https://sing-box.sagernet.org/configuration/shared/certificate-provider/cloudflare-origin-ca/ | Certificate Provider 类型 |
 | DNS01 Challenge Fields | https://sing-box.sagernet.org/configuration/shared/dns01_challenge/ | ACME Provider 子表单字段族 |
-| Pre-match | https://sing-box.sagernet.org/configuration/shared/pre-match/ | Route Rule / DNS Rule 匹配条件子表单 |
+| Pre-match | https://sing-box.sagernet.org/configuration/shared/pre-match/ | Route Rule action 子表单 |
 | Multiplex | https://sing-box.sagernet.org/configuration/shared/multiplex/ | Outbound/Endpoint Inspector 嵌入字段族 |
-| V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | VMess/VLESS/Trojan/Shadowsocks 等协议子表单 |
+| V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | VMess/VLESS/Trojan 等协议子表单 |
 | UDP over TCP | https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/ | Outbound/Inbound 协议子表单字段族 |
 | TCP Brutal | https://sing-box.sagernet.org/configuration/shared/tcp-brutal/ | Outbound/Endpoint 传输子表单字段族 |
 | Wi-Fi State | https://sing-box.sagernet.org/configuration/shared/wifi-state/ | Route Rule / DNS Rule 条件字段族 |

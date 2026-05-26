@@ -1,12 +1,238 @@
 [
   {
-    "source": "agustyuzu/confexamples/v2fly json v5 leastping.json",
-    "reason": "invalid-shape",
-    "detail": "services is not an array"
+    "source_repo": "adwzlad/AAcustom",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/adwzlad/AAcustom"
   },
   {
-    "source": "aleskxyz/serverless/google/sing-box/v1.13.json",
-    "reason": "duplicate"
+    "source_repo": "agustyuzu/confexamples",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/agustyuzu/confexamples"
+  },
+  {
+    "source_repo": "akiyamamio0921/sing-box_self",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/akiyamamio0921/sing-box_self"
+  },
+  {
+    "source_repo": "aleskxyz/serverless",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/aleskxyz/serverless"
+  },
+  {
+    "source_repo": "AliceHanako/sing-box-rules",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/AliceHanako/sing-box-rules"
+  },
+  {
+    "source_repo": "androidjiasuqi/androidjiasuqi.github.io",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/androidjiasuqi/androidjiasuqi.github.io"
+  },
+  {
+    "source_repo": "Archon-D/Config",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Archon-D/Config"
+  },
+  {
+    "source_repo": "aviapan/proxy",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/aviapan/proxy"
+  },
+  {
+    "source_repo": "axiba04/Proxy",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/axiba04/Proxy"
+  },
+  {
+    "source_repo": "BehradJi/Clash",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/BehradJi/Clash"
+  },
+  {
+    "source_repo": "BroCepage/BroCepage",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/BroCepage/BroCepage"
+  },
+  {
+    "source_repo": "djangoHuu/rule",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/djangoHuu/rule"
+  },
+  {
+    "source_repo": "FailedTech/S-UI",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/FailedTech/S-UI"
+  },
+  {
+    "source_repo": "FeiaoLin/ios_rule",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/FeiaoLin/ios_rule"
+  },
+  {
+    "source_repo": "FincerDW/opooss_ini",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/FincerDW/opooss_ini"
+  },
+  {
+    "source_repo": "gg4924/sing-box-subscribe",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/gg4924/sing-box-subscribe"
+  },
+  {
+    "source_repo": "gjkevin2/vss",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/gjkevin2/vss"
+  },
+  {
+    "source_repo": "HuSheng916/Sing-box-template",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/HuSheng916/Sing-box-template"
+  },
+  {
+    "source_repo": "huskydsb/singbox-for-sub-store-template",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/huskydsb/singbox-for-sub-store-template"
+  },
+  {
+    "source_repo": "hzyhzc/clashrule",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/hzyhzc/clashrule"
+  },
+  {
+    "source_repo": "ionscloud/sing-box-user",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/ionscloud/sing-box-user"
+  },
+  {
+    "source_repo": "IvanSolis1989/Smart-Config-Kit",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/IvanSolis1989/Smart-Config-Kit"
+  },
+  {
+    "source_repo": "jioson1/gvze",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/jioson1/gvze"
+  },
+  {
+    "source_repo": "Keavte/clash-and-sing-box",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Keavte/clash-and-sing-box"
+  },
+  {
+    "source_repo": "kisso-svg/templates",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/kisso-svg/templates"
+  },
+  {
+    "source_repo": "kongkongklng/sing-box_config",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/kongkongklng/sing-box_config"
+  },
+  {
+    "source_repo": "KurococLiu/momo-config",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/KurococLiu/momo-config"
+  },
+  {
+    "source_repo": "lagzian/SS-Collector",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/lagzian/SS-Collector"
+  },
+  {
+    "source_repo": "LGYT-KTPD/atuo-singbox",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/LGYT-KTPD/atuo-singbox"
+  },
+  {
+    "source_repo": "Lorcha-Wu/sing-box-rules",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Lorcha-Wu/sing-box-rules"
+  },
+  {
+    "source_repo": "lucky-cry/ruleset",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/lucky-cry/ruleset"
+  },
+  {
+    "source_repo": "maladr/boxjs",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/maladr/boxjs"
+  },
+  {
+    "source_repo": "ooztxoo/proxy_config",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/ooztxoo/proxy_config"
+  },
+  {
+    "source_repo": "panlingjin/proxyRuleSet",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/panlingjin/proxyRuleSet"
+  },
+  {
+    "source_repo": "proxyfree/proxyfree.github.io",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/proxyfree/proxyfree.github.io"
+  },
+  {
+    "source_repo": "Ptechgithub/configs",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Ptechgithub/configs"
+  },
+  {
+    "source_repo": "Quart233/SingBoxMerge",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Quart233/SingBoxMerge"
+  },
+  {
+    "source_repo": "ReturnFI/Blitz",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/ReturnFI/Blitz"
+  },
+  {
+    "source_repo": "SeanTo/demo",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/SeanTo/demo"
+  },
+  {
+    "source_repo": "spenserlucy/Sing-box-rule",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/spenserlucy/Sing-box-rule"
+  },
+  {
+    "source_repo": "Star-Trails/sing-box-config-example",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/Star-Trails/sing-box-config-example"
+  },
+  {
+    "source_repo": "suming1992/sing-box",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/suming1992/sing-box"
+  },
+  {
+    "source_repo": "tangnahuaite/sing-box_Route-rules",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/tangnahuaite/sing-box_Route-rules"
+  },
+  {
+    "source_repo": "v2raynnodes/v2raynnodes.github.io",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/v2raynnodes/v2raynnodes.github.io"
+  },
+  {
+    "source_repo": "whiskyrye/Rules",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/whiskyrye/Rules"
+  },
+  {
+    "source_repo": "wikm360/xray-client",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/wikm360/xray-client"
+  },
+  {
+    "source_repo": "yeqiu233/config_template",
+    "reason": "tree-fetch-failed",
+    "detail": "Error: GitHub API failed 403: repos/yeqiu233/config_template"
   },
   {
     "source": "baiyian/sing-box-config-template/1.11.x/iPhone2.json",
@@ -177,15 +403,6 @@
     "source": "Fdulo/Sing-Box-config_template/rule/perplexity.json",
     "reason": "ingest-failed",
     "detail": "SyntaxError: Unexpected non-whitespace character after JSON at position 7 (line 1 column 8)"
-  },
-  {
-    "source": "FeiaoLin/ios_rule/fakeipfilter.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "FeiaoLin/ios_rule/sing-box/1.11.x/config_tun.json",
-    "reason": "ingest-failed",
-    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 14789 (line 114 column 5)"
   },
   {
     "source": "herozmy/StoreHouse/config/sing-box/ph_hy2-home-20250418.json",
@@ -494,22 +711,6 @@
     "detail": "SyntaxError: Unexpected token ',', ...\"en_port\": ,\n        \"... is not valid JSON"
   },
   {
-    "source": "IvanSolis1989/Smart-Config-Kit/.claude/settings.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "IvanSolis1989/Smart-Config-Kit/.claude/settings.local.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "IvanSolis1989/Smart-Config-Kit/tools/fixtures/process-name-direct-tools.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "IvanSolis1989/Smart-Config-Kit/v2rayN/v2rayN(xray).json",
-    "reason": "not-sing-box-config"
-  },
-  {
     "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_box_default.json",
     "reason": "duplicate"
   },
@@ -647,14 +848,6 @@
   },
   {
     "source": "qifei/trygit/rules/fakeipfilter.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "Quart233/SingBoxMerge/.zed/tasks.json",
-    "reason": "not-sing-box-config"
-  },
-  {
-    "source": "Quart233/SingBoxMerge/deno.json",
     "reason": "not-sing-box-config"
   },
   {

@@ -1,0 +1,33 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "inbounds": [
+    {
+      "type": "shadowsocks",
+      "tag": "ss-managed-in",
+      "listen": "127.0.0.1",
+      "listen_port": 10801,
+      "method": "2022-blake3-aes-128-gcm",
+      "password": "Q7WI7Eid7AOHSdFDw3bkdA==",
+      "managed": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "services": [
+    {
+      "type": "ssm-api",
+      "tag": "ssm-api",
+      "listen": "127.0.0.1",
+      "listen_port": 9090,
+      "servers": {
+        "/": "ss-managed-in"
+      }
+    }
+  ]
+}

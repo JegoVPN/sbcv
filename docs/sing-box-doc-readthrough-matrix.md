@@ -58,10 +58,10 @@ Testing-only docs versus stable:
 | `log/index.md` | stable+testing | independent-settings | Settings node + Log Inspector |
 | `ntp/index.md` | stable+testing | independent-settings | Settings node + NTP Inspector |
 | `certificate/index.md` | stable+testing | independent-settings | Settings node + Certificate Inspector |
-| `experimental/index.md` | stable+testing | independent-settings | Settings node + Experimental Inspector |
-| `experimental/cache-file.md` | stable+testing | independent-settings | Experimental Inspector subform |
-| `experimental/clash-api.md` | stable+testing | independent-settings | Experimental Inspector subform |
-| `experimental/v2ray-api.md` | stable+testing | independent-settings | Experimental Inspector subform |
+| `experimental/index.md` | stable+testing | independent-settings | Settings node + Experimental module cards |
+| `experimental/cache-file.md` | stable+testing | independent-settings | Collapsed Experimental module card |
+| `experimental/clash-api.md` | stable+testing | independent-settings | Collapsed Experimental module card |
+| `experimental/v2ray-api.md` | stable+testing | independent-settings | Collapsed Experimental module card |
 | `dns/index.md` | stable+testing | chain-hub | DNS hub node + DNS Inspector |
 | `dns/rule.md` | stable+testing | ordered-rule | DNS Rules table + compact visual rule nodes |
 | `dns/rule_action.md` | stable+testing | inspector-subform | DNS Rule action editor |
@@ -195,7 +195,7 @@ Initial product rule:
 | `outbounds[]` | yes | yes | Library > Outbound | Traffic target/group node | Outbound Inspector; embeds Dial/TLS/Mux/Transport/etc. |
 | `route` | yes | yes | Template/import, Route Library helper | Route hub node | Route Inspector + Route Rules table |
 | `services[]` | yes | yes | Library > Service | Service resource card/list | Service Inspector; embeds TLS/Dial by type |
-| `experimental` | yes | yes | Library > Settings > Experimental | Optional independent settings card, no ports | Experimental Inspector subforms |
+| `experimental` | yes | yes | Library > Settings > Experimental | Optional independent settings card, no ports | Collapsed module cards; no raw field dump |
 
 ## Shared Field Ownership Decisions
 
@@ -204,10 +204,10 @@ These docs were read specifically to prevent the Library from treating shared fi
 | Shared doc | Channel | Field shape | Correct owner | Add behavior | Implementation note |
 | --- | --- | --- | --- | --- | --- |
 | `shared/listen.md` | stable+testing | `listen`, `listen_port`, bind/reuse/netns/TCP/UDP/deprecated sniff fields | Inbound types that listen | `INSPECTOR` only | Do not create a Listen node; expose as "Listen Fields" section in inbound Inspector |
-| `shared/dial.md` | stable+testing | detour, bind addresses, netns, timeout, TCP, `domain_resolver`, network strategy | Outbound, Endpoint, NTP, DNS server detour/dialing parents | `INSPECTOR` only | `detour` is a tag ref; canvas edge can visualize it, but Inspector/domain command owns the field |
-| `shared/tls.md` | stable+testing | inbound server TLS, outbound client TLS, ECH, Reality, uTLS, certificate provider refs | Inbound/Outbound/Endpoint/Service protocol parents | `INSPECTOR` only | Testing adds provider-oriented fields; certificate provider ref must be target-gated |
+| `shared/dial.md` | stable+testing | detour, bind addresses, netns, timeout, TCP, `domain_resolver`, network strategy | Outbound, Endpoint, NTP, Route, remote Rule Set, DNS server detour/dialing parents | `INSPECTOR` only | `detour` and download/default HTTP client refs are tag refs; canvas edges can visualize them, but Inspector/domain command owns the field |
+| `shared/tls.md` | stable+testing | inbound server TLS, outbound client TLS, ECH, Reality, uTLS, certificate provider refs | Inbound/Outbound/TLS-capable DNS Server/Service/HTTP Client protocol parents | `INSPECTOR` only | Testing adds provider-oriented fields; certificate provider ref must be target-gated |
 | `shared/multiplex.md` | stable+testing | inbound/outbound mux fields plus TCP Brutal subform | Protocol parents that support multiplex | `INSPECTOR` only | Outbound/endpoint Inspector subform; no mux node |
-| `shared/v2ray-transport.md` | stable+testing | transport `type`: http/ws/quic/grpc/httpupgrade plus type fields | VMess/VLESS/Trojan/Shadowsocks protocol parents | `INSPECTOR` only | Type switcher inside protocol Inspector |
+| `shared/v2ray-transport.md` | stable+testing | transport `type`: http/ws/quic/grpc/httpupgrade plus type fields | VMess/VLESS/Trojan protocol parents | `INSPECTOR` only | Type switcher inside protocol Inspector |
 | `shared/udp-over-tcp.md` | stable+testing | boolean or object with `enabled`, `version` | SOCKS/Shadowsocks/Naive/TUIC compatible parents | `INSPECTOR` only | Inline protocol field; no UoT node |
 | `shared/tcp-brutal.md` | stable+testing | `enabled`, `up_mbps`, `down_mbps` | Multiplex/transport parents that expose Brutal | `INSPECTOR` only | Nested subform under mux/transport |
 | `shared/pre-match.md` | stable+testing | behavior doc for route pre-match actions | Route Rule action editor | `TABLE`/`INSPECTOR` | Not a field group node; informs which actions are legal before connection establishment |
@@ -242,7 +242,8 @@ An entry is not release-ready until all items below exist and are linked back to
 4. Import round-trip test from canonical JSON to graph and back to canonical JSON.
 5. Fixture generated from the command path.
 6. Correct official CLI validation:
-   - `sing-box-stable check` for `1.13 stable` and `1.12 Legacy`.
+   - `sing-box-stable check` for `1.13 stable`.
+   - `sing-box-1.12 check` for `1.12 Legacy`.
    - `sing-box-testing check` for `1.14 testing`.
 7. E2E path proving the UI badge does what it says.
 

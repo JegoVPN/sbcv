@@ -23,12 +23,12 @@ Last run: 2026-05-26 against testing docs commit `b6c416b0482a2d2391470d70ce518a
 | Matrix rows | 105 |
 | Palette entries | 107 |
 | `ADD` entries | 15 |
-| `SETUP` entries | 42 |
+| `SETUP` entries | 44 |
 | `TABLE` entries | 4 |
 | `INSPECTOR` entries | 14 |
 | `GATED` entries | 15 |
 | `PENDING` entries | 0 |
-| `DOCS` entries | 17 |
+| `DOCS` entries | 15 |
 
 ## User-Facing Meaning
 
@@ -40,11 +40,13 @@ The second closed usability gap is Inbound setup: users can now add Direct, SOCK
 
 The third closed usability gap is DNS Server setup: users can now add Hosts, TCP, UDP, TLS, QUIC, HTTPS, HTTP3/H3, DHCP, FakeIP, Tailscale, and Resolved DNS servers from Library. These create DNS server objects under canonical `dns.servers[]`, select the new DNS server node, and expose editable server/path/interface/range/reference scalar fields in the Inspector. mDNS remains `GATED` because it is testing-only, and Legacy remains docs/migration-only.
 
-The fourth closed usability gap is independent settings setup: users can now add NTP, Certificate, and Experimental settings from Library. These create canonical top-level `ntp`, `certificate`, and `experimental` objects, pin independent settings cards on the canvas, and expose editable NTP server/interval, certificate store/path, cache file, Clash API, and V2Ray API fields in the Inspector. The stable fixture `fixtures/stable/global-settings.json` validates the emitted stable-safe subset with `sing-box-stable`.
+The fourth closed usability gap is independent settings setup: users can now add NTP, Certificate, and Experimental settings from Library. These create canonical top-level `ntp`, `certificate`, and `experimental` objects, pin independent settings cards on the canvas, and expose editable NTP server/interval and certificate store/path fields in the Inspector. Experimental uses collapsed module cards for Cache File, Clash API, and V2Ray API so the default view stays visual and does not dump raw fields. The stable fixture `fixtures/stable/global-settings.json` validates the emitted stable-safe subset with `sing-box-stable`.
 
 The fifth closed usability gap is outbound upstream ownership: newly created outbounds now respect the selected canonical owner. Route, Route Rule, Selector, URLTest, and DNS Server selections connect the new outbound through the corresponding official tag field. Orphan outbounds expose explicit Inspector actions for route final, route rule, selector/urltest membership, DNS detour target, and Dial detour target, so users do not need to infer those references from side-port icons alone.
 
 The sixth closed usability gap is Rule Set setup: users can now add a stable-safe remote source rule-set from Library. SBC writes `route.rule_set[]`, renders a `rule-set` canvas node, exposes URL/format/update interval/download detour fields in the Inspector, validates `route.rules[].rule_set` and `dns.rules[].rule_set` tag references, and shows rule-set fields in both ordered rule tables. The stable fixture `fixtures/stable/rule-set-remote.json` validates this output with `sing-box-stable`.
+
+The seventh closed usability gap is Endpoint setup and type switching: users can now add WireGuard and Tailscale endpoints from Library. SBC writes canonical `endpoints[]`, renders endpoint nodes, supports endpoint Dial `detour`, links Tailscale DNS servers to Tailscale endpoints, and validates endpoint tag references. Inbound, Outbound, DNS Server, Endpoint, and Rule Set nodes also expose target-appropriate type switching in the Inspector while preserving tags and clearing invalid references through domain commands.
 
 Remaining chain-node gaps reported by the audit:
 
@@ -56,10 +58,10 @@ Remaining Palette surface gaps reported by the audit:
 
 Remaining writable object gaps reported by the expanded audit:
 
-- Endpoint WireGuard and Tailscale.
 - Rule Set source-format and AdGuard conversion helpers.
 - Service resources.
 - Outbound WireGuard and DNS migration/special entries.
+- Testing-only Certificate Provider and HTTP Client resource schemas.
 
 ## Release Gate
 

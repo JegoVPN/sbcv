@@ -132,9 +132,9 @@ export function RouteRulesTable() {
                   onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
                 >
                   <option value="">Missing</option>
-                  {outbounds.map((outbound) => (
-                    <option key={outbound.tag} value={outbound.tag}>
-                      {outbound.tag}
+                  {outbounds.map((outbound, outboundIndex) => (
+                    <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
+                      {outbound.tag ?? `untagged-${outboundIndex + 1}`}
                     </option>
                   ))}
                 </select>
@@ -232,9 +232,9 @@ export function DnsRulesTable() {
                   onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
                 >
                   <option value="">Missing</option>
-                  {servers.map((server) => (
-                    <option key={server.tag} value={server.tag}>
-                      {server.tag}
+                  {servers.map((server, serverIndex) => (
+                    <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
+                      {server.tag ?? `untagged-${serverIndex + 1}`}
                     </option>
                   ))}
                 </select>

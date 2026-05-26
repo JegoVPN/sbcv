@@ -21,6 +21,27 @@ export const OUTBOUND_PALETTE_TYPES = {
   urltest: "urltest",
 } as const;
 
+export const CREATABLE_OUTBOUND_TYPES = [
+  "direct",
+  "block",
+  "socks",
+  "http",
+  "shadowsocks",
+  "vmess",
+  "trojan",
+  "naive",
+  "hysteria",
+  "shadowtls",
+  "vless",
+  "tuic",
+  "hysteria2",
+  "anytls",
+  "tor",
+  "ssh",
+  "selector",
+  "urltest",
+] as const;
+
 export type OutboundPaletteKind = keyof typeof OUTBOUND_PALETTE_TYPES;
 
 export const INBOUND_PALETTE_TYPES = {
@@ -44,6 +65,26 @@ export const INBOUND_PALETTE_TYPES = {
   "inbound-cloudflared": "cloudflared",
 } as const;
 
+export const CREATABLE_INBOUND_TYPES = [
+  "direct",
+  "mixed",
+  "socks",
+  "http",
+  "shadowsocks",
+  "vmess",
+  "trojan",
+  "naive",
+  "hysteria",
+  "shadowtls",
+  "vless",
+  "tuic",
+  "hysteria2",
+  "anytls",
+  "tun",
+  "redirect",
+  "tproxy",
+] as const;
+
 export type InboundPaletteKind = keyof typeof INBOUND_PALETTE_TYPES;
 
 export const DNS_SERVER_PALETTE_TYPES = {
@@ -63,7 +104,44 @@ export const DNS_SERVER_PALETTE_TYPES = {
   "dns-resolved": "resolved",
 } as const;
 
+export const CREATABLE_DNS_SERVER_TYPES = [
+  "local",
+  "hosts",
+  "tcp",
+  "udp",
+  "tls",
+  "quic",
+  "https",
+  "h3",
+  "dhcp",
+  "fakeip",
+  "tailscale",
+  "resolved",
+] as const;
+
 export type DnsServerPaletteKind = keyof typeof DNS_SERVER_PALETTE_TYPES;
+
+export const ENDPOINT_PALETTE_TYPES = {
+  "endpoint-wireguard": "wireguard",
+  "endpoint-tailscale": "tailscale",
+} as const;
+
+export const CREATABLE_ENDPOINT_TYPES = ["wireguard", "tailscale"] as const;
+
+export type EndpointPaletteKind = keyof typeof ENDPOINT_PALETTE_TYPES;
+
+export const SERVICE_PALETTE_TYPES = {
+  "service-derp": "derp",
+  "service-resolved": "resolved",
+  "service-ssm-api": "ssm-api",
+  "service-ccm": "ccm",
+  "service-ocm": "ocm",
+  "service-hysteria-realm": "hysteria-realm",
+} as const;
+
+export const CREATABLE_SERVICE_TYPES = ["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"] as const;
+
+export type ServicePaletteKind = keyof typeof SERVICE_PALETTE_TYPES;
 
 const preferredOutboundTags: Record<string, string> = {
   direct: "direct",
@@ -132,6 +210,22 @@ const preferredRuleSetTags: Record<string, string> = {
   inline: "inline-rules",
 };
 
+export const CREATABLE_RULE_SET_TYPES = ["remote", "local", "inline"] as const;
+
+const preferredEndpointTags: Record<string, string> = {
+  wireguard: "wg-ep",
+  tailscale: "ts-ep",
+};
+
+const preferredServiceTags: Record<string, string> = {
+  derp: "derp",
+  resolved: "resolved",
+  "ssm-api": "ssm-api",
+  ccm: "ccm",
+  ocm: "ocm",
+  "hysteria-realm": "hy-realm",
+};
+
 export function outboundTypeForPaletteKind(kind: string): string | undefined {
   return OUTBOUND_PALETTE_TYPES[kind as OutboundPaletteKind];
 }
@@ -158,4 +252,20 @@ export function preferredDnsServerTag(type: string): string {
 
 export function preferredRuleSetTag(type: string): string {
   return preferredRuleSetTags[type] ?? `${type}-rules`;
+}
+
+export function endpointTypeForPaletteKind(kind: string): string | undefined {
+  return ENDPOINT_PALETTE_TYPES[kind as EndpointPaletteKind];
+}
+
+export function preferredEndpointTag(type: string): string {
+  return preferredEndpointTags[type] ?? `${type}-ep`;
+}
+
+export function serviceTypeForPaletteKind(kind: string): string | undefined {
+  return SERVICE_PALETTE_TYPES[kind as ServicePaletteKind];
+}
+
+export function preferredServiceTag(type: string): string {
+  return preferredServiceTags[type] ?? `${type}-service`;
 }
