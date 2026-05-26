@@ -325,6 +325,125 @@ export function validateConfig(
     );
   });
 
+  const proxyOutboundTypes = new Set([
+    "socks",
+    "http",
+    "shadowsocks",
+    "vmess",
+    "trojan",
+    "naive",
+    "hysteria",
+    "shadowtls",
+    "vless",
+    "tuic",
+    "hysteria2",
+    "anytls",
+    "ssh",
+  ]);
+  const tlsRequiredOutboundTypes = new Set([
+    "trojan",
+    "naive",
+    "hysteria",
+    "hysteria2",
+    "tuic",
+    "anytls",
+    "shadowtls",
+  ]);
+  const tlsRequiredInboundTypes = new Set([
+    "trojan",
+    "naive",
+    "hysteria",
+    "hysteria2",
+    "tuic",
+    "anytls",
+  ]);
+
+  outbounds.forEach((outbound, index) => {
+    const tag = outbound.tag ?? `outbound-${index}`;
+    if (proxyOutboundTypes.has(outbound.type)) {
+      if (!outbound.server || (typeof outbound.server === "string" && outbound.server.length === 0)) {
+        push(
+          diagnostics,
+          "error",
+          "outbound-missing-server",
+          `/outbounds/${index}/server`,
+          `Outbound "${tag}" of type ${outbound.type} requires a server address.`,
+        );
+      }
+      const port = outbound.server_port;
+      if (typeof port !== "number" || !Number.isFinite(port) || port <= 0 || port > 65535) {
+        push(
+          diagnostics,
+          "error",
+          "outbound-invalid-server-port",
+          `/outbounds/${index}/server_port`,
+          `Outbound "${tag}" of type ${outbound.type} requires a numeric server_port between 1 and 65535.`,
+        );
+      }
+    }
+    if (tlsRequiredOutboundTypes.has(outbound.type)) {
+      const tls = (outbound as Record<string, unknown>).tls;
+      const enabled =
+        tls && typeof tls === "object" && !Array.isArray(tls)
+          ? Boolean((tls as Record<string, unknown>).enabled)
+          : false;
+      if (!enabled) {
+        push(
+          diagnostics,
+          "error",
+          "outbound-missing-tls",
+          `/outbounds/${index}/tls`,
+          `Outbound "${tag}" of type ${outbound.type} requires tls.enabled=true; sing-box will refuse to start otherwise.`,
+        );
+      }
+    }
+  });
+
+  listItems(config.inbounds).forEach((inbound, index) => {
+    if (!tlsRequiredInboundTypes.has(inbound.type)) return;
+    const tls = (inbound as Record<string, unknown>).tls;
+    const enabled =
+      tls && typeof tls === "object" && !Array.isArray(tls)
+        ? Boolean((tls as Record<string, unknown>).enabled)
+        : false;
+    if (!enabled) {
+      const tag = inbound.tag ?? `inbound-${index}`;
+      push(
+        diagnostics,
+        "error",
+        "inbound-missing-tls",
+        `/inbounds/${index}/tls`,
+        `Inbound "${tag}" of type ${inbound.type} requires tls.enabled=true; sing-box will refuse to start otherwise.`,
+      );
+    }
+  });
+
+  outbounds.forEach((outbound, index) => {
+    if (outbound.type !== "selector" && outbound.type !== "urltest") return;
+    const candidates = Array.isArray(outbound.outbounds) ? outbound.outbounds : [];
+    const tag = outbound.tag ?? `outbound-${index}`;
+    if (candidates.length === 0) {
+      push(
+        diagnostics,
+        "warning",
+        "group-outbound-empty",
+        `/outbounds/${index}/outbounds`,
+        `${outbound.type} group "${tag}" has no candidates; sing-box will reject it.`,
+      );
+    }
+    if (outbound.type === "selector" && typeof outbound.default === "string" && outbound.default.length > 0) {
+      if (!candidates.includes(outbound.default)) {
+        push(
+          diagnostics,
+          "error",
+          "selector-default-not-in-candidates",
+          `/outbounds/${index}/default`,
+          `Selector "${tag}" default "${outbound.default}" is not in its candidates list.`,
+        );
+      }
+    }
+  });
+
   listItems(config.dns?.servers).forEach((server, index) => {
     if (!looksLikeDomain(server.server)) return;
     if (resolverPresent(server.domain_resolver)) return;
