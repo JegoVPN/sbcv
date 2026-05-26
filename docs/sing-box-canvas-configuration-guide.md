@@ -284,7 +284,7 @@ Outbounds are the clearest source of the current usability gap. Users expect eve
 | `selector` | `ADD READY` | Group node | Candidate outbounds, default candidate |
 | `urltest` | `ADD READY` | Group node | Candidate outbounds, test URL, interval, tolerance |
 
-Normal-user rule: when a Route node is selected and the user adds an outbound from Library, the product should offer "add unconnected" and "connect as route final" choices. When a Selector/URLTest is selected, adding an outbound should default to adding it as a candidate.
+Normal-user rule: Library creation must respect the current selection instead of always creating an orphan node. If Route is selected, a new outbound becomes the route final when no final exists, otherwise a new editable route rule targets it. If a Route Rule is selected, that rule's `outbound` is replaced. If a Selector or URLTest is selected, the new outbound is appended to the group's `outbounds[]`. If a DNS Server is selected, the new outbound becomes its Dial `detour`. If there is no compatible selected owner, the node is created unconnected and the Inspector must expose the upstream connection actions.
 
 ## Route
 
@@ -440,7 +440,8 @@ When a user adds an outbound from Library without connecting it, the Inspector m
 - create a new `route.rules[]` row targeting it;
 - add it as a Selector or URLTest candidate;
 - use it as a DNS server detour;
-- set or clear its own Dial `detour` field.
+- use it as another outbound's Dial `detour` target;
+- set or clear its own downstream Dial `detour` field when the selected outbound supports Dial Fields.
 
 This is required because the official docs express these relationships through tag fields, not through a pure DAG. Canvas edges visualize those tag references; the Inspector gives the explicit, non-ambiguous edit path.
 

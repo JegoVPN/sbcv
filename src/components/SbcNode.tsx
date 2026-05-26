@@ -72,15 +72,15 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
     }
     if (kind === "outbound") {
       const routingInputs: PortSpec[] = [
-        { key: "route", label: "Route final", nodeKind: "route", icon: Route },
-        { key: "route-rule", label: "Rule outbound", nodeKind: "route-rule", icon: GitBranch },
+        { key: "route", label: "Upstream Route final", nodeKind: "route", icon: Route },
+        { key: "route-rule", label: "Upstream Rule outbound", nodeKind: "route-rule", icon: GitBranch },
       ];
       return [
         ...routingInputs,
-        { key: "selector-group", label: "Selector candidate", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
-        { key: "urltest-group", label: "URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
-        { key: "dns-detour", label: "DNS detour target", nodeKind: "dns-server", icon: Server },
-        { key: "detour-target", label: "Dial detour target", nodeKind: "outbound", icon: Network },
+        { key: "selector-group", label: "Upstream Selector candidate", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
+        { key: "urltest-group", label: "Upstream URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
+        { key: "dns-detour", label: "Upstream DNS detour target", nodeKind: "dns-server", icon: Server },
+        { key: "detour-target", label: "Upstream Dial detour target", nodeKind: "outbound", icon: Network },
       ];
     }
     return [];
@@ -103,10 +103,10 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
   if (kind === "dns-rule") return [{ key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server }];
   if (kind === "dns-server") return [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
   if (kind === "outbound" && (type === "selector" || type === "urltest")) {
-    return [{ key: "outbound-member", label: "Outbound member", nodeKind: "outbound", icon: Network }];
+    return [{ key: "outbound-member", label: "Downstream candidate", nodeKind: "outbound", icon: Network }];
   }
   if (kind === "outbound" && supportsDialDetour(type)) {
-    return [{ key: "dial-detour", label: "Dial detour", nodeKind: "outbound", icon: Network }];
+    return [{ key: "dial-detour", label: "Downstream dial detour", nodeKind: "outbound", icon: Network }];
   }
   return [];
 }
