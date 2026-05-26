@@ -337,6 +337,34 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("round-trips the settings:log timestamp toggle (timestamp + output placeholder)", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("settings-log");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    expect(inspector.getByPlaceholderText("file path (omit to use console)")).toBeInTheDocument();
+
+    const timestampToggle = inspector.getByLabelText("Prefix each line with a timestamp") as HTMLInputElement;
+    expect(timestampToggle.checked).toBe(false);
+
+    fireEvent.click(timestampToggle);
+    expect(useProjectStore.getState().config.log).toMatchObject({ timestamp: true });
+
+    fireEvent.click(timestampToggle);
+    expect((useProjectStore.getState().config.log ?? {}).timestamp).toBeUndefined();
+
+    const disableToggle = inspector.getByLabelText("Disable log") as HTMLInputElement;
+    fireEvent.click(disableToggle);
+    expect(useProjectStore.getState().config.log).toMatchObject({ disabled: true });
+    expect(timestampToggle.disabled).toBe(true);
+  });
+
   it("surfaces non-scalar entity fields under Advanced JSON fields", () => {
     useProjectStore.getState().loadMinimal();
 

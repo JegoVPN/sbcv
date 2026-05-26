@@ -1287,11 +1287,20 @@ export function Inspector() {
 
       {ref.kind === "settings" && ref.path === "log" ? (
         <>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.disabled)}
+              onChange={(event) => updateField(ref, "disabled", event.target.checked || undefined)}
+            />
+            <span>Disable log</span>
+          </label>
           <label className="field">
             <span>Level</span>
             <select
               value={String(entity.level ?? "info")}
               onChange={(event) => updateField(ref, "level", event.target.value)}
+              disabled={Boolean(entity.disabled)}
             >
               <option value="trace">trace</option>
               <option value="debug">debug</option>
@@ -1307,16 +1316,18 @@ export function Inspector() {
             <input
               value={String(entity.output ?? "")}
               onChange={(event) => updateField(ref, "output", event.target.value || undefined)}
-              placeholder="stdout or file path"
+              placeholder="file path (omit to use console)"
+              disabled={Boolean(entity.disabled)}
             />
           </label>
           <label className="toggle-row">
             <input
               type="checkbox"
-              checked={Boolean(entity.disabled)}
-              onChange={(event) => updateField(ref, "disabled", event.target.checked || undefined)}
+              checked={Boolean(entity.timestamp)}
+              onChange={(event) => updateField(ref, "timestamp", event.target.checked || undefined)}
+              disabled={Boolean(entity.disabled)}
             />
-            <span>Disable log</span>
+            <span>Prefix each line with a timestamp</span>
           </label>
         </>
       ) : null}
