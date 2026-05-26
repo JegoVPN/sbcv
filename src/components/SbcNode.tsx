@@ -8,6 +8,7 @@ import {
   Database,
   GitBranch,
   Globe2,
+  Layers3,
   Network,
   Plus,
   RadioTower,
@@ -31,6 +32,7 @@ const iconMap = {
   "dns-server": Server,
   "dns-rule": GitBranch,
   outbound: Network,
+  "rule-set": Layers3,
   settings: Braces,
 };
 
@@ -61,9 +63,25 @@ function supportsDialDetour(type: string) {
 export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
   if (direction === "input") {
     if (kind === "route") return [{ key: "inbound", label: "Inbound traffic", nodeKind: "inbound", icon: RadioTower }];
-    if (kind === "route-rule") return [{ key: "route", label: "Route order", nodeKind: "route", icon: Route }];
+    if (kind === "route-rule") {
+      return [
+        { key: "route", label: "Route order", nodeKind: "route", icon: Route },
+        { key: "inbound", label: "Inbound matcher", nodeKind: "inbound", icon: RadioTower },
+      ];
+    }
     if (kind === "dns") return [{ key: "inbound-query", label: "DNS query source", nodeKind: "inbound", icon: RadioTower }];
-    if (kind === "dns-rule") return [{ key: "dns", label: "DNS resolver", nodeKind: "dns", icon: Globe2 }];
+    if (kind === "dns-rule") {
+      return [
+        { key: "dns", label: "DNS order", nodeKind: "dns", icon: Globe2 },
+        { key: "inbound", label: "Inbound matcher", nodeKind: "inbound", icon: RadioTower },
+      ];
+    }
+    if (kind === "rule-set") {
+      return [
+        { key: "route-rule", label: "Upstream Route rule set", nodeKind: "route-rule", icon: GitBranch },
+        { key: "dns-rule", label: "Upstream DNS rule set", nodeKind: "dns-rule", icon: GitBranch },
+      ];
+    }
     if (kind === "dns-server") {
       return [
         { key: "dns", label: "DNS final server", nodeKind: "dns", icon: Globe2 },
@@ -81,26 +99,44 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
         { key: "urltest-group", label: "Upstream URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
         { key: "dns-detour", label: "Upstream DNS detour target", nodeKind: "dns-server", icon: Server },
         { key: "detour-target", label: "Upstream Dial detour target", nodeKind: "outbound", icon: Network },
+        { key: "rule-set-download", label: "Upstream Rule Set download detour", nodeKind: "rule-set", icon: Layers3 },
       ];
     }
     return [];
   }
 
-  if (kind === "inbound") return [{ key: "route", label: "Route", nodeKind: "route", icon: Route }];
+  if (kind === "inbound") {
+    return [
+      { key: "route", label: "Route hub", nodeKind: "route", icon: Route },
+      { key: "route-rule-match", label: "Route rule matcher", nodeKind: "route-rule", icon: GitBranch },
+      { key: "dns-rule-match", label: "DNS rule matcher", nodeKind: "dns-rule", icon: GitBranch },
+    ];
+  }
   if (kind === "route") {
     return [
       { key: "route-rule", label: "Route rule", nodeKind: "route-rule", icon: GitBranch },
       { key: "outbound", label: "Outbound", nodeKind: "outbound", icon: Network },
     ];
   }
-  if (kind === "route-rule") return [{ key: "outbound", label: "Outbound", nodeKind: "outbound", icon: Network }];
+  if (kind === "route-rule") {
+    return [
+      { key: "outbound", label: "Outbound", nodeKind: "outbound", icon: Network },
+      { key: "rule-set", label: "Rule Set", nodeKind: "rule-set", icon: Layers3 },
+    ];
+  }
   if (kind === "dns") {
     return [
       { key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch },
       { key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server },
     ];
   }
-  if (kind === "dns-rule") return [{ key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server }];
+  if (kind === "dns-rule") {
+    return [
+      { key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server },
+      { key: "rule-set", label: "Rule Set", nodeKind: "rule-set", icon: Layers3 },
+    ];
+  }
+  if (kind === "rule-set") return [{ key: "download-detour", label: "Download detour", nodeKind: "outbound", icon: Network }];
   if (kind === "dns-server") return [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
   if (kind === "outbound" && (type === "selector" || type === "urltest")) {
     return [{ key: "outbound-member", label: "Downstream candidate", nodeKind: "outbound", icon: Network }];
@@ -113,6 +149,11 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
 
 function nodeValueFromId(id: string) {
   return id.split(":").slice(1).join(":");
+}
+
+function stringRefs(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
 }
 
 function routeRuleIndex(id: string) {
@@ -133,8 +174,16 @@ function isPortConnected(
   if (direction === "input") {
     if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0;
     if (kind === "route-rule" && portKey === "route") return true;
+    if (kind === "route-rule" && portKey === "inbound") {
+      const index = routeRuleIndex(id);
+      return Boolean(config.route?.rules?.[index]?.inbound);
+    }
     if (kind === "dns" && portKey === "inbound-query") return (config.inbounds?.length ?? 0) > 0;
     if (kind === "dns-rule" && portKey === "dns") return true;
+    if (kind === "dns-rule" && portKey === "inbound") {
+      const index = routeRuleIndex(id);
+      return Boolean(config.dns?.rules?.[index]?.inbound);
+    }
     if (kind === "dns-server" && portKey === "dns-rule") {
       return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
     }
@@ -155,21 +204,53 @@ function isPortConnected(
     if (kind === "outbound" && portKey === "detour-target") {
       return config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ?? false;
     }
+    if (kind === "outbound" && portKey === "rule-set-download") {
+      return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
+    }
+    if (kind === "rule-set" && portKey === "route-rule") {
+      return config.route?.rules?.some((rule) => {
+        if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
+        return rule.rule_set === value;
+      }) ?? false;
+    }
+    if (kind === "rule-set" && portKey === "dns-rule") {
+      return config.dns?.rules?.some((rule) => {
+        if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
+        return rule.rule_set === value;
+      }) ?? false;
+    }
     return false;
   }
 
   if (kind === "inbound" && portKey === "route") return Boolean(config.route);
+  if (kind === "inbound" && portKey === "route-rule-match") {
+    return config.route?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
+  }
+  if (kind === "inbound" && portKey === "dns-rule-match") {
+    return config.dns?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
+  }
   if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
   if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
   if (kind === "route-rule" && portKey === "outbound") {
     const index = routeRuleIndex(id);
     return Boolean(config.route?.rules?.[index]?.outbound);
   }
+  if (kind === "route-rule" && portKey === "rule-set") {
+    const index = routeRuleIndex(id);
+    return Boolean(config.route?.rules?.[index]?.rule_set);
+  }
   if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0;
   if (kind === "dns" && portKey === "dns-server") return Boolean(config.dns?.final);
   if (kind === "dns-rule" && portKey === "dns-server") {
     const index = routeRuleIndex(id);
     return Boolean(config.dns?.rules?.[index]?.server);
+  }
+  if (kind === "dns-rule" && portKey === "rule-set") {
+    const index = routeRuleIndex(id);
+    return Boolean(config.dns?.rules?.[index]?.rule_set);
+  }
+  if (kind === "rule-set" && portKey === "download-detour") {
+    return Boolean(config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value)?.download_detour);
   }
   if (kind === "dns-server" && portKey === "outbound") {
     return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);

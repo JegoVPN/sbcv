@@ -10,34 +10,35 @@ type PortCase = {
 };
 
 const cases: PortCase[] = [
-  { kind: "inbound", type: "tun", inputKeys: [], outputKeys: ["route"] },
+  { kind: "inbound", type: "tun", inputKeys: [], outputKeys: ["route", "route-rule-match", "dns-rule-match"] },
   { kind: "route", type: "route", inputKeys: ["inbound"], outputKeys: ["route-rule", "outbound"] },
-  { kind: "route-rule", type: "route-rule", inputKeys: ["route"], outputKeys: ["outbound"] },
+  { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set"] },
   { kind: "dns", type: "dns", inputKeys: ["inbound-query"], outputKeys: ["dns-rule", "dns-server"] },
-  { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns"], outputKeys: ["dns-server"] },
+  { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
   { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound"] },
+  { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
   {
     kind: "outbound",
     type: "direct",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
     outputKeys: [],
   },
   {
     kind: "outbound",
     type: "socks",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
     outputKeys: ["dial-detour"],
   },
   {
     kind: "outbound",
     type: "selector",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
     outputKeys: ["outbound-member"],
   },
   {
     kind: "outbound",
     type: "urltest",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
     outputKeys: ["outbound-member"],
   },
 ];

@@ -37,11 +37,11 @@ Current completeness checkpoint, from `pnpm audit:config-docs` on 2026-05-26:
 
 - Official testing English docs: 105.
 - Matrix rows: 105.
-- Palette entries: 104.
-- Remaining docs without a Palette surface: 8 base/resource-helper docs.
-- Remaining writable docs without a complete write path: 12.
+- Palette entries: 107.
+- Remaining docs without a Palette surface: 5 base docs.
+- Remaining writable docs without a complete write path: 13, including source-format/conversion helper docs that are not direct config objects.
 
-The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set, and Service resources.
+The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set source/conversion helpers, and Service resources.
 
 ## Product Principle
 
@@ -312,6 +312,8 @@ Route rules must support common first-match fields first:
 
 Advanced route fields such as `auto_detect_interface`, default network strategy, default domain resolver, and target-specific fields belong on the Route Inspector.
 
+Current implementation rule: Rule Set creates stable-safe remote `source` entries under `route.rule_set[]`; route and DNS rules reference those entries through ordered table fields and canvas edges. When an imported config has more than 24 rule sets, the canvas suppresses individual Rule Set resource nodes and leaves editing to the Route/DNS rule tables plus JSON/Inspector, so large subscription configs remain renderable. Inline headless rule editing and AdGuard conversion remain documentation/helper surfaces until a dedicated rule-set table/compiler flow exists.
+
 ## DNS
 
 DNS is a hub plus servers plus ordered rules.
@@ -424,14 +426,15 @@ Node side icons are not decorative and must not simply repeat the node's own typ
 
 | Node | Left side means "can be referenced by" | Right side means "can reference / create" | Canonical fields |
 | --- | --- | --- | --- |
-| Inbound | none | Route hub | `inbounds[]` exists; visual traffic source only |
+| Inbound | none | Route hub, Route/DNS rule inbound matcher | `inbounds[]`, `route.rules[].inbound`, `dns.rules[].inbound` |
 | Route | Inbound traffic source | Route Rule, Route final outbound | `route.rules[]`, `route.final` |
-| Route Rule | Route ordered list | Rule outbound target | `route.rules[index].outbound` |
-| Outbound leaf | Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS detour target, Dial detour target | Dial detour outbound when the protocol supports Dial Fields | `route.final`, `route.rules[].outbound`, `outbounds[type=selector/urltest].outbounds[]`, `dns.servers[].detour`, `outbounds[].detour` |
+| Route Rule | Route ordered list, inbound matcher | Rule outbound target, Rule Set matcher | `route.rules[index].inbound`, `route.rules[index].outbound`, `route.rules[index].rule_set` |
+| Outbound leaf | Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS detour target, Dial detour target, Rule Set download detour target | Dial detour outbound when the protocol supports Dial Fields | `route.final`, `route.rules[].outbound`, `outbounds[type=selector/urltest].outbounds[]`, `dns.servers[].detour`, `outbounds[].detour`, `route.rule_set[].download_detour` |
 | Selector / URLTest | Same inbound references as other outbounds | Candidate outbounds | `outbounds[].outbounds[]`, `outbounds[].default` |
 | DNS | DNS query source | DNS Rule, DNS final server | `dns.rules[]`, `dns.final` |
-| DNS Rule | DNS ordered list | DNS server target | `dns.rules[index].server` |
+| DNS Rule | DNS ordered list, inbound matcher | DNS server target, Rule Set matcher | `dns.rules[index].inbound`, `dns.rules[index].server`, `dns.rules[index].rule_set` |
 | DNS Server | DNS final, DNS Rule server | Detour outbound | `dns.final`, `dns.rules[].server`, `dns.servers[].detour` |
+| Rule Set | Route/DNS rules that match it | Download detour outbound | `route.rules[].rule_set`, `dns.rules[].rule_set`, `route.rule_set[].download_detour` |
 | Settings | none | none | Top-level `log`, `ntp`, `certificate`, `experimental` |
 
 When a user adds an outbound from Library without connecting it, the Inspector must still expose the full upstream path:

@@ -126,6 +126,12 @@ const preferredDnsServerTags: Record<string, string> = {
   resolved: "resolved-dns",
 };
 
+const preferredRuleSetTags: Record<string, string> = {
+  remote: "remote-rules",
+  local: "local-rules",
+  inline: "inline-rules",
+};
+
 export function outboundTypeForPaletteKind(kind: string): string | undefined {
   return OUTBOUND_PALETTE_TYPES[kind as OutboundPaletteKind];
 }
@@ -148,4 +154,8 @@ export function dnsServerTypeForPaletteKind(kind: string): string | undefined {
 
 export function preferredDnsServerTag(type: string): string {
   return preferredDnsServerTags[type] ?? `${type}-dns`;
+}
+
+export function preferredRuleSetTag(type: string): string {
+  return preferredRuleSetTags[type] ?? `${type}-rules`;
 }

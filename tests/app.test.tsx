@@ -178,4 +178,24 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().selectedId).toBe("dns-server:tcp-dns");
     expect(screen.getByText("Server")).toBeInTheDocument();
   });
+
+  it("adds rule-set setup resources from the Library and opens editable rule-set fields", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Route/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Rule Set" }));
+
+    const created = useProjectStore.getState().config.route?.rule_set?.at(-1);
+
+    expect(created).toMatchObject({
+      type: "remote",
+      tag: "remote-rules",
+      format: "source",
+    });
+    expect(useProjectStore.getState().selectedId).toBe("rule-set:remote-rules");
+    expect(screen.getByTestId("node-rule-set:remote-rules")).toBeInTheDocument();
+    expect(screen.getByText("Download Detour")).toBeInTheDocument();
+  });
 });
