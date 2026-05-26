@@ -151,10 +151,17 @@ const outboundHandledFields = new Set([
   "server_port",
   "outbounds",
   "default",
+  "interrupt_exist_connections",
   "tls",
   "multiplex",
   "transport",
   "udp_over_tcp",
+  "network",
+  "method",
+  "security",
+  "flow",
+  "congestion_control",
+  "version",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -1984,6 +1991,110 @@ export function Inspector() {
                 value={Number(entity.server_port ?? 0)}
                 onChange={(event) => updateField(ref, "server_port", Number(event.target.value))}
               />
+            </label>
+          ) : null}
+          {entityType && ["socks", "http", "shadowsocks", "vmess", "trojan", "vless", "tuic", "hysteria", "hysteria2"].includes(entityType) ? (
+            <label className="field">
+              <span>Network</span>
+              <select
+                value={typeof entity.network === "string" ? entity.network : ""}
+                onChange={(event) => updateField(ref, "network", event.target.value || undefined)}
+              >
+                <option value="">tcp + udp (both)</option>
+                <option value="tcp">tcp</option>
+                <option value="udp">udp</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "shadowsocks" ? (
+            <>
+              <label className="field">
+                <span>Method</span>
+                <select
+                  value={typeof entity.method === "string" ? entity.method : ""}
+                  onChange={(event) => updateField(ref, "method", event.target.value || undefined)}
+                >
+                  <option value="">(none)</option>
+                  <optgroup label="Shadowsocks 2022">
+                    <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
+                    <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
+                    <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
+                  </optgroup>
+                  <optgroup label="AEAD">
+                    <option value="aes-128-gcm">aes-128-gcm</option>
+                    <option value="aes-192-gcm">aes-192-gcm</option>
+                    <option value="aes-256-gcm">aes-256-gcm</option>
+                    <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
+                    <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
+                  </optgroup>
+                  <optgroup label="Legacy / Stream cipher">
+                    <option value="none">none</option>
+                    <option value="aes-128-ctr">aes-128-ctr</option>
+                    <option value="aes-192-ctr">aes-192-ctr</option>
+                    <option value="aes-256-ctr">aes-256-ctr</option>
+                    <option value="aes-128-cfb">aes-128-cfb</option>
+                    <option value="aes-192-cfb">aes-192-cfb</option>
+                    <option value="aes-256-cfb">aes-256-cfb</option>
+                    <option value="rc4-md5">rc4-md5</option>
+                    <option value="chacha20-ietf">chacha20-ietf</option>
+                    <option value="xchacha20">xchacha20</option>
+                  </optgroup>
+                </select>
+              </label>
+            </>
+          ) : null}
+          {entityType === "vmess" ? (
+            <label className="field">
+              <span>Security</span>
+              <select
+                value={typeof entity.security === "string" ? entity.security : "auto"}
+                onChange={(event) => updateField(ref, "security", event.target.value)}
+              >
+                <option value="auto">auto</option>
+                <option value="none">none</option>
+                <option value="zero">zero</option>
+                <option value="aes-128-gcm">aes-128-gcm</option>
+                <option value="chacha20-poly1305">chacha20-poly1305</option>
+                <option value="aes-128-ctr">aes-128-ctr (legacy)</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "vless" ? (
+            <label className="field">
+              <span>Flow</span>
+              <select
+                value={typeof entity.flow === "string" ? entity.flow : ""}
+                onChange={(event) => updateField(ref, "flow", event.target.value || undefined)}
+              >
+                <option value="">(none)</option>
+                <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "tuic" ? (
+            <label className="field">
+              <span>Congestion Control</span>
+              <select
+                value={typeof entity.congestion_control === "string" ? entity.congestion_control : "cubic"}
+                onChange={(event) => updateField(ref, "congestion_control", event.target.value)}
+              >
+                <option value="cubic">cubic</option>
+                <option value="new_reno">new_reno</option>
+                <option value="bbr">bbr</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "socks" ? (
+            <label className="field">
+              <span>SOCKS Version</span>
+              <select
+                value={typeof entity.version === "string" ? entity.version : "5"}
+                onChange={(event) => updateField(ref, "version", event.target.value)}
+              >
+                <option value="5">5</option>
+                <option value="4a">4a</option>
+                <option value="4">4</option>
+              </select>
             </label>
           ) : null}
           {(entityType === "selector" || entityType === "urltest") && tagValue !== null ? (

@@ -133,7 +133,7 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 3. **Required 字段被埋进 Advanced fields**：`server` / `server_port` / `uuid` / `password` / `method` 在多数 outbound（http / socks / shadowsocks / vmess / trojan / naive / hysteria / hysteria2 / tuic / vless / anytls / ssh）只能通过折叠区进入。修复需要为每个 outbound 添加 entityType 专属渲染块，并把字段名加入 `outboundHandledFields`。
 
-4. **enum 字段用 raw text input**：`method`、`security`、`network`、`version`、`congestion_control`、`stack`、`flow`、`packet_encoding`、`default_mode`、`udp_relay_mode`、`congestion_control` 等等。所有应是 `<select>`，部分应附 optgroup（如 shadowsocks legacy method）。
+4. **enum 字段用 raw text input**：**部分 FIXED 2026-05-27** — Outbound 主区域现在为所有 entityType 渲染 `network` select (tcp / udp / both)，并按 protocol 加专属 enum：shadowsocks `method` select（含 2022-blake3 / AEAD / legacy 三 optgroup）、vmess `security`、vless `flow`、tuic `congestion_control`、socks `version`。所有字段名加入 `outboundHandledFields` 避免 AdvancedScalarFields 双渲染。**待办**：inbound 侧的同名字段（mixed/socks/http 等）、`stack`（tun）、`packet_encoding`（vless/vmess）、`default_mode`（clash_api）、`udp_relay_mode`（tuic）、`udp_over_stream`（tuic）、hysteria2 obfs.type、shadowtls version select 等。
 
 5. **默认 scaffold 缺 required TLS**：**FIXED 2026-05-27** — `commands.ts` 现在为 trojan / naive / hysteria / hysteria2 / tuic / anytls / vless inbound、trojan / naive / hysteria / hysteria2 / tuic / anytls / shadowtls / vless outbound 播种 `tls: { enabled: true, server_name: "" }`；shadowtls inbound 额外播种 `handshake: { server: "google.com", server_port: 443 }` 并移除 v2-only `password`。Outstanding: vmess inbound/outbound 不强制 TLS（按官方推荐保持可选），不在本批改动；Reality / ACME / ECH 嵌套对象由后续 atomic 引入结构化编辑。
 
