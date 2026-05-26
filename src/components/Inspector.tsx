@@ -192,6 +192,10 @@ const outboundHandledFields = new Set([
   "udp_relay_mode",
   "udp_over_stream",
   "obfs",
+  "executable_path",
+  "data_directory",
+  "extra_args",
+  "torrc",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2498,10 +2502,102 @@ export function Inspector() {
       {ref.kind === "outbound" ? (
         <>
           {entityType === "tor" ? (
-            <PlatformBanner
-              kind="build-tag"
-              text="Build-tag gate: outbound tor requires sing-box built with `with_tor` or an external tor binary at executable_path. Standard releases do not include embedded tor."
-            />
+            <>
+              <PlatformBanner
+                kind="build-tag"
+                text="Build-tag gate: outbound tor requires sing-box built with `with_tor` or an external tor binary at executable_path. Standard releases do not include embedded tor."
+              />
+              <label className="field">
+                <span>Executable Path</span>
+                <input
+                  value={String(entity.executable_path ?? "")}
+                  placeholder="/usr/bin/tor"
+                  onChange={(event) => updateField(ref, "executable_path", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Data Directory</span>
+                <input
+                  value={String(entity.data_directory ?? "")}
+                  placeholder="$HOME/.cache/sing-box/tor"
+                  onChange={(event) => updateField(ref, "data_directory", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Extra Args (CSV)</span>
+                <input
+                  value={toList(entity.extra_args)}
+                  placeholder="--SafeLogging,0"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "extra_args", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              {(() => {
+                const torrc = objectField(entity.torrc);
+                const entries = Object.entries(torrc);
+                const writeTorrc = (next: InspectorEntity) =>
+                  updateField(ref, "torrc", Object.keys(next).length ? next : undefined);
+                return (
+                  <fieldset className="field field--checklist" data-testid="tor-torrc-editor">
+                    <legend>torrc options</legend>
+                    {entries.length === 0 ? (
+                      <p className="field__hint">No torrc keys. Click Add to set ClientOnly, BridgeRelay, etc.</p>
+                    ) : null}
+                    {entries.map(([key, value], index) => (
+                      <div key={`${key}-${index}`} className="rule-row">
+                        <label className="field">
+                          <span>Key</span>
+                          <input
+                            value={key}
+                            onChange={(event) => {
+                              const newKey = event.target.value;
+                              if (!newKey || newKey === key) return;
+                              const next: InspectorEntity = {};
+                              for (const [k, v] of entries) next[k === key ? newKey : k] = v;
+                              writeTorrc(next);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Value</span>
+                          <input
+                            value={typeof value === "string" || typeof value === "number" ? String(value) : JSON.stringify(value)}
+                            onChange={(event) => {
+                              const raw = event.target.value;
+                              const next: InspectorEntity = { ...torrc };
+                              const num = Number(raw);
+                              next[key] = raw === "" ? "" : Number.isFinite(num) && /^-?\d+(?:\.\d+)?$/.test(raw) ? num : raw;
+                              writeTorrc(next);
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          aria-label={`Remove torrc ${key}`}
+                          onClick={() => {
+                            const next: InspectorEntity = { ...torrc };
+                            delete next[key];
+                            writeTorrc(next);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="palette-action"
+                      onClick={() => writeTorrc({ ...torrc, "": "" })}
+                    >
+                      Add torrc key
+                    </button>
+                  </fieldset>
+                );
+              })()}
+            </>
           ) : null}
           {entityType === "block" ? (
             <PlatformBanner

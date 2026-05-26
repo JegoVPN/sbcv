@@ -1132,6 +1132,30 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders tor outbound torrc map editor + extra_args CSV", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tor-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const exec = inspector.getByLabelText("Executable Path") as HTMLInputElement;
+    fireEvent.change(exec, { target: { value: "/opt/homebrew/bin/tor" } });
+    let tor = useProjectStore.getState().config.outbounds?.find((o) => o.type === "tor") as Record<string, unknown>;
+    expect(tor.executable_path).toBe("/opt/homebrew/bin/tor");
+
+    const extraArgs = inspector.getByLabelText("Extra Args (CSV)") as HTMLInputElement;
+    fireEvent.change(extraArgs, { target: { value: "--SafeLogging, 0" } });
+    tor = useProjectStore.getState().config.outbounds?.find((o) => o.type === "tor") as Record<string, unknown>;
+    expect(tor.extra_args).toEqual(["--SafeLogging", "0"]);
+
+    const torrcBlock = within(inspector.getByTestId("tor-torrc-editor"));
+    fireEvent.click(torrcBlock.getByRole("button", { name: "Add torrc key" }));
+    tor = useProjectStore.getState().config.outbounds?.find((o) => o.type === "tor") as Record<string, unknown>;
+    expect(tor.torrc).toBeDefined();
+  });
+
   it("renders hysteria2 obfs type select + conditional password", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
