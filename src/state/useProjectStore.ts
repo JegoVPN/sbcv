@@ -25,6 +25,7 @@ import {
 } from "../domain/commands";
 import { validateConfig } from "../domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
+import { outboundTypeForPaletteKind, preferredOutboundTag } from "../domain/protocols";
 import { targetById } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
@@ -204,11 +205,12 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       if (kind === "mixed") config = addInbound(config, "mixed");
       if (kind === "route") config = ensureRoute(config);
       if (kind === "route-rule") config = addRouteRule(config);
-      if (kind === "direct") config = addOutbound(config, "direct", "direct");
-      if (kind === "block") config = addOutbound(config, "block", "block");
-      if (kind === "selector") config = addOutbound(config, "selector", "proxy");
-      if (kind === "urltest") config = addOutbound(config, "urltest", "auto");
-      if (kind === "socks") config = addOutbound(config, "socks", "proxy-out");
+      const outboundType = outboundTypeForPaletteKind(kind);
+      if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
+        config = addOutbound(config, outboundType, preferredOutboundTag(outboundType));
+        const created = config.outbounds?.[config.outbounds.length - 1];
+        if (created) selectedId = `outbound:${created.tag}`;
+      }
       if (kind === "dns-hub") config = config.dns ? config : addDnsServer(config, "local");
       if (kind === "dns-local") config = addDnsServer(config, "local");
       if (kind === "dns-https") config = addDnsServer(config, "https");

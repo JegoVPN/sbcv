@@ -412,6 +412,10 @@ textarea {
   color: #6fb8ff;
 }
 
+.palette-add--setup small {
+  color: #c7ff00;
+}
+
 .palette-add--inspector small {
   color: #a7b2bd;
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   connectSelectorCandidate,
+  createOutbound,
   createStableTunSplitConfig,
   disconnectEdge,
   ensureSettings,
@@ -145,6 +146,32 @@ describe("canonical sing-box domain model", () => {
     expect(legacy.version).toBe("1.12");
     expect(stable.config.route?.final).toBe("proxy");
     expect(testing.config.http_clients?.[0]?.tag).toBe("remote-client");
+  });
+
+  it("creates outbound setup drafts with the requested official protocol type", () => {
+    const setupTypes = [
+      "http",
+      "shadowsocks",
+      "vmess",
+      "trojan",
+      "naive",
+      "hysteria",
+      "shadowtls",
+      "vless",
+      "tuic",
+      "hysteria2",
+      "anytls",
+      "tor",
+      "ssh",
+    ];
+
+    for (const type of setupTypes) {
+      const outbound = createOutbound(type, `${type}-out`);
+
+      expect(outbound.type).toBe(type);
+      expect(outbound.tag).toBe(`${type}-out`);
+      expect(outbound.type).not.toBe("socks");
+    }
   });
 
   it("derives independent settings nodes only after the user pins them to the canvas", () => {

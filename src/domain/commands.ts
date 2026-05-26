@@ -76,6 +76,156 @@ export function addOutbound(config: SingBoxConfig, type: string, preferredTag?: 
 export function createOutbound(type: string, tag: string): OutboundConfig {
   if (type === "direct") return { type, tag };
   if (type === "block") return { type, tag };
+  if (type === "socks") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+    };
+  }
+  if (type === "http") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      username: "user",
+      password: "change-me",
+    };
+  }
+  if (type === "shadowsocks") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      method: "aes-128-gcm",
+      password: "change-me",
+      network: "tcp",
+    };
+  }
+  if (type === "vmess") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
+      security: "auto",
+      alter_id: 0,
+      network: "tcp",
+    };
+  }
+  if (type === "trojan") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      password: "change-me",
+      network: "tcp",
+    };
+  }
+  if (type === "naive") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      username: "user",
+      password: "change-me",
+    };
+  }
+  if (type === "hysteria") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      up_mbps: 100,
+      down_mbps: 100,
+      auth_str: "change-me",
+      network: "udp",
+    };
+  }
+  if (type === "shadowtls") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      version: 3,
+      password: "change-me",
+    };
+  }
+  if (type === "vless") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
+      network: "tcp",
+    };
+  }
+  if (type === "tuic") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      uuid: "2dd61d93-75d8-4da4-ac0e-6aece7eac365",
+      password: "change-me",
+      congestion_control: "cubic",
+      udp_relay_mode: "native",
+      network: "udp",
+    };
+  }
+  if (type === "hysteria2") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      password: "change-me",
+      up_mbps: 100,
+      down_mbps: 100,
+      network: "udp",
+    };
+  }
+  if (type === "anytls") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 1080,
+      password: "change-me",
+      idle_session_check_interval: "30s",
+      idle_session_timeout: "30s",
+      min_idle_session: 5,
+    };
+  }
+  if (type === "tor") {
+    return {
+      type,
+      tag,
+      executable_path: "/usr/bin/tor",
+      extra_args: [],
+      data_directory: "$HOME/.cache/tor",
+      torrc: { ClientOnly: 1 },
+    };
+  }
+  if (type === "ssh") {
+    return {
+      type,
+      tag,
+      server: "127.0.0.1",
+      server_port: 22,
+      user: "root",
+      password: "change-me",
+    };
+  }
   if (type === "selector") return { type, tag, outbounds: [], default: undefined };
   if (type === "urltest") {
     return {
@@ -86,12 +236,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       interval: "3m",
     };
   }
-  return {
-    type: "socks",
-    tag,
-    server: "127.0.0.1",
-    server_port: 1080,
-  };
+  return { type, tag };
 }
 
 export function addDnsServer(config: SingBoxConfig, type: "local" | "https" = "local"): SingBoxConfig {
