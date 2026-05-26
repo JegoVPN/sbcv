@@ -40,7 +40,8 @@ Status vocabulary:
 
 Current status:
 
-- `official-read`: 66 / 66. All editable review docs now record official Markdown field and relationship findings.
+- `implemented`: 1 / 66 (`settings:log`).
+- `official-read`: 65 / 66.
 - `baseline`: 0 / 66.
 
 Review priority:

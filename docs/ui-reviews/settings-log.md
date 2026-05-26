@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/log/index.md; reviewed against current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: implemented (2026-05-27). Source: stable docs/configuration/log/index.md. P0 timestamp toggle added to Inspector with disabled-first ordering; output placeholder corrected. Outstanding: P1 singleton guard for Palette and P2 canvas subtitle differentiation. -->
 # Log Settings UI Review
 
 ## Scope
