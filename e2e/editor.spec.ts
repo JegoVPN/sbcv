@@ -14,7 +14,7 @@ test("stable-first visual editor primary path", async ({ page }) => {
   await page.getByRole("button", { name: "JSON", exact: true }).click();
   await expect(page.getByLabel("Advanced JSON editor")).toHaveValue(/"sg"/);
 
-  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByRole("button", { name: "Diagnostics", exact: true }).click();
   await expect(page.getByText("Semantic validation passed.")).toBeVisible();
 
   await page.getByLabel("Import JSON file").setInputFiles("fixtures/stable/minimal.json");

@@ -1,13 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import {
+  Braces,
+  GitBranch,
+  Globe2,
+  Network,
+  RadioTower,
+  Route,
+  Server,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { EntityRef } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 
 type InspectorEntity = Record<string, unknown>;
+type InspectorKind = EntityRef["kind"];
+
+const inspectorIcons = {
+  inbound: RadioTower,
+  outbound: Network,
+  "dns-server": Server,
+  route: Route,
+  "route-rule": GitBranch,
+  dns: Globe2,
+  "dns-rule": GitBranch,
+  settings: Braces,
+} satisfies Record<InspectorKind, typeof Braces>;
 
 function selectedRefFromId(id: string | null): EntityRef | null {
   if (!id) return null;
-  const [kind, value] = id.split(":");
+  const [kind, ...rest] = id.split(":");
+  const value = rest.join(":");
   if (kind === "inbound" && value) return { kind: "inbound", tag: value };
   if (kind === "outbound" && value) return { kind: "outbound", tag: value };
   if (kind === "dns-server" && value) return { kind: "dns-server", tag: value };
@@ -29,6 +52,15 @@ function fromList(value: string): string[] {
     .filter(Boolean);
 }
 
+function summaryFor(ref: EntityRef, entity: InspectorEntity) {
+  const lines = [
+    `kind: ${ref.kind}`,
+    typeof entity.type === "string" ? `type: ${entity.type}` : null,
+    typeof entity.tag === "string" ? `tag: ${entity.tag}` : null,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
 export function Inspector() {
   const selectedId = useProjectStore((state) => state.selectedId);
   const config = useProjectStore((state) => state.config);
@@ -36,6 +68,7 @@ export function Inspector() {
   const renameTag = useProjectStore((state) => state.renameTag);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const setPanelTab = useProjectStore((state) => state.setPanelTab);
+  const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const ref = useMemo(() => selectedRefFromId(selectedId), [selectedId]);
   const entity = useMemo<InspectorEntity | null>(() => {
     if (!ref) return null;
@@ -59,8 +92,13 @@ export function Inspector() {
 
   if (!ref || !entity) {
     return (
-      <aside className="inspector">
-        <div className="panel-title">Inspector</div>
+      <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">
+        <div className="inspector__header">
+          <div className="inspector__title">
+            <Braces size={18} />
+            <span>Inspector</span>
+          </div>
+        </div>
         <div className="empty-state">Select a node to edit its canonical sing-box entity.</div>
       </aside>
     );
@@ -68,10 +106,19 @@ export function Inspector() {
 
   const tagValue = typeof entity.tag === "string" ? entity.tag : null;
   const entityType = typeof entity.type === "string" ? entity.type : null;
+  const InspectorIcon = inspectorIcons[ref.kind];
 
   return (
-    <aside className="inspector" aria-label="Node inspector">
-      <div className="panel-title">Inspector</div>
+    <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">
+      <div className="inspector__header" data-testid="inspector-header">
+        <div className="inspector__title">
+          <InspectorIcon size={18} />
+          <span>{ref.kind}</span>
+        </div>
+        <button type="button" className="node-icon-button" aria-label="Close inspector" onClick={() => setSelectedId(null)}>
+          <X size={16} />
+        </button>
+      </div>
       <div className="inspector-heading">
         <div>
           <div className="inspector-kind">{ref.kind}</div>
@@ -83,6 +130,14 @@ export function Inspector() {
           </button>
         ) : null}
       </div>
+
+      <textarea
+        className="inspector__primary-editor"
+        aria-label="Selected node summary"
+        data-testid="inspector-primary-editor"
+        value={summaryFor(ref, entity)}
+        readOnly
+      />
 
       {tagValue ? (
         <label className="field">
@@ -234,6 +289,10 @@ export function Inspector() {
           Open ordered table
         </button>
       ) : null}
+
+      <button type="button" className="wide-action inspector__primary-action" onClick={() => setPanelTab("diagnostics")}>
+        Open diagnostics
+      </button>
     </aside>
   );
 }
