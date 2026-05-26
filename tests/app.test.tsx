@@ -1132,6 +1132,19 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders DoH/H3 headers map editor for https/h3 dns-server", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-https");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const block = within(inspector.getByTestId("dns-https-headers"));
+    fireEvent.click(block.getByRole("button", { name: "Add header" }));
+    const https = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "https") as Record<string, unknown>;
+    expect(https.headers).toBeDefined();
+  });
+
   it("renders fakeip DNS server inet4_range + inet6_range as CSV inputs", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
