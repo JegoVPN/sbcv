@@ -1,5 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
-import type { Diagnostic, EntityRef, SingBoxConfig } from "../domain/types";
+import type { Diagnostic, EntityRef, OutboundConfig, SingBoxConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
 export type SbcNodeKind =
@@ -30,6 +30,22 @@ const DEFAULT_POSITIONS: Record<string, { x: number; y: number }> = {
 };
 const MAX_VISUAL_RULE_NODES = 24;
 const MAX_VISUAL_CANDIDATE_EDGES = 96;
+const NODE_SLOT_Y = 330;
+const ROUTE_RULE_START_Y = 60;
+const ROUTE_HUB_Y = 260;
+const DNS_LANE_MIN_Y = 900;
+const MAX_OUTBOUND_DEPTH = 2;
+
+const COLUMNS = {
+  inbound: 60,
+  hub: 420,
+  rule: 780,
+  target: 1140,
+  member: 1500,
+  leaf: 1860,
+} as const;
+
+type LayoutColumn = keyof typeof COLUMNS;
 
 function nodePosition(layout: ProjectLayout, id: string, fallback: { x: number; y: number }) {
   return layout.positions[id] ?? DEFAULT_POSITIONS[id] ?? fallback;
@@ -47,6 +63,24 @@ function makeNode(
     position: nodePosition(layout, id, fallback),
     data,
   };
+}
+
+function createColumnAllocator() {
+  const occupied = new Map<LayoutColumn, number[]>();
+
+  function reserve(column: LayoutColumn, desiredY: number) {
+    const columnYs = occupied.get(column) ?? [];
+    let y = desiredY;
+    while (columnYs.some((usedY) => Math.abs(usedY - y) < NODE_SLOT_Y)) {
+      y += NODE_SLOT_Y;
+    }
+    columnYs.push(y);
+    columnYs.sort((a, b) => a - b);
+    occupied.set(column, columnYs);
+    return y;
+  }
+
+  return { reserve };
 }
 
 function diagnosticStatus(pathPrefix: string, diagnostics: Diagnostic[]): SbcNodeData["status"] {
@@ -67,6 +101,14 @@ function listItems<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+function visualizeRouteRulesCount(count: number) {
+  return count <= MAX_VISUAL_RULE_NODES ? count : 1;
+}
+
+function isOutboundGroup(outbound: OutboundConfig) {
+  return outbound.type === "selector" || outbound.type === "urltest";
+}
+
 function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
 }
@@ -74,12 +116,27 @@ function entityTag(tag: string | undefined, kind: string, index: number) {
 export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
   const nodes: SbcFlowNode[] = [];
   const edges: Edge[] = [];
+  const columnLayout = createColumnAllocator();
   const inbounds = listItems(config.inbounds);
   const outbounds = listItems(config.outbounds);
   const routeRules = listItems(config.route?.rules);
   const dnsServers = listItems(config.dns?.servers);
   const dnsRules = listItems(config.dns?.rules);
   let visualCandidateEdges = 0;
+  const routeTargetY = new Map<string, number>();
+  const outboundByTag = new Map<string, OutboundConfig>();
+  const outboundDepth = new Map<string, number>();
+  const outboundDesiredY = new Map<string, number>();
+  const outboundY = new Map<string, number>();
+  const memberY = new Map<string, number>();
+  const memberTags = new Set<string>();
+
+  outbounds.forEach((outbound, index) => {
+    outboundByTag.set(entityTag(outbound.tag, "outbound", index), outbound);
+    if (Array.isArray(outbound.outbounds)) {
+      outbound.outbounds.forEach((tag) => memberTags.add(tag));
+    }
+  });
 
   inbounds.forEach((inbound, index) => {
     const tag = entityTag(inbound.tag, "inbound", index);
@@ -97,7 +154,13 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: ["Route"],
         },
         layout,
-        { x: 80, y: 160 + index * 180 },
+        {
+          x: COLUMNS.inbound,
+          y: columnLayout.reserve(
+            "inbound",
+            ROUTE_HUB_Y + (index - Math.floor(inbounds.length / 2)) * NODE_SLOT_Y,
+          ),
+        },
       ),
     );
     if (config.route) {
@@ -113,6 +176,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
   if (config.route) {
     const visualizeRouteRules = routeRules.length <= MAX_VISUAL_RULE_NODES;
+    const routeY = columnLayout.reserve("hub", ROUTE_HUB_Y);
     nodes.push(
       makeNode(
         "route:main",
@@ -126,13 +190,17 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
         },
         layout,
-        { x: 420, y: 240 },
+        { x: COLUMNS.hub, y: routeY },
       ),
     );
 
     if (visualizeRouteRules) {
       routeRules.forEach((rule, index) => {
         const id = `route-rule:${index}`;
+        const y = columnLayout.reserve("rule", ROUTE_RULE_START_Y + index * NODE_SLOT_Y);
+        if (rule.outbound && !routeTargetY.has(rule.outbound)) {
+          routeTargetY.set(rule.outbound, y);
+        }
         const label =
           listLabel(rule.domain_suffix) ??
           listLabel(rule.domain_keyword) ??
@@ -153,7 +221,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
             },
             layout,
-            { x: 690, y: 120 + index * 130 },
+            { x: COLUMNS.rule, y },
           ),
         );
         edges.push({
@@ -174,6 +242,13 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
 
     if (config.route.final) {
+      if (!routeTargetY.has(config.route.final)) {
+        routeTargetY.set(
+          config.route.final,
+          ROUTE_RULE_START_Y +
+            Math.max(1, Math.min(routeRules.length, MAX_VISUAL_RULE_NODES)) * NODE_SLOT_Y,
+        );
+      }
       edges.push({
         id: `edge:route-final:${config.route.final}`,
         source: "route:main",
@@ -184,9 +259,56 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   }
 
+  function rememberOutbound(tag: string, depth: number, desiredY: number) {
+    const cappedDepth = Math.min(depth, MAX_OUTBOUND_DEPTH);
+    const currentDepth = outboundDepth.get(tag);
+    if (currentDepth === undefined || cappedDepth > currentDepth) {
+      outboundDepth.set(tag, cappedDepth);
+      outboundDesiredY.set(tag, desiredY);
+      return;
+    }
+    if (currentDepth === cappedDepth && !outboundDesiredY.has(tag)) {
+      outboundDesiredY.set(tag, desiredY);
+    }
+  }
+
+  function walkOutboundTree(tag: string, depth: number, desiredY: number, trail: Set<string>) {
+    if (trail.has(tag)) return;
+    rememberOutbound(tag, depth, desiredY);
+    const outbound = outboundByTag.get(tag);
+    if (!outbound || !isOutboundGroup(outbound) || !Array.isArray(outbound.outbounds)) {
+      return;
+    }
+    const nextTrail = new Set(trail);
+    nextTrail.add(tag);
+    const midpoint = (outbound.outbounds.length - 1) / 2;
+    outbound.outbounds.forEach((candidateTag, candidateIndex) => {
+      const candidateY = desiredY + (candidateIndex - midpoint) * NODE_SLOT_Y;
+      memberY.set(candidateTag, candidateY);
+      walkOutboundTree(candidateTag, depth + 1, candidateY, nextTrail);
+    });
+  }
+
+  routeTargetY.forEach((y, tag) => walkOutboundTree(tag, 0, y, new Set()));
+
+  outbounds.forEach((outbound, index) => {
+    const tag = entityTag(outbound.tag, "outbound", index);
+    const depth = outboundDepth.get(tag) ?? (memberTags.has(tag) ? 1 : 0);
+    const column: LayoutColumn = depth === 0 ? "target" : depth === 1 ? "member" : "leaf";
+    const desiredY =
+      routeTargetY.get(tag) ??
+      outboundDesiredY.get(tag) ??
+      memberY.get(tag) ??
+      ROUTE_HUB_Y + index * NODE_SLOT_Y;
+    const y = columnLayout.reserve(column, desiredY);
+    outboundY.set(tag, y);
+  });
+
   outbounds.forEach((outbound, index) => {
     const tag = entityTag(outbound.tag, "outbound", index);
     const id = `outbound:${tag}`;
+    const depth = outboundDepth.get(tag) ?? (memberTags.has(tag) ? 1 : 0);
+    const column: LayoutColumn = depth === 0 ? "target" : depth === 1 ? "member" : "leaf";
     nodes.push(
       makeNode(
         id,
@@ -198,19 +320,19 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           subtitle:
             Array.isArray(outbound.outbounds) &&
             outbound.outbounds.length &&
-            (outbound.type === "selector" || outbound.type === "urltest")
+            isOutboundGroup(outbound)
               ? `${outbound.type}: ${outbound.outbounds.join(", ")}`
               : outbound.server
                 ? `${outbound.type} ${outbound.server}:${outbound.server_port ?? ""}`
                 : `${outbound.type} outbound`,
           status: diagnosticStatus(`/outbounds/${index}`, diagnostics),
           compatible:
-            outbound.type === "selector" || outbound.type === "urltest"
+            isOutboundGroup(outbound)
               ? ["SOCKS", "Direct", "Block"]
               : [],
         },
         layout,
-        { x: outbound.type === "selector" || outbound.type === "urltest" ? 970 : 1240, y: 120 + index * 120 },
+        { x: COLUMNS[column], y: outboundY.get(tag) ?? ROUTE_HUB_Y + index * NODE_SLOT_Y },
       ),
     );
 
@@ -230,6 +352,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
   if (config.dns) {
     const visualizeDnsRules = dnsRules.length <= MAX_VISUAL_RULE_NODES;
+    const dnsLaneY =
+      ROUTE_RULE_START_Y +
+      Math.max(3, visualizeRouteRulesCount(routeRules.length) + 1) *
+        NODE_SLOT_Y;
+    const dnsY = columnLayout.reserve("hub", Math.max(DNS_LANE_MIN_Y, dnsLaneY));
     nodes.push(
       makeNode(
         "dns:main",
@@ -243,7 +370,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: ["DNS Server"],
         },
         layout,
-        { x: 420, y: 620 },
+        { x: COLUMNS.hub, y: dnsY },
       ),
     );
 
@@ -263,7 +390,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             compatible: [],
           },
           layout,
-          { x: 880, y: 560 + index * 120 },
+          { x: COLUMNS.target, y: columnLayout.reserve("target", dnsY + index * NODE_SLOT_Y) },
         ),
       );
     });
@@ -271,6 +398,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     if (visualizeDnsRules) {
       dnsRules.forEach((rule, index) => {
         const id = `dns-rule:${index}`;
+        const y = columnLayout.reserve("rule", dnsY + index * NODE_SLOT_Y);
         nodes.push(
           makeNode(
             id,
@@ -290,7 +418,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               compatible: ["DNS Server"],
             },
             layout,
-            { x: 670, y: 580 + index * 120 },
+            { x: COLUMNS.rule, y },
           ),
         );
         edges.push({

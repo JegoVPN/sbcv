@@ -52,6 +52,48 @@ describe("canonical sing-box domain model", () => {
     expect(new Set(edgeIds).size).toBe(edgeIds.length);
   });
 
+  it("lays out the stable split graph in semantic columns without same-column overlap", () => {
+    const { nodes } = deriveGraph(createStableTunSplitConfig(), { positions: {} }, []);
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    const route = byId.get("route:main");
+    const inbound = byId.get("inbound:tun-in");
+    const ruleOne = byId.get("route-rule:0");
+    const ruleTwo = byId.get("route-rule:1");
+    const direct = byId.get("outbound:direct");
+    const block = byId.get("outbound:block");
+    const proxy = byId.get("outbound:proxy");
+    const auto = byId.get("outbound:auto");
+    const hk = byId.get("outbound:hk");
+    const jp = byId.get("outbound:jp");
+
+    expect(inbound?.position.x).toBeLessThan(route?.position.x ?? 0);
+    expect(route?.position.x).toBeLessThan(ruleOne?.position.x ?? 0);
+    expect(ruleOne?.position.x).toBeLessThan(direct?.position.x ?? 0);
+    expect(direct?.position.y).toBe(ruleOne?.position.y);
+    expect(block?.position.y).toBe(ruleTwo?.position.y);
+    expect(proxy?.position.x).toBe(direct?.position.x);
+    expect(auto?.position.x).toBeGreaterThan(proxy?.position.x ?? 0);
+    expect(hk?.position.x).toBeGreaterThan(auto?.position.x ?? 0);
+    expect(jp?.position.x).toBe(hk?.position.x);
+
+    const byX = new Map<number, typeof nodes>();
+    for (const node of nodes) {
+      byX.set(node.position.x, [...(byX.get(node.position.x) ?? []), node]);
+    }
+    for (const columnNodes of byX.values()) {
+      const sorted = [...columnNodes].sort((a, b) => a.position.y - b.position.y);
+      for (let index = 1; index < sorted.length; index += 1) {
+        const current = sorted[index];
+        const previous = sorted[index - 1];
+        if (!current || !previous) throw new Error("missing sorted layout node");
+        expect(current.position.y - previous.position.y).toBeGreaterThanOrEqual(330);
+      }
+    }
+
+    const ys = nodes.map((node) => node.position.y);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(1_400);
+  });
+
   it("keeps large ordered rule lists in tables instead of flooding the canvas", () => {
     const config = createStableTunSplitConfig();
     config.route = {
