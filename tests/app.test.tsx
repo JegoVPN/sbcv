@@ -1132,6 +1132,21 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("marks legacy outbound block / hysteria v1 / top-level fakeip as deprecated in Palette", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+    const palette = within(screen.getByLabelText("Node palette"));
+    fireEvent.click(palette.getByRole("button", { name: /Library/ }));
+    fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
+    const blockBtn = palette.getByRole("button", { name: "Legacy Block" });
+    expect(blockBtn.title).toMatch(/deprecated/i);
+    const hysteriaBtn = palette.getByRole("button", { name: "Legacy Hysteria" });
+    expect(hysteriaBtn.title).toMatch(/deprecated/i);
+    fireEvent.click(palette.getAllByRole("button", { name: /^DNS/ })[0]);
+    const fakeipBtn = palette.getByRole("button", { name: "Legacy FakeIP" });
+    expect(fakeipBtn.title).toMatch(/deprecated/i);
+  });
+
   it("renders naive outbound username + extra_headers map editor", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

@@ -40,7 +40,7 @@ type PaletteGroup = {
   items: PaletteItem[];
 };
 
-type PaletteStatus = "add" | "setup" | "table" | "inspector" | "docs" | "gated" | "pending";
+type PaletteStatus = "add" | "setup" | "table" | "inspector" | "docs" | "gated" | "pending" | "deprecated";
 
 function docs(path = "") {
   return `https://sing-box.sagernet.org/configuration/${path}`;
@@ -244,10 +244,18 @@ const statusLabel: Record<PaletteStatus, string> = {
   docs: "Docs",
   gated: "Gated",
   pending: "Pending",
+  deprecated: "Legacy",
 };
+
+const deprecatedKinds = new Set<string>([
+  "block",
+  "hysteria-out",
+  "dns-fakeip",
+]);
 
 function itemStatus(item: PaletteItem, channel: string): PaletteStatus {
   if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
+  if (deprecatedKinds.has(item.kind)) return "deprecated";
   if (item.status) return item.status;
   if (item.ready || isTemplatePresetId(item.kind)) return "add";
   return "docs";
@@ -260,11 +268,17 @@ function statusTitle(status: PaletteStatus, label: string) {
   if (status === "inspector") return `${label} is edited inside its parent Inspector`;
   if (status === "gated") return `${label} is target-gated and needs matching sing-box validation`;
   if (status === "pending") return `${label} is planned but not implemented as a writable command yet`;
+  if (status === "deprecated") return `${label} is deprecated by sing-box; new configs should use the recommended replacement`;
   return `${label} is documentation-only in the current UI`;
 }
 
 function canActivate(item: PaletteItem, status: PaletteStatus) {
-  return status === "add" || status === "setup" || (status === "table" && (item.kind === "dns-rule" || item.kind === "route-rule"));
+  return (
+    status === "add" ||
+    status === "setup" ||
+    status === "deprecated" ||
+    (status === "table" && (item.kind === "dns-rule" || item.kind === "route-rule"))
+  );
 }
 
 export function Palette() {
