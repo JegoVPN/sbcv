@@ -41,14 +41,19 @@ function outboundIcon(type: string) {
   return Shield;
 }
 
-type PortSpec = {
+export type PortSpec = {
   key: string;
   label: string;
   nodeKind: SbcNodeKind;
+  nodeType?: string;
   icon: LucideIcon;
 };
 
-function portSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
+export function getNodeIcon(kind: SbcNodeKind, type: string): LucideIcon {
+  return kind === "outbound" ? outboundIcon(type) : iconMap[kind];
+}
+
+export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
   if (direction === "input") {
     if (kind === "route") return [{ key: "inbound", label: "Inbound traffic", nodeKind: "inbound", icon: RadioTower }];
     if (kind === "route-rule") return [{ key: "route", label: "Route order", nodeKind: "route", icon: Route }];
@@ -58,10 +63,15 @@ function portSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output
       return [{ key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch }];
     }
     if (kind === "outbound") {
-      return [
+      const routingInputs: PortSpec[] = [
         { key: "route", label: "Route target", nodeKind: "route", icon: Route },
         { key: "route-rule", label: "Route rule target", nodeKind: "route-rule", icon: GitBranch },
-        { key: "outbound-group", label: "Selector member", nodeKind: "outbound", icon: Shuffle },
+      ];
+      if (type === "selector" || type === "urltest") return routingInputs;
+      return [
+        ...routingInputs,
+        { key: "selector-group", label: "Selector member", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
+        { key: "urltest-group", label: "URLTest member", nodeKind: "outbound", nodeType: "urltest", icon: Database },
       ];
     }
     return [];
@@ -94,9 +104,9 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const createCompatible = useProjectStore((state) => state.createCompatible);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
-  const Icon = data.kind === "outbound" ? outboundIcon(data.type) : iconMap[data.kind];
-  const inputPorts = portSpecs(data.kind, data.type, "input");
-  const outputPorts = portSpecs(data.kind, data.type, "output");
+  const Icon = getNodeIcon(data.kind, data.type);
+  const inputPorts = getPortSpecs(data.kind, data.type, "input");
+  const outputPorts = getPortSpecs(data.kind, data.type, "output");
 
   return (
     <div
@@ -129,6 +139,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               title={port.label}
               data-port-type={port.key}
               data-port-node-kind={port.nodeKind}
+              data-port-node-type={port.nodeType}
             >
               <port.icon size={15} />
             </span>
@@ -144,6 +155,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               title={port.label}
               data-port-type={port.key}
               data-port-node-kind={port.nodeKind}
+              data-port-node-type={port.nodeType}
             >
               <port.icon size={15} />
             </span>
