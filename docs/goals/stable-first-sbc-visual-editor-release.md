@@ -355,3 +355,7 @@ Ask the user only for true product direction decisions, secrets, paid external s
 - Date: 2026-05-26
 - Decision: Top-bar JSON import is implemented with a hidden file input and canonical JSON parse/apply command, while the bottom JSON panel remains the advanced direct editor.
 - Reason: Release acceptance requires both import/export and Advanced JSON editing without making React Flow the config source.
+
+- Date: 2026-05-26
+- Decision: Outbound connectivity is split into explicit tag-reference semantics instead of generic upstream/downstream icons: Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS server detour, and Dial detour are separate UI actions and port labels.
+- Reason: sing-box expresses these relationships as ordered rules and tag references, not as a pure DAG. A user who adds an outbound from Library must be able to define how it is used from the Inspector without guessing hidden side-port behavior.

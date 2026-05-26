@@ -418,6 +418,32 @@ Current implementation rule: Log, NTP, Certificate, and Experimental are writabl
 9. Edge labels should be semantic: `route final`, `rule outbound`, `selector candidate`, `dns final`, `dns rule server`, not generic `candidate` everywhere.
 10. Large imported configs should auto-layout by semantic columns: inbounds, hubs, ordered rules, primary outbounds, group members, resources/settings.
 
+### Port Semantics Matrix
+
+Node side icons are not decorative and must not simply repeat the node's own type icon. They are explicit JSON reference affordances.
+
+| Node | Left side means "can be referenced by" | Right side means "can reference / create" | Canonical fields |
+| --- | --- | --- | --- |
+| Inbound | none | Route hub | `inbounds[]` exists; visual traffic source only |
+| Route | Inbound traffic source | Route Rule, Route final outbound | `route.rules[]`, `route.final` |
+| Route Rule | Route ordered list | Rule outbound target | `route.rules[index].outbound` |
+| Outbound leaf | Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS detour target, Dial detour target | Dial detour outbound when the protocol supports Dial Fields | `route.final`, `route.rules[].outbound`, `outbounds[type=selector/urltest].outbounds[]`, `dns.servers[].detour`, `outbounds[].detour` |
+| Selector / URLTest | Same inbound references as other outbounds | Candidate outbounds | `outbounds[].outbounds[]`, `outbounds[].default` |
+| DNS | DNS query source | DNS Rule, DNS final server | `dns.rules[]`, `dns.final` |
+| DNS Rule | DNS ordered list | DNS server target | `dns.rules[index].server` |
+| DNS Server | DNS final, DNS Rule server | Detour outbound | `dns.final`, `dns.rules[].server`, `dns.servers[].detour` |
+| Settings | none | none | Top-level `log`, `ntp`, `certificate`, `experimental` |
+
+When a user adds an outbound from Library without connecting it, the Inspector must still expose the full upstream path:
+
+- set as `route.final`;
+- create a new `route.rules[]` row targeting it;
+- add it as a Selector or URLTest candidate;
+- use it as a DNS server detour;
+- set or clear its own Dial `detour` field.
+
+This is required because the official docs express these relationships through tag fields, not through a pure DAG. Canvas edges visualize those tag references; the Inspector gives the explicit, non-ambiguous edit path.
+
 ## Normal User Flows
 
 ### Add A Proxy Outbound

@@ -54,6 +54,10 @@ export function getNodeIcon(kind: SbcNodeKind, type: string): LucideIcon {
   return kind === "outbound" ? outboundIcon(type) : iconMap[kind];
 }
 
+function supportsDialDetour(type: string) {
+  return !["direct", "block", "selector", "urltest", "dns"].includes(type);
+}
+
 export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
   if (direction === "input") {
     if (kind === "route") return [{ key: "inbound", label: "Inbound traffic", nodeKind: "inbound", icon: RadioTower }];
@@ -68,13 +72,15 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
     }
     if (kind === "outbound") {
       const routingInputs: PortSpec[] = [
-        { key: "route", label: "Route target", nodeKind: "route", icon: Route },
-        { key: "route-rule", label: "Route rule target", nodeKind: "route-rule", icon: GitBranch },
+        { key: "route", label: "Route final", nodeKind: "route", icon: Route },
+        { key: "route-rule", label: "Rule outbound", nodeKind: "route-rule", icon: GitBranch },
       ];
       return [
         ...routingInputs,
-        { key: "selector-group", label: "Selector member", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
-        { key: "urltest-group", label: "URLTest member", nodeKind: "outbound", nodeType: "urltest", icon: Database },
+        { key: "selector-group", label: "Selector candidate", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
+        { key: "urltest-group", label: "URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
+        { key: "dns-detour", label: "DNS detour target", nodeKind: "dns-server", icon: Server },
+        { key: "detour-target", label: "Dial detour target", nodeKind: "outbound", icon: Network },
       ];
     }
     return [];
@@ -98,6 +104,9 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
   if (kind === "dns-server") return [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
   if (kind === "outbound" && (type === "selector" || type === "urltest")) {
     return [{ key: "outbound-member", label: "Outbound member", nodeKind: "outbound", icon: Network }];
+  }
+  if (kind === "outbound" && supportsDialDetour(type)) {
+    return [{ key: "dial-detour", label: "Dial detour", nodeKind: "outbound", icon: Network }];
   }
   return [];
 }
@@ -140,6 +149,12 @@ function isPortConnected(
     if (kind === "outbound" && portKey === "urltest-group") {
       return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
     }
+    if (kind === "outbound" && portKey === "dns-detour") {
+      return config.dns?.servers?.some((server) => server.detour === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "detour-target") {
+      return config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ?? false;
+    }
     return false;
   }
 
@@ -161,6 +176,9 @@ function isPortConnected(
   }
   if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
     return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
+  }
+  if (kind === "outbound" && portKey === "dial-detour") {
+    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.detour);
   }
   return false;
 }
@@ -225,6 +243,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   isConnectable={false}
                 />
                 <port.icon size={15} />
+                <span className="sbc-port__label">{port.label}</span>
                 <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
               </button>
             );
@@ -258,6 +277,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   isConnectable={false}
                 />
                 <port.icon size={15} />
+                <span className="sbc-port__label">{port.label}</span>
                 <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
               </button>
             );

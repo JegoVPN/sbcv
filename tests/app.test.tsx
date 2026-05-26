@@ -92,6 +92,39 @@ describe("SBC editor shell", () => {
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 
+  it("lets an unconnected outbound define upstream references from the Inspector", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outbounds/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Naive" }));
+
+    expect(useProjectStore.getState().selectedId).toBe("outbound:naive-out");
+    expect(screen.getByText("Connections")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Set Route final" }));
+    expect(useProjectStore.getState().config.route?.final).toBe("naive-out");
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Route rule to this outbound" }));
+    expect(useProjectStore.getState().config.route?.rules?.at(-1)?.outbound).toBe("naive-out");
+
+    fireEvent.click(screen.getByRole("button", { name: "Create selector + add" }));
+    const selector = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "selector" && outbound.outbounds?.includes("naive-out"));
+    expect(selector?.tag).toBe("proxy");
+
+    fireEvent.click(screen.getByRole("button", { name: "Create URLTest + add" }));
+    const urltest = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes("naive-out"));
+    expect(urltest?.tag).toBe("auto");
+
+    fireEvent.click(screen.getByRole("button", { name: "Use for DNS server detour" }));
+    expect(useProjectStore.getState().config.dns?.servers?.some((server) => server.detour === "naive-out")).toBe(true);
+  });
+
   it("adds inbound setup drafts from the Library and opens editable listen fields", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);

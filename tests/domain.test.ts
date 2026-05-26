@@ -66,6 +66,32 @@ describe("canonical sing-box domain model", () => {
     expect(proxy?.outbounds).toEqual(["hk", "jp"]);
   });
 
+  it("renders DNS and outbound detour references with semantic handles", () => {
+    const config = createStableTunSplitConfig();
+    const dnsServer = config.dns?.servers?.[0];
+    const hk = config.outbounds?.find((outbound) => outbound.tag === "hk");
+    if (!dnsServer || !hk) throw new Error("missing detour fixture targets");
+    dnsServer.detour = "proxy";
+    hk.detour = "direct";
+
+    const { edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: `edge:dns-server-detour:${dnsServer.tag}:proxy`,
+          sourceHandle: "outbound",
+          targetHandle: "dns-detour",
+        }),
+        expect.objectContaining({
+          id: "edge:outbound-detour:hk:direct",
+          sourceHandle: "dial-detour",
+          targetHandle: "detour-target",
+        }),
+      ]),
+    );
+  });
+
   it("lays out the stable split graph in semantic columns without same-column overlap", () => {
     const { nodes } = deriveGraph(createStableTunSplitConfig(), { positions: {} }, []);
     const byId = new Map(nodes.map((node) => [node.id, node]));

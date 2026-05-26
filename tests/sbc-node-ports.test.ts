@@ -19,19 +19,25 @@ const cases: PortCase[] = [
   {
     kind: "outbound",
     type: "direct",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
     outputKeys: [],
   },
   {
     kind: "outbound",
+    type: "socks",
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
+    outputKeys: ["dial-detour"],
+  },
+  {
+    kind: "outbound",
     type: "selector",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
     outputKeys: ["outbound-member"],
   },
   {
     kind: "outbound",
     type: "urltest",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target"],
     outputKeys: ["outbound-member"],
   },
 ];

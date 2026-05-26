@@ -113,6 +113,10 @@ function isOutboundGroup(outbound: OutboundConfig) {
   return outbound.type === "selector" || outbound.type === "urltest";
 }
 
+function outboundDetourTag(outbound: OutboundConfig) {
+  return typeof outbound.detour === "string" && outbound.detour.trim() ? outbound.detour : undefined;
+}
+
 function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
 }
@@ -181,6 +185,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     if (Array.isArray(outbound.outbounds)) {
       outbound.outbounds.forEach((tag) => memberTags.add(tag));
     }
+    const detour = outboundDetourTag(outbound);
+    if (detour) memberTags.add(detour);
   });
 
   inbounds.forEach((inbound, index) => {
@@ -300,6 +306,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     rememberOutbound(tag, depth, desiredY);
     const outbound = outboundByTag.get(tag);
     if (!outbound || !isOutboundGroup(outbound) || !Array.isArray(outbound.outbounds)) {
+      const detour = outbound ? outboundDetourTag(outbound) : undefined;
+      if (detour) {
+        memberY.set(detour, desiredY);
+        walkOutboundTree(detour, depth + 1, desiredY, new Set([...trail, tag]));
+      }
       return;
     }
     const nextTrail = new Set(trail);
@@ -310,6 +321,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       memberY.set(candidateTag, candidateY);
       walkOutboundTree(candidateTag, depth + 1, candidateY, nextTrail);
     });
+    const detour = outboundDetourTag(outbound);
+    if (detour) {
+      memberY.set(detour, desiredY);
+      walkOutboundTree(detour, depth + 1, desiredY, nextTrail);
+    }
   }
 
   routeTargetY.forEach((y, tag) => walkOutboundTree(tag, 0, y, new Set()));
@@ -374,6 +390,10 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         );
       });
     }
+    const detour = outboundDetourTag(outbound);
+    if (detour) {
+      edges.push(makeEdge(`edge:outbound-detour:${tag}:${detour}`, id, `outbound:${detour}`, "dial-detour", "detour-target"));
+    }
   });
 
   if (config.dns) {
@@ -419,6 +439,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           { x: COLUMNS.target, y: columnLayout.reserve("target", dnsY + index * NODE_SLOT_Y) },
         ),
       );
+      if (server.detour) {
+        edges.push(makeEdge(`edge:dns-server-detour:${tag}:${server.detour}`, id, `outbound:${server.detour}`, "outbound", "dns-detour"));
+      }
     });
 
     if (visualizeDnsRules) {

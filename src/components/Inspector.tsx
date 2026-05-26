@@ -69,7 +69,7 @@ function fromList(value: string): string[] {
 }
 
 const inboundHandledFields = new Set(["tag", "type", "address", "auto_route"]);
-const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default"]);
+const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default", "detour"]);
 const dnsServerHandledFields = new Set(["tag", "type", "address", "server", "server_port", "path", "detour"]);
 
 function labelForField(field: string) {
@@ -100,6 +100,46 @@ function summaryFor(ref: EntityRef, entity: InspectorEntity) {
   return lines.join("\n");
 }
 
+function supportsDialDetour(type: string | null) {
+  return Boolean(type && !["direct", "block", "selector", "urltest", "dns"].includes(type));
+}
+
+function outboundTags(config: SingBoxConfig, excludeTag?: string) {
+  return (config.outbounds ?? [])
+    .map((outbound) => outbound.tag)
+    .filter((tag): tag is string => Boolean(tag && tag !== excludeTag));
+}
+
+function outboundGroups(config: SingBoxConfig, type: "selector" | "urltest") {
+  return (config.outbounds ?? [])
+    .filter((outbound) => outbound.type === type && typeof outbound.tag === "string")
+    .map((outbound) => ({
+      tag: outbound.tag,
+      members: Array.isArray(outbound.outbounds) ? outbound.outbounds : [],
+    }));
+}
+
+function outboundReferences(config: SingBoxConfig, tag: string) {
+  return {
+    routeFinal: config.route?.final === tag,
+    routeRules:
+      config.route?.rules
+        ?.map((rule, index) => (rule.outbound === tag ? index + 1 : null))
+        .filter((index): index is number => index !== null) ?? [],
+    selectors: outboundGroups(config, "selector").filter((group) => group.members.includes(tag)).map((group) => group.tag),
+    urltests: outboundGroups(config, "urltest").filter((group) => group.members.includes(tag)).map((group) => group.tag),
+    dnsDetours: config.dns?.servers?.filter((server) => server.detour === tag).map((server) => server.tag) ?? [],
+    outboundDetours:
+      config.outbounds
+        ?.filter((outbound) => outbound.tag !== tag && outbound.detour === tag)
+        .map((outbound) => outbound.tag) ?? [],
+  };
+}
+
+function formatReferenceList(items: string[] | number[]) {
+  return items.length ? items.join(", ") : "none";
+}
+
 export function Inspector() {
   const selectedId = useProjectStore((state) => state.selectedId);
   const config = useProjectStore((state) => state.config);
@@ -107,6 +147,8 @@ export function Inspector() {
   const renameTag = useProjectStore((state) => state.renameTag);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
+  const connectOutboundReference = useProjectStore((state) => state.connectOutboundReference);
+  const createCompatible = useProjectStore((state) => state.createCompatible);
   const ref = useMemo(() => selectedRefFromId(selectedId), [selectedId]);
   const entity = useMemo<InspectorEntity | null>(() => {
     if (!ref) return null;
@@ -139,6 +181,12 @@ export function Inspector() {
   const tagValue = typeof entity.tag === "string" ? entity.tag : null;
   const entityType = typeof entity.type === "string" ? entity.type : null;
   const InspectorIcon = inspectorIcons[ref.kind];
+  const selectedOutboundReferences =
+    ref.kind === "outbound" && tagValue ? outboundReferences(config, tagValue) : null;
+  const selectorGroups = outboundGroups(config, "selector");
+  const urltestGroups = outboundGroups(config, "urltest");
+  const firstSelector = selectorGroups.find((group) => tagValue && !group.members.includes(tagValue));
+  const firstUrltest = urltestGroups.find((group) => tagValue && !group.members.includes(tagValue));
 
   return (
     <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">
@@ -464,6 +512,102 @@ export function Inspector() {
 
       {ref.kind === "outbound" ? (
         <>
+          {tagValue ? (
+            <>
+              <div className="inspector-section-title">Connections</div>
+              <div className="reference-card">
+                <div>
+                  <span>Route final</span>
+                  <strong>{selectedOutboundReferences?.routeFinal ? "active" : "none"}</strong>
+                </div>
+                <div>
+                  <span>Route rules</span>
+                  <strong>{formatReferenceList(selectedOutboundReferences?.routeRules ?? [])}</strong>
+                </div>
+                <div>
+                  <span>Selector groups</span>
+                  <strong>{formatReferenceList(selectedOutboundReferences?.selectors ?? [])}</strong>
+                </div>
+                <div>
+                  <span>URLTest groups</span>
+                  <strong>{formatReferenceList(selectedOutboundReferences?.urltests ?? [])}</strong>
+                </div>
+                <div>
+                  <span>DNS detours</span>
+                  <strong>{formatReferenceList(selectedOutboundReferences?.dnsDetours ?? [])}</strong>
+                </div>
+                <div>
+                  <span>Dial detours</span>
+                  <strong>{formatReferenceList(selectedOutboundReferences?.outboundDetours ?? [])}</strong>
+                </div>
+              </div>
+              <div className="inspector-action-grid">
+                <button
+                  type="button"
+                  onClick={() => connectOutboundReference(tagValue, "route-final")}
+                  disabled={Boolean(selectedOutboundReferences?.routeFinal)}
+                >
+                  Set Route final
+                </button>
+                <button type="button" onClick={() => connectOutboundReference(tagValue, "route-rule")}>
+                  Add Route rule to this outbound
+                </button>
+                <button
+                  type="button"
+                  onClick={() => connectOutboundReference(tagValue, "selector-member", firstSelector?.tag)}
+                  disabled={selectorGroups.length > 0 && !firstSelector}
+                >
+                  {firstSelector ? `Add to selector ${firstSelector.tag}` : selectorGroups.length ? "Already in every selector" : "Create selector + add"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => connectOutboundReference(tagValue, "urltest-member", firstUrltest?.tag)}
+                  disabled={urltestGroups.length > 0 && !firstUrltest}
+                >
+                  {firstUrltest ? `Add to URLTest ${firstUrltest.tag}` : urltestGroups.length ? "Already in every URLTest" : "Create URLTest + add"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => connectOutboundReference(tagValue, "dns-detour")}
+                  disabled={Boolean(selectedOutboundReferences?.dnsDetours.length)}
+                >
+                  Use for DNS server detour
+                </button>
+              </div>
+              {supportsDialDetour(entityType) ? (
+                <label className="field">
+                  <span>Dial Detour</span>
+                  <select
+                    value={String(entity.detour ?? "")}
+                    onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
+                  >
+                    <option value="">None</option>
+                    {outboundTags(config, tagValue).map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              {entityType === "selector" || entityType === "urltest" ? (
+                <>
+                  <div className="inspector-section-title">Downstream Candidates</div>
+                  <div className="inspector-action-grid inspector-action-grid--compact">
+                    <button type="button" onClick={() => createCompatible(`outbound:${tagValue}`, "SOCKS")}>
+                      Add SOCKS candidate
+                    </button>
+                    <button type="button" onClick={() => createCompatible(`outbound:${tagValue}`, "Direct")}>
+                      Add Direct candidate
+                    </button>
+                    <button type="button" onClick={() => createCompatible(`outbound:${tagValue}`, "Block")}>
+                      Add Block candidate
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </>
+          ) : null}
           {"server" in entity ? (
             <label className="field">
               <span>Server</span>
