@@ -337,6 +337,46 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders entityType-specific enum selects for outbound protocols", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("ss-out");
+    });
+    render(<App />);
+
+    let inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Network")).toBeInTheDocument();
+    const methodSelect = inspector.getByLabelText("Method") as HTMLSelectElement;
+    expect(methodSelect.tagName).toBe("SELECT");
+    fireEvent.change(methodSelect, { target: { value: "2022-blake3-aes-128-gcm" } });
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.method).toBe("2022-blake3-aes-128-gcm");
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("vmess-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Security")).toBeInTheDocument();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("vless-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Flow")).toBeInTheDocument();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("tuic-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Congestion Control")).toBeInTheDocument();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("socks");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("SOCKS Version")).toBeInTheDocument();
+  });
+
   it("masks sensitive fields in AdvancedScalarFields and toggles visibility", () => {
     useProjectStore.getState().loadMinimal();
 
