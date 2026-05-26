@@ -26,8 +26,10 @@ import {
 import { validateConfig } from "../domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
 import {
+  dnsServerTypeForPaletteKind,
   inboundTypeForPaletteKind,
   outboundTypeForPaletteKind,
+  preferredDnsServerTag,
   preferredInboundTag,
   preferredOutboundTag,
 } from "../domain/protocols";
@@ -221,8 +223,12 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         if (created) selectedId = `outbound:${created.tag}`;
       }
       if (kind === "dns-hub") config = config.dns ? config : addDnsServer(config, "local");
-      if (kind === "dns-local") config = addDnsServer(config, "local");
-      if (kind === "dns-https") config = addDnsServer(config, "https");
+      const dnsServerType = dnsServerTypeForPaletteKind(kind);
+      if (dnsServerType && dnsServerType !== "legacy" && dnsServerType !== "mdns") {
+        config = addDnsServer(config, dnsServerType, preferredDnsServerTag(dnsServerType));
+        const created = config.dns?.servers?.[config.dns.servers.length - 1];
+        if (created) selectedId = `dns-server:${created.tag}`;
+      }
       if (kind === "dns-rule") config = addDnsRule(config);
       return { ...sync(config, state.channel), layout, selectedId };
     }),

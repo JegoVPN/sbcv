@@ -21,14 +21,14 @@ Last run: 2026-05-26 against testing docs commit `b6c416b0482a2d2391470d70ce518a
 | --- | ---: |
 | Official testing English docs | 105 |
 | Matrix rows | 105 |
-| Palette entries | 103 |
+| Palette entries | 104 |
 | `ADD` entries | 15 |
-| `SETUP` entries | 28 |
+| `SETUP` entries | 38 |
 | `TABLE` entries | 4 |
 | `INSPECTOR` entries | 13 |
-| `GATED` entries | 14 |
+| `GATED` entries | 15 |
 | `PENDING` entries | 4 |
-| `DOCS` entries | 25 |
+| `DOCS` entries | 15 |
 
 ## User-Facing Meaning
 
@@ -37,6 +37,8 @@ The matrix is now synchronized with the official testing docs, so missing behavi
 The first closed usability gap is Outbound setup: users can now add HTTP, Shadowsocks, VMess, Trojan, Naive, Hysteria, ShadowTLS, VLESS, TUIC, Hysteria2, AnyTLS, Tor, and SSH outbounds from Library. These create canonical JSON objects with the correct official `type`; they no longer fall back to `socks`. The selected setup node opens the Inspector, where common scalar protocol fields such as `password`, `uuid`, `method`, `network`, and bandwidth values are editable.
 
 The second closed usability gap is Inbound setup: users can now add Direct, SOCKS, HTTP, Shadowsocks, VMess, Trojan, Naive, Hysteria, ShadowTLS, VLESS, TUIC, Hysteria2, AnyTLS, Redirect, and TProxy inbounds from Library. These create canonical JSON objects with the correct official `type`, select the new node, and expose editable listen/protocol scalar fields in the Inspector. Cloudflared remains `GATED` because it is a testing-only `1.14` inbound.
+
+The third closed usability gap is DNS Server setup: users can now add Hosts, TCP, UDP, TLS, QUIC, HTTPS, HTTP3/H3, DHCP, FakeIP, Tailscale, and Resolved DNS servers from Library. These create DNS server objects under canonical `dns.servers[]`, select the new DNS server node, and expose editable server/path/interface/range/reference scalar fields in the Inspector. mDNS remains `GATED` because it is testing-only, and Legacy remains docs/migration-only.
 
 Remaining chain-node gaps reported by the audit:
 
@@ -50,7 +52,6 @@ Remaining Palette surface gaps reported by the audit:
 
 Remaining writable object gaps reported by the expanded audit:
 
-- DNS server types except Local and HTTPS.
 - NTP, Certificate, Experimental independent settings.
 - Endpoint WireGuard and Tailscale.
 - Rule Set resource editor.

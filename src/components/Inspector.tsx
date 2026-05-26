@@ -70,6 +70,7 @@ function fromList(value: string): string[] {
 
 const inboundHandledFields = new Set(["tag", "type", "address", "auto_route"]);
 const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default"]);
+const dnsServerHandledFields = new Set(["tag", "type", "address", "server", "server_port", "path", "detour"]);
 
 function labelForField(field: string) {
   return field
@@ -374,6 +375,29 @@ export function Inspector() {
               onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
             />
           </label>
+          {editableScalarFields(entity, dnsServerHandledFields).map(([field, value]) =>
+            typeof value === "boolean" ? (
+              <label className="toggle-row" key={field}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(event) => updateField(ref, field, event.target.checked)}
+                />
+                <span>{labelForField(field)}</span>
+              </label>
+            ) : (
+              <label className="field" key={field}>
+                <span>{labelForField(field)}</span>
+                <input
+                  type={typeof value === "number" ? "number" : "text"}
+                  value={String(value)}
+                  onChange={(event) =>
+                    updateField(ref, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
+                  }
+                />
+              </label>
+            ),
+          )}
         </>
       ) : null}
 
