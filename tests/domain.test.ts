@@ -523,6 +523,40 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("emits vmess/vless validation diagnostics (uuid, alterId, flow/multiplex)", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        { type: "vmess", tag: "vmess-bad", server: "1.1.1.1", server_port: 443, uuid: "", alter_id: 4, tls: { enabled: true } },
+        { type: "vmess", tag: "vmess-uuid-bad", server: "1.1.1.1", server_port: 443, uuid: "not-a-uuid", tls: { enabled: true } },
+        {
+          type: "vless",
+          tag: "vless-conflict",
+          server: "1.1.1.1",
+          server_port: 443,
+          uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
+          flow: "xtls-rprx-vision",
+          multiplex: { enabled: true },
+          tls: { enabled: true },
+        },
+      ],
+      inbounds: [
+        ...(base.inbounds ?? []),
+        { type: "vmess", tag: "vmess-in", listen: "127.0.0.1", listen_port: 2080, users: [{ name: "u", uuid: "", alterId: 8 }], tls: { enabled: true } },
+      ],
+    } as typeof base;
+
+    const diagnostics = validateConfig(config, "testing");
+    const codes = diagnostics.map((d) => d.code);
+    expect(codes).toContain("vmess-missing-uuid");
+    expect(codes).toContain("vmess-invalid-uuid");
+    expect(codes).toContain("vmess-alterid-deprecated");
+    expect(codes).toContain("vless-flow-multiplex-conflict");
+    expect(codes).toContain("user-missing-uuid");
+  });
+
   it("emits required-server / required-TLS / selector-default diagnostics", () => {
     const base = createStableTunSplitConfig();
     const config = {
