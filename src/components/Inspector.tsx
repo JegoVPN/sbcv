@@ -186,6 +186,7 @@ const outboundHandledFields = new Set([
   "interval",
   "tolerance",
   "idle_timeout",
+  "packet_encoding",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2706,6 +2707,19 @@ export function Inspector() {
               >
                 <option value="">(none)</option>
                 <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "vmess" || entityType === "vless" ? (
+            <label className="field">
+              <span>Packet Encoding</span>
+              <select
+                value={typeof entity.packet_encoding === "string" ? entity.packet_encoding : ""}
+                onChange={(event) => updateField(ref, "packet_encoding", event.target.value || undefined)}
+              >
+                <option value="">(disabled)</option>
+                <option value="packetaddr">packetaddr</option>
+                <option value="xudp">xudp</option>
               </select>
             </label>
           ) : null}

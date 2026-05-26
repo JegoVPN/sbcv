@@ -1120,6 +1120,27 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders packet_encoding select for vmess and vless outbounds", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("vmess-out");
+    });
+    render(<App />);
+    let inspector = within(screen.getByLabelText("Node inspector"));
+    let pkt = inspector.getByLabelText("Packet Encoding") as HTMLSelectElement;
+    expect(pkt.tagName).toBe("SELECT");
+    fireEvent.change(pkt, { target: { value: "xudp" } });
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.packet_encoding).toBe("xudp");
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("vless-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    pkt = inspector.getByLabelText("Packet Encoding") as HTMLSelectElement;
+    fireEvent.change(pkt, { target: { value: "packetaddr" } });
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.packet_encoding).toBe("packetaddr");
+  });
+
   it("renders urltest url / interval / tolerance / idle_timeout as first-class fields", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
