@@ -586,6 +586,18 @@ export function validateConfig(
         );
       }
     }
+    if (outbound.type === "tuic") {
+      const obj = outbound as Record<string, unknown>;
+      if (obj.udp_over_stream && typeof obj.udp_relay_mode === "string" && obj.udp_relay_mode.length > 0) {
+        push(
+          diagnostics,
+          "error",
+          "tuic-udp-mode-conflict",
+          `/outbounds/${index}`,
+          `TUIC outbound "${tag}" sets both udp_over_stream and udp_relay_mode; the two are mutually exclusive.`,
+        );
+      }
+    }
     if (channel === "stable" && outbound.type === "ssh") {
       const obj = outbound as Record<string, unknown>;
       if (obj.cipher !== undefined) {
