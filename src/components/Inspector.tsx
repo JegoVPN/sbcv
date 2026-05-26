@@ -1575,7 +1575,52 @@ export function Inspector() {
               />
             </label>
           ) : null}
-          {"outbounds" in entity ? (
+          {(entityType === "selector" || entityType === "urltest") && tagValue !== null ? (
+            (() => {
+              const currentCandidates = Array.isArray(entity.outbounds)
+                ? (entity.outbounds as unknown[]).filter((item): item is string => typeof item === "string")
+                : [];
+              const availableTags = outboundTags(config, tagValue);
+              const toggleCandidate = (candidate: string) => {
+                const next = currentCandidates.includes(candidate)
+                  ? currentCandidates.filter((item) => item !== candidate)
+                  : [...currentCandidates, candidate];
+                updateField(ref, "outbounds", next);
+                if (entityType === "selector") {
+                  const currentDefault = typeof entity.default === "string" ? entity.default : "";
+                  if (currentDefault && !next.includes(currentDefault)) {
+                    updateField(ref, "default", undefined);
+                  }
+                }
+              };
+              return (
+                <fieldset className="field field--checklist" data-testid="candidate-checklist">
+                  <legend>Candidates</legend>
+                  {availableTags.length === 0 ? (
+                    <p className="field__hint">Add another outbound first to populate candidates.</p>
+                  ) : null}
+                  {availableTags.map((candidate) => (
+                    <label key={candidate} className="toggle-row toggle-row--inline">
+                      <input
+                        type="checkbox"
+                        checked={currentCandidates.includes(candidate)}
+                        onChange={() => toggleCandidate(candidate)}
+                      />
+                      <span>{candidate}</span>
+                    </label>
+                  ))}
+                  {currentCandidates.filter((tag) => !availableTags.includes(tag)).map((stale) => (
+                    <label key={`stale-${stale}`} className="toggle-row toggle-row--inline toggle-row--stale">
+                      <input type="checkbox" checked readOnly />
+                      <span>
+                        {stale} <em>(missing)</em>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              );
+            })()
+          ) : "outbounds" in entity ? (
             <label className="field">
               <span>Candidates</span>
               <input
@@ -1584,13 +1629,39 @@ export function Inspector() {
               />
             </label>
           ) : null}
-          {"default" in entity ? (
-            <label className="field">
-              <span>Default</span>
+          {entityType === "selector" ? (
+            (() => {
+              const candidates = Array.isArray(entity.outbounds)
+                ? (entity.outbounds as unknown[]).filter((item): item is string => typeof item === "string")
+                : [];
+              return (
+                <label className="field">
+                  <span>Default</span>
+                  <select
+                    value={typeof entity.default === "string" ? entity.default : ""}
+                    onChange={(event) => updateField(ref, "default", event.target.value || undefined)}
+                  >
+                    <option value="">First candidate</option>
+                    {candidates.map((candidate) => (
+                      <option key={candidate} value={candidate}>
+                        {candidate}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              );
+            })()
+          ) : null}
+          {entityType === "selector" || entityType === "urltest" ? (
+            <label className="toggle-row">
               <input
-                value={String(entity.default ?? "")}
-                onChange={(event) => updateField(ref, "default", event.target.value || undefined)}
+                type="checkbox"
+                checked={Boolean(entity.interrupt_exist_connections)}
+                onChange={(event) =>
+                  updateField(ref, "interrupt_exist_connections", event.target.checked || undefined)
+                }
               />
+              <span>Interrupt existing connections on switch</span>
             </label>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={outboundHandledFields} entityRef={ref} updateField={updateField} />
