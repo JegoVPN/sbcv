@@ -570,8 +570,8 @@ export function createEndpoint(type: string, tag: string): EndpointConfig {
       private_key: "EEKlAzKfS87ShJPnvEF3AiJjGS9JHEzgn2jB3J7yMkY=",
       peers: [
         {
-          address: "127.0.0.1",
-          port: 51820,
+          server: "127.0.0.1",
+          server_port: 51820,
           public_key: "tM4NaeCZrzxQ6BfhyeuQMy5jDReji4o8h5LVAGpI1HQ=",
           allowed_ips: ["0.0.0.0/0"],
         },
