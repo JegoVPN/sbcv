@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable log/index.md + testing diff + Palette/SbcNode/Inspector grep. UI verification + implementation fixes still pending. -->
+<!-- Status: implemented (2026-05-27). Source: stable log/index.md + testing diff + Palette/SbcNode/Inspector grep. P0 timestamp toggle, P1 output placeholder, and disabled-first ordering shipped. Outstanding P1: Palette singleton guard. P2: canvas subtitle differentiation. -->
 # Settings / Log UI Review (Claude Deep Review)
 
 ## Scope
