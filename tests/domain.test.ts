@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   connectSelectorCandidate,
   createStableTunSplitConfig,
+  disconnectEdge,
   moveRouteRule,
   renameTag,
   updateRouteRule,
@@ -50,6 +51,14 @@ describe("canonical sing-box domain model", () => {
     const edgeIds = edges.map((edge) => edge.id);
 
     expect(new Set(edgeIds).size).toBe(edgeIds.length);
+  });
+
+  it("disconnects selector candidate references from rendered graph edge ids", () => {
+    const config = createStableTunSplitConfig();
+    const updated = disconnectEdge(config, "edge:selector:proxy:0:auto");
+    const proxy = updated.outbounds?.find((outbound) => outbound.tag === "proxy");
+
+    expect(proxy?.outbounds).toEqual(["hk", "jp"]);
   });
 
   it("lays out the stable split graph in semantic columns without same-column overlap", () => {

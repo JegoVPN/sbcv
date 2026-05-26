@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
+import type { SingBoxConfig } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 
 const iconMap = {
@@ -99,10 +100,74 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
   return [];
 }
 
+function nodeValueFromId(id: string) {
+  return id.split(":").slice(1).join(":");
+}
+
+function routeRuleIndex(id: string) {
+  const index = Number(nodeValueFromId(id));
+  return Number.isInteger(index) ? index : -1;
+}
+
+function isPortConnected(
+  config: SingBoxConfig,
+  id: string,
+  kind: SbcNodeKind,
+  type: string,
+  direction: "input" | "output",
+  portKey: string,
+) {
+  const value = nodeValueFromId(id);
+
+  if (direction === "input") {
+    if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0;
+    if (kind === "route-rule" && portKey === "route") return true;
+    if (kind === "dns" && portKey === "inbound-query") return (config.inbounds?.length ?? 0) > 0;
+    if (kind === "dns-rule" && portKey === "dns") return true;
+    if (kind === "dns-server" && portKey === "dns-rule") {
+      return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "route") return config.route?.final === value;
+    if (kind === "outbound" && portKey === "route-rule") {
+      return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "selector-group") {
+      return config.outbounds?.some((outbound) => outbound.type === "selector" && outbound.outbounds?.includes(value)) ?? false;
+    }
+    if (kind === "outbound" && portKey === "urltest-group") {
+      return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
+    }
+    return false;
+  }
+
+  if (kind === "inbound" && portKey === "route") return Boolean(config.route);
+  if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
+  if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
+  if (kind === "route-rule" && portKey === "outbound") {
+    const index = routeRuleIndex(id);
+    return Boolean(config.route?.rules?.[index]?.outbound);
+  }
+  if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0;
+  if (kind === "dns" && portKey === "dns-server") return Boolean(config.dns?.final);
+  if (kind === "dns-rule" && portKey === "dns-server") {
+    const index = routeRuleIndex(id);
+    return Boolean(config.dns?.rules?.[index]?.server);
+  }
+  if (kind === "dns-server" && portKey === "outbound") {
+    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
+  }
+  if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
+    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
+  }
+  return false;
+}
+
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
+  const config = useProjectStore((state) => state.config);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const createCompatible = useProjectStore((state) => state.createCompatible);
+  const togglePortConnection = useProjectStore((state) => state.togglePortConnection);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const Icon = getNodeIcon(data.kind, data.type);
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
@@ -132,34 +197,56 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
         <div className="sbc-node__ports sbc-node__ports--left" data-testid="node-left-ports">
           <Handle className="sbc-handle sbc-handle--in" type="target" position={Position.Left} />
-          {inputPorts.map((port) => (
-            <span
-              className="sbc-port sbc-port--input"
-              key={port.key}
-              title={port.label}
-              data-port-type={port.key}
-              data-port-node-kind={port.nodeKind}
-              data-port-node-type={port.nodeType}
-            >
-              <port.icon size={15} />
-            </span>
-          ))}
+          {inputPorts.map((port) => {
+            const connected = isPortConnected(config, id, data.kind, data.type, "input", port.key);
+            return (
+              <button
+                className={`sbc-port sbc-port--input ${connected ? "is-connected" : ""}`}
+                key={port.key}
+                title={port.label}
+                type="button"
+                aria-label={`${connected ? "Remove" : "Add"} ${port.label} for ${data.title}`}
+                data-port-type={port.key}
+                data-port-node-kind={port.nodeKind}
+                data-port-node-type={port.nodeType}
+                data-connected={connected ? "true" : "false"}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  togglePortConnection(id, "input", port);
+                }}
+              >
+                <port.icon size={15} />
+                <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="sbc-node__ports sbc-node__ports--right" data-testid="node-right-ports">
           <Handle className="sbc-handle sbc-handle--out" type="source" position={Position.Right} />
-          {outputPorts.map((port) => (
-            <span
-              className="sbc-port sbc-port--output"
-              key={port.key}
-              title={port.label}
-              data-port-type={port.key}
-              data-port-node-kind={port.nodeKind}
-              data-port-node-type={port.nodeType}
-            >
-              <port.icon size={15} />
-            </span>
-          ))}
+          {outputPorts.map((port) => {
+            const connected = isPortConnected(config, id, data.kind, data.type, "output", port.key);
+            return (
+              <button
+                className={`sbc-port sbc-port--output ${connected ? "is-connected" : ""}`}
+                key={port.key}
+                title={port.label}
+                type="button"
+                aria-label={`${connected ? "Remove" : "Add"} ${port.label} from ${data.title}`}
+                data-port-type={port.key}
+                data-port-node-kind={port.nodeKind}
+                data-port-node-type={port.nodeType}
+                data-connected={connected ? "true" : "false"}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  togglePortConnection(id, "output", port);
+                }}
+              >
+                <port.icon size={15} />
+                <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="sbc-node__summary">

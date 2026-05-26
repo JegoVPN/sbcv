@@ -327,7 +327,7 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
   }
   if (relation === "selector" || relation === "urltest") {
     const parent = parts[2];
-    const child = parts[3];
+    const child = parts[4] ?? parts[3];
     next.outbounds = next.outbounds?.map((outbound) =>
       outbound.tag === parent
         ? { ...outbound, outbounds: outbound.outbounds?.filter((tag) => tag !== child) }

@@ -30,7 +30,7 @@ textarea {
 
 button {
   border: 1px solid #29313a;
-  background: #171c22;
+  background: #101418;
   color: #eef2f4;
   min-height: 34px;
   border-radius: 7px;
@@ -44,7 +44,7 @@ button {
 
 button:hover:not(:disabled) {
   border-color: #5f6d7a;
-  background: #202832;
+  background: #171d24;
 }
 
 button:disabled {
@@ -87,8 +87,7 @@ textarea {
 }
 
 .app-shell {
-  display: grid;
-  grid-template-rows: 58px minmax(420px, 1fr) 300px;
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -96,12 +95,18 @@ textarea {
 }
 
 .topbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border-bottom: 1px solid #1e252d;
-  background: #0d1117;
+  border-bottom: 1px solid rgba(30, 37, 45, 0.74);
+  background: linear-gradient(180deg, rgba(10, 13, 18, 0.96), rgba(10, 13, 18, 0.72));
+  backdrop-filter: blur(14px);
 }
 
 .brand {
@@ -175,27 +180,36 @@ textarea {
 }
 
 .workspace {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 250px minmax(480px, 1fr);
-  position: relative;
 }
 
 .palette {
+  position: absolute;
+  top: 72px;
+  left: 14px;
+  z-index: 12;
+  width: 236px;
+  max-height: calc(100% - 404px);
   min-width: 0;
   overflow: auto;
-  background: #0f141a;
-  border-right: 1px solid #1e252d;
+  background: rgba(15, 20, 26, 0.88);
+  border: 1px solid #1e252d;
+  border-radius: 14px;
   padding: 14px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px);
 }
 
 .inspector {
   position: absolute;
-  top: 16px;
+  top: 72px;
   right: 16px;
-  z-index: 8;
+  z-index: 13;
   width: min(390px, calc(100% - 298px));
-  max-height: calc(100% - 32px);
+  max-height: calc(100% - 390px);
   overflow: auto;
   min-width: 0;
   padding: 18px;
@@ -235,9 +249,10 @@ textarea {
 }
 
 .canvas-shell {
+  position: absolute;
+  inset: 0;
   min-width: 0;
   min-height: 0;
-  position: relative;
   overflow: hidden;
   background:
     radial-gradient(circle at 1px 1px, rgba(147, 161, 176, 0.13) 1px, transparent 0),
@@ -257,7 +272,7 @@ textarea {
 
 .canvas-selection-pill {
   position: absolute;
-  top: 12px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -369,7 +384,7 @@ textarea {
   z-index: 5;
   display: grid;
   gap: 12px;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .sbc-node__ports--left {
@@ -386,22 +401,62 @@ textarea {
 
 .sbc-port {
   width: 40px;
+  min-width: 40px;
   height: 40px;
+  min-height: 40px;
+  padding: 0;
   border: 1px solid #2a3139;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #262b31;
+  position: relative;
+  background: #101418;
   color: #aeb8c2;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
 }
 
 .sbc-port--input {
-  color: #59a8ff;
+  color: #65b0ff;
 }
 
 .sbc-port--output {
   color: #c7ff00;
+}
+
+.sbc-port:hover,
+.sbc-port.is-connected:hover {
+  background: #151b22;
+  border-color: #55616d;
+}
+
+.sbc-port.is-connected {
+  background: #11161c;
+  border-color: #3c4650;
+}
+
+.sbc-port__action {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #202832;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #101418;
+  color: #dfe6ed;
+  opacity: 0;
+  transform: scale(0.86);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.sbc-port:hover .sbc-port__action,
+.sbc-port:focus-visible .sbc-port__action {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .sbc-handle {
@@ -468,7 +523,7 @@ textarea {
   padding: 0;
   border-radius: 12px;
   border-color: #444b53;
-  background: #252a2f;
+  background: #101418;
   color: #e4e9ee;
 }
 
@@ -492,7 +547,7 @@ textarea {
   gap: 7px;
   min-width: 0;
   padding: 0 11px;
-  background: #262a2f;
+  background: #101418;
   color: #e7ecef;
   font-weight: 760;
   white-space: nowrap;
@@ -521,16 +576,16 @@ textarea {
   height: 48px;
   padding: 0 12px;
   border-radius: 14px;
-  border-color: #c7ff00;
-  background: #c7ff00;
-  color: #111600;
+  border-color: #3f4b56;
+  background: #101418;
+  color: #c7ff00;
   font-size: 18px;
   font-weight: 860;
 }
 
 .sbc-node-primary:hover:not(:disabled) {
-  border-color: #d9ff47;
-  background: #d9ff47;
+  border-color: #c7ff00;
+  background: #151b22;
 }
 
 .sbc-node__actions {
@@ -678,16 +733,16 @@ textarea {
 
 .inspector__primary-action {
   min-height: 52px;
-  border-color: #c7ff00;
+  border-color: #3f4b56;
   border-radius: 14px;
-  background: #c7ff00;
-  color: #111600;
+  background: #101418;
+  color: #c7ff00;
   font-weight: 860;
 }
 
 .inspector__primary-action:hover:not(:disabled) {
   border-color: #d9ff47;
-  background: #d9ff47;
+  background: #151b22;
 }
 
 .empty-state {
@@ -699,11 +754,18 @@ textarea {
 }
 
 .bottom-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 14;
+  height: 300px;
   min-height: 0;
   border-top: 1px solid #1e252d;
-  background: #0c1117;
+  background: rgba(12, 17, 23, 0.94);
   display: grid;
   grid-template-rows: 44px minmax(0, 1fr);
+  backdrop-filter: blur(14px);
 }
 
 .panel-tabs {
@@ -719,8 +781,8 @@ textarea {
 }
 
 .panel-tabs .is-active {
-  background: #c7ff00;
-  color: #111;
+  background: #101418;
+  color: #c7ff00;
   border-color: #c7ff00;
 }
 
@@ -870,20 +932,28 @@ textarea {
 
 @media (max-width: 980px) {
   .app-shell {
-    grid-template-rows: 58px minmax(540px, 1fr) 340px;
+    height: 100%;
   }
 
-  .workspace {
-    grid-template-columns: 190px minmax(360px, 1fr);
+  .palette {
+    top: 70px;
+    left: 10px;
+    width: 172px;
+    max-height: 234px;
+    padding: 10px;
   }
 
   .inspector {
-    top: 12px;
+    top: 70px;
     right: 12px;
-    left: 202px;
+    left: 12px;
     width: auto;
-    max-height: calc(100% - 24px);
+    max-height: calc(100% - 424px);
     padding: 14px;
+  }
+
+  .bottom-panel {
+    height: 340px;
   }
 
   .canvas-shell::after {

@@ -136,7 +136,7 @@ async function assertSelectedNodeAndInspector(page: Page) {
   const box = await inspector.boundingBox();
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
   expect(box?.x ?? 0).toBeGreaterThan((viewport?.width ?? 0) / 2);
-  expect((box?.y ?? 999) - (canvasBox?.y ?? 0)).toBeLessThan(24);
+  expect((box?.y ?? 999) - (canvasBox?.y ?? 0)).toBeLessThan(88);
 }
 
 test("representative external fixtures import, render, inspect, export, and re-import", async ({ page }) => {
