@@ -2506,14 +2506,34 @@ export function Inspector() {
             </label>
           ) : null}
           {"server_port" in entity ? (
-            <label className="field">
-              <span>Port</span>
-              <input
-                type="number"
-                value={Number(entity.server_port ?? 0)}
-                onChange={(event) => updateField(ref, "server_port", Number(event.target.value))}
-              />
-            </label>
+            (() => {
+              const portDefaultByType: Record<string, number> = {
+                socks: 1080,
+                http: 8080,
+                trojan: 443,
+                naive: 443,
+                vless: 443,
+                shadowtls: 443,
+                ssh: 22,
+              };
+              const defaultPort = entityType && portDefaultByType[entityType];
+              return (
+                <label className="field">
+                  <span>Port</span>
+                  <input
+                    type="number"
+                    value={
+                      typeof entity.server_port === "number" ? entity.server_port : defaultPort ?? ""
+                    }
+                    placeholder={defaultPort ? String(defaultPort) : "port"}
+                    onChange={(event) => {
+                      const next = Number(event.target.value);
+                      updateField(ref, "server_port", Number.isFinite(next) && next > 0 ? next : undefined);
+                    }}
+                  />
+                </label>
+              );
+            })()
           ) : null}
           {entityType && ["socks", "http", "shadowsocks", "vmess", "trojan", "vless", "tuic", "hysteria", "hysteria2"].includes(entityType) ? (
             <label className="field">
