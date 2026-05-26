@@ -141,6 +141,28 @@ if (docsOnlyProtocolEntries.length) {
   for (const entry of docsOnlyProtocolEntries) console.log(`- ${entry.doc}: ${entry.label} (${entry.kind})`);
 }
 
+const writableClasses = new Set([
+  "independent-settings",
+  "chain-hub",
+  "chain-node",
+  "chain-resource",
+  "resource",
+  "service-resource",
+]);
+
+const incompleteWritableEntries = paletteEntries.filter((entry) => {
+  const row = matrixRows.get(entry.doc);
+  return row && writableClasses.has(row.className) && (entry.status === "docs" || entry.status === "pending");
+});
+
+if (incompleteWritableEntries.length) {
+  console.log(`\nWritable object docs without a write path yet (${incompleteWritableEntries.length}):`);
+  for (const entry of incompleteWritableEntries) {
+    const row = matrixRows.get(entry.doc);
+    console.log(`- ${entry.doc}: ${entry.label} (${row?.className}, ${entry.status})`);
+  }
+}
+
 if (!missingInMatrix.length && !staleInMatrix.length) {
   console.log("\nMatrix is in sync with current official testing docs.");
 }
