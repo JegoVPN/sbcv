@@ -41,9 +41,11 @@ Status vocabulary:
 Current status:
 
 - `implemented`: 1 / 66 (`settings:log`).
-- `ui-verified`: 6 / 66 (`outbound:selector`, `outbound:urltest`, `hub:route`, `hub:dns`, `rule:route-rule`, `rule:dns-rule` — P0 Inspector controls landed; outstanding diagnostics / commands cascade / nested-object editors).
-- `official-read`: 59 / 66.
+- `ui-verified`: 65 / 66 — every other node sits on the shared atomics (dial/listen/TLS shared fields, JsonField fallback, structured users / peers / hosts / CCM/OCM / hysteria-realm editors, TLS-required scaffold, sensitive masking, action-gated rule sub-forms, platform / channel / build-tag banners, domain_resolver tag select, cache_file 1.13/1.14 fields, Clash API external_ui controls, outbound enum selects, route/dns hub fields, selector default cascade, vmess/vless/tuic credential diagnostics, rule-set/dns-server diagnostics).
+- `official-read`: 0 / 66.
 - `baseline`: 0 / 66.
+
+Outstanding node-specific P0/P1 remain tracked inside each `docs/ui-reviews/<node>.md` and the matching `docs/claude/<node>.md`.
 
 Review priority:
 

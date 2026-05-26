@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Service / hysteria-realm — Deep UI Review
 
 > Sources: official testing docs (`service/hysteria-realm.md`, `shared/listen.md`, `shared/http2.md`, `shared/tls.md`). stable `service/index.md` does NOT list hysteria-realm — stable targets must never add or export this service.

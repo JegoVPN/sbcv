@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/outbound/vless.md, shared/dial.md, shared/tls.md, shared/multiplex.md, and shared/v2ray-transport.md; reviewed against current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics (listenSharedFields + tlsSharedFields + dialSharedFields + JsonField fallback + structured users editor + TLS-required scaffold + sensitive masking + diagnostics) landed; see docs/claude/index-ui-reviews.md Cross-Node Findings #1–#9. Node-specific P0/P1 still tracked here. -->
 # Outbound / vless UI Review
 
 ## Scope

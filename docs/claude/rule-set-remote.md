@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # rule-set:remote — Deep UI Review
 
 <!-- Source: sing-box stable 1.8–1.13 + testing 1.14 docs; Palette.tsx, Inspector.tsx, SbcNode.tsx, sharedFieldRegistry.ts, canvas/graph.ts, domain/commands.ts, domain/diagnostics.ts -->

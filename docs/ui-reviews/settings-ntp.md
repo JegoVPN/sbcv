@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/ntp/index.md and shared/dial.md; reviewed against current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics (Clash API external_ui controls + cache_file 1.13/1.14 fields + Sensitive masking + diagnostics) landed; see docs/claude/index-ui-reviews.md Cross-Node Findings #1–#9. Node-specific outstanding P0/P1 still tracked here. -->
 # NTP Settings UI Review
 
 ## Scope
