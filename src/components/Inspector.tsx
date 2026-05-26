@@ -1266,8 +1266,130 @@ export function Inspector() {
         ) : null}
       </div>
 
-      {ref.kind === "route" ? <RouteRulesTable /> : null}
-      {ref.kind === "dns" ? <DnsRulesTable /> : null}
+      {ref.kind === "route" ? (
+        <>
+          <label className="field">
+            <span>Final Outbound</span>
+            <select
+              value={typeof entity.final === "string" ? entity.final : ""}
+              onChange={(event) => updateField(ref, "final", event.target.value || undefined)}
+            >
+              <option value="">First outbound</option>
+              {outboundTags(config).map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.auto_detect_interface)}
+              onChange={(event) =>
+                updateField(ref, "auto_detect_interface", event.target.checked || undefined)
+              }
+            />
+            <span>Auto detect interface</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.override_android_vpn)}
+              onChange={(event) =>
+                updateField(ref, "override_android_vpn", event.target.checked || undefined)
+              }
+            />
+            <span>Override Android VPN</span>
+          </label>
+          <RouteRulesTable />
+        </>
+      ) : null}
+      {ref.kind === "dns" ? (
+        <>
+          <label className="field">
+            <span>Final DNS Server</span>
+            <select
+              value={typeof entity.final === "string" ? entity.final : ""}
+              onChange={(event) => updateField(ref, "final", event.target.value || undefined)}
+            >
+              <option value="">First DNS server</option>
+              {(config.dns?.servers ?? [])
+                .map((server) => server.tag)
+                .filter((tag): tag is string => Boolean(tag))
+                .map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Strategy</span>
+            <select
+              value={typeof entity.strategy === "string" ? entity.strategy : ""}
+              onChange={(event) => updateField(ref, "strategy", event.target.value || undefined)}
+            >
+              <option value="">(default)</option>
+              <option value="prefer_ipv4">prefer_ipv4</option>
+              <option value="prefer_ipv6">prefer_ipv6</option>
+              <option value="ipv4_only">ipv4_only</option>
+              <option value="ipv6_only">ipv6_only</option>
+            </select>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.disable_cache)}
+              onChange={(event) => updateField(ref, "disable_cache", event.target.checked || undefined)}
+            />
+            <span>Disable cache</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.disable_expire)}
+              onChange={(event) => updateField(ref, "disable_expire", event.target.checked || undefined)}
+            />
+            <span>Disable expire</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.independent_cache)}
+              onChange={(event) =>
+                updateField(ref, "independent_cache", event.target.checked || undefined)
+              }
+            />
+            <span>Independent cache</span>
+          </label>
+          <label className="field">
+            <span>Cache Capacity</span>
+            <input
+              type="number"
+              value={Number(entity.cache_capacity ?? 0)}
+              onChange={(event) => updateField(ref, "cache_capacity", Number(event.target.value) || undefined)}
+            />
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.reverse_mapping)}
+              onChange={(event) => updateField(ref, "reverse_mapping", event.target.checked || undefined)}
+            />
+            <span>Reverse mapping</span>
+          </label>
+          <label className="field">
+            <span>Client Subnet</span>
+            <input
+              type="text"
+              value={typeof entity.client_subnet === "string" ? entity.client_subnet : ""}
+              onChange={(event) => updateField(ref, "client_subnet", event.target.value || undefined)}
+            />
+          </label>
+          <DnsRulesTable />
+        </>
+      ) : null}
       {ref.kind === "route-rule" ? (
         <RouteRuleInspector index={ref.index} rule={entity} config={config} updateRouteRule={updateRouteRule} />
       ) : null}

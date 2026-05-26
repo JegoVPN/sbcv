@@ -1,3 +1,4 @@
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 #1 fixed — route.final now renders as `<select>` over outboundTags with "First outbound" option; P0 #2 partially addressed via Auto detect interface and Override Android VPN toggles (P0 routing-rule canvas ordering ambiguity still open). Outstanding: 5 platform-scoped fields (default_interface, default_mark, find_process, default_interface_address, default_network_strategy/type conflict guard), testing-1.14 fields channel gate, default_domain_resolver object-form. -->
 # Route Hub UI Review
 
 ## Scope

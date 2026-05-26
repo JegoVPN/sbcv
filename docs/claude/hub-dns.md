@@ -1,4 +1,4 @@
-<!-- Status: official-read. Sources: stable docs/configuration/dns/index.md, testing docs/configuration/dns/index.md, Palette.tsx, SbcNode.tsx, Inspector.tsx, RuleTables.tsx. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 #1 fixed — Inspector now exposes final select over dns-server tags, strategy select, all cache toggles (disable_cache, disable_expire, independent_cache, reverse_mapping), cache_capacity, client_subnet. P0 #2 verified — final select sources from config.dns.servers[].tag, not outbound tags. P0 #3 and #4 unchanged (rule ordering authoritative in RouteRulesTable; dns-server namespace separate). Outstanding: P1 testing-1.14 optimistic/timeout fields channel gate, P0 fakeip nested editor (moved to fakeip atomic). -->
 # DNS Hub UI Review
 
 ## Scope
