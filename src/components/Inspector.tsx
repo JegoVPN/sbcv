@@ -196,6 +196,7 @@ const outboundHandledFields = new Set([
   "data_directory",
   "extra_args",
   "torrc",
+  "extra_headers",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2684,7 +2685,7 @@ export function Inspector() {
               </button>
             </>
           ) : null}
-          {entityType && ["http", "socks"].includes(entityType) ? (
+          {entityType && ["http", "socks", "naive"].includes(entityType) ? (
             <>
               <label className="field">
                 <span>Username</span>
@@ -2693,11 +2694,13 @@ export function Inspector() {
                   onChange={(event) => updateField(ref, "username", event.target.value || undefined)}
                 />
               </label>
-              <SensitiveTextField
-                label="Password"
-                value={String(entity.password ?? "")}
-                onChange={(next) => updateField(ref, "password", next || undefined)}
-              />
+              {entityType !== "naive" ? (
+                <SensitiveTextField
+                  label="Password"
+                  value={String(entity.password ?? "")}
+                  onChange={(next) => updateField(ref, "password", next || undefined)}
+                />
+              ) : null}
             </>
           ) : null}
           {entityType && ["shadowsocks", "trojan", "naive", "tuic", "hysteria2", "anytls", "shadowtls"].includes(entityType) ? (
@@ -2869,6 +2872,65 @@ export function Inspector() {
                 <option value="xtls-rprx-vision">xtls-rprx-vision</option>
               </select>
             </label>
+          ) : null}
+          {entityType === "naive" ? (
+            (() => {
+              const headers = objectField(entity.extra_headers);
+              const entries = Object.entries(headers);
+              const writeHeaders = (next: InspectorEntity) =>
+                updateField(ref, "extra_headers", Object.keys(next).length ? next : undefined);
+              return (
+                <fieldset className="field field--checklist" data-testid="naive-extra-headers">
+                  <legend>Extra Headers</legend>
+                  {entries.length === 0 ? (
+                    <p className="field__hint">No custom headers. Click Add to set User-Agent, Authorization, etc.</p>
+                  ) : null}
+                  {entries.map(([key, value], index) => (
+                    <div key={`${key}-${index}`} className="rule-row">
+                      <label className="field">
+                        <span>Name</span>
+                        <input
+                          value={key}
+                          onChange={(event) => {
+                            const newKey = event.target.value;
+                            if (!newKey || newKey === key) return;
+                            const next: InspectorEntity = {};
+                            for (const [k, v] of entries) next[k === key ? newKey : k] = v;
+                            writeHeaders(next);
+                          }}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Value</span>
+                        <input
+                          value={typeof value === "string" ? value : String(value ?? "")}
+                          onChange={(event) => writeHeaders({ ...headers, [key]: event.target.value })}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="icon-danger"
+                        aria-label={`Remove header ${key}`}
+                        onClick={() => {
+                          const next: InspectorEntity = { ...headers };
+                          delete next[key];
+                          writeHeaders(next);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="palette-action"
+                    onClick={() => writeHeaders({ ...headers, "": "" })}
+                  >
+                    Add header
+                  </button>
+                </fieldset>
+              );
+            })()
           ) : null}
           {entityType === "hysteria2" ? (
             (() => {
