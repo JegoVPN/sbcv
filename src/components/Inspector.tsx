@@ -334,6 +334,9 @@ const dnsRulePrimaryFields = new Set([
   "server",
   "action",
   "invert",
+  "method",
+  "no_drop",
+  "rcode",
 ]);
 
 const routeRuleAdvancedFields = [
@@ -846,7 +849,15 @@ function DnsRuleInspector({
       <div className="inspector-section-title">Action</div>
       <label className="field">
         <span>Action</span>
-        <select value={String(rule.action ?? "route")} onChange={(event) => patch({ action: event.target.value })}>
+        <select
+          value={String(rule.action ?? "route")}
+          onChange={(event) => {
+            const nextAction = event.target.value;
+            const cleared: Record<string, unknown> = { action: nextAction };
+            if (nextAction !== "route" && rule.server !== undefined) cleared.server = undefined;
+            patch(cleared);
+          }}
+        >
           <option value="route">route</option>
           <option value="evaluate">evaluate</option>
           <option value="respond">respond</option>
@@ -855,17 +866,47 @@ function DnsRuleInspector({
           <option value="predefined">predefined</option>
         </select>
       </label>
-      <label className="field">
-        <span>Server</span>
-        <select value={String(rule.server ?? "")} onChange={(event) => patch({ server: event.target.value || undefined })}>
-          <option value="">None</option>
-          {(config.dns?.servers ?? []).map((server, serverIndex) => (
-            <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
-              {server.tag ?? `untagged-${serverIndex + 1}`}
-            </option>
-          ))}
-        </select>
-      </label>
+      {String(rule.action ?? "route") === "route" ? (
+        <label className="field">
+          <span>Server</span>
+          <select value={String(rule.server ?? "")} onChange={(event) => patch({ server: event.target.value || undefined })}>
+            <option value="">(default)</option>
+            {(config.dns?.servers ?? []).map((server, serverIndex) => (
+              <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
+                {server.tag ?? `untagged-${serverIndex + 1}`}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      {String(rule.action) === "reject" ? (
+        <>
+          <label className="field">
+            <span>Reject Method</span>
+            <select value={String(rule.method ?? "default")} onChange={(event) => patch({ method: event.target.value === "default" ? undefined : event.target.value })}>
+              <option value="default">default</option>
+              <option value="drop">drop</option>
+            </select>
+          </label>
+          <label className="toggle-row">
+            <input type="checkbox" checked={Boolean(rule.no_drop)} onChange={(event) => patch({ no_drop: event.target.checked || undefined })} />
+            <span>No drop (only return)</span>
+          </label>
+        </>
+      ) : null}
+      {String(rule.action) === "predefined" ? (
+        <label className="field">
+          <span>Predefined RCODE</span>
+          <select value={String(rule.rcode ?? "NOERROR")} onChange={(event) => patch({ rcode: event.target.value === "NOERROR" ? undefined : event.target.value })}>
+            <option value="NOERROR">NOERROR</option>
+            <option value="FORMERR">FORMERR</option>
+            <option value="SERVFAIL">SERVFAIL</option>
+            <option value="NXDOMAIN">NXDOMAIN</option>
+            <option value="NOTIMP">NOTIMP</option>
+            <option value="REFUSED">REFUSED</option>
+          </select>
+        </label>
+      ) : null}
       <label className="toggle-row">
         <input type="checkbox" checked={Boolean(rule.invert)} onChange={(event) => patch({ invert: event.target.checked || undefined })} />
         <span>Invert match</span>

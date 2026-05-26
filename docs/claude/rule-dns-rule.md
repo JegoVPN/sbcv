@@ -1,3 +1,4 @@
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 #2 (server select rendered for all actions) FIXED — server select only on action=route; action change clears `rule.server` and exits with the right namespace (dns.servers[].tag). P0 #3 (action sub-fields absent) partially FIXED — reject (method + no_drop) and predefined (rcode) render. Outstanding: P0 evaluate / respond / route-options sub-forms, P0 dns-rule-action phantom Palette kind cleanup, P0 canvas dns-server port action-gating, P1 1.13 interface_address fields, P1 1.14 source_mac_address / source_hostname / preferred_by / match_response. -->
 # DNS Rule Node — Deep UI Review
 
 Status: official-read. Sources: stable docs/configuration/dns/rule.md + rule_action.md, testing docs/configuration/dns/rule.md + rule_action.md, Palette.tsx, SbcNode.tsx, Inspector.tsx, RuleTables.tsx, diagnostics.ts.

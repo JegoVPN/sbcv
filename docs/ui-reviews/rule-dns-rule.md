@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/dns/rule.md and dns/rule_action.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 action-gated server select: route keeps `<select>` (now scoped to dns.servers[].tag); reject/route-options/predefined/respond/evaluate hide it and clear `rule.server`. P0 action sub-fields landed for reject (method + no_drop) and predefined (rcode select). Outstanding: P0 evaluate / respond / route-options sub-forms, P0 canvas dns-server port action-gating, P0 phantom dns-rule-action Palette kind cleanup, P1 1.13 interface_address / 1.14 source_mac_address fields. -->
 # DNS Rule UI Review
 
 ## Scope
