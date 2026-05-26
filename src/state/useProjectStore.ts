@@ -27,6 +27,13 @@ import { parseConfigJson, stringifyConfig } from "../domain/serialization";
 import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfig } from "../domain/types";
 
 type PanelTab = "rules" | "dns" | "json" | "diagnostics";
+type PortDirection = "input" | "output";
+type NodePortAction = {
+  key: string;
+  nodeKind: string;
+  nodeType?: string;
+  label: string;
+};
 
 type ProjectStore = {
   channel: SingBoxChannel;
@@ -45,6 +52,7 @@ type ProjectStore = {
   loadMinimal: () => void;
   createFromPalette: (kind: string) => void;
   createCompatible: (sourceId: string, kind: string) => void;
+  togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
   updateField: (ref: EntityRef, field: string, value: unknown) => void;
   renameTag: (oldTag: string, newTag: string) => void;
   deleteEntity: (ref: EntityRef) => void;
@@ -87,9 +95,33 @@ function nextLayout(layout: ProjectLayout, id: string, x: number, y: number): Pr
   };
 }
 
+function parseNodeId(nodeId: string) {
+  const [kind, ...rest] = nodeId.split(":");
+  return { kind: kind ?? "", value: rest.join(":") };
+}
+
+function firstOutboundParent(config: SingBoxConfig, childTag: string, parentType?: string) {
+  return (config.outbounds ?? []).find((outbound) => {
+    if (parentType && outbound.type !== parentType) return false;
+    return outbound.outbounds?.includes(childTag);
+  });
+}
+
+function firstRouteRuleIndex(config: SingBoxConfig, outboundTag: string) {
+  return config.route?.rules?.findIndex((rule) => rule.outbound === outboundTag) ?? -1;
+}
+
+function firstDnsRuleIndex(config: SingBoxConfig, serverTag: string) {
+  return config.dns?.rules?.findIndex((rule) => rule.server === serverTag) ?? -1;
+}
+
+function disconnectSelectorMember(config: SingBoxConfig, parentTag: string, childTag: string, parentType: string) {
+  return disconnectEdge(config, `edge:${parentType}:${parentTag}:${childTag}`);
+}
+
 const initialConfig = createStableTunSplitConfig();
 
-export const useProjectStore = create<ProjectStore>((set, get) => ({
+export const useProjectStore = create<ProjectStore>((set) => ({
   channel: "stable",
   version: "stable",
   config: initialConfig,
@@ -157,6 +189,150 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         layout = nextLayout(layout, `dns-server:${latestServer.tag}`, 850, 560 + servers.length * 100);
       }
       return { ...sync(config, state.channel), layout };
+    }),
+
+  togglePortConnection: (nodeId, direction, port) =>
+    set((state) => {
+      const node = parseNodeId(nodeId);
+      let config = state.config;
+
+      if (direction === "input") {
+        if (node.kind === "route" && port.key === "inbound") {
+          config = addInbound(config, "tun");
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "route-rule" && port.key === "route") {
+          config = ensureRoute(config);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns" && port.key === "inbound-query") {
+          config = addInbound(config, "tun");
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-rule" && port.key === "dns") {
+          config = addDnsServer(config, "local");
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-server" && port.key === "dns-rule") {
+          const index = firstDnsRuleIndex(config, node.value);
+          config = index >= 0 ? disconnectEdge(config, `edge:dns-rule:${index}:${node.value}`) : addDnsRule(config, { domain_suffix: ["example"], server: node.value });
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "route") {
+          config = config.route?.final === node.value ? disconnectEdge(config, `edge:route-final:${node.value}`) : setRouteFinal(config, node.value);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "route-rule") {
+          const index = firstRouteRuleIndex(config, node.value);
+          config = index >= 0 ? disconnectEdge(config, `edge:route-rule:${index}:${node.value}`) : addRouteRule(config, { domain_suffix: ["example"], outbound: node.value });
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && (port.key === "selector-group" || port.key === "urltest-group")) {
+          const parentType = port.key === "selector-group" ? "selector" : "urltest";
+          const parent = firstOutboundParent(config, node.value, parentType);
+          if (parent) {
+            config = disconnectSelectorMember(config, parent.tag, node.value, parent.type);
+          } else {
+            config = addOutbound(config, parentType, parentType === "selector" ? "proxy" : "auto");
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created) config = connectSelectorCandidate(config, created.tag, node.value);
+          }
+          return sync(config, state.channel);
+        }
+      }
+
+      if (direction === "output") {
+        if (node.kind === "inbound" && port.key === "route") {
+          config = ensureRoute(config);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "route" && port.key === "route-rule") {
+          const lastRuleIndex = (config.route?.rules?.length ?? 0) - 1;
+          config = lastRuleIndex >= 0 ? deleteRouteRule(config, lastRuleIndex) : addRouteRule(config);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "route" && port.key === "outbound") {
+          if (config.route?.final) {
+            config = disconnectEdge(config, `edge:route-final:${config.route.final}`);
+          } else {
+            config = addOutbound(config, "direct", "direct");
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created) config = setRouteFinal(config, created.tag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "route-rule" && port.key === "outbound") {
+          const index = Number(node.value);
+          const outbound = Number.isInteger(index) ? config.route?.rules?.[index]?.outbound : undefined;
+          if (outbound) config = disconnectEdge(config, `edge:route-rule:${index}:${outbound}`);
+          else {
+            config = addOutbound(config, "direct", "direct");
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created && Number.isInteger(index)) config = updateRouteRule(config, index, { outbound: created.tag });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "outbound-member") {
+          const parent = config.outbounds?.find((outbound) => outbound.tag === node.value);
+          const lastMember = parent?.outbounds?.[parent.outbounds.length - 1];
+          if (parent && lastMember) {
+            config = disconnectSelectorMember(config, parent.tag, lastMember, parent.type);
+          } else if (parent) {
+            config = addOutbound(config, "socks", "proxy-out");
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created) config = connectSelectorCandidate(config, parent.tag, created.tag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns" && port.key === "dns-rule") {
+          const lastRuleIndex = (config.dns?.rules?.length ?? 0) - 1;
+          config = lastRuleIndex >= 0 ? deleteDnsRule(config, lastRuleIndex) : addDnsRule(config);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns" && port.key === "dns-server") {
+          if (config.dns?.final) config = disconnectEdge(config, `edge:dns-final:${config.dns.final}`);
+          else config = addDnsServer(config, "local");
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-rule" && port.key === "dns-server") {
+          const index = Number(node.value);
+          const server = Number.isInteger(index) ? config.dns?.rules?.[index]?.server : undefined;
+          if (server) config = disconnectEdge(config, `edge:dns-rule:${index}:${server}`);
+          else {
+            config = addDnsServer(config, "local");
+            const created = config.dns?.servers?.[config.dns.servers.length - 1];
+            if (created && Number.isInteger(index)) config = updateDnsRule(config, index, { server: created.tag });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-server" && port.key === "outbound") {
+          const server = config.dns?.servers?.find((item) => item.tag === node.value);
+          if (server?.detour) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "detour", undefined);
+          else {
+            config = addOutbound(config, "direct", "direct");
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "detour", created.tag);
+          }
+          return sync(config, state.channel);
+        }
+      }
+
+      return state;
     }),
 
   updateField: (ref, field, value) =>
