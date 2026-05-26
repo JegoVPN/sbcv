@@ -337,6 +337,32 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders hysteria-realm users as a structured editor with channel banner", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().setChannel("testing");
+    });
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-hysteria-realm");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/1.14 testing-only/)).toBeInTheDocument();
+
+    const editor = inspector.getByTestId("hysteria-realm-users-editor");
+    // scaffold seeds one user; structured row should already render its name/max_realms
+    expect((within(editor).getByLabelText("Name") as HTMLInputElement).value).toBe("user");
+
+    fireEvent.change(within(editor).getByLabelText("Max Realms"), { target: { value: "5" } });
+    const service = useProjectStore.getState().config.services?.find((s) => s.type === "hysteria-realm");
+    expect(((service as Record<string, unknown>).users as Record<string, unknown>[])[0]).toMatchObject({ max_realms: 5 });
+
+    fireEvent.click(within(editor).getByRole("button", { name: /Add user/ }));
+    const updated = useProjectStore.getState().config.services?.find((s) => s.type === "hysteria-realm");
+    expect((updated as Record<string, unknown>).users as Record<string, unknown>[]).toHaveLength(2);
+  });
+
   it("renders CCM/OCM users and headers as structured row editors with token masking", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

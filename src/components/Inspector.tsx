@@ -2893,7 +2893,74 @@ export function Inspector() {
           ) : null}
 
           {entityType === "hysteria-realm" ? (
-            <JsonField label="Users JSON" value={entity.users ?? []} onChange={(value) => updateField(ref, "users", value)} />
+            <>
+              <PlatformBanner
+                kind="channel"
+                text={
+                  channel === "stable"
+                    ? "Channel gate: service hysteria-realm is testing-only (sing-box 1.14+). The current channel is stable; exporting this node will fail sing-box check."
+                    : "Channel gate: service hysteria-realm is 1.14 testing-only. Stable targets will refuse to load it."
+                }
+              />
+              {(() => {
+                const users = Array.isArray(entity.users) ? (entity.users as Record<string, unknown>[]) : [];
+                const writeUsers = (next: Record<string, unknown>[]) =>
+                  updateField(ref, "users", next.length ? next : undefined);
+                const patchUser = (index: number, patch: Record<string, unknown>) =>
+                  writeUsers(users.map((user, i) => (i === index ? { ...user, ...patch } : user)));
+                const removeUser = (index: number) => writeUsers(users.filter((_, i) => i !== index));
+                const addUser = () => writeUsers([...users, { name: `user${users.length + 1}`, token: "" }]);
+                return (
+                  <fieldset className="field field--checklist" data-testid="hysteria-realm-users-editor">
+                    <legend>Realm Users</legend>
+                    {users.length === 0 ? (
+                      <p className="field__hint">No users yet. Click Add to create one.</p>
+                    ) : null}
+                    {users.map((user, index) => (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>Name</span>
+                          <input
+                            value={String(user.name ?? "")}
+                            onChange={(event) => patchUser(index, { name: event.target.value })}
+                          />
+                        </label>
+                        <SensitiveTextField
+                          label="Token"
+                          value={String(user.token ?? "")}
+                          onChange={(next) => patchUser(index, { token: next })}
+                        />
+                        <label className="field">
+                          <span>Max Realms</span>
+                          <input
+                            type="number"
+                            value={Number(user.max_realms ?? 0)}
+                            onChange={(event) => {
+                              const value = Number(event.target.value);
+                              patchUser(index, {
+                                max_realms: Number.isFinite(value) && value > 0 ? value : undefined,
+                              });
+                            }}
+                            placeholder="0 = unlimited"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          onClick={() => removeUser(index)}
+                          aria-label={`Remove user ${index + 1}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="palette-action" onClick={addUser}>
+                      Add user
+                    </button>
+                  </fieldset>
+                );
+              })()}
+            </>
           ) : null}
 
           <AdvancedScalarFields entity={entity} handledFields={serviceHandledFields} entityRef={ref} updateField={updateField} />
