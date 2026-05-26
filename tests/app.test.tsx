@@ -336,4 +336,41 @@ describe("SBC editor shell", () => {
       .config.dns?.servers?.find((server) => server.type === "tailscale" && server.endpoint === "ts-ep");
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
+
+  it("surfaces non-scalar entity fields under Advanced JSON fields", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-http");
+    });
+    act(() => {
+      useProjectStore.getState().updateField(
+        { kind: "inbound", tag: "http-in" },
+        "users",
+        [{ username: "alice", password: "secret" }],
+      );
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const advanced = inspector.getByText("Advanced JSON fields", { exact: false });
+    expect(advanced).toBeInTheDocument();
+    fireEvent.click(advanced);
+    expect(inspector.getByText("Users")).toBeInTheDocument();
+    const usersTextarea = inspector.getByText("Users").parentElement?.querySelector("textarea");
+    expect(usersTextarea?.value).toContain("alice");
+
+    act(() => {
+      const textarea = inspector.getByText("Users").parentElement?.querySelector("textarea") as HTMLTextAreaElement;
+      fireEvent.change(textarea, {
+        target: { value: JSON.stringify([{ username: "bob", password: "x" }], null, 2) },
+      });
+    });
+
+    const stored = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.tag === "http-in")?.users;
+    expect(stored).toEqual([{ username: "bob", password: "x" }]);
+  });
 });
