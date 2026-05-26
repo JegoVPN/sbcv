@@ -3,6 +3,7 @@ import {
   Braces,
   GitBranch,
   Globe2,
+  Layers3,
   Network,
   RadioTower,
   Route,
@@ -21,6 +22,7 @@ const inspectorIcons = {
   inbound: RadioTower,
   outbound: Network,
   "dns-server": Server,
+  "rule-set": Layers3,
   route: Route,
   "route-rule": GitBranch,
   dns: Globe2,
@@ -35,6 +37,7 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   if (kind === "inbound" && value) return { kind: "inbound", tag: value };
   if (kind === "outbound" && value) return { kind: "outbound", tag: value };
   if (kind === "dns-server" && value) return { kind: "dns-server", tag: value };
+  if (kind === "rule-set" && value) return { kind: "rule-set", tag: value };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };
   if (kind === "route-rule" && value) return { kind: "route-rule", index: Number(value) };
@@ -43,14 +46,14 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   return null;
 }
 
-function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server") {
+function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server" | "rule-set") {
   const prefix = `untagged-${kind}-`;
   if (!value.startsWith(prefix)) return -1;
   const index = Number(value.slice(prefix.length)) - 1;
   return Number.isInteger(index) && index >= 0 ? index : -1;
 }
 
-function findTaggedOrGenerated<T extends { tag?: string }>(items: T[] | undefined, tag: string, kind: "inbound" | "outbound" | "dns-server") {
+function findTaggedOrGenerated<T extends { tag?: string }>(items: T[] | undefined, tag: string, kind: "inbound" | "outbound" | "dns-server" | "rule-set") {
   const byTag = items?.find((item) => item.tag === tag);
   if (byTag) return byTag;
   const index = generatedIndex(tag, kind);
@@ -71,6 +74,7 @@ function fromList(value: string): string[] {
 const inboundHandledFields = new Set(["tag", "type", "address", "auto_route"]);
 const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default", "detour"]);
 const dnsServerHandledFields = new Set(["tag", "type", "address", "server", "server_port", "path", "detour"]);
+const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour"]);
 
 function labelForField(field: string) {
   return field
@@ -158,6 +162,7 @@ export function Inspector() {
     if (ref.kind === "dns-server") {
       return (findTaggedOrGenerated(config.dns?.servers, ref.tag, "dns-server") as InspectorEntity | undefined) ?? null;
     }
+    if (ref.kind === "rule-set") return (findTaggedOrGenerated(config.route?.rule_set, ref.tag, "rule-set") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route") return (config.route as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns") return (config.dns as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route-rule") return (config.route?.rules?.[ref.index] as InspectorEntity | undefined) ?? null;
@@ -750,6 +755,106 @@ export function Inspector() {
             />
           </label>
           {editableScalarFields(entity, dnsServerHandledFields).map(([field, value]) =>
+            typeof value === "boolean" ? (
+              <label className="toggle-row" key={field}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(event) => updateField(ref, field, event.target.checked)}
+                />
+                <span>{labelForField(field)}</span>
+              </label>
+            ) : (
+              <label className="field" key={field}>
+                <span>{labelForField(field)}</span>
+                <input
+                  type={typeof value === "number" ? "number" : "text"}
+                  value={String(value)}
+                  onChange={(event) =>
+                    updateField(ref, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
+                  }
+                />
+              </label>
+            ),
+          )}
+        </>
+      ) : null}
+
+      {ref.kind === "rule-set" ? (
+        <>
+          <label className="field">
+            <span>Type</span>
+            <input value={String(entity.type ?? "")} readOnly />
+          </label>
+          {entity.type === "remote" || entity.type === "local" ? (
+            <label className="field">
+              <span>Format</span>
+              <select
+                value={String(entity.format ?? "source")}
+                onChange={(event) => updateField(ref, "format", event.target.value)}
+              >
+                <option value="source">source</option>
+                <option value="binary">binary</option>
+              </select>
+            </label>
+          ) : null}
+          {entity.type === "remote" ? (
+            <>
+              <label className="field">
+                <span>URL</span>
+                <input
+                  value={String(entity.url ?? "")}
+                  onChange={(event) => updateField(ref, "url", event.target.value)}
+                />
+              </label>
+              <label className="field">
+                <span>Update Interval</span>
+                <input
+                  value={String(entity.update_interval ?? "")}
+                  onChange={(event) => updateField(ref, "update_interval", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Download Detour</span>
+                <select
+                  value={String(entity.download_detour ?? "")}
+                  onChange={(event) => updateField(ref, "download_detour", event.target.value || undefined)}
+                >
+                  <option value="">Default outbound</option>
+                  {outboundTags(config).map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : null}
+          {entity.type === "local" ? (
+            <label className="field">
+              <span>Path</span>
+              <input
+                value={String(entity.path ?? "")}
+                onChange={(event) => updateField(ref, "path", event.target.value)}
+              />
+            </label>
+          ) : null}
+          {entity.type === "inline" ? (
+            <label className="field">
+              <span>Rules JSON</span>
+              <textarea
+                value={JSON.stringify(entity.rules ?? [], null, 2)}
+                onChange={(event) => {
+                  try {
+                    updateField(ref, "rules", JSON.parse(event.target.value));
+                  } catch {
+                    updateField(ref, "rules", event.target.value);
+                  }
+                }}
+              />
+            </label>
+          ) : null}
+          {editableScalarFields(entity, ruleSetHandledFields).map(([field, value]) =>
             typeof value === "boolean" ? (
               <label className="toggle-row" key={field}>
                 <input

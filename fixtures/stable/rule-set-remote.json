@@ -1,0 +1,38 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "route": {
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "ads-rules",
+        "format": "source",
+        "url": "https://example.com/rules.json",
+        "update_interval": "1d"
+      }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [
+          "ads.example"
+        ],
+        "rule_set": [
+          "ads-rules"
+        ],
+        "outbound": "block"
+      }
+    ],
+    "final": "direct"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ]
+}

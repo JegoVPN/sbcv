@@ -21,14 +21,14 @@ Last run: 2026-05-26 against testing docs commit `b6c416b0482a2d2391470d70ce518a
 | --- | ---: |
 | Official testing English docs | 105 |
 | Matrix rows | 105 |
-| Palette entries | 104 |
+| Palette entries | 107 |
 | `ADD` entries | 15 |
-| `SETUP` entries | 41 |
+| `SETUP` entries | 42 |
 | `TABLE` entries | 4 |
-| `INSPECTOR` entries | 13 |
+| `INSPECTOR` entries | 14 |
 | `GATED` entries | 15 |
-| `PENDING` entries | 1 |
-| `DOCS` entries | 15 |
+| `PENDING` entries | 0 |
+| `DOCS` entries | 17 |
 
 ## User-Facing Meaning
 
@@ -44,6 +44,8 @@ The fourth closed usability gap is independent settings setup: users can now add
 
 The fifth closed usability gap is outbound upstream ownership: newly created outbounds now respect the selected canonical owner. Route, Route Rule, Selector, URLTest, and DNS Server selections connect the new outbound through the corresponding official tag field. Orphan outbounds expose explicit Inspector actions for route final, route rule, selector/urltest membership, DNS detour target, and Dial detour target, so users do not need to infer those references from side-port icons alone.
 
+The sixth closed usability gap is Rule Set setup: users can now add a stable-safe remote source rule-set from Library. SBC writes `route.rule_set[]`, renders a `rule-set` canvas node, exposes URL/format/update interval/download detour fields in the Inspector, validates `route.rules[].rule_set` and `dns.rules[].rule_set` tag references, and shows rule-set fields in both ordered rule tables. The stable fixture `fixtures/stable/rule-set-remote.json` validates this output with `sing-box-stable`.
+
 Remaining chain-node gaps reported by the audit:
 
 - Outbound `wireguard` and `dns` remain documentation/migration entries until the target-specific migration policy is implemented.
@@ -51,12 +53,11 @@ Remaining chain-node gaps reported by the audit:
 Remaining Palette surface gaps reported by the audit:
 
 - Base docs: `dns/server/index.md`, `endpoint/index.md`, `inbound/index.md`, `outbound/index.md`, `service/index.md`.
-- Rule-set source/headless/adguard docs.
 
 Remaining writable object gaps reported by the expanded audit:
 
 - Endpoint WireGuard and Tailscale.
-- Rule Set resource editor.
+- Rule Set source-format and AdGuard conversion helpers.
 - Service resources.
 - Outbound WireGuard and DNS migration/special entries.
 

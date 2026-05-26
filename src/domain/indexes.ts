@@ -82,8 +82,16 @@ export function getOutboundTags(config: SingBoxConfig): Set<string> {
   return new Set(listItems(config.outbounds).map((item) => item.tag));
 }
 
+export function getInboundTags(config: SingBoxConfig): Set<string> {
+  return new Set(listItems(config.inbounds).map((item) => item.tag));
+}
+
 export function getDnsServerTags(config: SingBoxConfig): Set<string> {
   return new Set(listItems(config.dns?.servers).map((item) => item.tag));
+}
+
+export function getRuleSetTags(config: SingBoxConfig): Set<string> {
+  return new Set(listItems(config.route?.rule_set).map((item) => item.tag));
 }
 
 export function getUniqueTag(config: SingBoxConfig, base: string): string {

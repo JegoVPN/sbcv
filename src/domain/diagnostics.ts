@@ -1,4 +1,4 @@
-import { buildTagIndex, getDnsServerTags, getOutboundTags } from "./indexes";
+import { buildTagIndex, getDnsServerTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
 function listItems<T>(value: T[] | undefined): T[] {
@@ -35,7 +35,9 @@ export function validateConfig(
   }
 
   const outboundTags = getOutboundTags(config);
+  const inboundTags = getInboundTags(config);
   const dnsServerTags = getDnsServerTags(config);
+  const ruleSetTags = getRuleSetTags(config);
   const outbounds = listItems(config.outbounds);
   const routeRules = listItems(config.route?.rules);
   const dnsRules = listItems(config.dns?.rules);
@@ -52,6 +54,18 @@ export function validateConfig(
   }
 
   routeRules.forEach((rule, index) => {
+    const inbounds = Array.isArray(rule.inbound) ? rule.inbound : rule.inbound ? [rule.inbound] : [];
+    inbounds.forEach((tag) => {
+      if (!inboundTags.has(tag)) {
+        push(
+          diagnostics,
+          "error",
+          "missing-route-rule-inbound",
+          `/route/rules/${index}/inbound`,
+          `Route rule ${index + 1} references missing inbound "${tag}".`,
+        );
+      }
+    });
     if (rule.outbound && !outboundTags.has(rule.outbound)) {
       push(
         diagnostics,
@@ -61,6 +75,18 @@ export function validateConfig(
         `Route rule ${index + 1} references missing outbound "${rule.outbound}".`,
       );
     }
+    const ruleSets = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
+    ruleSets.forEach((tag) => {
+      if (!ruleSetTags.has(tag)) {
+        push(
+          diagnostics,
+          "error",
+          "missing-route-rule-set",
+          `/route/rules/${index}/rule_set`,
+          `Route rule ${index + 1} references missing rule-set "${tag}".`,
+        );
+      }
+    });
   });
 
   outbounds.forEach((outbound, index) => {
@@ -91,6 +117,18 @@ export function validateConfig(
   }
 
   dnsRules.forEach((rule, index) => {
+    const inbounds = Array.isArray(rule.inbound) ? rule.inbound : rule.inbound ? [rule.inbound] : [];
+    inbounds.forEach((tag) => {
+      if (!inboundTags.has(tag)) {
+        push(
+          diagnostics,
+          "error",
+          "missing-dns-rule-inbound",
+          `/dns/rules/${index}/inbound`,
+          `DNS rule ${index + 1} references missing inbound "${tag}".`,
+        );
+      }
+    });
     if (rule.server && !dnsServerTags.has(rule.server)) {
       push(
         diagnostics,
@@ -100,6 +138,18 @@ export function validateConfig(
         `DNS rule ${index + 1} references missing server "${rule.server}".`,
       );
     }
+    const ruleSets = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
+    ruleSets.forEach((tag) => {
+      if (!ruleSetTags.has(tag)) {
+        push(
+          diagnostics,
+          "error",
+          "missing-dns-rule-set",
+          `/dns/rules/${index}/rule_set`,
+          `DNS rule ${index + 1} references missing rule-set "${tag}".`,
+        );
+      }
+    });
   });
 
   if (channel === "stable") {

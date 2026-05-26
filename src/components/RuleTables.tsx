@@ -72,6 +72,7 @@ export function RouteRulesTable() {
   const moveRouteRule = useProjectStore((state) => state.moveRouteRule);
   const deleteRouteRule = useProjectStore((state) => state.deleteRouteRule);
   const outbounds = listItems(config.outbounds);
+  const ruleSets = listItems(config.route?.rule_set);
   const rules = listItems(config.route?.rules);
   const routeBounds = pageBounds(rules.length, routePage);
   const visibleRules = rules.slice(routeBounds.start, routeBounds.end);
@@ -138,10 +139,27 @@ export function RouteRulesTable() {
                   ))}
                 </select>
               </label>
+              <label className="rule-field">
+                <span>Rule Set</span>
+                <input
+                  aria-label={`Route rule ${ruleIndex + 1} rule set`}
+                  list="route-rule-set-tags"
+                  value={listToText(rule.rule_set)}
+                  onChange={(event) => {
+                    const ruleSet = textToList(event.target.value);
+                    updateRouteRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
+                  }}
+                />
+              </label>
             </article>
           );
         })}
       </div>
+      <datalist id="route-rule-set-tags">
+        {ruleSets.map((ruleSet, index) => (
+          <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
+        ))}
+      </datalist>
     </section>
   );
 }
@@ -154,6 +172,7 @@ export function DnsRulesTable() {
   const moveDnsRule = useProjectStore((state) => state.moveDnsRule);
   const deleteDnsRule = useProjectStore((state) => state.deleteDnsRule);
   const servers = listItems(config.dns?.servers);
+  const ruleSets = listItems(config.route?.rule_set);
   const rules = listItems(config.dns?.rules);
   const dnsBounds = pageBounds(rules.length, dnsPage);
   const visibleRules = rules.slice(dnsBounds.start, dnsBounds.end);
@@ -220,10 +239,27 @@ export function DnsRulesTable() {
                   ))}
                 </select>
               </label>
+              <label className="rule-field">
+                <span>Rule Set</span>
+                <input
+                  aria-label={`DNS rule ${ruleIndex + 1} rule set`}
+                  list="dns-rule-set-tags"
+                  value={listToText(rule.rule_set)}
+                  onChange={(event) => {
+                    const ruleSet = textToList(event.target.value);
+                    updateDnsRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
+                  }}
+                />
+              </label>
             </article>
           );
         })}
       </div>
+      <datalist id="dns-rule-set-tags">
+        {ruleSets.map((ruleSet, index) => (
+          <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
+        ))}
+      </datalist>
     </section>
   );
 }

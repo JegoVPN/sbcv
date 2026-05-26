@@ -43,6 +43,7 @@ export type DnsServerConfig = TaggedConfig & {
 };
 
 export type RouteRule = {
+  inbound?: string | string[];
   domain_suffix?: string[];
   domain_keyword?: string[];
   domain?: string[];
@@ -53,6 +54,7 @@ export type RouteRule = {
 };
 
 export type DnsRule = {
+  inbound?: string | string[];
   domain_suffix?: string[];
   domain_keyword?: string[];
   domain?: string[];
@@ -111,6 +113,7 @@ export type EntityRef =
   | { kind: "inbound"; tag: string }
   | { kind: "outbound"; tag: string }
   | { kind: "dns-server"; tag: string }
+  | { kind: "rule-set"; tag: string }
   | { kind: "route"; id: "main" }
   | { kind: "route-rule"; index: number }
   | { kind: "dns"; id: "main" }

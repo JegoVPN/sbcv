@@ -5,6 +5,7 @@ import {
   addInbound,
   addOutbound,
   addRouteRule,
+  addRuleSet,
   connectSelectorCandidate,
   createMinimalConfig,
   createStableTunSplitConfig,
@@ -32,6 +33,7 @@ import {
   preferredDnsServerTag,
   preferredInboundTag,
   preferredOutboundTag,
+  preferredRuleSetTag,
 } from "../domain/protocols";
 import { targetById } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
@@ -142,8 +144,47 @@ function firstRouteRuleIndex(config: SingBoxConfig, outboundTag: string) {
   return config.route?.rules?.findIndex((rule) => rule.outbound === outboundTag) ?? -1;
 }
 
+function tagRefs(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
+function addTagRef(value: string | string[] | undefined, tag: string): string | string[] {
+  const refs = tagRefs(value);
+  if (refs.includes(tag)) return value ?? tag;
+  return refs.length ? [...refs, tag] : tag;
+}
+
+function removeTagRef(value: string | string[] | undefined, tag: string): string | string[] | undefined {
+  const refs = tagRefs(value).filter((item) => item !== tag);
+  if (refs.length === 0) return undefined;
+  return refs.length === 1 ? refs[0] : refs;
+}
+
+function firstRouteRuleInboundIndex(config: SingBoxConfig, inboundTag: string) {
+  return config.route?.rules?.findIndex((rule) => tagRefs(rule.inbound).includes(inboundTag)) ?? -1;
+}
+
+function firstRouteRuleSetIndex(config: SingBoxConfig, ruleSetTag: string) {
+  return config.route?.rules?.findIndex((rule) => {
+    if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(ruleSetTag);
+    return rule.rule_set === ruleSetTag;
+  }) ?? -1;
+}
+
 function firstDnsRuleIndex(config: SingBoxConfig, serverTag: string) {
   return config.dns?.rules?.findIndex((rule) => rule.server === serverTag) ?? -1;
+}
+
+function firstDnsRuleInboundIndex(config: SingBoxConfig, inboundTag: string) {
+  return config.dns?.rules?.findIndex((rule) => tagRefs(rule.inbound).includes(inboundTag)) ?? -1;
+}
+
+function firstDnsRuleSetIndex(config: SingBoxConfig, ruleSetTag: string) {
+  return config.dns?.rules?.findIndex((rule) => {
+    if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(ruleSetTag);
+    return rule.rule_set === ruleSetTag;
+  }) ?? -1;
 }
 
 function firstDnsServerDetouringThrough(config: SingBoxConfig, outboundTag: string) {
@@ -157,6 +198,14 @@ function firstDialableDnsServer(config: SingBoxConfig) {
 
 function firstOutboundDetouringThrough(config: SingBoxConfig, outboundTag: string) {
   return config.outbounds?.find((outbound) => outbound.tag !== outboundTag && outbound.detour === outboundTag);
+}
+
+function firstRuleSetDownloadingThrough(config: SingBoxConfig, outboundTag: string) {
+  return config.route?.rule_set?.find((ruleSet) => ruleSet.download_detour === outboundTag);
+}
+
+function firstRuleSetTag(config: SingBoxConfig) {
+  return config.route?.rule_set?.find((ruleSet) => typeof ruleSet.tag === "string" && ruleSet.tag)?.tag;
 }
 
 function firstDirectOutboundTag(config: SingBoxConfig, excludedTag: string) {
@@ -199,6 +248,10 @@ function connectCreatedOutboundForSelection(
 
   if (selected.kind === "dns-server") {
     return updateEntityField(config, { kind: "dns-server", tag: selected.value }, "detour", createdTag);
+  }
+
+  if (selected.kind === "rule-set") {
+    return updateEntityField(config, { kind: "rule-set", tag: selected.value }, "download_detour", createdTag);
   }
 
   return config;
@@ -297,6 +350,11 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       }
       if (kind === "route") config = ensureRoute(config);
       if (kind === "route-rule") config = addRouteRule(config);
+      if (kind === "rule-set") {
+        config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
+        const created = config.route?.rule_set?.[config.route.rule_set.length - 1];
+        if (created) selectedId = `rule-set:${created.tag}`;
+      }
       const outboundType = outboundTypeForPaletteKind(kind);
       if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
         config = addOutbound(config, outboundType, preferredOutboundTag(outboundType));
@@ -432,6 +490,23 @@ export const useProjectStore = create<ProjectStore>((set) => ({
           return sync(config, state.channel);
         }
 
+        if (node.kind === "route-rule" && port.key === "inbound") {
+          const index = Number(node.value);
+          if (!Number.isInteger(index)) return state;
+          const current = config.route?.rules?.[index];
+          if (current?.inbound) {
+            config = updateRouteRule(config, index, { inbound: undefined });
+          } else {
+            let inboundTag = config.inbounds?.[0]?.tag;
+            if (!inboundTag) {
+              config = addInbound(config, "tun");
+              inboundTag = config.inbounds?.[config.inbounds.length - 1]?.tag;
+            }
+            if (inboundTag) config = updateRouteRule(config, index, { inbound: inboundTag });
+          }
+          return sync(config, state.channel);
+        }
+
         if (node.kind === "dns" && port.key === "inbound-query") {
           config = addInbound(config, "tun");
           return sync(config, state.channel);
@@ -439,6 +514,23 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 
         if (node.kind === "dns-rule" && port.key === "dns") {
           config = addDnsServer(config, "local");
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-rule" && port.key === "inbound") {
+          const index = Number(node.value);
+          if (!Number.isInteger(index)) return state;
+          const current = config.dns?.rules?.[index];
+          if (current?.inbound) {
+            config = updateDnsRule(config, index, { inbound: undefined });
+          } else {
+            let inboundTag = config.inbounds?.[0]?.tag;
+            if (!inboundTag) {
+              config = addInbound(config, "tun");
+              inboundTag = config.inbounds?.[config.inbounds.length - 1]?.tag;
+            }
+            if (inboundTag) config = updateDnsRule(config, index, { inbound: inboundTag });
+          }
           return sync(config, state.channel);
         }
 
@@ -505,11 +597,68 @@ export const useProjectStore = create<ProjectStore>((set) => ({
           }
           return sync(config, state.channel);
         }
+
+        if (node.kind === "outbound" && port.key === "rule-set-download") {
+          const ruleSet = firstRuleSetDownloadingThrough(config, node.value);
+          if (ruleSet?.tag) {
+            config = updateEntityField(config, { kind: "rule-set", tag: ruleSet.tag }, "download_detour", undefined);
+          } else {
+            let ruleSetTag = firstRuleSetTag(config);
+            if (!ruleSetTag) {
+              config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
+              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+            }
+            if (ruleSetTag) config = updateEntityField(config, { kind: "rule-set", tag: ruleSetTag }, "download_detour", node.value);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "rule-set" && port.key === "route-rule") {
+          const index = firstRouteRuleSetIndex(config, node.value);
+          if (index >= 0) {
+            config = disconnectEdge(config, `edge:route-rule-set:${index}:${node.value}`);
+          } else {
+            config = addRouteRule(config, { domain_suffix: ["example"], rule_set: node.value, outbound: config.route?.final });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "rule-set" && port.key === "dns-rule") {
+          const index = firstDnsRuleSetIndex(config, node.value);
+          if (index >= 0) {
+            config = disconnectEdge(config, `edge:dns-rule-set:${index}:${node.value}`);
+          } else {
+            config = addDnsRule(config, { domain_suffix: ["example"], rule_set: node.value, server: config.dns?.final });
+          }
+          return sync(config, state.channel);
+        }
       }
 
       if (direction === "output") {
         if (node.kind === "inbound" && port.key === "route") {
           config = ensureRoute(config);
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "inbound" && port.key === "route-rule-match") {
+          const index = firstRouteRuleInboundIndex(config, node.value);
+          if (index >= 0) {
+            const current = config.route?.rules?.[index];
+            config = updateRouteRule(config, index, { inbound: removeTagRef(current?.inbound, node.value) });
+          } else {
+            config = addRouteRule(config, { inbound: node.value, outbound: config.route?.final });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "inbound" && port.key === "dns-rule-match") {
+          const index = firstDnsRuleInboundIndex(config, node.value);
+          if (index >= 0) {
+            const current = config.dns?.rules?.[index];
+            config = updateDnsRule(config, index, { inbound: removeTagRef(current?.inbound, node.value) });
+          } else {
+            config = addDnsRule(config, { inbound: node.value, server: config.dns?.final });
+          }
           return sync(config, state.channel);
         }
 
@@ -538,6 +687,23 @@ export const useProjectStore = create<ProjectStore>((set) => ({
             config = addOutbound(config, "direct", "direct");
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created && Number.isInteger(index)) config = updateRouteRule(config, index, { outbound: created.tag });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "route-rule" && port.key === "rule-set") {
+          const index = Number(node.value);
+          if (!Number.isInteger(index)) return state;
+          const current = config.route?.rules?.[index];
+          if (current?.rule_set) {
+            config = updateRouteRule(config, index, { rule_set: undefined });
+          } else {
+            let ruleSetTag = firstRuleSetTag(config);
+            if (!ruleSetTag) {
+              config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
+              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+            }
+            if (ruleSetTag) config = updateRouteRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
           }
           return sync(config, state.channel);
         }
@@ -590,6 +756,38 @@ export const useProjectStore = create<ProjectStore>((set) => ({
             config = addDnsServer(config, "local");
             const created = config.dns?.servers?.[config.dns.servers.length - 1];
             if (created && Number.isInteger(index)) config = updateDnsRule(config, index, { server: created.tag });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-rule" && port.key === "rule-set") {
+          const index = Number(node.value);
+          if (!Number.isInteger(index)) return state;
+          const current = config.dns?.rules?.[index];
+          if (current?.rule_set) {
+            config = updateDnsRule(config, index, { rule_set: undefined });
+          } else {
+            let ruleSetTag = firstRuleSetTag(config);
+            if (!ruleSetTag) {
+              config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
+              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+            }
+            if (ruleSetTag) config = updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "rule-set" && port.key === "download-detour") {
+          const ruleSet = config.route?.rule_set?.find((item) => item.tag === node.value);
+          if (ruleSet?.download_detour) {
+            config = updateEntityField(config, { kind: "rule-set", tag: node.value }, "download_detour", undefined);
+          } else {
+            let targetTag = firstDirectOutboundTag(config, node.value);
+            if (!targetTag) {
+              config = addOutbound(config, "direct", preferredOutboundTag("direct"));
+              targetTag = config.outbounds?.[config.outbounds.length - 1]?.tag;
+            }
+            if (targetTag) config = updateEntityField(config, { kind: "rule-set", tag: node.value }, "download_detour", targetTag);
           }
           return sync(config, state.channel);
         }
@@ -688,6 +886,7 @@ export function getSelectedRef(): EntityRef | null {
   if (kind === "inbound" && rest) return { kind: "inbound", tag: rest };
   if (kind === "outbound" && rest) return { kind: "outbound", tag: rest };
   if (kind === "dns-server" && rest) return { kind: "dns-server", tag: rest };
+  if (kind === "rule-set" && rest) return { kind: "rule-set", tag: rest };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };
   if (kind === "settings" && rest) return { kind: "settings", path: rest as keyof SingBoxConfig };

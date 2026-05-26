@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addRuleSet,
   connectSelectorCandidate,
   createDnsServer,
   createInbound,
@@ -238,6 +239,107 @@ describe("canonical sing-box domain model", () => {
       expect(server.type).toBe(type);
       expect(server.tag).toBe(`${type}-dns`);
     }
+  });
+
+  it("creates route rule-set resources and renders rule references from canonical JSON", () => {
+    let config = addRuleSet(createStableTunSplitConfig(), "remote", "ads-rules");
+    config = updateRouteRule(config, 1, { rule_set: "ads-rules" });
+
+    const ruleSet = config.route?.rule_set?.[0];
+    const { nodes, edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(ruleSet).toMatchObject({
+      type: "remote",
+      tag: "ads-rules",
+      format: "source",
+      url: "https://example.com/rules.json",
+    });
+    expect(nodes.some((node) => node.id === "rule-set:ads-rules" && node.data.kind === "rule-set")).toBe(true);
+    expect(edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "edge:route-rule-set:1:ads-rules",
+          source: "route-rule:1",
+          target: "rule-set:ads-rules",
+        }),
+      ]),
+    );
+  });
+
+  it("validates and cascades rule-set tag references", () => {
+    const missing = updateRouteRule(createStableTunSplitConfig(), 0, { rule_set: "missing-rules" });
+    expect(validateConfig(missing, "stable").some((diagnostic) => diagnostic.code === "missing-route-rule-set")).toBe(true);
+
+    const withRuleSet = updateRouteRule(addRuleSet(createStableTunSplitConfig(), "remote", "ads-rules"), 0, {
+      rule_set: "ads-rules",
+    });
+    const renamed = renameTag(withRuleSet, "ads-rules", "privacy-rules");
+
+    expect(renamed.route?.rule_set?.[0]?.tag).toBe("privacy-rules");
+    expect(renamed.route?.rules?.[0]?.rule_set).toBe("privacy-rules");
+    expect(validateConfig(renamed, "stable").some((diagnostic) => diagnostic.code === "missing-route-rule-set")).toBe(false);
+  });
+
+  it("renders inbound rule matchers and rule-set download detours from official tag fields", () => {
+    let config = addRuleSet(createStableTunSplitConfig(), "remote", "remote-rules");
+    config = updateRouteRule(config, 0, { inbound: "tun-in", rule_set: "remote-rules" });
+    config.dns = {
+      ...config.dns,
+      rules: [{ inbound: "tun-in", rule_set: "remote-rules", server: "local-dns" }],
+    };
+    const firstRuleSet = config.route?.rule_set?.[0];
+    if (!firstRuleSet) throw new Error("missing rule-set fixture");
+    config.route!.rule_set![0] = {
+      ...firstRuleSet,
+      download_detour: "proxy",
+    };
+
+    const { edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(edges).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "edge:route-rule-inbound:0:tun-in",
+          source: "inbound:tun-in",
+          target: "route-rule:0",
+          sourceHandle: "route-rule-match",
+          targetHandle: "inbound",
+        }),
+        expect.objectContaining({
+          id: "edge:dns-rule-inbound:0:tun-in",
+          source: "inbound:tun-in",
+          target: "dns-rule:0",
+          sourceHandle: "dns-rule-match",
+          targetHandle: "inbound",
+        }),
+        expect.objectContaining({
+          id: "edge:rule-set-download:remote-rules:proxy",
+          source: "rule-set:remote-rules",
+          target: "outbound:proxy",
+          sourceHandle: "download-detour",
+          targetHandle: "rule-set-download",
+        }),
+      ]),
+    );
+  });
+
+  it("keeps dense rule-set imports table-owned instead of rendering every resource node", () => {
+    const config = createStableTunSplitConfig();
+    config.route = {
+      ...config.route,
+      rule_set: Array.from({ length: 40 }, (_, index) => ({
+        type: "remote",
+        tag: `rules-${index}`,
+        format: "source",
+        url: `https://example.com/rules-${index}.json`,
+      })),
+      rules: [{ rule_set: "rules-0", outbound: "direct" }],
+    };
+
+    const { nodes, edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(nodes.filter((node) => node.data.kind === "rule-set")).toHaveLength(0);
+    expect(edges.some((edge) => edge.id.startsWith("edge:route-rule-set"))).toBe(false);
   });
 
   it("derives independent settings nodes only after the user pins them to the canvas", () => {

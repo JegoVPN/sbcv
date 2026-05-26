@@ -9,6 +9,7 @@ import type {
   OutboundConfig,
   RouteRule,
   SingBoxConfig,
+  TaggedConfig,
 } from "./types";
 
 export function createMinimalConfig(): SingBoxConfig {
@@ -533,6 +534,38 @@ export function createDnsServer(type: string, tag: string): DnsServerConfig {
   return { type, tag };
 }
 
+export function addRuleSet(config: SingBoxConfig, type = "remote", preferredTag?: string): SingBoxConfig {
+  const next = ensureRoute(config);
+  const tag = getUniqueTag(next, preferredTag ?? `${type}-rules`);
+  next.route!.rule_set = [...(next.route!.rule_set ?? []), createRuleSet(type, tag)];
+  return next;
+}
+
+export function createRuleSet(type: string, tag: string): TaggedConfig {
+  if (type === "inline") {
+    return {
+      type,
+      tag,
+      rules: [{ domain_suffix: ["example.com"] }],
+    };
+  }
+  if (type === "local") {
+    return {
+      type,
+      tag,
+      format: "source",
+      path: "./rules.json",
+    };
+  }
+  return {
+    type: "remote",
+    tag,
+    format: "source",
+    url: "https://example.com/rules.json",
+    update_interval: "1d",
+  };
+}
+
 export function addRouteRule(config: SingBoxConfig, rule?: RouteRule): SingBoxConfig {
   const next = ensureRoute(config);
   next.route!.rules = [
@@ -675,6 +708,12 @@ export function updateEntityField(
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "rule-set") {
+    next.route = next.route ?? {};
+    next.route.rule_set = (next.route.rule_set ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
   if (ref.kind === "settings") {
     const current = next[ref.path];
     const objectValue =
@@ -682,6 +721,26 @@ export function updateEntityField(
     next[ref.path] = { ...objectValue, [field]: value };
   }
   return next;
+}
+
+function replaceRuleSetRef(value: string | string[] | undefined, oldTag: string, newTag: string) {
+  if (Array.isArray(value)) return value.map((tag) => (tag === oldTag ? newTag : tag));
+  return value === oldTag ? newTag : value;
+}
+
+function removeRuleSetRef(value: string | string[] | undefined, tag: string) {
+  if (Array.isArray(value)) return value.filter((item) => item !== tag);
+  return value === tag ? undefined : value;
+}
+
+function replaceTagRef(value: string | string[] | undefined, oldTag: string, newTag: string) {
+  if (Array.isArray(value)) return value.map((tag) => (tag === oldTag ? newTag : tag));
+  return value === oldTag ? newTag : value;
+}
+
+function removeTagRef(value: string | string[] | undefined, tag: string) {
+  if (Array.isArray(value)) return value.filter((item) => item !== tag);
+  return value === tag ? undefined : value;
 }
 
 export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string): SingBoxConfig {
@@ -705,6 +764,7 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
         ),
         rules: next.dns.rules?.map((rule) => ({
           ...rule,
+          inbound: replaceTagRef(rule.inbound, oldTag, newTag),
           server: rule.server === oldTag ? newTag : rule.server,
         })),
       }
@@ -713,12 +773,23 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
     ? {
         ...next.route,
         final: next.route.final === oldTag ? newTag : next.route.final,
+        rule_set: next.route.rule_set?.map((item) =>
+          item.tag === oldTag ? { ...item, tag: newTag } : item,
+        ),
         rules: next.route.rules?.map((rule) => ({
           ...rule,
+          inbound: replaceTagRef(rule.inbound, oldTag, newTag),
           outbound: rule.outbound === oldTag ? newTag : rule.outbound,
+          rule_set: replaceRuleSetRef(rule.rule_set, oldTag, newTag),
         })),
       }
     : next.route;
+  if (next.dns?.rules) {
+    next.dns.rules = next.dns.rules.map((rule) => ({
+      ...rule,
+      rule_set: replaceRuleSetRef(rule.rule_set, oldTag, newTag),
+    }));
+  }
   return next;
 }
 
@@ -726,6 +797,12 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
   const next = cloneConfig(config);
   if (ref.kind === "inbound") {
     next.inbounds = (next.inbounds ?? []).filter((item) => item.tag !== ref.tag);
+    next.route?.rules?.forEach((rule) => {
+      rule.inbound = removeTagRef(rule.inbound, ref.tag);
+    });
+    next.dns?.rules?.forEach((rule) => {
+      rule.inbound = removeTagRef(rule.inbound, ref.tag);
+    });
   }
   if (ref.kind === "outbound") {
     next.outbounds = (next.outbounds ?? []).filter((item) => item.tag !== ref.tag);
@@ -746,6 +823,17 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
     if (next.dns?.final === ref.tag) next.dns.final = undefined;
     next.dns?.rules?.forEach((rule) => {
       if (rule.server === ref.tag) rule.server = undefined;
+    });
+  }
+  if (ref.kind === "rule-set") {
+    if (next.route?.rule_set) {
+      next.route.rule_set = next.route.rule_set.filter((item) => item.tag !== ref.tag);
+    }
+    next.route?.rules?.forEach((rule) => {
+      rule.rule_set = removeRuleSetRef(rule.rule_set, ref.tag);
+    });
+    next.dns?.rules?.forEach((rule) => {
+      rule.rule_set = removeRuleSetRef(rule.rule_set, ref.tag);
     });
   }
   if (ref.kind === "route-rule") return deleteRouteRule(config, ref.index);
@@ -769,6 +857,13 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
       next.route.rules[index].outbound = undefined;
     }
   }
+  if (relation === "route-rule-inbound") {
+    const index = Number(parts[2]);
+    const tag = parts[3];
+    if (Number.isInteger(index) && tag && next.route?.rules?.[index]) {
+      next.route.rules[index].inbound = removeTagRef(next.route.rules[index].inbound, tag);
+    }
+  }
   if (relation === "selector" || relation === "urltest") {
     const parent = parts[2];
     const child = parts[4] ?? parts[3];
@@ -785,6 +880,27 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     const index = Number(parts[2]);
     if (Number.isInteger(index) && next.dns?.rules?.[index]) {
       next.dns.rules[index].server = undefined;
+    }
+  }
+  if (relation === "dns-rule-inbound") {
+    const index = Number(parts[2]);
+    const tag = parts[3];
+    if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
+      next.dns.rules[index].inbound = removeTagRef(next.dns.rules[index].inbound, tag);
+    }
+  }
+  if (relation === "route-rule-set") {
+    const index = Number(parts[2]);
+    const tag = parts[3];
+    if (Number.isInteger(index) && tag && next.route?.rules?.[index]) {
+      next.route.rules[index].rule_set = removeRuleSetRef(next.route.rules[index].rule_set, tag);
+    }
+  }
+  if (relation === "dns-rule-set") {
+    const index = Number(parts[2]);
+    const tag = parts[3];
+    if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
+      next.dns.rules[index].rule_set = removeRuleSetRef(next.dns.rules[index].rule_set, tag);
     }
   }
   return next;
