@@ -21,8 +21,9 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 ## Coverage
 
 - 节点 review 数：**66 / 66**
-- Status：全部 `official-read`（stable + testing 两版均已读）+ 当前 UI 代码 grep。
+- Status：65 / 66 `official-read`，1 / 66 `implemented`（`settings:log`，2026-05-27）。
 - 发现总数：**P0 ≈ 148**，**P1 ≈ 260**（按节点求和，未做跨节点去重）。
+- Implementation 进度：见 `docs/goals/editable-node-ui-deep-pass.md` 的 Milestone / Atomic 列表。
 
 ## 节点清单（按节点族）
 
