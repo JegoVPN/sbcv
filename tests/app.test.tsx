@@ -1132,6 +1132,29 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders hysteria2 obfs type select + conditional password", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria2-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const block = within(inspector.getByTestId("hysteria2-obfs"));
+    const typeSelect = block.getByLabelText("Type") as HTMLSelectElement;
+    expect(typeSelect.tagName).toBe("SELECT");
+    expect(block.queryByLabelText("Password")).not.toBeInTheDocument();
+
+    fireEvent.change(typeSelect, { target: { value: "salamander" } });
+    const h2 = useProjectStore.getState().config.outbounds?.find((o) => o.type === "hysteria2") as Record<string, unknown>;
+    expect((h2.obfs as Record<string, unknown>).type).toBe("salamander");
+
+    const password = block.getByLabelText("Password") as HTMLInputElement;
+    expect(password.type).toBe("password");
+    fireEvent.change(password, { target: { value: "s3cret" } });
+    const updated = useProjectStore.getState().config.outbounds?.find((o) => o.type === "hysteria2") as Record<string, unknown>;
+    expect((updated.obfs as Record<string, unknown>).password).toBe("s3cret");
+  });
+
   it("renders TUIC udp_relay_mode select + udp_over_stream toggle with mutual exclusion", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
