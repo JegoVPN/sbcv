@@ -175,6 +175,7 @@ const dnsServerHandledFields = new Set([
   "endpoint",
   "tls",
   "neighbor_domain",
+  "predefined",
   ...dialSharedFields,
 ]);
 const endpointHandledFields = new Set([
@@ -2363,6 +2364,84 @@ export function Inspector() {
                 ))}
               </select>
             </label>
+          ) : null}
+          {entityType === "hosts" ? (
+            (() => {
+              const predefined = objectField(entity.predefined);
+              const entries = Object.entries(predefined);
+              const updatePredefined = (next: Record<string, string[]>) => {
+                const cleaned = Object.fromEntries(Object.entries(next).filter(([, ips]) => ips.length > 0));
+                updateField(ref, "predefined", Object.keys(cleaned).length ? cleaned : undefined);
+              };
+              const ipsAsList = (value: unknown): string[] => {
+                if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+                if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
+                return [];
+              };
+              const setDomain = (oldDomain: string, newDomain: string) => {
+                if (oldDomain === newDomain) return;
+                const next: Record<string, string[]> = {};
+                for (const [key, value] of entries) {
+                  if (key === oldDomain) next[newDomain] = ipsAsList(value);
+                  else next[key] = ipsAsList(value);
+                }
+                updatePredefined(next);
+              };
+              const setIps = (domain: string, ipsText: string) => {
+                const next: Record<string, string[]> = {};
+                for (const [key, value] of entries) {
+                  next[key] = key === domain ? fromList(ipsText) : ipsAsList(value);
+                }
+                updatePredefined(next);
+              };
+              const removeRow = (domain: string) => {
+                const next = Object.fromEntries(entries.filter(([key]) => key !== domain).map(([key, value]) => [key, ipsAsList(value)]));
+                updatePredefined(next);
+              };
+              const addRow = () => {
+                let candidate = "example.com";
+                let suffix = 1;
+                while (Object.prototype.hasOwnProperty.call(predefined, candidate)) {
+                  suffix += 1;
+                  candidate = `example${suffix}.com`;
+                }
+                const next: Record<string, string[]> = Object.fromEntries(
+                  entries.map(([key, value]) => [key, ipsAsList(value)]),
+                );
+                next[candidate] = ["127.0.0.1"];
+                updatePredefined(next);
+              };
+              return (
+                <fieldset className="field field--checklist" data-testid="hosts-predefined-editor">
+                  <legend>Predefined Hosts</legend>
+                  {entries.length === 0 ? (
+                    <p className="field__hint">No predefined mappings yet. Click Add to start.</p>
+                  ) : null}
+                  {entries.map(([domain, ipValue]) => (
+                    <div key={domain} className="rule-row">
+                      <label className="field">
+                        <span>Domain</span>
+                        <input value={domain} onChange={(event) => setDomain(domain, event.target.value)} />
+                      </label>
+                      <label className="field">
+                        <span>IPs</span>
+                        <input
+                          value={ipsAsList(ipValue).join(", ")}
+                          onChange={(event) => setIps(domain, event.target.value)}
+                          placeholder="comma-separated IPv4/IPv6"
+                        />
+                      </label>
+                      <button type="button" className="icon-danger" onClick={() => removeRow(domain)} aria-label={`Remove ${domain}`}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="palette-action" onClick={addRow}>
+                    Add host mapping
+                  </button>
+                </fieldset>
+              );
+            })()
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />

@@ -337,6 +337,34 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("provides a structured predefined hosts editor for dns-server hosts type", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-hosts");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const editor = inspector.getByTestId("hosts-predefined-editor");
+    expect(within(editor).getByText("No predefined mappings yet. Click Add to start.")).toBeInTheDocument();
+
+    fireEvent.click(within(editor).getByRole("button", { name: /Add host mapping/ }));
+    let server = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "hosts");
+    expect((server as Record<string, unknown>)?.predefined).toMatchObject({ "example.com": ["127.0.0.1"] });
+
+    const editorAfter = inspector.getByTestId("hosts-predefined-editor");
+    const ipsInput = within(editorAfter).getByLabelText("IPs") as HTMLInputElement;
+    fireEvent.change(ipsInput, { target: { value: "10.0.0.1, 10.0.0.2" } });
+    server = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "hosts");
+    expect((server as Record<string, unknown>)?.predefined).toMatchObject({
+      "example.com": ["10.0.0.1", "10.0.0.2"],
+    });
+
+    fireEvent.click(within(editorAfter).getByLabelText("Remove example.com"));
+    server = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "hosts");
+    expect((server as Record<string, unknown>)?.predefined).toBeUndefined();
+  });
+
   it("falls back DNS-server port to the protocol default (53/443/853)", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
