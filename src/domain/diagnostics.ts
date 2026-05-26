@@ -628,6 +628,20 @@ export function validateConfig(
         );
       }
     }
+    if (outbound.type === "hysteria2") {
+      const obj = outbound as Record<string, unknown>;
+      if (Array.isArray(obj.server_ports) && obj.server_ports.length > 0) {
+        if (typeof obj.server_port === "number" && obj.server_port > 0) {
+          push(
+            diagnostics,
+            "warning",
+            "hysteria2-server-port-vs-server-ports",
+            `/outbounds/${index}/server_ports`,
+            `Hysteria2 outbound "${tag}" sets both server_port and server_ports; sing-box ignores server_port whenever server_ports is non-empty.`,
+          );
+        }
+      }
+    }
     if (channel === "stable" && outbound.type === "hysteria2") {
       const obj = outbound as Record<string, unknown>;
       if (obj.realm !== undefined) {

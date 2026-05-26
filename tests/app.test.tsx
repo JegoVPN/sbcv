@@ -1175,6 +1175,25 @@ describe("SBC editor shell", () => {
     expect(tor.torrc).toBeDefined();
   });
 
+  it("renders hysteria2 server_ports + hop_interval inputs", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria2-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const ports = inspector.getByLabelText("Server Ports (port hopping)") as HTMLInputElement;
+    fireEvent.change(ports, { target: { value: "2080:3000, 4000:5000" } });
+    let h2 = useProjectStore.getState().config.outbounds?.find((o) => o.type === "hysteria2") as Record<string, unknown>;
+    expect(h2.server_ports).toEqual(["2080:3000", "4000:5000"]);
+
+    const hop = inspector.getByLabelText("Hop Interval") as HTMLInputElement;
+    fireEvent.change(hop, { target: { value: "45s" } });
+    h2 = useProjectStore.getState().config.outbounds?.find((o) => o.type === "hysteria2") as Record<string, unknown>;
+    expect(h2.hop_interval).toBe("45s");
+  });
+
   it("renders hysteria2 obfs type select + conditional password", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

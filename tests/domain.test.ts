@@ -601,6 +601,27 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags hysteria2 server_port + server_ports overlap", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        {
+          type: "hysteria2",
+          tag: "h2-ports",
+          server: "1.1.1.1",
+          server_port: 443,
+          server_ports: ["2080:3000"],
+          password: "x",
+          tls: { enabled: true },
+        },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("hysteria2-server-port-vs-server-ports");
+  });
+
   it("flags tuic udp_over_stream + udp_relay_mode mutual exclusion", () => {
     const base = createStableTunSplitConfig();
     const config = {
