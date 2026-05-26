@@ -1,4 +1,4 @@
-<!-- Status: deep-review. Source: stable+testing docs/configuration/route/rule.md and rule_action.md; Palette.tsx, SbcNode.tsx, Inspector.tsx, RuleTables.tsx, diagnostics.ts. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 outbound-select-always-renders FIXED: outbound `<select>` only appears for action route/bypass; selecting reject/sniff/resolve/route-options/hijack-dns clears `rule.outbound` automatically. P0 missing action sub-forms partially FIXED: reject (method + no_drop), sniff (sniffer + timeout), resolve (server tag-select + strategy). Outstanding: P0 route-options sub-form (override_address / override_port / network_strategy / network_type / fallback_* / udp_disable_domain_unmapping), P0 canvas outbound port action-gating, P0 deprecated geosite/source_geoip/geoip removal from routeRuleAdvancedFields, P1 resolve.server diagnostic when missing on action=route. -->
 # Route Rule UI Review — `rule:route-rule`
 
 ## Scope

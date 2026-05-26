@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/route/rule.md and route/rule_action.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0 action-gated outbound select: route/bypass keep the outbound `<select>`, reject/sniff/resolve/route-options/hijack-dns hide it and clear `rule.outbound`. P0 action-specific sub-fields landed for reject (method + no_drop), sniff (sniffer + timeout), resolve (server + strategy). Outstanding: P0 route-options sub-form, P0 canvas-port gating to match action, P1 deprecated geosite/geoip removal, P1 fixture/E2E. -->
 # Route Rule UI Review
 
 ## Scope

@@ -337,6 +337,38 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("gates the route-rule outbound select by action and surfaces reject/sniff/resolve sub-fields", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("node-route-rule:0"));
+    let inspector = within(screen.getByLabelText("Route rule 1 inspector"));
+
+    // Default action is route -> outbound select visible
+    expect(inspector.getByLabelText("Outbound")).toBeInTheDocument();
+
+    // Switching to reject hides outbound and shows method/no_drop
+    fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "reject" } });
+    inspector = within(screen.getByLabelText("Route rule 1 inspector"));
+    expect(inspector.queryByLabelText("Outbound")).not.toBeInTheDocument();
+    expect(inspector.getByLabelText("Reject Method")).toBeInTheDocument();
+    expect(inspector.getByLabelText("No drop (only return)")).toBeInTheDocument();
+    expect(useProjectStore.getState().config.route?.rules?.[0]?.outbound).toBeUndefined();
+
+    // Sniff
+    fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "sniff" } });
+    inspector = within(screen.getByLabelText("Route rule 1 inspector"));
+    expect(inspector.getByLabelText("Sniffer")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Sniff Timeout")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("Outbound")).not.toBeInTheDocument();
+
+    // Resolve shows resolve sub-fields (server + strategy)
+    fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "resolve" } });
+    inspector = within(screen.getByLabelText("Route rule 1 inspector"));
+    expect(inspector.getByLabelText("Resolve Server")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Resolve Strategy")).toBeInTheDocument();
+  });
+
   it("exposes route and DNS hub final selectors plus top-level toggles in the Inspector", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

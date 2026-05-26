@@ -41,8 +41,8 @@ Status vocabulary:
 Current status:
 
 - `implemented`: 1 / 66 (`settings:log`).
-- `ui-verified`: 4 / 66 (`outbound:selector`, `outbound:urltest`, `hub:route`, `hub:dns` — P0 Inspector controls landed; outstanding diagnostics / commands cascade / nested-object editors).
-- `official-read`: 61 / 66.
+- `ui-verified`: 5 / 66 (`outbound:selector`, `outbound:urltest`, `hub:route`, `hub:dns`, `rule:route-rule` — P0 Inspector controls landed; outstanding diagnostics / commands cascade / nested-object editors).
+- `official-read`: 60 / 66.
 - `baseline`: 0 / 66.
 
 Review priority:
