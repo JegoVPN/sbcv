@@ -1,0 +1,46 @@
+name: Release Check
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Install sing-box validation binaries
+        run: |
+          mkdir -p .tools/sing-box-stable .tools/sing-box-testing .tools/bin
+          curl -L https://github.com/SagerNet/sing-box/releases/download/v1.13.12/sing-box-1.13.12-linux-amd64.tar.gz -o .tools/sing-box-stable.tar.gz
+          tar -xzf .tools/sing-box-stable.tar.gz -C .tools/sing-box-stable --strip-components=1
+          curl -L https://github.com/SagerNet/sing-box/releases/download/v1.14.0-alpha.25/sing-box-1.14.0-alpha.25-linux-amd64.tar.gz -o .tools/sing-box-testing.tar.gz
+          tar -xzf .tools/sing-box-testing.tar.gz -C .tools/sing-box-testing --strip-components=1
+          ln -s ../sing-box-stable/sing-box .tools/bin/sing-box-stable
+          ln -s ../sing-box-testing/sing-box .tools/bin/sing-box-testing
+
+      - name: Release gate
+        run: pnpm release:check
