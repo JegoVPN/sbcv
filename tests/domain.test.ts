@@ -601,6 +601,21 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags urltest missing url + invalid scheme", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        { type: "urltest", tag: "ut1", outbounds: ["direct"] },
+        { type: "urltest", tag: "ut2", outbounds: ["direct"], url: "ftp://example.com" },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("urltest-url-missing");
+    expect(codes).toContain("urltest-url-invalid-scheme");
+  });
+
   it("flags missing derp config_path and ntp.server when enabled", () => {
     const base = createStableTunSplitConfig();
     const config = {

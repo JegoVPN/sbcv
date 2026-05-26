@@ -454,6 +454,27 @@ export function validateConfig(
         );
       }
     }
+    if (outbound.type === "urltest") {
+      const obj = outbound as Record<string, unknown>;
+      const url = typeof obj.url === "string" ? obj.url.trim() : "";
+      if (!url) {
+        push(
+          diagnostics,
+          "warning",
+          "urltest-url-missing",
+          `/outbounds/${index}/url`,
+          `URLTest "${tag}" has no url; sing-box falls back to a built-in default, recommend setting it explicitly.`,
+        );
+      } else if (!/^https?:\/\//i.test(url)) {
+        push(
+          diagnostics,
+          "warning",
+          "urltest-url-invalid-scheme",
+          `/outbounds/${index}/url`,
+          `URLTest "${tag}" url "${url}" should use http:// or https://.`,
+        );
+      }
+    }
   });
 
   const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
