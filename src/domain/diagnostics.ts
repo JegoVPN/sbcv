@@ -897,6 +897,28 @@ export function validateConfig(
 
   const experimental = config.experimental;
   if (experimental && typeof experimental === "object" && !Array.isArray(experimental)) {
+    const cacheFile = (experimental as Record<string, unknown>).cache_file;
+    if (cacheFile && typeof cacheFile === "object" && !Array.isArray(cacheFile)) {
+      const cfObj = cacheFile as Record<string, unknown>;
+      if (cfObj.store_rdrc !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "cache-file-store-rdrc-deprecated",
+          "/experimental/cache_file/store_rdrc",
+          "experimental.cache_file.store_rdrc is deprecated since 1.14.0 and scheduled for removal in 1.16. Migrate to store_dns.",
+        );
+      }
+      if (channel === "stable" && cfObj.store_dns !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "cache-file-store-dns-testing-only",
+          "/experimental/cache_file/store_dns",
+          "experimental.cache_file.store_dns is testing-only (sing-box 1.14+).",
+        );
+      }
+    }
     const clashApi = (experimental as Record<string, unknown>).clash_api;
     if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
       const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
