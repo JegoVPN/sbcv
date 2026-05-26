@@ -3207,6 +3207,12 @@ export function Inspector() {
               text="Platform gate: dns-server `resolved` is Linux/systemd specific. It requires a matching service:resolved peer; exports work on any host but sing-box will refuse to start on macOS/Windows/Android/iOS."
             />
           ) : null}
+          {entityType === "tailscale" ? (
+            <PlatformBanner
+              kind="build-tag"
+              text="Build-tag gate: dns-server `tailscale` requires sing-box built with the `with_tailscale` tag. Stock release binaries omit Tailscale support."
+            />
+          ) : null}
           {"address" in entity ? (
             <label className="field">
               <span>Address</span>
@@ -3492,6 +3498,10 @@ export function Inspector() {
           ) : null}
           {entityType === "tailscale" ? (
             <>
+              <PlatformBanner
+                kind="build-tag"
+                text="Build-tag gate: endpoint `tailscale` requires sing-box built with the `with_tailscale` tag. Stock release binaries omit Tailscale support."
+              />
               <label className="field">
                 <span>State Directory</span>
                 <input
@@ -3601,6 +3611,10 @@ export function Inspector() {
 
           {entityType === "derp" ? (
             <>
+              <PlatformBanner
+                kind="build-tag"
+                text="Build-tag gate: service `derp` requires sing-box built with the `with_tailscale` tag for verify_client_endpoint integration. Stock release binaries omit DERP support."
+              />
               <label className="field">
                 <span>Config Path</span>
                 <input
