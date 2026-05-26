@@ -601,6 +601,48 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags testing-only ssh allow-lists and tailscale accept_search_domain on stable", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        {
+          type: "ssh",
+          tag: "ssh-out",
+          server: "1.2.3.4",
+          server_port: 22,
+          user: "x",
+          password: "y",
+          cipher: ["aes128-ctr"],
+          mac: ["hmac-sha2-256"],
+          kex_algorithm: ["curve25519-sha256"],
+        },
+      ],
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "tailscale", tag: "ts", endpoint: "ts-ep", accept_search_domain: true },
+        ],
+      },
+      endpoints: [
+        ...(((base as Record<string, unknown>).endpoints as Record<string, unknown>[]) ?? []),
+        { type: "tailscale", tag: "ts-ep", auth_key: "ak" },
+      ],
+    } as typeof base;
+    const stable = validateConfig(config, "stable");
+    const codes = stable.map((d) => d.code);
+    expect(codes).toContain("ssh-cipher-testing-only");
+    expect(codes).toContain("ssh-mac-testing-only");
+    expect(codes).toContain("ssh-kex-algorithm-testing-only");
+    expect(codes).toContain("dns-server-tailscale-accept-search-domain-testing-only");
+    const testing = validateConfig(config, "testing");
+    const testingCodes = testing.map((d) => d.code);
+    expect(testingCodes).not.toContain("ssh-cipher-testing-only");
+    expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
+  });
+
   it("emits reality + xtls-rprx-vision diagnostics", () => {
     const base = createStableTunSplitConfig();
     const config = {
