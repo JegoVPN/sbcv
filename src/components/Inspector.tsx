@@ -163,6 +163,10 @@ const outboundHandledFields = new Set([
   "flow",
   "congestion_control",
   "version",
+  "uuid",
+  "username",
+  "password",
+  "auth_str",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2283,6 +2287,57 @@ export function Inspector() {
                 <option value="udp">udp</option>
               </select>
             </label>
+          ) : null}
+          {entityType && ["vmess", "vless", "tuic"].includes(entityType) ? (
+            <>
+              <SensitiveTextField
+                label="UUID"
+                value={String(entity.uuid ?? "")}
+                onChange={(next) => updateField(ref, "uuid", next || undefined)}
+              />
+              <button
+                type="button"
+                className="palette-action"
+                onClick={() => {
+                  const uuid = (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+                    ? crypto.randomUUID()
+                    : "00000000-0000-4000-8000-000000000000");
+                  updateField(ref, "uuid", uuid);
+                }}
+              >
+                Generate UUID
+              </button>
+            </>
+          ) : null}
+          {entityType && ["http", "socks"].includes(entityType) ? (
+            <>
+              <label className="field">
+                <span>Username</span>
+                <input
+                  value={String(entity.username ?? "")}
+                  onChange={(event) => updateField(ref, "username", event.target.value || undefined)}
+                />
+              </label>
+              <SensitiveTextField
+                label="Password"
+                value={String(entity.password ?? "")}
+                onChange={(next) => updateField(ref, "password", next || undefined)}
+              />
+            </>
+          ) : null}
+          {entityType && ["shadowsocks", "trojan", "naive", "tuic", "hysteria2", "anytls", "shadowtls"].includes(entityType) ? (
+            <SensitiveTextField
+              label="Password"
+              value={String(entity.password ?? "")}
+              onChange={(next) => updateField(ref, "password", next || undefined)}
+            />
+          ) : null}
+          {entityType === "hysteria" ? (
+            <SensitiveTextField
+              label="Auth (string)"
+              value={String(entity.auth_str ?? "")}
+              onChange={(next) => updateField(ref, "auth_str", next || undefined)}
+            />
           ) : null}
           {entityType === "shadowsocks" ? (
             <>
