@@ -22,8 +22,18 @@ const cases: PortCase[] = [
     inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
     outputKeys: [],
   },
-  { kind: "outbound", type: "selector", inputKeys: ["route", "route-rule"], outputKeys: ["outbound-member"] },
-  { kind: "outbound", type: "urltest", inputKeys: ["route", "route-rule"], outputKeys: ["outbound-member"] },
+  {
+    kind: "outbound",
+    type: "selector",
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
+    outputKeys: ["outbound-member"],
+  },
+  {
+    kind: "outbound",
+    type: "urltest",
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group"],
+    outputKeys: ["outbound-member"],
+  },
 ];
 
 describe("SBC node port registry", () => {
@@ -37,7 +47,10 @@ describe("SBC node port registry", () => {
       expect(outputPorts.map((port) => port.key), `${item.kind}/${item.type} output ports`).toEqual(item.outputKeys);
 
       for (const port of [...inputPorts, ...outputPorts]) {
-        expect(port.icon, `${item.kind}/${item.type} port ${port.key}`).not.toBe(nodeIcon);
+        const sameNodeType = port.nodeKind === item.kind && port.nodeType === item.type;
+        if (!sameNodeType) {
+          expect(port.icon, `${item.kind}/${item.type} port ${port.key}`).not.toBe(nodeIcon);
+        }
       }
     }
   });

@@ -71,7 +71,6 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
         { key: "route", label: "Route target", nodeKind: "route", icon: Route },
         { key: "route-rule", label: "Route rule target", nodeKind: "route-rule", icon: GitBranch },
       ];
-      if (type === "selector" || type === "urltest") return routingInputs;
       return [
         ...routingInputs,
         { key: "selector-group", label: "Selector member", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
