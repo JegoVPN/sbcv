@@ -981,6 +981,12 @@ describe("SBC editor shell", () => {
     expect(inspector.getByLabelText("Reality Public Key (client)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Reality Short ID (client)")).toBeInTheDocument();
     expect(inspector.getByLabelText("ECH Enabled")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("ECH Config Path")).not.toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("ECH Enabled"));
+    expect(inspector.getByLabelText("ECH Config Path")).toBeInTheDocument();
+    expect(inspector.getByLabelText("ECH Query Server Name")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Server (Reality, server-only)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Private Key (Reality, server-only)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Fragment (client, 1.12+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Record Fragment (client, 1.12+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Curve Preferences (1.13+)")).toBeInTheDocument();
