@@ -31,6 +31,42 @@ export function ensureSettings(config: SingBoxConfig, path: keyof SingBoxConfig)
       ...(typeof current === "object" && current && !Array.isArray(current) ? current : {}),
     };
   }
+  if (path === "ntp") {
+    next.ntp = {
+      enabled: false,
+      server: "time.apple.com",
+      server_port: 123,
+      interval: "30m",
+      ...(typeof current === "object" && current && !Array.isArray(current) ? current : {}),
+    };
+  }
+  if (path === "certificate") {
+    next.certificate = {
+      store: "system",
+      certificate: [],
+      certificate_path: [],
+      certificate_directory_path: [],
+      ...(typeof current === "object" && current && !Array.isArray(current) ? current : {}),
+    };
+  }
+  if (path === "experimental") {
+    next.experimental = {
+      cache_file: {
+        enabled: false,
+        path: "",
+        cache_id: "",
+        store_fakeip: false,
+      },
+      clash_api: {
+        external_controller: "",
+        secret: "",
+        default_mode: "",
+        access_control_allow_origin: [],
+        access_control_allow_private_network: false,
+      },
+      ...(typeof current === "object" && current && !Array.isArray(current) ? current : {}),
+    };
+  }
   return next;
 }
 

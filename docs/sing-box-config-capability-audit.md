@@ -23,11 +23,11 @@ Last run: 2026-05-26 against testing docs commit `b6c416b0482a2d2391470d70ce518a
 | Matrix rows | 105 |
 | Palette entries | 104 |
 | `ADD` entries | 15 |
-| `SETUP` entries | 38 |
+| `SETUP` entries | 41 |
 | `TABLE` entries | 4 |
 | `INSPECTOR` entries | 13 |
 | `GATED` entries | 15 |
-| `PENDING` entries | 4 |
+| `PENDING` entries | 1 |
 | `DOCS` entries | 15 |
 
 ## User-Facing Meaning
@@ -40,6 +40,8 @@ The second closed usability gap is Inbound setup: users can now add Direct, SOCK
 
 The third closed usability gap is DNS Server setup: users can now add Hosts, TCP, UDP, TLS, QUIC, HTTPS, HTTP3/H3, DHCP, FakeIP, Tailscale, and Resolved DNS servers from Library. These create DNS server objects under canonical `dns.servers[]`, select the new DNS server node, and expose editable server/path/interface/range/reference scalar fields in the Inspector. mDNS remains `GATED` because it is testing-only, and Legacy remains docs/migration-only.
 
+The fourth closed usability gap is independent settings setup: users can now add NTP, Certificate, and Experimental settings from Library. These create canonical top-level `ntp`, `certificate`, and `experimental` objects, pin independent settings cards on the canvas, and expose editable NTP server/interval, certificate store/path, cache file, Clash API, and V2Ray API fields in the Inspector. The stable fixture `fixtures/stable/global-settings.json` validates the emitted stable-safe subset with `sing-box-stable`.
+
 Remaining chain-node gaps reported by the audit:
 
 - Outbound `wireguard` and `dns` remain documentation/migration entries until the target-specific migration policy is implemented.
@@ -51,7 +53,6 @@ Remaining Palette surface gaps reported by the audit:
 
 Remaining writable object gaps reported by the expanded audit:
 
-- NTP, Certificate, Experimental independent settings.
 - Endpoint WireGuard and Tailscale.
 - Rule Set resource editor.
 - Service resources.

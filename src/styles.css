@@ -940,7 +940,8 @@ textarea {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   width: 100%;
   min-height: 38px;
   border-color: transparent;
@@ -948,6 +949,20 @@ textarea {
   background: #262a2f;
   color: #eef2f4;
   font-weight: 700;
+}
+
+.field textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.inspector-section-title {
+  margin: 18px 0 10px;
+  color: #8b96a1;
+  font-size: 12px;
+  font-weight: 840;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
 .toggle-row {
