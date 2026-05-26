@@ -601,6 +601,19 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags deprecated direct.override_address / override_port", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        { type: "direct", tag: "lan", override_address: "10.0.0.1" },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("direct-override-deprecated");
+  });
+
   it("flags hysteria2 server_port + server_ports overlap", () => {
     const base = createStableTunSplitConfig();
     const config = {
