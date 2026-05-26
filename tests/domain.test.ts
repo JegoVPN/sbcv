@@ -601,6 +601,28 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags missing derp config_path and ntp.server when enabled", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        { type: "derp", tag: "derp", config_path: "" },
+      ],
+      ntp: { enabled: true, server: "" },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("derp-config-path-missing");
+    expect(codes).toContain("ntp-server-missing");
+
+    const configWithDangling = {
+      ...base,
+      ntp: { enabled: true, server: "time.cloudflare.com", server_port: 123, detour: "ghost-out" },
+    } as typeof base;
+    const codes2 = validateConfig(configWithDangling, "stable").map((d) => d.code);
+    expect(codes2).toContain("ntp-detour-missing");
+  });
+
   it("flags testing-only ssh allow-lists and tailscale accept_search_domain on stable", () => {
     const base = createStableTunSplitConfig();
     const config = {
