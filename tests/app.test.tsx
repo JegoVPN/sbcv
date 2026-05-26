@@ -62,10 +62,10 @@ describe("SBC editor shell", () => {
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
 
     expect(palette.getByRole("button", { name: /^Outbounds/ })).toBeInTheDocument();
-    expect(palette.queryByRole("button", { name: "Add Log Settings" })).not.toBeInTheDocument();
+    expect(palette.queryByRole("button", { name: /Log Settings/ })).not.toBeInTheDocument();
 
     fireEvent.click(palette.getByRole("button", { name: /^Log/ }));
-    expect(palette.getByRole("button", { name: "Add Log Settings" })).toBeInTheDocument();
+    expect(palette.getByRole("button", { name: /Log Settings/ })).toBeInTheDocument();
   });
 
   it("marks the loaded template without closing the template panel", () => {
@@ -144,7 +144,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Log/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Log Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: /Log Settings/ }));
 
     expect(useProjectStore.getState().selectedId).toBe("settings:log");
     expect(useProjectStore.getState().config.log?.level).toBe("info");
