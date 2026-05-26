@@ -40,6 +40,13 @@ import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfi
 
 type PanelTab = "rules" | "dns" | "json" | "diagnostics";
 type PortDirection = "input" | "output";
+type OutboundReferenceKind =
+  | "route-final"
+  | "route-rule"
+  | "selector-member"
+  | "urltest-member"
+  | "dns-detour"
+  | "outbound-detour";
 type NodePortAction = {
   key: string;
   nodeKind: string;
@@ -66,6 +73,7 @@ type ProjectStore = {
   loadMinimal: () => void;
   createFromPalette: (kind: string) => void;
   createCompatible: (sourceId: string, kind: string) => void;
+  connectOutboundReference: (outboundTag: string, reference: OutboundReferenceKind, parentTag?: string) => void;
   togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
   updateField: (ref: EntityRef, field: string, value: unknown) => void;
   renameTag: (oldTag: string, newTag: string) => void;
@@ -136,6 +144,23 @@ function firstRouteRuleIndex(config: SingBoxConfig, outboundTag: string) {
 
 function firstDnsRuleIndex(config: SingBoxConfig, serverTag: string) {
   return config.dns?.rules?.findIndex((rule) => rule.server === serverTag) ?? -1;
+}
+
+function firstDnsServerDetouringThrough(config: SingBoxConfig, outboundTag: string) {
+  return config.dns?.servers?.find((server) => server.detour === outboundTag);
+}
+
+function firstDialableDnsServer(config: SingBoxConfig) {
+  const nonDialableTypes = new Set(["local", "hosts", "fakeip"]);
+  return config.dns?.servers?.find((server) => !nonDialableTypes.has(server.type));
+}
+
+function firstOutboundDetouringThrough(config: SingBoxConfig, outboundTag: string) {
+  return config.outbounds?.find((outbound) => outbound.tag !== outboundTag && outbound.detour === outboundTag);
+}
+
+function firstDirectOutboundTag(config: SingBoxConfig, excludedTag: string) {
+  return config.outbounds?.find((outbound) => outbound.tag !== excludedTag && outbound.type === "direct")?.tag;
 }
 
 function disconnectSelectorMember(config: SingBoxConfig, parentTag: string, childTag: string, parentType: string) {
@@ -284,6 +309,69 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       return { ...sync(config, state.channel), layout };
     }),
 
+  connectOutboundReference: (outboundTag, reference, parentTag) =>
+    set((state) => {
+      let config = state.config;
+      let layout = state.layout;
+
+      if (reference === "route-final") {
+        config = setRouteFinal(config, outboundTag);
+      }
+
+      if (reference === "route-rule") {
+        config = addRouteRule(config, { domain_suffix: ["example"], outbound: outboundTag });
+      }
+
+      if (reference === "selector-member" || reference === "urltest-member") {
+        const parentType = reference === "selector-member" ? "selector" : "urltest";
+        let targetParent = parentTag;
+        if (!targetParent) {
+          config = addOutbound(config, parentType, parentType === "selector" ? "proxy" : "auto");
+          const created = config.outbounds?.[config.outbounds.length - 1];
+          targetParent = created?.tag;
+          if (created?.tag) {
+            layout = nextLayout(layout, `outbound:${created.tag}`, 2160, 260);
+          }
+        }
+        if (targetParent) config = connectSelectorCandidate(config, targetParent, outboundTag);
+      }
+
+      if (reference === "dns-detour") {
+        let serverTag = parentTag;
+        if (!serverTag) {
+          const existing = firstDialableDnsServer(config);
+          if (existing) {
+            serverTag = existing.tag;
+          } else {
+            config = addDnsServer(config, "https", preferredDnsServerTag("https"));
+            const created = config.dns?.servers?.[config.dns.servers.length - 1];
+            serverTag = created?.tag;
+            if (created?.tag) {
+              layout = nextLayout(layout, `dns-server:${created.tag}`, 2160, 900);
+            }
+          }
+        }
+        if (serverTag) {
+          config = updateEntityField(config, { kind: "dns-server", tag: serverTag }, "detour", outboundTag);
+        }
+      }
+
+      if (reference === "outbound-detour") {
+        if (parentTag) {
+          config = updateEntityField(config, { kind: "outbound", tag: parentTag }, "detour", outboundTag);
+        } else {
+          config = addOutbound(config, "socks", preferredOutboundTag("socks"));
+          const created = config.outbounds?.[config.outbounds.length - 1];
+          if (created?.tag) {
+            config = updateEntityField(config, { kind: "outbound", tag: created.tag }, "detour", outboundTag);
+            layout = nextLayout(layout, `outbound:${created.tag}`, 2160, 260);
+          }
+        }
+      }
+
+      return { ...sync(config, state.channel), layout, selectedId: `outbound:${outboundTag}` };
+    }),
+
   togglePortConnection: (nodeId, direction, port) =>
     set((state) => {
       const node = parseNodeId(nodeId);
@@ -344,6 +432,35 @@ export const useProjectStore = create<ProjectStore>((set) => ({
           }
           return sync(config, state.channel);
         }
+
+        if (node.kind === "outbound" && port.key === "dns-detour") {
+          const server = firstDnsServerDetouringThrough(config, node.value);
+          if (server) {
+            config = updateEntityField(config, { kind: "dns-server", tag: server.tag }, "detour", undefined);
+          } else {
+            const existing = firstDialableDnsServer(config);
+            if (existing) {
+              config = updateEntityField(config, { kind: "dns-server", tag: existing.tag }, "detour", node.value);
+            } else {
+              config = addDnsServer(config, "https", preferredDnsServerTag("https"));
+              const created = config.dns?.servers?.[config.dns.servers.length - 1];
+              if (created) config = updateEntityField(config, { kind: "dns-server", tag: created.tag }, "detour", node.value);
+            }
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "detour-target") {
+          const child = firstOutboundDetouringThrough(config, node.value);
+          if (child) {
+            config = updateEntityField(config, { kind: "outbound", tag: child.tag }, "detour", undefined);
+          } else {
+            config = addOutbound(config, "socks", preferredOutboundTag("socks"));
+            const created = config.outbounds?.[config.outbounds.length - 1];
+            if (created) config = updateEntityField(config, { kind: "outbound", tag: created.tag }, "detour", node.value);
+          }
+          return sync(config, state.channel);
+        }
       }
 
       if (direction === "output") {
@@ -390,6 +507,21 @@ export const useProjectStore = create<ProjectStore>((set) => ({
             config = addOutbound(config, "socks", "proxy-out");
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = connectSelectorCandidate(config, parent.tag, created.tag);
+          }
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "outbound" && port.key === "dial-detour") {
+          const outbound = config.outbounds?.find((item) => item.tag === node.value);
+          if (outbound?.detour) {
+            config = updateEntityField(config, { kind: "outbound", tag: node.value }, "detour", undefined);
+          } else {
+            let targetTag = firstDirectOutboundTag(config, node.value);
+            if (!targetTag) {
+              config = addOutbound(config, "direct", preferredOutboundTag("direct"));
+              targetTag = config.outbounds?.[config.outbounds.length - 1]?.tag;
+            }
+            if (targetTag) config = updateEntityField(config, { kind: "outbound", tag: node.value }, "detour", targetTag);
           }
           return sync(config, state.channel);
         }

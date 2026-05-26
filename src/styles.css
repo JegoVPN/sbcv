@@ -682,10 +682,49 @@ textarea {
     transform 120ms ease;
 }
 
+.sbc-port__label {
+  position: absolute;
+  top: 50%;
+  z-index: 8;
+  max-width: 180px;
+  min-height: 26px;
+  padding: 0 9px;
+  border: 1px solid #303944;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(16, 20, 24, 0.97);
+  color: #dce4eb;
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.96);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.sbc-node__ports--left .sbc-port__label {
+  right: 48px;
+}
+
+.sbc-node__ports--right .sbc-port__label {
+  left: 48px;
+}
+
 .sbc-port:hover .sbc-port__action,
 .sbc-port:focus-visible .sbc-port__action {
   opacity: 1;
   transform: scale(1);
+}
+
+.sbc-port:hover .sbc-port__label,
+.sbc-port:focus-visible .sbc-port__label {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
 }
 
 .sbc-handle {
@@ -963,6 +1002,65 @@ textarea {
   font-weight: 840;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.reference-card {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #2b343e;
+  border-radius: 12px;
+  background: #11161c;
+}
+
+.reference-card div {
+  display: grid;
+  grid-template-columns: minmax(98px, 0.72fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.reference-card span {
+  color: #8f9aa5;
+  font-size: 12px;
+}
+
+.reference-card strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #dbe3eb;
+  font-size: 12px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector-action-grid {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.inspector-action-grid--compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.inspector-action-grid button {
+  min-width: 0;
+  min-height: 36px;
+  justify-content: flex-start;
+  border-radius: 10px;
+  background: #101418;
+  color: #edf2f5;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.inspector-action-grid--compact button {
+  justify-content: center;
+  padding: 0 8px;
 }
 
 .toggle-row {
