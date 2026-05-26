@@ -337,6 +337,25 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("falls back DNS-server port to the protocol default (53/443/853)", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-tls");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const portInput = inspector.getByLabelText("Port") as HTMLInputElement;
+    expect(portInput.value).toBe("853");
+    expect(portInput.placeholder).toBe("853");
+
+    fireEvent.change(portInput, { target: { value: "" } });
+    const cleared = useProjectStore
+      .getState()
+      .config.dns?.servers?.find((server) => server.type === "tls");
+    expect(cleared?.server_port).toBeUndefined();
+  });
+
   it("renders cache_file store_rdrc/rdrc_timeout and store_dns (testing only) with deprecation banner", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
