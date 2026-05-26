@@ -302,6 +302,41 @@ export function validateConfig(
     }
   });
 
+  const looksLikeDomain = (value: unknown) =>
+    typeof value === "string" &&
+    value.length > 0 &&
+    !/^[0-9.]+$/.test(value) &&
+    !/^[0-9a-fA-F:]+$/.test(value) &&
+    /[a-zA-Z]/.test(value);
+  const resolverPresent = (resolver: unknown) =>
+    (typeof resolver === "string" && resolver.length > 0) ||
+    (resolver !== null && typeof resolver === "object" && resolver !== undefined);
+
+  outbounds.forEach((outbound, index) => {
+    if (!looksLikeDomain(outbound.server)) return;
+    if (resolverPresent(outbound.domain_resolver)) return;
+    const tag = outbound.tag ?? `outbound-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "outbound-domain-without-resolver",
+      `/outbounds/${index}/domain_resolver`,
+      `Outbound "${tag}" uses a domain server but has no domain_resolver. sing-box 1.14+ requires this; rely on route.default_domain_resolver only if a single DNS server is configured.`,
+    );
+  });
+
+  listItems(config.dns?.servers).forEach((server, index) => {
+    if (!looksLikeDomain(server.server)) return;
+    if (resolverPresent(server.domain_resolver)) return;
+    push(
+      diagnostics,
+      "warning",
+      "dns-server-domain-without-resolver",
+      `/dns/servers/${index}/domain_resolver`,
+      `DNS server "${server.tag}" uses a domain remote but has no domain_resolver. sing-box 1.14+ requires this whenever the host is a domain name.`,
+    );
+  });
+
   if (channel === "stable") {
     if (listItems(config.certificate_providers).length > 0) {
       push(

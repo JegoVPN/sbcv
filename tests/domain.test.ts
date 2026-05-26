@@ -523,6 +523,38 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("warns when an outbound or dns-server uses a domain host without a domain_resolver", () => {
+    const config: ReturnType<typeof createStableTunSplitConfig> = createStableTunSplitConfig();
+    const next: typeof config = {
+      ...config,
+      outbounds: [
+        ...(config.outbounds ?? []),
+        { type: "trojan", tag: "remote-host", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } },
+      ],
+      dns: {
+        ...(config.dns ?? {}),
+        servers: [
+          ...(config.dns?.servers ?? []),
+          { type: "tls", tag: "remote-doh", server: "cloudflare-dns.com", server_port: 853 },
+        ],
+      },
+    };
+
+    const diagnostics = validateConfig(next, "testing");
+    expect(diagnostics.some((diagnostic) => diagnostic.code === "outbound-domain-without-resolver")).toBe(true);
+    expect(diagnostics.some((diagnostic) => diagnostic.code === "dns-server-domain-without-resolver")).toBe(true);
+
+    const ipOnly: typeof config = {
+      ...config,
+      outbounds: [
+        ...(config.outbounds ?? []),
+        { type: "trojan", tag: "ip-host", server: "1.1.1.1", server_port: 443, password: "x", tls: { enabled: true } },
+      ],
+    };
+    const ipDiagnostics = validateConfig(ipOnly, "testing");
+    expect(ipDiagnostics.some((diagnostic) => diagnostic.code === "outbound-domain-without-resolver")).toBe(false);
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     const tlsRequiredInbounds = ["trojan", "naive", "hysteria", "hysteria2", "tuic", "anytls", "vless"];
     for (const type of tlsRequiredInbounds) {
