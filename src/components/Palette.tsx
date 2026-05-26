@@ -40,7 +40,7 @@ type PaletteGroup = {
   items: PaletteItem[];
 };
 
-type PaletteStatus = "add" | "setup" | "table" | "inspector" | "docs" | "gated" | "pending" | "deprecated";
+type PaletteStatus = "add" | "setup" | "table" | "inspector" | "docs" | "gated" | "pending" | "deprecated" | "open";
 
 function docs(path = "") {
   return `https://sing-box.sagernet.org/configuration/${path}`;
@@ -245,6 +245,7 @@ const statusLabel: Record<PaletteStatus, string> = {
   gated: "Gated",
   pending: "Pending",
   deprecated: "Legacy",
+  open: "Open",
 };
 
 const deprecatedKinds = new Set<string>([
@@ -253,9 +254,10 @@ const deprecatedKinds = new Set<string>([
   "dns-fakeip",
 ]);
 
-function itemStatus(item: PaletteItem, channel: string): PaletteStatus {
+function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>): PaletteStatus {
   if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
   if (deprecatedKinds.has(item.kind)) return "deprecated";
+  if (singletons.has(item.kind)) return "open";
   if (item.status) return item.status;
   if (item.ready || isTemplatePresetId(item.kind)) return "add";
   return "docs";
@@ -269,6 +271,7 @@ function statusTitle(status: PaletteStatus, label: string) {
   if (status === "gated") return `${label} is target-gated and needs matching sing-box validation`;
   if (status === "pending") return `${label} is planned but not implemented as a writable command yet`;
   if (status === "deprecated") return `${label} is deprecated by sing-box; new configs should use the recommended replacement`;
+  if (status === "open") return `${label} already exists — click to open the Inspector`;
   return `${label} is documentation-only in the current UI`;
 }
 
@@ -277,6 +280,7 @@ function canActivate(item: PaletteItem, status: PaletteStatus) {
     status === "add" ||
     status === "setup" ||
     status === "deprecated" ||
+    status === "open" ||
     (status === "table" && (item.kind === "dns-rule" || item.kind === "route-rule"))
   );
 }
@@ -289,7 +293,19 @@ export function Palette() {
   const [loadedTemplateId, setLoadedTemplateId] = useState<TemplatePresetId | null>(null);
   const loadTemplatePreset = useProjectStore((state) => state.loadTemplatePreset);
   const createFromPalette = useProjectStore((state) => state.createFromPalette);
+  const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const channel = useProjectStore((state) => state.channel);
+  const config = useProjectStore((state) => state.config);
+  const singletonsPresent = useMemo(() => {
+    const set = new Set<string>();
+    if (config.log && Object.keys(config.log).length > 0) set.add("settings-log");
+    if (config.ntp && Object.keys(config.ntp).length > 0) set.add("settings-ntp");
+    if (config.certificate && Object.keys(config.certificate).length > 0) set.add("settings-certificate");
+    if (config.experimental && Object.keys(config.experimental).length > 0) set.add("settings-experimental");
+    if (config.route) set.add("route");
+    if (config.dns) set.add("dns-hub");
+    return set;
+  }, [config.log, config.ntp, config.certificate, config.experimental, config.route, config.dns]);
   const filteredGroups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return [];
@@ -361,6 +377,8 @@ export function Palette() {
           createFromPalette={createFromPalette}
           loadedTemplateId={loadedTemplateId}
           channel={channel}
+          singletonsPresent={singletonsPresent}
+          setSelectedId={setSelectedId}
         />
       ) : null}
       {!query.trim() && libraryOpen ? (
@@ -387,6 +405,8 @@ export function Palette() {
           createFromPalette={createFromPalette}
           loadedTemplateId={loadedTemplateId}
           channel={channel}
+          singletonsPresent={singletonsPresent}
+          setSelectedId={setSelectedId}
         />
       ))}
     </aside>
@@ -399,12 +419,16 @@ function PaletteSection({
   createFromPalette,
   loadedTemplateId,
   channel,
+  singletonsPresent,
+  setSelectedId,
 }: {
   group: PaletteGroup;
   loadTemplatePreset: (id: TemplatePresetId) => void;
   createFromPalette: (kind: string) => void;
   loadedTemplateId: TemplatePresetId | null;
   channel: string;
+  singletonsPresent: Set<string>;
+  setSelectedId: (id: string | null) => void;
 }) {
   const isTemplateGroup = group.title === "Templates";
   return (
@@ -413,9 +437,23 @@ function PaletteSection({
       <div className="palette-list">
         {group.items.map((item) => {
           const Icon = item.icon;
-          const status = itemStatus(item, channel);
+          const status = itemStatus(item, channel, singletonsPresent);
           const actionable = canActivate(item, status);
           const templateAdded = isTemplateGroup && isTemplatePresetId(item.kind) && item.kind === loadedTemplateId;
+          const singletonSelectionId =
+            item.kind === "settings-log"
+              ? "settings:log"
+              : item.kind === "settings-ntp"
+                ? "settings:ntp"
+                : item.kind === "settings-certificate"
+                  ? "settings:certificate"
+                  : item.kind === "settings-experimental"
+                    ? "settings:experimental"
+                    : item.kind === "route"
+                      ? "route:main"
+                      : item.kind === "dns-hub"
+                        ? "dns:main"
+                        : null;
           return (
             <div className="palette-entry" key={item.kind}>
               <button
@@ -433,6 +471,7 @@ function PaletteSection({
                 onClick={() => {
                   if (isTemplatePresetId(item.kind)) loadTemplatePreset(item.kind);
                   else createFromPalette(item.kind);
+                  if (singletonSelectionId) setSelectedId(singletonSelectionId);
                 }}
               >
                 <Icon size={16} />
