@@ -444,6 +444,130 @@ export function validateConfig(
     }
   });
 
+  const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+  const validateVmessLikeUsers = (
+    pathPrefix: string,
+    items: Record<string, unknown>[] | undefined,
+    ownerTag: string,
+    requireUuid: boolean,
+  ) => {
+    if (!Array.isArray(items)) return;
+    items.forEach((user, userIndex) => {
+      if (requireUuid) {
+        const uuid = typeof user.uuid === "string" ? user.uuid : "";
+        if (!uuid) {
+          push(
+            diagnostics,
+            "error",
+            "user-missing-uuid",
+            `${pathPrefix}/${userIndex}/uuid`,
+            `${ownerTag} user ${userIndex + 1} has no uuid.`,
+          );
+        } else if (!uuidPattern.test(uuid)) {
+          push(
+            diagnostics,
+            "warning",
+            "user-invalid-uuid",
+            `${pathPrefix}/${userIndex}/uuid`,
+            `${ownerTag} user ${userIndex + 1} uuid "${uuid}" does not match the canonical UUID format.`,
+          );
+        }
+      }
+      if (typeof user.alterId === "number" && user.alterId > 0) {
+        push(
+          diagnostics,
+          "warning",
+          "vmess-alterid-deprecated",
+          `${pathPrefix}/${userIndex}/alterId`,
+          `${ownerTag} user ${userIndex + 1} uses alterId=${user.alterId}; the legacy MD5 (alter_id > 0) auth mode is deprecated, prefer alterId: 0.`,
+        );
+      }
+    });
+  };
+
+  outbounds.forEach((outbound, index) => {
+    const tag = outbound.tag ?? `outbound-${index}`;
+    if (outbound.type === "vmess") {
+      const uuid = typeof outbound.uuid === "string" ? outbound.uuid : "";
+      if (!uuid) {
+        push(
+          diagnostics,
+          "error",
+          "vmess-missing-uuid",
+          `/outbounds/${index}/uuid`,
+          `Outbound "${tag}" (vmess) requires a uuid.`,
+        );
+      } else if (!uuidPattern.test(uuid)) {
+        push(
+          diagnostics,
+          "warning",
+          "vmess-invalid-uuid",
+          `/outbounds/${index}/uuid`,
+          `Outbound "${tag}" (vmess) uuid "${uuid}" does not match the canonical UUID format.`,
+        );
+      }
+      if (typeof outbound.alter_id === "number" && outbound.alter_id > 0) {
+        push(
+          diagnostics,
+          "warning",
+          "vmess-alterid-deprecated",
+          `/outbounds/${index}/alter_id`,
+          `Outbound "${tag}" (vmess) uses alter_id=${outbound.alter_id}; legacy MD5 auth mode is deprecated, prefer alter_id: 0.`,
+        );
+      }
+    }
+    if (outbound.type === "vless") {
+      const uuid = typeof outbound.uuid === "string" ? outbound.uuid : "";
+      if (!uuid) {
+        push(diagnostics, "error", "vless-missing-uuid", `/outbounds/${index}/uuid`, `Outbound "${tag}" (vless) requires a uuid.`);
+      } else if (!uuidPattern.test(uuid)) {
+        push(diagnostics, "warning", "vless-invalid-uuid", `/outbounds/${index}/uuid`, `Outbound "${tag}" (vless) uuid "${uuid}" does not match the canonical UUID format.`);
+      }
+      const flow = typeof outbound.flow === "string" ? outbound.flow : "";
+      const multiplex = (outbound as Record<string, unknown>).multiplex;
+      const multiplexEnabled =
+        multiplex && typeof multiplex === "object" && !Array.isArray(multiplex)
+          ? Boolean((multiplex as Record<string, unknown>).enabled)
+          : false;
+      if (flow === "xtls-rprx-vision" && multiplexEnabled) {
+        push(
+          diagnostics,
+          "error",
+          "vless-flow-multiplex-conflict",
+          `/outbounds/${index}/flow`,
+          `Outbound "${tag}" enables both flow=xtls-rprx-vision and multiplex; the two are mutually exclusive.`,
+        );
+      }
+    }
+  });
+
+  listItems(config.inbounds).forEach((inbound, index) => {
+    if (inbound.type === "vmess") {
+      validateVmessLikeUsers(
+        `/inbounds/${index}/users`,
+        inbound.users as Record<string, unknown>[] | undefined,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" (vmess)`,
+        true,
+      );
+    }
+    if (inbound.type === "vless") {
+      validateVmessLikeUsers(
+        `/inbounds/${index}/users`,
+        inbound.users as Record<string, unknown>[] | undefined,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" (vless)`,
+        true,
+      );
+    }
+    if (inbound.type === "tuic") {
+      validateVmessLikeUsers(
+        `/inbounds/${index}/users`,
+        inbound.users as Record<string, unknown>[] | undefined,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" (tuic)`,
+        true,
+      );
+    }
+  });
+
   listItems(config.dns?.servers).forEach((server, index) => {
     if (!looksLikeDomain(server.server)) return;
     if (resolverPresent(server.domain_resolver)) return;
