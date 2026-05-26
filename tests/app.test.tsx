@@ -337,6 +337,34 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders CCM/OCM users and headers as structured row editors with token masking", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-ccm");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const usersEditor = inspector.getByTestId("ccm-users-editor");
+    expect(within(usersEditor).getByText("No users yet. Click Add to create one.")).toBeInTheDocument();
+
+    fireEvent.click(within(usersEditor).getByRole("button", { name: /Add user/ }));
+    let ccm = useProjectStore.getState().config.services?.find((s) => s.type === "ccm");
+    expect((ccm as Record<string, unknown>).users).toMatchObject([{ name: "user1", token: "" }]);
+
+    const refreshedUsersEditor = inspector.getByTestId("ccm-users-editor");
+    const tokenInput = within(refreshedUsersEditor).getByLabelText("Token") as HTMLInputElement;
+    expect(tokenInput.type).toBe("password");
+    fireEvent.change(tokenInput, { target: { value: "shhh" } });
+    ccm = useProjectStore.getState().config.services?.find((s) => s.type === "ccm");
+    expect(((ccm as Record<string, unknown>).users as Record<string, unknown>[])[0].token).toBe("shhh");
+
+    const headersEditor = inspector.getByTestId("ccm-headers-editor");
+    fireEvent.click(within(headersEditor).getByRole("button", { name: /Add header/ }));
+    ccm = useProjectStore.getState().config.services?.find((s) => s.type === "ccm");
+    expect((ccm as Record<string, unknown>).headers).toMatchObject({ "X-Header": "" });
+  });
+
   it("renders WireGuard peers as a structured editor with sensitive masking", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
