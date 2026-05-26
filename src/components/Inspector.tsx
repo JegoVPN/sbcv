@@ -191,6 +191,7 @@ const outboundHandledFields = new Set([
   "plugin_opts",
   "udp_relay_mode",
   "udp_over_stream",
+  "obfs",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2772,6 +2773,43 @@ export function Inspector() {
                 <option value="xtls-rprx-vision">xtls-rprx-vision</option>
               </select>
             </label>
+          ) : null}
+          {entityType === "hysteria2" ? (
+            (() => {
+              const obfs = objectField(entity.obfs);
+              const writeObfs = (patch: InspectorEntity) => {
+                const merged: InspectorEntity = { ...obfs, ...patch };
+                const cleaned: InspectorEntity = {};
+                for (const [k, v] of Object.entries(merged)) {
+                  if (v === undefined || v === "") continue;
+                  cleaned[k] = v;
+                }
+                updateField(ref, "obfs", Object.keys(cleaned).length ? cleaned : undefined);
+              };
+              return (
+                <fieldset className="field field--checklist" data-testid="hysteria2-obfs">
+                  <legend>Obfuscator (obfs)</legend>
+                  <label className="field">
+                    <span>Type</span>
+                    <select
+                      value={typeof obfs.type === "string" ? obfs.type : ""}
+                      onChange={(event) => writeObfs({ type: event.target.value || undefined })}
+                    >
+                      <option value="">(disabled)</option>
+                      <option value="salamander">salamander</option>
+                      <option value="gecko">gecko (1.14+ testing)</option>
+                    </select>
+                  </label>
+                  {typeof obfs.type === "string" && obfs.type ? (
+                    <SensitiveTextField
+                      label="Password"
+                      value={typeof obfs.password === "string" ? obfs.password : ""}
+                      onChange={(next) => writeObfs({ password: next || undefined })}
+                    />
+                  ) : null}
+                </fieldset>
+              );
+            })()
           ) : null}
           {entityType === "vmess" || entityType === "vless" ? (
             <label className="field">
