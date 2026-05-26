@@ -40,4 +40,5 @@ The app builds to `dist/` and can be hosted as a static site. Hosted deployment 
 - [Goal-Driven Development](docs/goal-driven-development.md)
 - [Release Goal: Stable-First SBC Visual Editor](docs/goals/stable-first-sbc-visual-editor-release.md)
 - [First Goal: Project Scaffold And UI Shell](docs/goals/project-scaffold-and-ui-shell.md)
+- [External Config E2E Hardening Goal](docs/goals/external-config-e2e-hardening.md)
 - [Release Notes](docs/release-notes.md)

@@ -34,30 +34,34 @@ function pushTagged(
   }
 }
 
+function listItems<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 export function getTaggedEntities(config: SingBoxConfig): TaggedEntityRef[] {
   const result: TaggedEntityRef[] = [];
-  config.inbounds?.forEach((item, index) =>
+  listItems(config.inbounds).forEach((item, index) =>
     pushTagged(result, "inbound", item, `/inbounds/${index}`),
   );
-  config.outbounds?.forEach((item, index) =>
+  listItems(config.outbounds).forEach((item, index) =>
     pushTagged(result, "outbound", item, `/outbounds/${index}`),
   );
-  config.dns?.servers?.forEach((item, index) =>
+  listItems(config.dns?.servers).forEach((item, index) =>
     pushTagged(result, "dns-server", item, `/dns/servers/${index}`),
   );
-  config.endpoints?.forEach((item, index) =>
+  listItems(config.endpoints).forEach((item, index) =>
     pushTagged(result, "endpoint", item, `/endpoints/${index}`),
   );
-  config.services?.forEach((item, index) =>
+  listItems(config.services).forEach((item, index) =>
     pushTagged(result, "service", item, `/services/${index}`),
   );
-  config.certificate_providers?.forEach((item, index) =>
+  listItems(config.certificate_providers).forEach((item, index) =>
     pushTagged(result, "certificate-provider", item, `/certificate_providers/${index}`),
   );
-  config.http_clients?.forEach((item, index) =>
+  listItems(config.http_clients).forEach((item, index) =>
     pushTagged(result, "http-client", item, `/http_clients/${index}`),
   );
-  config.route?.rule_set?.forEach((item, index) =>
+  listItems(config.route?.rule_set).forEach((item, index) =>
     pushTagged(result, "rule-set", item, `/route/rule_set/${index}`),
   );
   return result;
@@ -74,11 +78,11 @@ export function buildTagIndex(config: SingBoxConfig): Map<string, TaggedEntityRe
 }
 
 export function getOutboundTags(config: SingBoxConfig): Set<string> {
-  return new Set((config.outbounds ?? []).map((item) => item.tag));
+  return new Set(listItems(config.outbounds).map((item) => item.tag));
 }
 
 export function getDnsServerTags(config: SingBoxConfig): Set<string> {
-  return new Set((config.dns?.servers ?? []).map((item) => item.tag));
+  return new Set(listItems(config.dns?.servers).map((item) => item.tag));
 }
 
 export function getUniqueTag(config: SingBoxConfig, base: string): string {

@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"mixed","listen":"::","listen_port":10000}],"outbounds":[{"type":"hysteria","server":"example.com","server_port":443,"up_mbps":20,"down_mbps":100,"auth_str":"","tls":{"enabled":true,"server_name":"","alpn":["h3"]}}]}

@@ -38,7 +38,8 @@ export type DnsServerConfig = TaggedConfig & {
 export type RouteRule = {
   domain_suffix?: string[];
   domain_keyword?: string[];
-  rule_set?: string[];
+  domain?: string[];
+  rule_set?: string | string[];
   outbound?: string;
   action?: string;
   [key: string]: unknown;
@@ -47,7 +48,8 @@ export type RouteRule = {
 export type DnsRule = {
   domain_suffix?: string[];
   domain_keyword?: string[];
-  rule_set?: string[];
+  domain?: string[];
+  rule_set?: string | string[];
   server?: string;
   action?: string;
   [key: string]: unknown;

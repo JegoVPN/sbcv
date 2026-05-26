@@ -11,6 +11,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
+    "fixtures:update:external": "node scripts/update-external-fixtures.mjs",
+    "validate:external": "vitest run tests/external-fixtures.test.ts",
     "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm e2e"
   },
   "dependencies": {

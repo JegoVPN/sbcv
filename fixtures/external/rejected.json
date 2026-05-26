@@ -1,0 +1,827 @@
+[
+  {
+    "source": "agustyuzu/confexamples/v2fly json v5 leastping.json",
+    "reason": "invalid-shape",
+    "detail": "services is not an array"
+  },
+  {
+    "source": "aleskxyz/serverless/google/sing-box/v1.13.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "baiyian/sing-box-config-template/1.11.x/iPhone2.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 8709 (line 350 column 1)"
+  },
+  {
+    "source": "baiyian/sing-box-config-template/1.11.x/qcy_iphone.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "baiyian/sing-box-config-template/1.12.x/biatiw.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 1342 (line 68 column 25)"
+  },
+  {
+    "source": "baiyian/sing-box-config-template/1.12.x/dns.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected non-whitespace character after JSON at position 12 (line 1 column 13)"
+  },
+  {
+    "source": "baiyian/sing-box-config-template/dns.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 992 (line 54 column 1)"
+  },
+  {
+    "source": "baozaodetudou/mssb/backup/zashboard-settings.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/fb/fb.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/adguard/config.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/audit_settings.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/config_overrides.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/nft/nftadd.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/srs/cuscn.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/srs/cusnocn.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/srs/geoipcn.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/srs/geositecn.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/srs/geositenocn.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/upstream_overrides.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/webinfo/clientname.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/mosdns/webinfo/requeryconfig.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "baozaodetudou/mssb/mssb/sing-box/sing-box-r.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "chika0801/sing-box-examples/Shadowsocks/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 201 (line 8 column 29)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/ShadowTLS/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 355 (line 15 column 31)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/TUIC/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 191 (line 9 column 33)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/Tun/config_client_android_remote_dns.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4030 (line 141 column 13)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/Tun/config_client_windows_local_dns.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 3273 (line 117 column 13)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VLESS-gRPC-REALITY/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 767 (line 29 column 36)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VLESS-gRPC-TLS/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 326 (line 14 column 36)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VLESS-HTTP2-REALITY/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 759 (line 29 column 28)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VLESS-Vision-REALITY/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 361 (line 15 column 36)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VLESS-Vision-REALITY/steal_oneself/config_server.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 378 (line 15 column 53)"
+  },
+  {
+    "source": "chika0801/sing-box-examples/VMess/config_server.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "CHIZI-0618/box4magisk/box/sing-box/config.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"80\n    },\n//    {\n//\"... is not valid JSON"
+  },
+  {
+    "source": "CHIZI-0618/box4magisk/box4.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "CHIZI-0618/box4magisk/webui/tsconfig.app.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 288 (line 11 column 5)"
+  },
+  {
+    "source": "CHIZI-0618/box4magisk/webui/tsconfig.node.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 222 (line 10 column 5)"
+  },
+  {
+    "source": "Fdulo/Sing-Box-config_template/config_template/some_manual_h2dns.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "Fdulo/Sing-Box-config_template/rule/discord.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "Fdulo/Sing-Box-config_template/rule/perplexity.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected non-whitespace character after JSON at position 7 (line 1 column 8)"
+  },
+  {
+    "source": "FeiaoLin/ios_rule/fakeipfilter.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "FeiaoLin/ios_rule/sing-box/1.11.x/config_tun.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 14789 (line 114 column 5)"
+  },
+  {
+    "source": "herozmy/StoreHouse/config/sing-box/ph_hy2-home-20250418.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'h', ...\"er_port\": home_port,\"... is not valid JSON"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Android/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Android/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Android/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Android/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Armbian/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Armbian/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/ImmortalWrt/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/ImmortalWrt/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.10.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.10.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.11.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.11.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPad/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.10.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.10.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.11.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.11.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/iOS/iPhone/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/OpenWrt/sing-box-rule-set/≥sing-box-1.12.0/client-anytls-reality-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/OpenWrt/sing-box-rule-set/≥sing-box-1.12.0/client-anytls-reality-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/OpenWrt/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/OpenWrt/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-GeoIP-Geosite/sing-box-1.7.8/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-GeoIP-Geosite/sing-box-1.7.8/server-shadowtls-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.10.0/server-shadowtls-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.11.0/server-shadowtls-IPv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/client-shadowtls-mixed-system-proxy-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/client-shadowtls-mixed-system-proxy-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/client-shadowtls-tun-with-dns-rules-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/server-anytls-reality-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.12.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-mixed-system-proxy-block-ads-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.9.0/client-shadowtls-mixed-system-proxy-block-ads-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv4.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "HideinOSS/sing-box-configuration-examples/Windows/sing-box-rule-set/≥sing-box-1.9.0/server-shadowtls-IPv6.json",
+    "reason": "repo-fixture-cap"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/etc/sing-box/commonports.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/inbound_tproxy.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/inbound_tun.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/routing_tproxy.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/routing_tun.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/trojan-grpc.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/trojan-upgrade.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/trojan-ws.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vless-grpc.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vless-reality.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vless-upgrade.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vless-ws.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vmess-grpc.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vmess-upgrade.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IPTUNNELS/IPTUNNELS/sing-box/vmess-ws.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "iStrom01/sing-box-config-template/client.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2628 (line 96 column 35)"
+  },
+  {
+    "source": "iStrom01/sing-box-config-template/openwrt/config-template.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2923 (line 107 column 35)"
+  },
+  {
+    "source": "iStrom01/sing-box-config-template/openwrt/tproxy/config-template.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2618 (line 95 column 35)"
+  },
+  {
+    "source": "iStrom01/sing-box-config-template/reality/client-template.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token ',', ...\"er_port\": ,\n        \"... is not valid JSON"
+  },
+  {
+    "source": "iStrom01/sing-box-config-template/reality/server-template.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token ',', ...\"en_port\": ,\n        \"... is not valid JSON"
+  },
+  {
+    "source": "IvanSolis1989/Smart-Config-Kit/.claude/settings.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IvanSolis1989/Smart-Config-Kit/.claude/settings.local.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IvanSolis1989/Smart-Config-Kit/tools/fixtures/process-name-direct-tools.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "IvanSolis1989/Smart-Config-Kit/v2rayN/v2rayN(xray).json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_box_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_box_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_box_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_momo_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_momo_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_momo_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/config_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_box_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_box_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_box_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_momo_default.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_momo_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_momo_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_prefer_ipv4.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "kj163kj/singbox_proxy_config/v1.13.0+/链式代理/config_prefer_ipv6.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/base.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 1862 (line 93 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/light.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2549 (line 131 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/normal.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2540 (line 131 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/pro-plus.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2653 (line 137 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/pro.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2549 (line 131 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/NekoBoxForAndroid/ultimate.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 2653 (line 137 column 7)"
+  },
+  {
+    "source": "malikshi/sing-box-examples/Sing-boxForMobile(iOS SFI or Android SFA)/sing-box.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 5248 (line 243 column 1)"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/base/singbox.self.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"          // \"geosit\"... is not valid JSON"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/ADBlock.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/Direct.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/Download.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/Proxy.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/sample.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "ofwh/Profiles/sing-box/Rules/SpecifyProxy.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "qifei/trygit/rules/fakeipfilter.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "Quart233/SingBoxMerge/.zed/tasks.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "Quart233/SingBoxMerge/deno.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customip-no-direct.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-direct.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-geo-jp.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-geo-us.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-netflix.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-no-direct.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/ruleset/customsite-shopping.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "se1jaku/sub-store-template/sing-box.json",
+    "reason": "duplicate"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Hysteria/1.5/client.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Hysteria/1.5/server.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/Hysteria.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/hysteria2-insecure.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/Hysteria2.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/Reality-gRPC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/ShadowTLS.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/SSH.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/SFA/TUIC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/Hysteria.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/Hysteria2.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/Reality-gRPC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/ShadowTLS-nekobox.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/ShadowTLS-nekoray.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/SSH-Outbound.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/TUIC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"er_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Client/vless-tls-ech-hiddify.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Hysteria2-obfs.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Hysteria2.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Naive.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Reality-gRPC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Reality-tcp.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/ShadowTLS.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/Tuic.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/vless-gRPC.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/Sing-Box/Server/vless-WebSocket.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token 'P', ...\"en_port\": PORT,\n    \"... is not valid JSON"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/TUIC/client.json",
+    "reason": "not-sing-box-config"
+  },
+  {
+    "source": "TheyCallMeSecond/config-examples/TUIC/server.json",
+    "reason": "not-sing-box-config"
+  }
+]

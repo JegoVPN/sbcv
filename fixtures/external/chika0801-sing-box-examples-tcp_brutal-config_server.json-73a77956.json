@@ -1,0 +1,1 @@
+{"inbounds":[{"type":"vless","listen":"::","listen_port":443,"users":[{"uuid":"00000000-0000-4000-8000-000000000000"}],"tls":{"enabled":true,"certificate_path":"/root/fullchain.cer","key_path":"/root/private.key"},"multiplex":{"enabled":true,"padding":false,"brutal":{"enabled":true,"up_mbps":100,"down_mbps":20}}}],"outbounds":[{"type":"direct"}]}
