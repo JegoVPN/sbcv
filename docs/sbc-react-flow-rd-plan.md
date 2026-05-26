@@ -116,6 +116,7 @@ sing-box 不是纯 DAG 工作流：
 落地约束：
 
 - 新增或修改任何协议字段前，必须记录对应文档路径。
+- 每个 schema registry、node registry、Inspector 表单条目都必须映射到 [sing-box 配置文档入口清单](sing-box-config-doc-inventory.md) 的一个入口。
 - 任何 `Since`、`Deprecated`、`Removed` 信息都要进入版本化 schema metadata。
 - 不能只根据 UI 直觉创建字段；字段必须能追溯到 sing-box 文档或 CLI 行为。
 - 默认导出目标是 stable；不在目标 stable binary 支持范围内的字段必须显示禁用、警告或迁移建议。
@@ -474,6 +475,7 @@ CI 要求：
 
 - `SingBoxConfig` 类型。
 - `SingBoxChannel` / `SingBoxTarget` 类型。
+- 官方 Configuration 导航入口清单。
 - stable-first schema registry。
 - top-level config normalize。
 - tag index / reference index。
@@ -668,6 +670,7 @@ Selector
 
 ## 15. 参考资料
 
+- SBC sing-box config document inventory: [sing-box-config-doc-inventory.md](sing-box-config-doc-inventory.md)
 - SagerNet/sing-box stable configuration docs: https://github.com/SagerNet/sing-box/tree/stable/docs/configuration
 - SagerNet/sing-box stable configuration index: https://raw.githubusercontent.com/SagerNet/sing-box/stable/docs/configuration/index.md
 - SagerNet/sing-box stable route docs: https://raw.githubusercontent.com/SagerNet/sing-box/stable/docs/configuration/route/index.md

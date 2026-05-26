@@ -7,3 +7,4 @@ The canvas is not the source of truth. The sing-box JSON config and validated do
 ## Documents
 
 - [SBC React Flow R&D Plan](docs/sbc-react-flow-rd-plan.md)
+- [sing-box Config Document Inventory](docs/sing-box-config-doc-inventory.md)
