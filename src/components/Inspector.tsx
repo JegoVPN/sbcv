@@ -1957,6 +1957,20 @@ export function Inspector() {
               onChange={(event) => updateField(ref, "interval", event.target.value)}
             />
           </label>
+          <label className="field">
+            <span>Detour</span>
+            <select
+              value={typeof entity.detour === "string" ? entity.detour : ""}
+              onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
+            >
+              <option value="">(default outbound)</option>
+              {outboundTags(config).map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
+                </option>
+              ))}
+            </select>
+          </label>
         </>
       ) : null}
 
