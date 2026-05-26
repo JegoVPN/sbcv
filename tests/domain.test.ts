@@ -523,6 +523,35 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("flags rule-set issues (missing url/path/detour reference, empty inline rules, testing deprecation)", () => {
+    const config = createStableTunSplitConfig();
+    const ruleSets = (config.route?.rule_set ?? []).slice();
+    const next = {
+      ...config,
+      route: {
+        ...config.route,
+        rule_set: [
+          ...ruleSets,
+          { type: "remote", tag: "no-url", format: "binary" },
+          { type: "remote", tag: "bad-detour", format: "binary", url: "https://example.com/rules.srs", download_detour: "missing-outbound" },
+          { type: "local", tag: "missing-path", format: "source" },
+          { type: "inline", tag: "no-rules", rules: [] },
+          { type: "remote", tag: "with-detour", format: "binary", url: "https://example.com/x.srs", download_detour: "direct" },
+        ],
+      },
+    } as typeof config;
+
+    const stable = validateConfig(next, "stable");
+    expect(stable.some((diagnostic) => diagnostic.code === "rule-set-remote-missing-url")).toBe(true);
+    expect(stable.some((diagnostic) => diagnostic.code === "rule-set-download-detour-missing")).toBe(true);
+    expect(stable.some((diagnostic) => diagnostic.code === "rule-set-local-missing-path")).toBe(true);
+    expect(stable.some((diagnostic) => diagnostic.code === "rule-set-inline-empty")).toBe(true);
+    expect(stable.some((diagnostic) => diagnostic.code === "rule-set-download-detour-deprecated")).toBe(false);
+
+    const testing = validateConfig(next, "testing");
+    expect(testing.some((diagnostic) => diagnostic.code === "rule-set-download-detour-deprecated")).toBe(true);
+  });
+
   it("warns when an outbound or dns-server uses a domain host without a domain_resolver", () => {
     const config: ReturnType<typeof createStableTunSplitConfig> = createStableTunSplitConfig();
     const next: typeof config = {

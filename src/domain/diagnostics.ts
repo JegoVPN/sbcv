@@ -358,6 +358,66 @@ export function validateConfig(
     }
   }
 
+  listItems(config.route?.rule_set).forEach((ruleSet, index) => {
+    const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : `rule-set-${index}`;
+    const type = typeof ruleSet.type === "string" ? ruleSet.type : undefined;
+    if (type === "remote") {
+      const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
+      if (!url) {
+        push(
+          diagnostics,
+          "error",
+          "rule-set-remote-missing-url",
+          `/route/rule_set/${index}/url`,
+          `Remote rule-set "${tag}" has no url; the resource cannot be downloaded.`,
+        );
+      }
+      const detour = typeof ruleSet.download_detour === "string" ? ruleSet.download_detour : "";
+      if (detour && !outboundTags.has(detour)) {
+        push(
+          diagnostics,
+          "error",
+          "rule-set-download-detour-missing",
+          `/route/rule_set/${index}/download_detour`,
+          `Remote rule-set "${tag}" references missing download_detour outbound "${detour}".`,
+        );
+      }
+      if (detour && channel === "testing") {
+        push(
+          diagnostics,
+          "warning",
+          "rule-set-download-detour-deprecated",
+          `/route/rule_set/${index}/download_detour`,
+          `Remote rule-set "${tag}" uses download_detour, which is deprecated in sing-box 1.14+ in favour of http_client. Consider migrating before the field is removed.`,
+        );
+      }
+    }
+    if (type === "local") {
+      const path = typeof ruleSet.path === "string" ? ruleSet.path : "";
+      if (!path) {
+        push(
+          diagnostics,
+          "error",
+          "rule-set-local-missing-path",
+          `/route/rule_set/${index}/path`,
+          `Local rule-set "${tag}" has no path; sing-box will refuse to load it.`,
+        );
+      }
+    }
+    if (type === "inline") {
+      const rules = Array.isArray(ruleSet.rules) ? ruleSet.rules : [];
+      if (rules.length === 0) {
+        push(
+          diagnostics,
+          "warning",
+          "rule-set-inline-empty",
+          `/route/rule_set/${index}/rules`,
+          `Inline rule-set "${tag}" has an empty rules array; it will match nothing.`,
+        );
+      }
+    }
+  });
+
   if (outbounds.length === 0) {
     push(diagnostics, "warning", "no-outbounds", "/outbounds", "No outbounds are configured.");
   }
