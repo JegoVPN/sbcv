@@ -1,4 +1,5 @@
 <!-- Reviewed against official stable/testing docs (both identical at 1.12.0), Inspector.tsx, sharedFieldRegistry.ts, Palette.tsx, protocols.ts, and commands.ts. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # DNS Server / udp UI Review
 
 ## Scope

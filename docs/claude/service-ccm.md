@@ -1,4 +1,5 @@
 <!-- Source: official stable+testing docs/configuration/service/ccm.md (identical); baseline docs/ui-reviews/service-ccm.md; grep audit of Palette, SbcNode, Inspector, sharedFieldRegistry, graph.ts, commands.ts, useProjectStore. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Service / CCM UI Review
 
 ## Scope

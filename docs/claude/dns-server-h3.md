@@ -1,4 +1,5 @@
 <!-- Reviewed against stable and testing http3.md (identical content), shared dial/TLS registries, Palette.tsx, Inspector.tsx, commands.ts, sharedFieldRegistry.ts, SbcNode.tsx, protocols.ts. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # DNS Server / h3 UI Review
 
 ## Scope

@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Service / ocm Deep Review
 
 <!-- Source: .tmp/sing-box-docs/stable/docs/configuration/service/ocm.md (identical to testing).

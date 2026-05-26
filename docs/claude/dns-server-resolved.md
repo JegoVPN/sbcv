@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # DNS Server / resolved — UI Review
 
 <!-- source: stable + testing docs/configuration/dns/server/resolved.md; sharedFieldRegistry.ts; Inspector.tsx; graph.ts; diagnostics.ts; commands.ts; Palette.tsx; protocols.ts -->

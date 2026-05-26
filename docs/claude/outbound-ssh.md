@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Outbound / ssh — Deep UI Review
 
 > Source: official stable docs (`outbound/ssh.md`), official testing docs (`outbound/ssh.md`), Palette.tsx, Inspector.tsx, sharedFieldRegistry.ts, commands.ts.

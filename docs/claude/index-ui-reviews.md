@@ -21,7 +21,7 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 ## Coverage
 
 - 节点 review 数：**66 / 66**
-- Status：59 / 66 `official-read`，6 / 66 `ui-verified`（`outbound:selector`、`outbound:urltest`、`hub:route`、`hub:dns`、`rule:route-rule`、`rule:dns-rule`，2026-05-27 部分 P0 修），1 / 66 `implemented`（`settings:log`，2026-05-27）。
+- Status：0 / 66 `official-read`，65 / 66 `ui-verified`（覆盖全部 inbound / outbound / dns-server / endpoint / service / rule-set / hub / rule / settings except `settings:log`），1 / 66 `implemented`（`settings:log`，2026-05-27）。Shared atomics（共享字段表、JsonField 兜底、结构化 users / peers / hosts / CCM/OCM / realm 编辑器、TLS 默认 scaffold、敏感字段 mask、action-gated rule sub-forms、平台 / channel / build-tag banner、domain_resolver select、cache_file 1.13/1.14、Clash API external_ui、outbound enum select、route/dns hub 顶层字段、selector default cascade、vmess/vless/tuic 凭证诊断、rule-set/dns-server 诊断）已经全部 ship。每个节点剩余的专属 P0/P1 仍在各自 review doc 顶部 header 追踪。
 - 发现总数：**P0 ≈ 148**，**P1 ≈ 260**（按节点求和，未做跨节点去重）。
 - Implementation 进度：见 `docs/goals/editable-node-ui-deep-pass.md` 的 Milestone / Atomic 列表。
 

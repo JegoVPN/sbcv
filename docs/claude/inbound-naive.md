@@ -1,4 +1,4 @@
-<!-- Status: official-read. Sources: stable docs/configuration/inbound/naive.md, testing docs/configuration/inbound/naive.md (identical), stable docs/configuration/shared/listen.md, Palette.tsx, protocols.ts, commands.ts, sharedFieldRegistry.ts, SbcNode.tsx, Inspector.tsx. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Inbound / NaiveProxy UI Review
 
 ## Scope

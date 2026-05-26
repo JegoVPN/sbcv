@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable ntp/index.md + testing diff + Palette/SbcNode/Inspector/graph.ts grep. UI verification + implementation fixes still pending. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Settings / NTP UI Review (Claude Deep Review)
 
 ## Scope

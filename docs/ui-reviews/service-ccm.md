@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/service/ccm.md, shared/listen.md, and shared/tls.md; reviewed against current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified (2026-05-27). Shared atomics (dial/listen/TLS shared fields + structured editors + diagnostics + platform/channel banners) landed; see docs/claude/index-ui-reviews.md Cross-Node Findings #1–#9. Node-specific outstanding P0/P1 still tracked here. -->
 # Service / ccm UI Review
 
 ## Scope

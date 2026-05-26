@@ -1,3 +1,4 @@
+<!-- Status: ui-verified (2026-05-27). Shared atomics shipped (see docs/claude/index-ui-reviews.md Cross-Node Findings #1-#9). Node-specific outstanding P0/P1 still tracked below. -->
 # Outbound / block UI Review
 
 <!-- Source: official stable + testing docs, Palette.tsx, SbcNode.tsx, Inspector.tsx, commands.ts, templates.ts, protocols.ts, sharedFieldRegistry.ts -->
