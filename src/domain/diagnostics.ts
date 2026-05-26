@@ -553,6 +553,36 @@ export function validateConfig(
         );
       }
     }
+    if (channel === "stable" && outbound.type === "ssh") {
+      const obj = outbound as Record<string, unknown>;
+      if (obj.cipher !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "ssh-cipher-testing-only",
+          `/outbounds/${index}/cipher`,
+          `Outbound "${tag}" (ssh) sets cipher; this allow-list is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.mac !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "ssh-mac-testing-only",
+          `/outbounds/${index}/mac`,
+          `Outbound "${tag}" (ssh) sets mac; this allow-list is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.kex_algorithm !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "ssh-kex-algorithm-testing-only",
+          `/outbounds/${index}/kex_algorithm`,
+          `Outbound "${tag}" (ssh) sets kex_algorithm; this allow-list is testing-only (sing-box 1.14+).`,
+        );
+      }
+    }
     if (channel === "stable" && outbound.type === "hysteria2") {
       const obj = outbound as Record<string, unknown>;
       if (obj.realm !== undefined) {
@@ -709,6 +739,18 @@ export function validateConfig(
   });
 
   listItems(config.dns?.servers).forEach((server, index) => {
+    if (channel === "stable" && server.type === "tailscale") {
+      const obj = server as Record<string, unknown>;
+      if (obj.accept_search_domain !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-server-tailscale-accept-search-domain-testing-only",
+          `/dns/servers/${index}/accept_search_domain`,
+          `DNS server "${server.tag}" (tailscale) sets accept_search_domain; this field is testing-only (sing-box 1.14+).`,
+        );
+      }
+    }
     if (!looksLikeDomain(server.server)) return;
     if (resolverPresent(server.domain_resolver)) return;
     push(
