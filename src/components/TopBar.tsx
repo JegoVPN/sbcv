@@ -1,7 +1,7 @@
 import { Download, FileCheck2, FolderOpen, RotateCcw } from "lucide-react";
 import { useRef } from "react";
 import type { ChangeEvent } from "react";
-import { stringifyConfig } from "../domain/serialization";
+import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { useProjectStore } from "../state/useProjectStore";
 
@@ -17,11 +17,12 @@ export function TopBar() {
   const status = summarizeDiagnostics(diagnostics);
 
   function exportConfig() {
-    const blob = new Blob([stringifyConfig(config)], { type: "application/json" });
+    const exportedConfig = createConfigExport(config);
+    const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "config.json";
+    link.download = exportedConfig.fileName;
     link.click();
     URL.revokeObjectURL(url);
   }

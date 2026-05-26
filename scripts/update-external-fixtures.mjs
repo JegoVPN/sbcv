@@ -381,6 +381,7 @@ async function main() {
             "import",
             "derive-graph",
             "diagnostics",
+            "render",
             "json-round-trip",
             "export",
           ],
