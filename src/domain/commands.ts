@@ -163,6 +163,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen: "127.0.0.1",
       listen_port: 2080,
       users: [{ name: "user", password: "change-me" }],
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "naive") {
@@ -173,6 +174,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen_port: 2080,
       network: "tcp",
       users: [{ username: "user", password: "change-me" }],
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "hysteria") {
@@ -184,6 +186,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       up_mbps: 100,
       down_mbps: 100,
       users: [{ name: "user", auth_str: "change-me" }],
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "shadowtls") {
@@ -193,8 +196,8 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen: "127.0.0.1",
       listen_port: 2080,
       version: 3,
-      password: "change-me",
       users: [{ name: "user", password: "change-me" }],
+      handshake: { server: "google.com", server_port: 443 },
     };
   }
   if (type === "vless") {
@@ -204,6 +207,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen: "127.0.0.1",
       listen_port: 2080,
       users: [{ name: "user", uuid: "bf000d23-0752-40b4-affe-68f7707a9661" }],
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "tuic") {
@@ -217,6 +221,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       auth_timeout: "3s",
       zero_rtt_handshake: false,
       heartbeat: "10s",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "hysteria2") {
@@ -229,6 +234,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       down_mbps: 100,
       users: [{ name: "user", password: "change-me" }],
       ignore_client_bandwidth: false,
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "anytls") {
@@ -238,6 +244,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen: "127.0.0.1",
       listen_port: 2080,
       users: [{ name: "user", password: "change-me" }],
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "redirect") {
@@ -320,6 +327,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server_port: 1080,
       password: "change-me",
       network: "tcp",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "naive") {
@@ -330,6 +338,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server_port: 1080,
       username: "user",
       password: "change-me",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "hysteria") {
@@ -342,6 +351,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       down_mbps: 100,
       auth_str: "change-me",
       network: "udp",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "shadowtls") {
@@ -352,6 +362,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server_port: 1080,
       version: 3,
       password: "change-me",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "vless") {
@@ -362,6 +373,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server_port: 1080,
       uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
       network: "tcp",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "tuic") {
@@ -375,6 +387,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       congestion_control: "cubic",
       udp_relay_mode: "native",
       network: "udp",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "hysteria2") {
@@ -387,6 +400,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       up_mbps: 100,
       down_mbps: 100,
       network: "udp",
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "anytls") {
@@ -399,6 +413,7 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       idle_session_check_interval: "30s",
       idle_session_timeout: "30s",
       min_idle_session: 5,
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "tor") {
