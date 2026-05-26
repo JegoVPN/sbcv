@@ -1835,21 +1835,69 @@ export function Inspector() {
                     onChange={(event) =>
                       updateField(ref, "clash_api", { ...clashApi, external_controller: event.target.value })
                     }
+                    placeholder="127.0.0.1:9090"
                   />
                 </label>
-                <label className="field">
-                  <span>Secret</span>
-                  <input
-                    value={String(clashApi.secret ?? "")}
-                    onChange={(event) => updateField(ref, "clash_api", { ...clashApi, secret: event.target.value })}
-                  />
-                </label>
+                <SensitiveTextField
+                  label="Secret"
+                  value={String(clashApi.secret ?? "")}
+                  onChange={(next) => updateField(ref, "clash_api", { ...clashApi, secret: next })}
+                />
                 <label className="field">
                   <span>Default Mode</span>
-                  <input
+                  <select
                     value={String(clashApi.default_mode ?? "")}
-                    onChange={(event) => updateField(ref, "clash_api", { ...clashApi, default_mode: event.target.value })}
+                    onChange={(event) =>
+                      updateField(ref, "clash_api", { ...clashApi, default_mode: event.target.value || undefined })
+                    }
+                  >
+                    <option value="">(unset)</option>
+                    <option value="rule">rule</option>
+                    <option value="global">global</option>
+                    <option value="direct">direct</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>External UI Directory</span>
+                  <input
+                    value={String(clashApi.external_ui ?? "")}
+                    onChange={(event) =>
+                      updateField(ref, "clash_api", { ...clashApi, external_ui: event.target.value || undefined })
+                    }
+                    placeholder="./ui or absolute path"
                   />
+                </label>
+                <label className="field">
+                  <span>External UI Download URL</span>
+                  <input
+                    value={String(clashApi.external_ui_download_url ?? "")}
+                    onChange={(event) =>
+                      updateField(ref, "clash_api", {
+                        ...clashApi,
+                        external_ui_download_url: event.target.value || undefined,
+                      })
+                    }
+                    placeholder="https://… (auto-extracted to external_ui)"
+                  />
+                </label>
+                <label className="field">
+                  <span>External UI Download Detour</span>
+                  <select
+                    value={String(clashApi.external_ui_download_detour ?? "")}
+                    onChange={(event) =>
+                      updateField(ref, "clash_api", {
+                        ...clashApi,
+                        external_ui_download_detour: event.target.value || undefined,
+                      })
+                    }
+                  >
+                    <option value="">(default outbound)</option>
+                    {outboundTags(config).map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <details className="advanced-fields">
                   <summary>Advanced CORS <span>2</span></summary>
