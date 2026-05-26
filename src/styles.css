@@ -1472,3 +1472,36 @@ textarea {
     overflow-x: auto;
   }
 }
+
+.inspector-banner {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+
+.inspector-banner--platform {
+  background: rgba(168, 91, 31, 0.12);
+  border-color: rgba(207, 119, 47, 0.4);
+  color: #ffb274;
+}
+
+.inspector-banner--build-tag {
+  background: rgba(187, 73, 13, 0.16);
+  border-color: rgba(207, 87, 0, 0.55);
+  color: #ffa264;
+}
+
+.inspector-banner--deprecated {
+  background: rgba(178, 34, 34, 0.12);
+  border-color: rgba(208, 84, 84, 0.5);
+  color: #ff9a9a;
+}
+
+.inspector-banner--channel {
+  background: rgba(38, 87, 158, 0.18);
+  border-color: rgba(70, 132, 215, 0.5);
+  color: #9fc6ff;
+}

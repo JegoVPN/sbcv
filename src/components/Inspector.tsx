@@ -449,6 +449,14 @@ function AdvancedScalarFields({
   );
 }
 
+function PlatformBanner({ kind, text }: { kind: "platform" | "build-tag" | "deprecated" | "channel"; text: string }) {
+  return (
+    <div className={`inspector-banner inspector-banner--${kind}`} role="note" aria-label={text}>
+      {text}
+    </div>
+  );
+}
+
 function JsonField({
   label,
   value,
@@ -1797,6 +1805,10 @@ export function Inspector() {
               </ModuleCard>
 
               <ModuleCard title="V2Ray API" active={v2rayEnabled}>
+                <PlatformBanner
+                  kind="build-tag"
+                  text="Build-tag gate: V2Ray API requires sing-box compiled with the v2rayapi tag. Standard releases do not include it; enabling listen+stats on a stock binary fails at runtime."
+                />
                 <label className="field">
                   <span>Listen</span>
                   <input
@@ -1825,6 +1837,24 @@ export function Inspector() {
 
       {ref.kind === "inbound" ? (
         <>
+          {entityType === "redirect" ? (
+            <PlatformBanner
+              kind="platform"
+              text="Platform gate: redirect inbound only works on Linux (iptables REDIRECT). Exports are produced on any host but the sing-box runtime will refuse to start on macOS/Windows/Android/iOS."
+            />
+          ) : null}
+          {entityType === "tproxy" ? (
+            <PlatformBanner
+              kind="platform"
+              text="Platform gate: TProxy inbound only works on Linux (iptables TPROXY). Exports work on any host but sing-box will refuse to start elsewhere."
+            />
+          ) : null}
+          {entityType === "tun" ? (
+            <PlatformBanner
+              kind="platform"
+              text="Platform-sensitive: TUN inbound behaves differently on Linux / macOS / Windows / Android / iOS. Apple platforms typically need platform.http_proxy and stack=system."
+            />
+          ) : null}
           <label className="field">
             <span>Address</span>
             <input
@@ -1847,6 +1877,24 @@ export function Inspector() {
 
       {ref.kind === "outbound" ? (
         <>
+          {entityType === "tor" ? (
+            <PlatformBanner
+              kind="build-tag"
+              text="Build-tag gate: outbound tor requires sing-box built with `with_tor` or an external tor binary at executable_path. Standard releases do not include embedded tor."
+            />
+          ) : null}
+          {entityType === "block" ? (
+            <PlatformBanner
+              kind="deprecated"
+              text="Deprecated: outbound type `block` is superseded by route action `reject` from sing-box 1.11+. Imports still round-trip; new configs should use route.rules[].action=reject."
+            />
+          ) : null}
+          {entityType === "hysteria" ? (
+            <PlatformBanner
+              kind="deprecated"
+              text="Hysteria v1 is deprecated. The official docs recommend migrating to Hysteria2; new deployments should choose `hysteria2`."
+            />
+          ) : null}
           {"server" in entity ? (
             <label className="field">
               <span>Server</span>

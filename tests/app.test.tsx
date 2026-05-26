@@ -337,6 +337,52 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("shows platform / build-tag / deprecation banners only for matching node types", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-redirect");
+    });
+    render(<App />);
+
+    let inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Platform gate: redirect inbound only works on Linux/)).toBeInTheDocument();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-tproxy");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Platform gate: TProxy inbound only works on Linux/)).toBeInTheDocument();
+
+    // socks inbound should have no platform banner
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-socks");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.queryByText(/Platform gate:/)).not.toBeInTheDocument();
+
+    // tor outbound build-tag banner
+    act(() => {
+      useProjectStore.getState().createFromPalette("tor-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Build-tag gate: outbound tor requires/)).toBeInTheDocument();
+
+    // hysteria outbound deprecation banner
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria-out");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Hysteria v1 is deprecated/)).toBeInTheDocument();
+
+    // block outbound deprecation banner
+    act(() => {
+      useProjectStore.getState().createFromPalette("block");
+    });
+    inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Deprecated: outbound type `block`/)).toBeInTheDocument();
+  });
+
   it("gates the dns-rule server select by action and surfaces reject + predefined sub-fields", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
