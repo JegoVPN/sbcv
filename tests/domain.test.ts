@@ -601,6 +601,23 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags cache_file store_rdrc + store_dns version state", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      experimental: {
+        ...((base as Record<string, unknown>).experimental as Record<string, unknown> | undefined ?? {}),
+        cache_file: { enabled: true, store_rdrc: true, store_dns: true },
+      },
+    } as typeof base;
+    const stable = validateConfig(config, "stable").map((d) => d.code);
+    expect(stable).toContain("cache-file-store-rdrc-deprecated");
+    expect(stable).toContain("cache-file-store-dns-testing-only");
+    const testing = validateConfig(config, "testing").map((d) => d.code);
+    expect(testing).toContain("cache-file-store-rdrc-deprecated");
+    expect(testing).not.toContain("cache-file-store-dns-testing-only");
+  });
+
   it("flags top-level dns.fakeip as deprecated", () => {
     const base = createStableTunSplitConfig();
     const config = {
