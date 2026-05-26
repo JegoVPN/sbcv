@@ -1,4 +1,4 @@
-<!-- Status: implementation-reviewed. Source: stable + testing docs/configuration/outbound/selector.md, Inspector.tsx, SbcNode.tsx, graph.ts, commands.ts, diagnostics.ts, useProjectStore.ts, sharedFieldRegistry.ts. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). P0-A (CSV input) and P0-B (default freeform input) FIXED — Inspector now renders a candidate checklist constrained to outboundTags(config, self) and a default `<select>` constrained to current candidates with an empty "First candidate" option; toggling a candidate also clears stale `default`. P1-A (interrupt_exist_connections) FIXED — first-class toggle. Outstanding: P0-C commands.ts rename/delete cascade for `default`, P0-D empty-outbounds[] diagnostic, P1-B default-not-in-candidates diagnostic, P1-D positional remove fix, P1-E Clash API banner. -->
 # Outbound / selector — Implementation Review
 
 ## Scope

@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/outbound/urltest.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). Source: stable docs/configuration/outbound/urltest.md. P0 Inspector candidate multiselect, no `default` field for urltest, and interrupt_exist_connections toggle landed; url/interval/tolerance/idle_timeout fall through to AdvancedScalarFields (still acceptable; promote to first-class in a later atomic). Outstanding: P0 fixture/E2E coverage. -->
 # Outbound / urltest UI Review
 
 ## Scope
