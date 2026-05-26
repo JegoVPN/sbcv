@@ -586,6 +586,18 @@ export function validateConfig(
         );
       }
     }
+    if (outbound.type === "direct") {
+      const obj = outbound as Record<string, unknown>;
+      if (obj.override_address !== undefined || obj.override_port !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "direct-override-deprecated",
+          `/outbounds/${index}`,
+          `Outbound "${tag}" (direct) uses override_address/override_port; both fields are deprecated since sing-box 1.11.0 and scheduled for removal in 1.13.0. Prefer route rule overrides.`,
+        );
+      }
+    }
     if (outbound.type === "tuic") {
       const obj = outbound as Record<string, unknown>;
       if (obj.udp_over_stream && typeof obj.udp_relay_mode === "string" && obj.udp_relay_mode.length > 0) {
