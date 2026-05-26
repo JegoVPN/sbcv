@@ -1132,6 +1132,25 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders fakeip DNS server inet4_range + inet6_range as CSV inputs", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-fakeip-server");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const inet4 = inspector.getByLabelText("IPv4 Range (CIDR)") as HTMLInputElement;
+    fireEvent.change(inet4, { target: { value: "198.18.0.0/15" } });
+    let fakeip = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "fakeip") as Record<string, unknown>;
+    expect(fakeip.inet4_range).toEqual(["198.18.0.0/15"]);
+
+    const inet6 = inspector.getByLabelText("IPv6 Range (CIDR)") as HTMLInputElement;
+    fireEvent.change(inet6, { target: { value: "fc00::/18, fd00::/8" } });
+    fakeip = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "fakeip") as Record<string, unknown>;
+    expect(fakeip.inet6_range).toEqual(["fc00::/18", "fd00::/8"]);
+  });
+
   it("marks legacy outbound block / hysteria v1 / top-level fakeip as deprecated in Palette", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
