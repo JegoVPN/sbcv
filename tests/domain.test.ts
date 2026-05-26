@@ -557,6 +557,50 @@ describe("canonical sing-box domain model", () => {
     expect(codes).toContain("user-missing-uuid");
   });
 
+  it("flags testing-only hysteria2 and tun fields when channel is stable", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        {
+          type: "hysteria2",
+          tag: "h2-realm",
+          server: "1.1.1.1",
+          server_port: 443,
+          password: "x",
+          tls: { enabled: true },
+          realm: { server: "rendezvous.example.com" },
+          bbr_profile: "aggressive",
+          hop_interval_max: "30s",
+        },
+      ],
+      inbounds: [
+        ...(base.inbounds ?? []),
+        {
+          type: "tun",
+          tag: "tun-testing",
+          address: ["172.20.0.1/30"],
+          dns_mode: "hijack",
+          dns_address: ["1.1.1.1"],
+          include_mac_address: ["aa:bb:cc:dd:ee:ff"],
+        },
+      ],
+    } as typeof base;
+    const stable = validateConfig(config, "stable");
+    const codes = stable.map((d) => d.code);
+    expect(codes).toContain("hysteria2-realm-testing-only");
+    expect(codes).toContain("hysteria2-bbr-profile-testing-only");
+    expect(codes).toContain("hysteria2-hop-interval-max-testing-only");
+    expect(codes).toContain("tun-dns-mode-testing-only");
+    expect(codes).toContain("tun-dns-address-testing-only");
+    expect(codes).toContain("tun-mac-address-filter-testing-only");
+    const testing = validateConfig(config, "testing");
+    const testingCodes = testing.map((d) => d.code);
+    expect(testingCodes).not.toContain("hysteria2-realm-testing-only");
+    expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
+  });
+
   it("emits reality + xtls-rprx-vision diagnostics", () => {
     const base = createStableTunSplitConfig();
     const config = {

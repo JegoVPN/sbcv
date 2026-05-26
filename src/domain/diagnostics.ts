@@ -553,6 +553,36 @@ export function validateConfig(
         );
       }
     }
+    if (channel === "stable" && outbound.type === "hysteria2") {
+      const obj = outbound as Record<string, unknown>;
+      if (obj.realm !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "hysteria2-realm-testing-only",
+          `/outbounds/${index}/realm`,
+          `Outbound "${tag}" (hysteria2) sets realm; the realm rendezvous field is testing-only (sing-box 1.14+) and will be rejected by stable builds.`,
+        );
+      }
+      if (obj.bbr_profile !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "hysteria2-bbr-profile-testing-only",
+          `/outbounds/${index}/bbr_profile`,
+          `Outbound "${tag}" (hysteria2) sets bbr_profile; this BBR tuning field is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.hop_interval_max !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "hysteria2-hop-interval-max-testing-only",
+          `/outbounds/${index}/hop_interval_max`,
+          `Outbound "${tag}" (hysteria2) sets hop_interval_max; this randomization field is testing-only (sing-box 1.14+).`,
+        );
+      }
+    }
     const tls = (outbound as Record<string, unknown>).tls;
     if (tls && typeof tls === "object" && !Array.isArray(tls)) {
       const reality = (tls as Record<string, unknown>).reality;
@@ -616,6 +646,36 @@ export function validateConfig(
         `Inbound "${inbound.tag ?? `inbound-${index}`}" (tuic)`,
         true,
       );
+    }
+    if (channel === "stable" && inbound.type === "tun") {
+      const obj = inbound as Record<string, unknown>;
+      if (obj.dns_mode !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "tun-dns-mode-testing-only",
+          `/inbounds/${index}/dns_mode`,
+          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_mode; this field is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.dns_address !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "tun-dns-address-testing-only",
+          `/inbounds/${index}/dns_address`,
+          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_address; this field is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.include_mac_address !== undefined || obj.exclude_mac_address !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "tun-mac-address-filter-testing-only",
+          `/inbounds/${index}`,
+          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) uses MAC address filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
+        );
+      }
     }
     const tls = (inbound as Record<string, unknown>).tls;
     if (tls && typeof tls === "object" && !Array.isArray(tls)) {
