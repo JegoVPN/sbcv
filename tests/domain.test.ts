@@ -650,6 +650,24 @@ describe("canonical sing-box domain model", () => {
     expect(testing).not.toContain("cache-file-store-dns-testing-only");
   });
 
+  it("flags fakeip DNS server missing inet4/6_range + tailscale missing endpoint", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...((base.dns as Record<string, unknown>) ?? {}),
+        servers: [
+          ...(((base.dns as Record<string, unknown>)?.servers as Record<string, unknown>[]) ?? []),
+          { type: "fakeip", tag: "fakeip-broken" },
+          { type: "tailscale", tag: "ts-broken" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("dns-server-fakeip-range-missing");
+    expect(codes).toContain("dns-server-tailscale-endpoint-missing");
+  });
+
   it("flags top-level dns.fakeip as deprecated", () => {
     const base = createStableTunSplitConfig();
     const config = {

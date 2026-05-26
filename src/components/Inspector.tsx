@@ -3384,23 +3384,17 @@ export function Inspector() {
               <label className="field">
                 <span>IPv4 Range (CIDR)</span>
                 <input
-                  value={toList(entity.inet4_range)}
+                  value={typeof entity.inet4_range === "string" ? entity.inet4_range : ""}
                   placeholder="198.18.0.0/15"
-                  onChange={(event) => {
-                    const next = fromList(event.target.value);
-                    updateField(ref, "inet4_range", next.length ? next : undefined);
-                  }}
+                  onChange={(event) => updateField(ref, "inet4_range", event.target.value || undefined)}
                 />
               </label>
               <label className="field">
                 <span>IPv6 Range (CIDR)</span>
                 <input
-                  value={toList(entity.inet6_range)}
+                  value={typeof entity.inet6_range === "string" ? entity.inet6_range : ""}
                   placeholder="fc00::/18"
-                  onChange={(event) => {
-                    const next = fromList(event.target.value);
-                    updateField(ref, "inet6_range", next.length ? next : undefined);
-                  }}
+                  onChange={(event) => updateField(ref, "inet6_range", event.target.value || undefined)}
                 />
               </label>
             </>

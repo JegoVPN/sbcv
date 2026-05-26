@@ -1143,12 +1143,12 @@ describe("SBC editor shell", () => {
     const inet4 = inspector.getByLabelText("IPv4 Range (CIDR)") as HTMLInputElement;
     fireEvent.change(inet4, { target: { value: "198.18.0.0/15" } });
     let fakeip = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "fakeip") as Record<string, unknown>;
-    expect(fakeip.inet4_range).toEqual(["198.18.0.0/15"]);
+    expect(fakeip.inet4_range).toBe("198.18.0.0/15");
 
     const inet6 = inspector.getByLabelText("IPv6 Range (CIDR)") as HTMLInputElement;
-    fireEvent.change(inet6, { target: { value: "fc00::/18, fd00::/8" } });
+    fireEvent.change(inet6, { target: { value: "fc00::/18" } });
     fakeip = useProjectStore.getState().config.dns?.servers?.find((s) => s.type === "fakeip") as Record<string, unknown>;
-    expect(fakeip.inet6_range).toEqual(["fc00::/18", "fd00::/8"]);
+    expect(fakeip.inet6_range).toBe("fc00::/18");
   });
 
   it("marks legacy outbound block / hysteria v1 / top-level fakeip as deprecated in Palette", () => {
