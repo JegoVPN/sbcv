@@ -601,6 +601,19 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags top-level dns.fakeip as deprecated", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...((base.dns as Record<string, unknown>) ?? {}),
+        fakeip: { enabled: true, inet4_range: "198.18.0.0/15" },
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("legacy-fakeip-deprecated");
+  });
+
   it("flags deprecated direct.override_address / override_port", () => {
     const base = createStableTunSplitConfig();
     const config = {
