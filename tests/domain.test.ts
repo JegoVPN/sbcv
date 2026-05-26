@@ -601,6 +601,38 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags route hub 1.14 fields + dns rule 1.14 matchers on stable channel", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      route: {
+        ...((base.route as Record<string, unknown>) ?? {}),
+        find_neighbor: true,
+        dhcp_lease_files: ["/var/lib/dhcp/dhcpd.leases"],
+        default_http_client: { detour: "direct" },
+      },
+      dns: {
+        ...((base.dns as Record<string, unknown>) ?? {}),
+        rules: [
+          ...(((base.dns as Record<string, unknown>)?.rules as Record<string, unknown>[]) ?? []),
+          { source_mac_address: ["aa:bb:cc:dd:ee:ff"], source_hostname: ["host.local"], server: "x" },
+          { preferred_by: ["best-server"], match_response: true, package_name_regex: ["^com\\.example$"], server: "x" },
+        ],
+      },
+    } as typeof base;
+    const stable = validateConfig(config, "stable").map((d) => d.code);
+    expect(stable).toContain("route-find-neighbor-testing-only");
+    expect(stable).toContain("route-dhcp-lease-files-testing-only");
+    expect(stable).toContain("route-default-http-client-testing-only");
+    expect(stable).toContain("dns-rule-source-mac-address-testing-only");
+    expect(stable).toContain("dns-rule-source-hostname-testing-only");
+    expect(stable).toContain("dns-rule-preferred-by-testing-only");
+    expect(stable).toContain("dns-rule-match-response-testing-only");
+    expect(stable).toContain("dns-rule-package-name-regex-testing-only");
+    const testing = validateConfig(config, "testing").map((d) => d.code);
+    expect(testing).not.toContain("route-find-neighbor-testing-only");
+  });
+
   it("flags cache_file store_rdrc + store_dns version state", () => {
     const base = createStableTunSplitConfig();
     const config = {
