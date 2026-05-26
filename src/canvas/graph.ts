@@ -28,6 +28,8 @@ const DEFAULT_POSITIONS: Record<string, { x: number; y: number }> = {
   "route:main": { x: 420, y: 260 },
   "dns:main": { x: 420, y: 620 },
 };
+const MAX_VISUAL_RULE_NODES = 24;
+const MAX_VISUAL_CANDIDATE_EDGES = 96;
 
 function nodePosition(layout: ProjectLayout, id: string, fallback: { x: number; y: number }) {
   return layout.positions[id] ?? DEFAULT_POSITIONS[id] ?? fallback;
@@ -77,6 +79,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const routeRules = listItems(config.route?.rules);
   const dnsServers = listItems(config.dns?.servers);
   const dnsRules = listItems(config.dns?.rules);
+  let visualCandidateEdges = 0;
 
   inbounds.forEach((inbound, index) => {
     const tag = entityTag(inbound.tag, "inbound", index);
@@ -109,6 +112,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   });
 
   if (config.route) {
+    const visualizeRouteRules = routeRules.length <= MAX_VISUAL_RULE_NODES;
     nodes.push(
       makeNode(
         "route:main",
@@ -126,46 +130,48 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    routeRules.forEach((rule, index) => {
-      const id = `route-rule:${index}`;
-      const label =
-        listLabel(rule.domain_suffix) ??
-        listLabel(rule.domain_keyword) ??
-        listLabel(rule.domain) ??
-        listLabel(rule.rule_set) ??
-        rule.action ??
-        "match rule";
-      nodes.push(
-        makeNode(
-          id,
-          {
-            ref: { kind: "route-rule", index },
-            kind: "route-rule",
-            type: "route-rule",
-            title: `Rule ${index + 1}`,
-            subtitle: label,
-            status: diagnosticStatus(`/route/rules/${index}`, diagnostics),
-            compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
-          },
-          layout,
-          { x: 690, y: 120 + index * 130 },
-        ),
-      );
-      edges.push({
-        id: `edge:route-rule-order:${index}`,
-        source: "route:main",
-        target: id,
-        label: "ordered",
-      });
-      if (rule.outbound) {
+    if (visualizeRouteRules) {
+      routeRules.forEach((rule, index) => {
+        const id = `route-rule:${index}`;
+        const label =
+          listLabel(rule.domain_suffix) ??
+          listLabel(rule.domain_keyword) ??
+          listLabel(rule.domain) ??
+          listLabel(rule.rule_set) ??
+          rule.action ??
+          "match rule";
+        nodes.push(
+          makeNode(
+            id,
+            {
+              ref: { kind: "route-rule", index },
+              kind: "route-rule",
+              type: "route-rule",
+              title: `Rule ${index + 1}`,
+              subtitle: label,
+              status: diagnosticStatus(`/route/rules/${index}`, diagnostics),
+              compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
+            },
+            layout,
+            { x: 690, y: 120 + index * 130 },
+          ),
+        );
         edges.push({
-          id: `edge:route-rule:${index}:${rule.outbound}`,
-          source: id,
-          target: `outbound:${rule.outbound}`,
-          label: "outbound",
+          id: `edge:route-rule-order:${index}`,
+          source: "route:main",
+          target: id,
+          label: "ordered",
         });
-      }
-    });
+        if (rule.outbound) {
+          edges.push({
+            id: `edge:route-rule:${index}:${rule.outbound}`,
+            source: id,
+            target: `outbound:${rule.outbound}`,
+            label: "outbound",
+          });
+        }
+      });
+    }
 
     if (config.route.final) {
       edges.push({
@@ -209,9 +215,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
 
     if (Array.isArray(outbound.outbounds)) {
-      outbound.outbounds.forEach((candidateTag) => {
+      outbound.outbounds.forEach((candidateTag, candidateIndex) => {
+        if (visualCandidateEdges >= MAX_VISUAL_CANDIDATE_EDGES) return;
+        visualCandidateEdges += 1;
         edges.push({
-          id: `edge:${outbound.type}:${tag}:${candidateTag}`,
+          id: `edge:${outbound.type}:${tag}:${candidateIndex}:${candidateTag}`,
           source: id,
           target: `outbound:${candidateTag}`,
           label: "candidate",
@@ -221,6 +229,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   });
 
   if (config.dns) {
+    const visualizeDnsRules = dnsRules.length <= MAX_VISUAL_RULE_NODES;
     nodes.push(
       makeNode(
         "dns:main",
@@ -259,45 +268,47 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       );
     });
 
-    dnsRules.forEach((rule, index) => {
-      const id = `dns-rule:${index}`;
-      nodes.push(
-        makeNode(
-          id,
-          {
-            ref: { kind: "dns-rule", index },
-            kind: "dns-rule",
-            type: "dns-rule",
-            title: `DNS Rule ${index + 1}`,
-            subtitle:
-              listLabel(rule.domain_suffix) ??
-              listLabel(rule.domain_keyword) ??
-              listLabel(rule.domain) ??
-              listLabel(rule.rule_set) ??
-              rule.action ??
-              "dns match",
-            status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
-            compatible: ["DNS Server"],
-          },
-          layout,
-          { x: 670, y: 580 + index * 120 },
-        ),
-      );
-      edges.push({
-        id: `edge:dns-rule-order:${index}`,
-        source: "dns:main",
-        target: id,
-        label: "ordered",
-      });
-      if (rule.server) {
+    if (visualizeDnsRules) {
+      dnsRules.forEach((rule, index) => {
+        const id = `dns-rule:${index}`;
+        nodes.push(
+          makeNode(
+            id,
+            {
+              ref: { kind: "dns-rule", index },
+              kind: "dns-rule",
+              type: "dns-rule",
+              title: `DNS Rule ${index + 1}`,
+              subtitle:
+                listLabel(rule.domain_suffix) ??
+                listLabel(rule.domain_keyword) ??
+                listLabel(rule.domain) ??
+                listLabel(rule.rule_set) ??
+                rule.action ??
+                "dns match",
+              status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
+              compatible: ["DNS Server"],
+            },
+            layout,
+            { x: 670, y: 580 + index * 120 },
+          ),
+        );
         edges.push({
-          id: `edge:dns-rule:${index}:${rule.server}`,
-          source: id,
-          target: `dns-server:${rule.server}`,
-          label: "server",
+          id: `edge:dns-rule-order:${index}`,
+          source: "dns:main",
+          target: id,
+          label: "ordered",
         });
-      }
-    });
+        if (rule.server) {
+          edges.push({
+            id: `edge:dns-rule:${index}:${rule.server}`,
+            source: id,
+            target: `dns-server:${rule.server}`,
+            label: "server",
+          });
+        }
+      });
+    }
 
     if (config.dns.final) {
       edges.push({

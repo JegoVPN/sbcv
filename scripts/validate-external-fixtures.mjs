@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const requiredUiGates = ["json-parse", "import", "derive-graph", "diagnostics", "json-round-trip", "export"];
+const requiredUiGates = ["json-parse", "import", "derive-graph", "diagnostics", "render", "json-round-trip", "export"];
 const manifest = JSON.parse(readFileSync("fixtures/external/manifest.json", "utf8"));
 const rejected = JSON.parse(readFileSync("fixtures/external/rejected.json", "utf8"));
 
@@ -86,4 +86,3 @@ if (officialChecks === 0) fail("No external fixture official checks ran");
 console.log(
   `External fixture validation complete. Accepted: ${manifest.length}. Rejected: ${rejected.length}. Official checks: ${officialChecks}. Versioned display/template fixtures: ${displayOnlyVersioned}.`,
 );
-

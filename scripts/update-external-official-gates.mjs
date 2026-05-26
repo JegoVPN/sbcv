@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 const manifestPath = "fixtures/external/manifest.json";
 const reportPath = "fixtures/external/compatibility-report.md";
-const requiredUiGates = ["json-parse", "import", "derive-graph", "diagnostics", "json-round-trip", "export"];
+const requiredUiGates = ["json-parse", "import", "derive-graph", "diagnostics", "render", "json-round-trip", "export"];
 
 const versionBinaries = {
   "1.11": "sing-box-1.11",

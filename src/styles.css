@@ -762,6 +762,21 @@ textarea {
   font-size: 12px;
 }
 
+.rule-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: -4px 0 10px;
+  color: #9faab5;
+  font-size: 12px;
+}
+
+.rule-pager button {
+  min-height: 28px;
+  padding: 0 10px;
+}
+
 .rules-grid--route,
 .rules-grid--dns {
   grid-template-columns: 40px minmax(180px, 1fr) minmax(180px, 1fr) 180px 132px;

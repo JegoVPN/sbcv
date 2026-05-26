@@ -16,7 +16,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -42,7 +43,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -68,7 +70,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -95,6 +98,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -122,6 +126,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -148,7 +153,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -177,6 +183,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -206,6 +213,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -234,7 +242,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -263,7 +272,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -292,7 +302,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -322,6 +333,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -350,7 +362,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -380,6 +393,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -409,6 +423,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -438,6 +453,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -467,6 +483,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -495,14 +512,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-stable",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-80EF1j/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-VR6z7z/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
     }
   },
   {
@@ -525,6 +543,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -554,6 +573,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -583,6 +603,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -612,6 +633,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -641,6 +663,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-testing",
@@ -669,7 +692,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -697,7 +721,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -723,7 +748,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -749,7 +775,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -775,7 +802,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -801,7 +829,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -827,7 +856,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -853,7 +883,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -879,7 +910,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -905,7 +937,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -931,7 +964,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -957,7 +991,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -983,7 +1018,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1009,7 +1045,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1035,7 +1072,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1061,7 +1099,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1088,7 +1127,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1114,7 +1154,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1140,7 +1181,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1166,7 +1208,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1192,7 +1235,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1218,7 +1262,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1244,7 +1289,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1270,7 +1316,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1296,7 +1343,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1322,7 +1370,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1348,7 +1397,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1374,7 +1424,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1400,7 +1451,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1426,7 +1478,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1452,7 +1505,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1478,7 +1532,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1504,7 +1559,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1530,7 +1586,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1556,7 +1613,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1582,7 +1640,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1608,7 +1667,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1635,6 +1695,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -1661,7 +1722,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1687,7 +1749,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1713,7 +1776,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1739,7 +1803,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1765,7 +1830,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1791,7 +1857,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1817,7 +1884,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1843,7 +1911,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1869,7 +1938,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1895,7 +1965,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1921,7 +1992,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1947,7 +2019,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1976,6 +2049,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -2004,14 +2078,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-CoCYwI/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ks74nB/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2033,14 +2108,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-x1UBx1/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Qa3p0a/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2062,14 +2138,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-15DVjC/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-fEEYlN/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2092,6 +2169,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -2120,14 +2198,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-LXNxRQ/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-UIODgn/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2149,14 +2228,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-HgFcwo/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-gOdYy5/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2178,14 +2258,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-YPgqhl/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-REFWpp/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2207,14 +2288,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-KyHGBk/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-HNO3Q5/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2237,6 +2319,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -2266,6 +2349,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -2294,14 +2378,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ut0Wes/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-CVVhqi/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2323,14 +2408,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-0IxPMJ/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-10Nm43/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2352,14 +2438,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-HurLF0/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-aAndG3/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2381,14 +2468,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-uAuDTc/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-G7t6Sg/config.json: outbounds[10].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -2410,14 +2498,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-QHtVpb/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Yy2wGV/config.json: outbounds[10].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -2439,14 +2528,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-QNGmG4/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-V2dzEq/config.json: outbounds[10].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -2468,7 +2558,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2496,7 +2587,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2525,6 +2617,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-testing",
@@ -2553,7 +2646,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2583,6 +2677,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-testing",
@@ -2611,7 +2706,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2640,7 +2736,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2669,7 +2766,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2697,7 +2795,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2725,14 +2824,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-0vECG1/config.json: out"
+      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ieXXWD/config.json: out"
     }
   },
   {
@@ -2754,14 +2854,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-MI6ok3/config.json: out"
+      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-xlJyKB/config.json: out"
     }
   },
   {
@@ -2783,14 +2884,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-5302XU/config.json: out"
+      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-D30WKi/config.json: out"
     }
   },
   {
@@ -2812,14 +2914,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ZeJbaw/config.json: out"
+      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-VqS0uZ/config.json: out"
     }
   },
   {
@@ -2841,14 +2944,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-p6tnfh/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-LAGptB/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -2870,14 +2974,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-KIvwu6/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-a4gleZ/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -2899,7 +3004,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2925,7 +3031,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2953,7 +3060,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2981,14 +3089,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-qVRX5D/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-2RMiVH/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -3010,7 +3119,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3038,7 +3148,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3066,7 +3177,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3094,7 +3206,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3120,7 +3233,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3146,7 +3260,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3172,7 +3287,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3198,7 +3314,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3224,7 +3341,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3251,7 +3369,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3278,7 +3397,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3304,7 +3424,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3330,7 +3451,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3357,7 +3479,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3384,7 +3507,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3411,7 +3535,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3438,7 +3563,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3465,7 +3591,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3492,7 +3619,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3519,7 +3647,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3546,7 +3675,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3572,7 +3702,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3598,7 +3729,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3624,7 +3756,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3650,7 +3783,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3676,7 +3810,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3702,7 +3837,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3729,7 +3865,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3756,7 +3893,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3783,7 +3921,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3810,7 +3949,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3837,7 +3977,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3864,7 +4005,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3891,7 +4033,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3920,7 +4063,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3948,7 +4092,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3974,7 +4119,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4000,7 +4146,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4026,7 +4173,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4052,7 +4200,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4078,7 +4227,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4107,6 +4257,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4136,6 +4287,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4165,6 +4317,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4194,6 +4347,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4223,6 +4377,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4252,6 +4407,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -4281,6 +4437,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4310,6 +4467,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4339,6 +4497,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4368,6 +4527,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4397,6 +4557,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4426,6 +4587,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4455,6 +4617,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4484,6 +4647,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4513,6 +4677,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4542,6 +4707,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4571,6 +4737,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4600,6 +4767,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4629,6 +4797,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4658,6 +4827,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4687,6 +4857,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4716,6 +4887,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4745,6 +4917,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4774,6 +4947,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4802,7 +4976,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4830,7 +5005,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4856,7 +5032,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4882,7 +5059,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4908,7 +5086,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4934,7 +5113,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4960,7 +5140,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4986,7 +5167,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5012,7 +5194,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5038,7 +5221,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5064,7 +5248,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5090,7 +5275,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5116,7 +5302,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5143,6 +5330,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5170,6 +5358,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5197,6 +5386,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5224,6 +5414,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5251,6 +5442,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5278,6 +5470,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -5306,14 +5499,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-8u47dK/config.json: out"
+      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-X5ev0l/config.json: out"
     }
   },
   {
@@ -5335,14 +5529,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ftt4Do/config.json: outbounds[13].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-O8ycaG/config.json: outbounds[13].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5362,7 +5557,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5391,14 +5587,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-WaYMxU/config.json: outbounds[13].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Tp61FK/config.json: outbounds[13].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5420,14 +5617,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-4oy8cV/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Ye447c/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5449,14 +5647,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Gi2Vni/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-QGAoyE/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5478,14 +5677,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ceX64f/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-EXVunz/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5507,14 +5707,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-wxhYCw/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-f0rOqc/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5536,14 +5737,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-xNvrF6/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-BnTSNI/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5566,6 +5768,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -5592,7 +5795,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5621,14 +5825,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-hQgtaC/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-I5WRCl/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5650,14 +5855,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-BsKNaU/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-27KnCi/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5679,14 +5885,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-XI598P/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-yqt3Ob/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5708,14 +5915,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-XhICre/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-mWrdUl/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5737,14 +5945,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-dYZP2k/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-6begBW/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5767,6 +5976,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -5793,7 +6003,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5820,7 +6031,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5847,7 +6059,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5874,7 +6087,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5901,6 +6115,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -5929,7 +6144,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5958,6 +6174,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -5987,6 +6204,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -6016,6 +6234,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.11",
@@ -6045,6 +6264,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -6073,7 +6293,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6101,7 +6322,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6129,7 +6351,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6157,7 +6380,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6185,7 +6409,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6211,7 +6436,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6237,7 +6463,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6266,6 +6493,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6295,6 +6523,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6324,6 +6553,7 @@
       "diagnostics",
       "json-round-trip",
       "export",
+      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6352,7 +6582,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6380,7 +6611,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6408,7 +6640,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6436,14 +6669,15 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-EioS5z/config.json: outbounds[18].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Zxxf8r/config.json: outbounds[18].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -6465,7 +6699,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6493,7 +6728,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6521,7 +6757,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6549,7 +6786,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6577,7 +6815,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6605,7 +6844,8 @@
       "derive-graph",
       "diagnostics",
       "json-round-trip",
-      "export"
+      "export",
+      "render"
     ],
     "official_check": null,
     "counts_toward_200": true,

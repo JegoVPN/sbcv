@@ -1,5 +1,11 @@
 import type { SingBoxConfig } from "./types";
 
+export type ConfigExport = {
+  fileName: "config.json";
+  mimeType: "application/json";
+  contents: string;
+};
+
 function stripUndefined(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(stripUndefined);
@@ -25,6 +31,14 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
 
 export function stringifyConfig(config: SingBoxConfig): string {
   return JSON.stringify(stripUndefined(config), null, 2);
+}
+
+export function createConfigExport(config: SingBoxConfig): ConfigExport {
+  return {
+    fileName: "config.json",
+    mimeType: "application/json",
+    contents: stringifyConfig(config),
+  };
 }
 
 export function parseConfigJson(json: string): SingBoxConfig {

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { deriveGraph } from "../src/canvas/graph";
 import { validateConfig } from "../src/domain/diagnostics";
-import { parseConfigJson, stringifyConfig } from "../src/domain/serialization";
+import { createConfigExport, parseConfigJson, stringifyConfig } from "../src/domain/serialization";
 import type { SingBoxChannel } from "../src/domain/types";
 
 type ExternalFixtureManifestEntry = {
@@ -17,7 +17,7 @@ function readJson<T>(path: string): T {
 }
 
 describe("external sing-box fixture corpus", () => {
-  it("imports, validates, derives graph, and round-trips every accepted fixture", () => {
+  it("imports, validates, derives graph, round-trips, and exports every accepted fixture", () => {
     const manifest = readJson<ExternalFixtureManifestEntry[]>("fixtures/external/manifest.json").filter(
       (item) => item.counts_toward_200,
     );
@@ -32,11 +32,16 @@ describe("external sing-box fixture corpus", () => {
         const diagnostics = validateConfig(config, item.channel);
         const graph = deriveGraph(config, { positions: {} }, diagnostics);
         const roundTrip = parseConfigJson(stringifyConfig(config));
+        const exportedConfig = createConfigExport(config);
+        const exportedRoundTrip = parseConfigJson(exportedConfig.contents);
 
         if (graph.nodes.length === 0) {
           throw new Error("derived graph has no nodes");
         }
         expect(roundTrip).toEqual(config);
+        expect(exportedConfig.fileName).toBe("config.json");
+        expect(exportedConfig.mimeType).toBe("application/json");
+        expect(exportedRoundTrip).toEqual(config);
       } catch (error) {
         failures.push(`${item.id}: ${error instanceof Error ? error.message : String(error)}`);
       }

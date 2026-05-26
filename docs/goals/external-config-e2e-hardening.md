@@ -67,14 +67,17 @@ Current implemented local gates:
 
 - `pnpm fixtures:update:external` regenerates the deterministic external fixture corpus from public GitHub sources.
 - `pnpm fixtures:update:external` also refreshes official gate metadata by running version-matched sing-box binaries when installed.
-- `pnpm validate:external` runs manifest integrity checks, official `sing-box check` for every fixture with `official_check`, and the external fixture unit gate.
-- `pnpm test` includes all accepted external fixtures and currently checks JSON parse, canonical import, semantic diagnostics, graph derivation, JSON stringify/parse round-trip, and the 200+ fixture count.
+- `pnpm validate:external` runs manifest integrity checks, official `sing-box check` for every fixture with `official_check`, the external fixture unit gate, and a sharded JSDOM render gate for every accepted fixture.
+- `pnpm test` includes all accepted external fixtures and currently checks JSON parse, canonical import, semantic diagnostics, graph derivation, JSON stringify/parse round-trip, export content, and the 200+ fixture count.
+- `node scripts/run-external-render-gate.mjs` renders every accepted fixture through the App surfaces in bounded shards, checking the canvas, Inspector, JSON editor, and route/DNS table panels without holding all React Flow renders in one worker.
 - `pnpm e2e` imports 20 representative external fixtures, asserts node classes, opens ordered rule tables, verifies the Higgsfield-style selected node DOM, verifies the top-right Inspector DOM, opens JSON Preview, exports JSON, re-imports the export, and fails on runtime page/console errors.
 - `pnpm e2e` also runs a mobile viewport smoke for the selected node and floating Inspector.
 - External fixture E2E currently writes a review screenshot at `test-results/sbc-selected-node-inspector.png` during local runs.
 - Official external fixture checks currently pass for 61 fixtures: 23 with `sing-box-1.11`, 24 with `sing-box-1.12`, 11 with `sing-box-stable`, and 3 with `sing-box-testing`.
 - 66 versioned fixtures are explicitly marked display/template-compatible because their matching official binary rejects them, with the failure reason stored in `fixtures/external/manifest.json`.
 - Browser visual review has been performed against the local Vite app for the selected-node plus Inspector state.
+- Large ordered `route.rules` / `dns.rules` lists remain table-owned. The canvas derives individual rule nodes only for compact rule lists, so real configs with hundreds of ordered rules still render the main Route/DNS relationship without flooding React Flow.
+- Dense selector/urltest candidate lists remain tag-reference data in canonical JSON and Inspector fields. The canvas caps candidate edge rendering for large groups to preserve React Flow responsiveness while keeping export/import semantics complete.
 
 ## Fixture Acceptance Rules
 
