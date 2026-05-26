@@ -404,6 +404,61 @@ const dnsRuleAdvancedFields = [
   "client_subnet",
 ];
 
+const SENSITIVE_FIELD_PATTERNS = [
+  "password",
+  "passphrase",
+  "private_key",
+  "pre_shared_key",
+  "preshared_key",
+  "psk",
+  "secret",
+  "token",
+  "auth_key",
+  "authkey",
+  "credential",
+];
+
+function isSensitiveFieldName(field: string) {
+  const lower = field.toLowerCase();
+  return SENSITIVE_FIELD_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
+function SensitiveTextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+}) {
+  const [reveal, setReveal] = useState(false);
+  return (
+    <label className="field field--sensitive">
+      <span>{label}</span>
+      <span className="field__input-row">
+        <input
+          type={reveal ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          autoComplete="off"
+        />
+        <button
+          type="button"
+          className="field__reveal-button"
+          aria-label={reveal ? `Hide ${label}` : `Show ${label}`}
+          onClick={() => setReveal((current) => !current)}
+        >
+          {reveal ? "Hide" : "Show"}
+        </button>
+      </span>
+    </label>
+  );
+}
+
 function AdvancedScalarFields({
   entity,
   handledFields,
@@ -421,17 +476,30 @@ function AdvancedScalarFields({
     <details className="advanced-fields">
       <summary>Advanced fields <span>{fields.length}</span></summary>
       <div className="advanced-fields__body">
-        {fields.map(([field, value]) =>
-          typeof value === "boolean" ? (
-            <label className="toggle-row" key={field}>
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={(event) => updateField(entityRef, field, event.target.checked)}
+        {fields.map(([field, value]) => {
+          if (typeof value === "boolean") {
+            return (
+              <label className="toggle-row" key={field}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(event) => updateField(entityRef, field, event.target.checked)}
+                />
+                <span>{labelForField(field)}</span>
+              </label>
+            );
+          }
+          if (typeof value === "string" && isSensitiveFieldName(field)) {
+            return (
+              <SensitiveTextField
+                key={field}
+                label={labelForField(field)}
+                value={value}
+                onChange={(next) => updateField(entityRef, field, next)}
               />
-              <span>{labelForField(field)}</span>
-            </label>
-          ) : (
+            );
+          }
+          return (
             <label className="field" key={field}>
               <span>{labelForField(field)}</span>
               <input
@@ -442,8 +510,8 @@ function AdvancedScalarFields({
                 }
               />
             </label>
-          ),
-        )}
+          );
+        })}
       </div>
     </details>
   );
