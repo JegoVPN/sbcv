@@ -824,6 +824,29 @@ export function validateConfig(
   }
 
   listItems(config.dns?.servers).forEach((server, index) => {
+    if (server.type === "fakeip") {
+      const obj = server as Record<string, unknown>;
+      const v4 = typeof obj.inet4_range === "string" && obj.inet4_range.length > 0;
+      const v6 = typeof obj.inet6_range === "string" && obj.inet6_range.length > 0;
+      if (!v4 && !v6) {
+        push(
+          diagnostics,
+          "error",
+          "dns-server-fakeip-range-missing",
+          `/dns/servers/${index}`,
+          `Fake-IP DNS server "${server.tag}" requires at least one of inet4_range or inet6_range; sing-box refuses to start otherwise.`,
+        );
+      }
+    }
+    if (server.type === "tailscale" && !server.endpoint) {
+      push(
+        diagnostics,
+        "error",
+        "dns-server-tailscale-endpoint-missing",
+        `/dns/servers/${index}/endpoint`,
+        `Tailscale DNS server "${server.tag}" requires an endpoint reference to a tailscale endpoint node.`,
+      );
+    }
     if (channel === "stable" && server.type === "tailscale") {
       const obj = server as Record<string, unknown>;
       if (obj.accept_search_domain !== undefined) {
