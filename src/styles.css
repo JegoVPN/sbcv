@@ -490,6 +490,22 @@ textarea {
   color: #707b86;
 }
 
+.palette-add--deprecated small {
+  color: #ff8c69;
+}
+
+.palette-add--deprecated {
+  border-color: #4a2727;
+}
+
+.palette-add--open small {
+  color: #6fb8ff;
+}
+
+.palette-add--open {
+  border-color: #1f3a52;
+}
+
 .palette-doc-link {
   min-height: 38px;
   padding: 0 10px;
