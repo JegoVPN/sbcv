@@ -26,6 +26,23 @@ Testing-only docs compared with stable:
 
 The UI must target `1.13 stable` by default, keep `1.12 Legacy` explicit, and require an explicit switch for `1.14 testing`.
 
+Readthrough contract:
+
+- The exhaustive doc-by-doc ledger is [sing-box Configuration Readthrough Matrix](sing-box-doc-readthrough-matrix.md). It has one row for every English Markdown file in the testing configuration docs and records the product class for each doc.
+- This guide is the global product rule for how normal users configure those docs in the canvas. It intentionally does not duplicate every field table from upstream sing-box docs.
+- If a doc exists in the matrix but the Library item is `DOCS`, `PENDING`, or `GATED`, the UI must explain where that object will eventually be configured and why it is not writable yet.
+- If this guide, the matrix, the Palette, or `pnpm audit:config-docs` disagree, fix the documentation before implementing more UI.
+
+Current completeness checkpoint, from `pnpm audit:config-docs` on 2026-05-26:
+
+- Official testing English docs: 105.
+- Matrix rows: 105.
+- Palette entries: 104.
+- Remaining docs without a Palette surface: 8 base/resource-helper docs.
+- Remaining writable docs without a complete write path: 15.
+
+The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, NTP, Certificate, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set, Service resources, and Experimental.
+
 ## Product Principle
 
 The canvas is a visual editor, not the configuration source. The source of truth is the canonical sing-box JSON/domain model.
@@ -40,6 +57,21 @@ Every user action must follow this path:
 6. Official `sing-box check` validates fixtures/export through the target-matched binary.
 
 Never infer final JSON from canvas node positions, edge order, or React Flow node data.
+
+## Global Placement Algorithm
+
+Use this decision tree for every official configuration doc before writing UI or schema:
+
+1. If the doc owns a top-level object or array, expose it from Library or Templates, but keep the canonical JSON key as the write owner.
+2. If the doc is a protocol/object under `inbounds[]`, `outbounds[]`, `dns.servers[]`, `endpoints[]`, or `services[]`, make it an addable setup node only after a domain create command, Inspector schema, graph derivation, fixture, and target binary check exist.
+3. If the doc is an ordered list item, such as `route.rules`, `dns.rules`, or headless rule-set rules, edit it in an ordered table in the right Inspector. Canvas rule nodes are visual shortcuts only.
+4. If the doc is a shared field group, such as Listen, Dial, TLS, Multiplex, V2Ray Transport, HTTP2, QUIC, DNS01, Wi-Fi State, or Neighbor Resolution, never add it as a standalone node. Put it inside the owning parent Inspector.
+5. If the doc is a base/index page, use it as a Library group, hub node, or table entry. Do not create duplicate "base" objects when the concrete child types own the JSON.
+6. If the doc is deprecated, removed, or superseded in the target, support import diagnostics and migration help first. Fresh creation stays `DOCS` or `MIGRATION/DOCS`.
+7. If the doc is testing-only, mark it `TARGET GATED` outside `1.14 testing`.
+8. If any write path is incomplete, the Library badge stays `PENDING` or `DOCS`; it must not emit JSON.
+
+The normal user should never need to know this algorithm. They should see an obvious action: add a node, open a table, edit an Inspector section, switch target, or read migration docs.
 
 ## UI Status Vocabulary
 
@@ -69,6 +101,22 @@ Users do not think in JSON sections first. They think in these workflows:
 6. "I need advanced resources" -> add Endpoints, Rule Sets, Services, HTTP Clients, Certificate Providers.
 
 The product should present these workflows, while preserving the exact official top-level JSON structure.
+
+## Editing Surfaces
+
+SBC has five editing surfaces, each with a strict owner:
+
+| Surface | What users do there | What it may mutate |
+| --- | --- | --- |
+| Templates | Start from curated stable/legacy/testing examples | Whole canonical config through template commands |
+| Library | Add or reveal concrete objects | Top-level objects, array entries, resource entries |
+| Canvas side icons | Add/remove compatible references near a selected node | Tag references, final/default refs, selector/urltest members, detours |
+| Right Inspector | Edit fields for the selected object | The selected canonical object and its embedded shared fields |
+| Ordered tables | Edit first-match order and rule rows | `route.rules`, `dns.rules`, rule-set rules |
+
+The JSON Preview and advanced JSON editor are synchronization surfaces, not graph generation sources.
+
+No selection means no Inspector. Selecting a node means the Inspector is the primary edit surface for that node.
 
 ## Canvas Object Classes
 
@@ -174,6 +222,14 @@ Templates should include:
 - `1.12 Legacy Mixed Split`
 - `1.14 Testing HTTP Client`
 
+Library groups should be broad enough to scan and narrow enough to explain ownership:
+
+- `Log`, `NTP`, `Certificate`, and `Experimental` are settings groups. Items create settings cards or open settings Inspectors.
+- `DNS`, `Route`, and `Rule Set` are logic groups. Rules open ordered tables; hubs are add/reveal nodes.
+- `Inbounds`, `Outbounds`, `DNS Server`, `Endpoints`, and `Services` are object groups. Writable items add nodes or setup drafts.
+- `Certificate Providers` and `HTTP Clients` are target-gated resource groups until stable support is proven.
+- `Shared` is an educational/index group. Its items open docs or highlight the owning Inspector section; they do not add standalone nodes.
+
 ## Inbounds
 
 All official inbound docs should be discoverable under Library > Inbounds.
@@ -266,7 +322,7 @@ DNS is a hub plus servers plus ordered rules.
 | DNS Rule | `TABLE` | Opens ordered DNS Rules editor |
 | DNS Rule Action | `INSPECTOR` | Edited inside each DNS rule row |
 | FakeIP | `INSPECTOR` | DNS Inspector subform |
-| Legacy Server | `ADD SETUP` | DNS server node, import/support oriented |
+| Legacy Server | `MIGRATION/DOCS` | Import/support oriented; do not create fresh stable configs by default |
 | Local Server | `ADD READY` | DNS server node |
 | Hosts Server | `ADD SETUP` | DNS server node |
 | TCP/UDP/TLS/QUIC/HTTPS/HTTP3 Server | `ADD SETUP` | DNS server node |
@@ -278,6 +334,8 @@ DNS is a hub plus servers plus ordered rules.
 
 DNS Rules are ordered just like Route Rules. Canvas edges may show `dns.rules[].server` and `dns.final`, but the table owns rule order.
 
+Normal-user rule: DNS Server items are addable because they create concrete `dns.servers[]` entries. DNS FakeIP is not a server; it is a DNS Inspector subform. DNS Rule Action is not a node; it is the action section inside a DNS Rule row.
+
 ## Endpoints
 
 Endpoints are resource/chain nodes, not ordinary outbounds.
@@ -288,6 +346,8 @@ Endpoints are resource/chain nodes, not ordinary outbounds.
 | Tailscale endpoint | `ADD SETUP` | Endpoint node; can be referenced by DNS server/certificate provider |
 
 Endpoint Inspector owns Dial/TLS-like shared sections where supported.
+
+Current implementation rule: until endpoint graph derivation and reference commands are implemented, endpoint docs stay `DOCS` even though the target product action is `ADD SETUP`. Do not create endpoint JSON from a generic placeholder.
 
 ## Services
 
@@ -301,6 +361,8 @@ Services are runtime resources. They should not be shown as if they are route ou
 | CCM | `ADD SETUP` | Service card/node, Listen Fields, users, headers, detour, TLS |
 | OCM | `ADD SETUP` | Service card/node, Listen Fields, users, headers, detour, TLS |
 | Hysteria Realm | `TARGET GATED` | Testing service card/node, Listen Fields, HTTP2, users |
+
+Current implementation rule: services are runtime resources, not route targets. They stay `DOCS` until service create/update/delete commands and Inspector schemas exist. Hysteria Realm is additionally target-gated because it is testing-only.
 
 ## Settings And Advanced Resources
 
@@ -320,6 +382,8 @@ Certificate providers:
 - ACME owns DNS01 Challenge and optional HTTP Client fields.
 - Tailscale provider references a Tailscale endpoint.
 - Cloudflare Origin CA owns API/origin CA fields and optional HTTP Client fields.
+
+Current implementation rule: Log is writable. NTP, Certificate, and Experimental remain `PENDING` until they have settings-card domain commands, Inspector schemas, fixtures, and target binary checks.
 
 ## Shared Field Placement
 

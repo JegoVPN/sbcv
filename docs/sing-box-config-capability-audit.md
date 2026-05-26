@@ -47,7 +47,6 @@ Remaining chain-node gaps reported by the audit:
 Remaining Palette surface gaps reported by the audit:
 
 - Base docs: `dns/server/index.md`, `endpoint/index.md`, `inbound/index.md`, `outbound/index.md`, `service/index.md`.
-- DNS server `fakeip`.
 - Rule-set source/headless/adguard docs.
 
 Remaining writable object gaps reported by the expanded audit:
