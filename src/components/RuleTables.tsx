@@ -1,8 +1,13 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useProjectStore } from "../state/useProjectStore";
 
-function listToText(value: string[] | undefined) {
-  return value?.join(", ") ?? "";
+function listItems<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function listToText(value: string[] | string | undefined) {
+  if (Array.isArray(value)) return value.join(", ");
+  return typeof value === "string" ? value : "";
 }
 
 function textToList(value: string) {
@@ -18,8 +23,8 @@ export function RouteRulesTable() {
   const updateRouteRule = useProjectStore((state) => state.updateRouteRule);
   const moveRouteRule = useProjectStore((state) => state.moveRouteRule);
   const deleteRouteRule = useProjectStore((state) => state.deleteRouteRule);
-  const outbounds = config.outbounds ?? [];
-  const rules = config.route?.rules ?? [];
+  const outbounds = listItems(config.outbounds);
+  const rules = listItems(config.route?.rules);
 
   return (
     <section className="table-panel" aria-label="Route rules">
@@ -87,8 +92,8 @@ export function DnsRulesTable() {
   const updateDnsRule = useProjectStore((state) => state.updateDnsRule);
   const moveDnsRule = useProjectStore((state) => state.moveDnsRule);
   const deleteDnsRule = useProjectStore((state) => state.deleteDnsRule);
-  const servers = config.dns?.servers ?? [];
-  const rules = config.dns?.rules ?? [];
+  const servers = listItems(config.dns?.servers);
+  const rules = listItems(config.dns?.rules);
 
   return (
     <section className="table-panel" aria-label="DNS rules">

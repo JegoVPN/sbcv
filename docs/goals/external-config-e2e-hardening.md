@@ -68,8 +68,11 @@ Current implemented local gates:
 - `pnpm fixtures:update:external` regenerates the deterministic external fixture corpus from public GitHub sources.
 - `pnpm validate:external` runs the external fixture unit gate.
 - `pnpm test` includes all accepted external fixtures and currently checks JSON parse, canonical import, semantic diagnostics, graph derivation, JSON stringify/parse round-trip, and the 200+ fixture count.
+- `pnpm e2e` imports 20 representative external fixtures, asserts node classes, opens ordered rule tables, verifies the Higgsfield-style selected node DOM, verifies the top-right Inspector DOM, opens JSON Preview, exports JSON, re-imports the export, and fails on runtime page/console errors.
+- `pnpm e2e` also runs a mobile viewport smoke for the selected node and floating Inspector.
+- External fixture E2E currently writes a review screenshot at `test-results/sbc-selected-node-inspector.png` during local runs.
 - Official `sing-box-* check` remains separate and incomplete for external fixtures until version-matched binaries are wired into the manifest gate.
-- Playwright visual/E2E coverage for import, selected-node layout, Inspector, tables, JSON preview, export, and re-import remains to be implemented.
+- Browser visual review has been performed against the local Vite app for the selected-node plus Inspector state.
 
 ## Fixture Acceptance Rules
 
@@ -196,6 +199,34 @@ Reference screenshot coordinate model, using the supplied crop as approximately 
 - Hover/selection affordances: add/delete/connect controls are visible on hover or selection only. Moving over a node should reveal compatible upstream/downstream add affordances; moving over an added child/edge should reveal delete/disconnect affordances.
 - Edge style: connected edges are curved, color-coded by port type, and attach to the circular side handles. Edges should not imply that ordered rule tables are sourced from canvas position.
 
+Pixel-level node decomposition from the updated user screenshot:
+
+- The selected node is not a compact card. It is a large canvas object with a separate title strip and an inner work surface. On desktop, the selected SBC node should target a large readable footprint (`~310-360px` wide in current app scale, with stable aspect ratio and `min-height >= 260px`) rather than the old `230px x 124px` config card.
+- Above the rectangle: the title row floats outside the node body, offset by roughly one icon height. It contains only the type icon and type label. It must not be inside the selected blue outline.
+- Around the rectangle: the blue selected outline hugs the node body only. Four small square blue handles sit exactly on the outline corners. If these handles are missing, the node is not considered visually complete.
+- Left of the rectangle: upstream ports sit on the outside edge as circular buttons, vertically stacked, centered on the node's left boundary and partially overlapping the node margin. These are not toolbar buttons and not text chips. Each port is icon-first and type-colored. The icon must represent the connectable upstream node type, not the current node. For example, a `Route` node's left port uses the `Inbound` icon because traffic enters from inbound nodes.
+- Right of the rectangle: downstream ports sit outside the right edge, normally one primary circular lime handle for the active outgoing relation plus additional compatible handles when the node type exposes them. Curved edges must leave from these circles, not from the rectangle center. The icon must represent the connectable downstream node type, such as `Route Rule`, `Outbound`, `DNS Server`, or selector member, not the current node.
+- Inside the upper body: the content is sparse. The first large text block is a muted summary/placeholder, placed near the top-left interior with generous empty space around it. Dense schema editing belongs in the Inspector or ordered tables.
+- Inside the lower-left body: a square rounded `+` button floats above the toolbar. It creates a compatible adjacent entity through domain commands, not by directly adding arbitrary React Flow nodes.
+- Inside the bottom edge: the toolbar is a horizontal strip of compact pills. From left to right it should read as: subtype/tag pill, count/status pill, settings/sliders icon, and a high-emphasis lime action at the bottom-right. The toolbar is inside the rectangle and must remain visible when selected.
+- On hover/selection: compatible add affordances and delete/disconnect controls appear, but the default non-hover state remains clean. Controls added by hover must not shift the node body size.
+
+Pixel-level Inspector decomposition from the updated user screenshot:
+
+- The Inspector is a floating top-right overlay on the canvas. It is not the third column of the page grid and not below the canvas. It sits over the dotted canvas, with its own rounded border and elevated shadow.
+- The Inspector top aligns close to the canvas top padding. Its right edge aligns close to the viewport/canvas right padding. Desktop target width is approximately `360-420px` in SBC scale, with mobile falling back to an overlay sheet.
+- Header row: icon and selected node type on the left, close `X` on the right. This header mirrors the canvas node header.
+- Directly below the header: a large rounded primary editor/summary block. It contains muted text and an internal `+` affordance when the node type supports adding/importing primary data.
+- Field rows: label left, compact dark pill/input right. The visual rhythm must match the reference panel rows, not full-width stacked form fields unless mobile width forces it.
+- Footer/action area: a bright lime full-width primary action appears near the bottom of the Inspector content. It is visually stronger than ordinary field controls.
+
+Definition of done for this visual slice:
+
+- A selected representative node must show the external title row, blue outline, four corner handles, left external port stack, right external port stack, internal bottom-left add button, internal bottom toolbar, and hover-only management controls.
+- Opening settings or selecting a node must show the floating top-right Inspector with header, primary editor block, field rows, and footer action.
+- Playwright must assert the DOM hooks for these pieces and capture at least one screenshot artifact for review.
+- The implementation is incomplete if it only renders generic cards, a fixed right grid column, dense form fields inside nodes, or canvas nodes whose React Flow data becomes the config source of truth.
+
 The expanded Inspector target is the right-side floating panel in the screenshot:
 
 - Position: top-right overlay panel on the canvas, not a page section and not a card nested inside another card. In the crop it starts near `x ~= 1468`, `y ~= 10`, with `w ~= 580`, `h ~= 918`, rounded outer corners, and a slightly lighter dark background than the canvas.
@@ -232,8 +263,7 @@ The E2E matrix must include:
 - Toperlock `config_template_groups_rule_set_tun_fakeip.json`;
 - Toperlock `config_template_no_groups_tun_VN.json`;
 - Toperlock `sb-config-1.14.json`;
-- kj163kj v1.13 default;
-- kj163kj v1.13 chain proxy default;
+- current stable `1.13` representative fixture; if kj163kj adds or exposes accepted v1.13 fixtures, include both default and chain proxy default;
 - kj163kj v1.12 default;
 - kj163kj v1.12 chain proxy default;
 - kj163kj v1.11 default;

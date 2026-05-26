@@ -65,6 +65,10 @@ function listItems<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+function entityTag(tag: string | undefined, kind: string, index: number) {
+  return tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
+}
+
 export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
   const nodes: SbcFlowNode[] = [];
   const edges: Edge[] = [];
@@ -75,15 +79,16 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const dnsRules = listItems(config.dns?.rules);
 
   inbounds.forEach((inbound, index) => {
-    const id = `inbound:${inbound.tag}`;
+    const tag = entityTag(inbound.tag, "inbound", index);
+    const id = `inbound:${tag}`;
     nodes.push(
       makeNode(
         id,
         {
-          ref: { kind: "inbound", tag: inbound.tag },
+          ref: { kind: "inbound", tag },
           kind: "inbound",
           type: inbound.type,
-          title: inbound.tag,
+          title: tag,
           subtitle: `${inbound.type} inbound`,
           status: diagnosticStatus(`/inbounds/${index}`, diagnostics),
           compatible: ["Route"],
@@ -94,7 +99,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
     if (config.route) {
       edges.push({
-        id: `edge:inbound:${inbound.tag}:route`,
+        id: `edge:inbound:${tag}:route`,
         source: id,
         target: "route:main",
         animated: true,
@@ -174,17 +179,20 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   }
 
   outbounds.forEach((outbound, index) => {
-    const id = `outbound:${outbound.tag}`;
+    const tag = entityTag(outbound.tag, "outbound", index);
+    const id = `outbound:${tag}`;
     nodes.push(
       makeNode(
         id,
         {
-          ref: { kind: "outbound", tag: outbound.tag },
+          ref: { kind: "outbound", tag },
           kind: "outbound",
           type: outbound.type,
-          title: outbound.tag,
+          title: tag,
           subtitle:
-      Array.isArray(outbound.outbounds) && outbound.outbounds.length && (outbound.type === "selector" || outbound.type === "urltest")
+            Array.isArray(outbound.outbounds) &&
+            outbound.outbounds.length &&
+            (outbound.type === "selector" || outbound.type === "urltest")
               ? `${outbound.type}: ${outbound.outbounds.join(", ")}`
               : outbound.server
                 ? `${outbound.type} ${outbound.server}:${outbound.server_port ?? ""}`
@@ -201,11 +209,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
 
     if (Array.isArray(outbound.outbounds)) {
-      outbound.outbounds.forEach((tag) => {
+      outbound.outbounds.forEach((candidateTag) => {
         edges.push({
-          id: `edge:${outbound.type}:${outbound.tag}:${tag}`,
+          id: `edge:${outbound.type}:${tag}:${candidateTag}`,
           source: id,
-          target: `outbound:${tag}`,
+          target: `outbound:${candidateTag}`,
           label: "candidate",
         });
       });
@@ -231,15 +239,16 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
 
     dnsServers.forEach((server, index) => {
-      const id = `dns-server:${server.tag}`;
+      const tag = entityTag(server.tag, "dns-server", index);
+      const id = `dns-server:${tag}`;
       nodes.push(
         makeNode(
           id,
           {
-            ref: { kind: "dns-server", tag: server.tag },
+            ref: { kind: "dns-server", tag },
             kind: "dns-server",
             type: server.type,
-            title: server.tag,
+            title: tag,
             subtitle: `${server.type} dns server`,
             status: diagnosticStatus(`/dns/servers/${index}`, diagnostics),
             compatible: [],
