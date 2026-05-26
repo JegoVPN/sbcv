@@ -996,11 +996,14 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
   next.inbounds = next.inbounds?.map((item) =>
     item.tag === oldTag ? { ...item, tag: newTag } : item,
   );
-  next.outbounds = next.outbounds?.map((item) =>
-    item.tag === oldTag
-      ? { ...item, tag: newTag, outbounds: item.outbounds?.map((tag) => (tag === oldTag ? newTag : tag)) }
-      : { ...item, outbounds: item.outbounds?.map((tag) => (tag === oldTag ? newTag : tag)) },
-  );
+  const remapOutbound = <T extends OutboundConfig>(item: T): T => ({
+    ...item,
+    tag: item.tag === oldTag ? newTag : item.tag,
+    outbounds: item.outbounds?.map((tag) => (tag === oldTag ? newTag : tag)),
+    default: item.default === oldTag ? newTag : item.default,
+    detour: typeof item.detour === "string" && item.detour === oldTag ? newTag : item.detour,
+  });
+  next.outbounds = next.outbounds?.map(remapOutbound);
   next.dns = next.dns
     ? {
         ...next.dns,
@@ -1054,6 +1057,31 @@ export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string)
       rule_set: replaceRuleSetRef(rule.rule_set, oldTag, newTag),
     }));
   }
+  if (next.route?.rule_set) {
+    next.route.rule_set = next.route.rule_set.map((item) => {
+      const value = (item as Record<string, unknown>).download_detour;
+      if (value === oldTag) return { ...item, download_detour: newTag } as TaggedConfig;
+      return item;
+    });
+  }
+  if (next.experimental && typeof next.experimental === "object" && !Array.isArray(next.experimental)) {
+    const clashApi = (next.experimental as Record<string, unknown>).clash_api;
+    if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
+      const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
+      if (detour === oldTag) {
+        next.experimental = {
+          ...next.experimental,
+          clash_api: { ...(clashApi as Record<string, unknown>), external_ui_download_detour: newTag },
+        };
+      }
+    }
+  }
+  if (next.ntp && typeof next.ntp === "object" && !Array.isArray(next.ntp)) {
+    const ntpDetour = (next.ntp as Record<string, unknown>).detour;
+    if (ntpDetour === oldTag) {
+      next.ntp = { ...next.ntp, detour: newTag };
+    }
+  }
   return next;
 }
 
@@ -1085,11 +1113,44 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
       ...item,
       outbounds: item.outbounds?.filter((tag) => tag !== ref.tag),
       default: item.default === ref.tag ? undefined : item.default,
+      detour: typeof item.detour === "string" && item.detour === ref.tag ? undefined : item.detour,
     }));
     next.services = next.services?.map((item) => ({
       ...item,
       detour: item.detour === ref.tag ? undefined : item.detour,
     }));
+    next.dns?.servers?.forEach((server) => {
+      if (server.detour === ref.tag) server.detour = undefined;
+    });
+    if (next.route?.rule_set) {
+      next.route.rule_set = next.route.rule_set.map((item) => {
+        const value = (item as Record<string, unknown>).download_detour;
+        if (value === ref.tag) return { ...item, download_detour: undefined } as TaggedConfig;
+        return item;
+      });
+    }
+    if (next.experimental && typeof next.experimental === "object" && !Array.isArray(next.experimental)) {
+      const clashApi = (next.experimental as Record<string, unknown>).clash_api;
+      if (
+        clashApi &&
+        typeof clashApi === "object" &&
+        !Array.isArray(clashApi) &&
+        (clashApi as Record<string, unknown>).external_ui_download_detour === ref.tag
+      ) {
+        next.experimental = {
+          ...next.experimental,
+          clash_api: { ...(clashApi as Record<string, unknown>), external_ui_download_detour: undefined },
+        };
+      }
+    }
+    if (
+      next.ntp &&
+      typeof next.ntp === "object" &&
+      !Array.isArray(next.ntp) &&
+      (next.ntp as Record<string, unknown>).detour === ref.tag
+    ) {
+      next.ntp = { ...next.ntp, detour: undefined };
+    }
   }
   if (ref.kind === "dns-server") {
     if (next.dns?.servers) {
