@@ -1387,6 +1387,13 @@ function sharedFieldDefinitions(
       { label: "Reality Public Key (client)", path: ["tls", "reality", "public_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Short ID (client)", path: ["tls", "reality", "short_id"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
+      { label: "ECH Config (PEM/lines)", path: ["tls", "ech", "config"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "Server (Reality, server-only)", path: ["tls", "reality", "handshake", "server"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Server Port (Reality, server-only)", path: ["tls", "reality", "handshake", "server_port"], kind: "number", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Private Key (Reality, server-only)", path: ["tls", "reality", "private_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Max Time Difference (Reality, server-only)", path: ["tls", "reality", "max_time_difference"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
     ];
   }
 
