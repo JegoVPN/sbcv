@@ -64,12 +64,17 @@ A `/goal` should be one line:
 The method lives here:
 
 1. Read the spec path, this guide, and the source-of-truth docs.
-2. Create or update a goal R&D doc under `docs/` if the goal is larger than one atomic.
-3. Break the goal into 1-3 near-term atomics; do not pre-plan a long queue.
-4. Implement one atomic at a time.
-5. Run checks, commit signed, push, verify.
-6. Record deviations from the spec in the goal R&D doc.
-7. Continue until the goal is complete or a real blocker appears.
+2. Create or update a goal R&D doc under `docs/goals/` for the full end-to-end path.
+3. Define the optimal path: architecture choice, implementation order, review gate, E2E gate, and done definition.
+4. Break the goal into 1-3 near-term atomics; do not pre-plan a long queue.
+5. Implement one atomic at a time.
+6. Run checks, commit signed, push, verify.
+7. Review the implementation against the goal doc and source-of-truth docs.
+8. Run E2E or smoke verification that proves the user-facing outcome works.
+9. Record deviations from the spec in the goal R&D doc.
+10. Continue until the goal is complete or a real blocker appears.
+
+A goal is not complete just because code was written. It is complete only when the researched approach, implementation, review, E2E verification, docs, and signed push are all done or explicitly marked not applicable with a reason.
 
 Stop and ask the user before:
 
@@ -83,6 +88,7 @@ At each milestone, report:
 
 - what changed;
 - checks run and their result;
+- review/E2E status;
 - known deviations or unresolved risks;
 - the next atomic.
 
@@ -92,4 +98,3 @@ At each milestone, report:
 - Default branch: `main`.
 - Commit author/signing identity: `JegoVPN`.
 - Local `pre-push` hook verifies every pushed commit signature.
-

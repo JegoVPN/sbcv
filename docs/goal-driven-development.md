@@ -1,6 +1,6 @@
 # Goal-Driven Development
 
-This document defines how SBC goals are prepared and executed. It is intentionally lighter than the Hirona workflow because this repo is still early-stage.
+This document defines how SBC goals are prepared and executed. It is intentionally lighter than the Hirona workflow because this repo is still early-stage, but each goal must still close the full loop: research, implementation, review, E2E verification, docs, signed commit, and push.
 
 ## Goal Format
 
@@ -16,6 +16,22 @@ Good goals name an outcome, not a vague activity:
 - Good: `Implement Route Rules table backed by canonical JSON`
 - Weak: `Work on canvas`
 - Weak: `Improve schema`
+
+## Completion Standard
+
+A goal is expected to represent one complete end-to-end research and development pass. The agent should choose the best path available from the source docs and local codebase, then carry the work through review and E2E verification.
+
+A goal is done only when all of these are true:
+
+- The source docs and local constraints were read.
+- The chosen approach is documented as the optimal path for this repo.
+- The implementation is complete for the stated scope.
+- The diff has been reviewed against the goal doc, AGENTS.md, and source-of-truth docs.
+- E2E or smoke verification proves the intended user-facing path works.
+- Missing checks are explicitly called out with reasons.
+- The final commit is signed, pushed, and verified on GitHub when available.
+
+For docs-only goals, E2E can be replaced by a traceability review: every claim must map to a source document or local policy. For app goals, E2E means opening/running the app path and verifying the workflow, not only passing typecheck.
 
 ## Goal R&D Doc Template
 
@@ -46,11 +62,32 @@ One paragraph describing what is true when the goal is done.
 - docs/sing-box-config-doc-inventory.md
 - sing-box stable/testing docs used by this goal
 
+## Optimal Path
+
+- Architecture decision:
+- Why this is the best path for SBC:
+- Alternatives rejected:
+- Risk controls:
+
 ## Implementation Plan
 
 1. Atomic 1
 2. Atomic 2
 3. Atomic 3
+
+## Review Plan
+
+- Self-review focus:
+- Source-of-truth checks:
+- Diff scope checks:
+- Design/UX checks if UI is touched:
+
+## E2E Plan
+
+- User path:
+- Tooling:
+- Expected evidence:
+- Fallback if full E2E is not possible:
 
 ## Acceptance Criteria
 
@@ -65,6 +102,14 @@ One paragraph describing what is true when the goal is done.
 | stable config | `sing-box-stable check` |
 | testing config | `sing-box-testing check` |
 | app code | project tests/typecheck once available |
+
+## Done Definition
+
+- Implementation complete:
+- Review complete:
+- E2E/smoke complete:
+- Docs updated:
+- Signed commit pushed:
 
 ## Notes And Deviations
 
@@ -97,6 +142,7 @@ Until the app scaffold exists:
 
 - `git diff --check`
 - Markdown/readability review
+- traceability review against source docs
 - commit signature verification
 
 Once the app exists:
@@ -105,6 +151,7 @@ Once the app exists:
 - TypeScript check
 - unit tests for domain commands
 - round-trip tests for config fixtures
+- E2E/smoke test for the user path covered by the goal
 - `sing-box-stable check` for stable fixtures
 - `sing-box-testing check` for testing fixtures
 
