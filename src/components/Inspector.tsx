@@ -3201,6 +3201,12 @@ export function Inspector() {
 
       {ref.kind === "dns-server" ? (
         <>
+          {entityType === "resolved" ? (
+            <PlatformBanner
+              kind="platform"
+              text="Platform gate: dns-server `resolved` is Linux/systemd specific. It requires a matching service:resolved peer; exports work on any host but sing-box will refuse to start on macOS/Windows/Android/iOS."
+            />
+          ) : null}
           {"address" in entity ? (
             <label className="field">
               <span>Address</span>
@@ -3523,6 +3529,12 @@ export function Inspector() {
 
       {ref.kind === "service" ? (
         <>
+          {entityType === "resolved" ? (
+            <PlatformBanner
+              kind="platform"
+              text="Platform gate: service `resolved` is Linux/systemd specific. Exports work on any host but sing-box will refuse to start on macOS/Windows/Android/iOS."
+            />
+          ) : null}
           {entityType === "ssm-api" ? (
             <>
               {(() => {
