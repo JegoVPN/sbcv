@@ -523,6 +523,43 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("cascades selector default, dial detour, ntp/clash/rule-set detour on rename and delete", () => {
+    const seeded = renameTag(
+      {
+        outbounds: [
+          { type: "direct", tag: "direct" },
+          { type: "direct", tag: "fallback" },
+          { type: "selector", tag: "auto", outbounds: ["direct", "fallback"], default: "direct" },
+          { type: "trojan", tag: "trojan", server: "1.1.1.1", server_port: 443, password: "x", detour: "direct" },
+        ],
+        ntp: { enabled: true, server: "time.cloudflare.com", server_port: 123, detour: "direct" },
+        route: {
+          rule_set: [{ type: "remote", tag: "rules", url: "https://x", download_detour: "direct" }],
+        },
+        experimental: { clash_api: { external_ui_download_detour: "direct" } },
+      } as unknown as ReturnType<typeof createStableTunSplitConfig>,
+      "direct",
+      "lan",
+    );
+    const renamedAuto = seeded.outbounds?.find((o) => o.tag === "auto");
+    expect(renamedAuto?.default).toBe("lan");
+    expect(seeded.outbounds?.find((o) => o.tag === "trojan")?.detour).toBe("lan");
+    expect((seeded.ntp as Record<string, unknown>)?.detour).toBe("lan");
+    expect(seeded.route?.rule_set?.[0]?.download_detour).toBe("lan");
+    expect((seeded.experimental as Record<string, unknown>)?.clash_api).toMatchObject({
+      external_ui_download_detour: "lan",
+    });
+
+    const deleted = deleteEntity(seeded, { kind: "outbound", tag: "lan" });
+    expect(deleted.outbounds?.find((o) => o.tag === "auto")?.default).toBeUndefined();
+    expect(deleted.outbounds?.find((o) => o.tag === "trojan")?.detour).toBeUndefined();
+    expect((deleted.ntp as Record<string, unknown>)?.detour).toBeUndefined();
+    expect(deleted.route?.rule_set?.[0]?.download_detour).toBeUndefined();
+    expect((deleted.experimental as Record<string, unknown>)?.clash_api).toMatchObject({
+      external_ui_download_detour: undefined,
+    });
+  });
+
   it("flags Clash API misconfigurations (dangling download_detour, public listen without secret)", () => {
     const base = createStableTunSplitConfig();
     const dangling = {
