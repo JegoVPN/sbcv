@@ -2311,14 +2311,33 @@ export function Inspector() {
             </label>
           ) : null}
           {"server_port" in entity ? (
-            <label className="field">
-              <span>Port</span>
-              <input
-                type="number"
-                value={Number(entity.server_port ?? 0)}
-                onChange={(event) => updateField(ref, "server_port", Number(event.target.value))}
-              />
-            </label>
+            (() => {
+              const portDefaultByType: Record<string, number> = {
+                tcp: 53,
+                udp: 53,
+                dhcp: 53,
+                tls: 853,
+                quic: 853,
+                https: 443,
+                h3: 443,
+              };
+              const defaultPort = entityType && portDefaultByType[entityType] ? portDefaultByType[entityType] : 53;
+              const portValue = typeof entity.server_port === "number" ? entity.server_port : defaultPort;
+              return (
+                <label className="field">
+                  <span>Port</span>
+                  <input
+                    type="number"
+                    value={portValue}
+                    onChange={(event) => {
+                      const next = Number(event.target.value);
+                      updateField(ref, "server_port", Number.isFinite(next) && next > 0 ? next : undefined);
+                    }}
+                    placeholder={String(defaultPort)}
+                  />
+                </label>
+              );
+            })()
           ) : null}
           {"path" in entity ? (
             <label className="field">
