@@ -4,3 +4,6 @@ SBC is a sing-box configuration builder planned around a canonical JSON/domain m
 
 The canvas is not the source of truth. The sing-box JSON config and validated domain model are.
 
+## Documents
+
+- [SBC React Flow R&D Plan](docs/sbc-react-flow-rd-plan.md)
