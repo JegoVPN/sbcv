@@ -337,6 +337,57 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders selector candidates as a constrained checklist and default select", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("node-outbound:proxy"));
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const checklist = inspector.getByTestId("candidate-checklist");
+    const hkCheckbox = within(checklist).getByLabelText("hk", { exact: false }) as HTMLInputElement;
+    expect(hkCheckbox.checked).toBe(true);
+
+    fireEvent.click(hkCheckbox);
+    const proxyAfterToggle = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.tag === "proxy");
+    expect(proxyAfterToggle?.outbounds).not.toContain("hk");
+
+    const defaultSelect = inspector.getByLabelText("Default") as HTMLSelectElement;
+    const defaultOptions = Array.from(defaultSelect.options).map((option) => option.value);
+    expect(defaultOptions).toContain("");
+    expect(defaultOptions).not.toContain("proxy");
+    expect(defaultOptions).not.toContain("hk");
+
+    if (defaultOptions.length > 1) {
+      fireEvent.change(defaultSelect, { target: { value: defaultOptions[1] } });
+      expect(
+        useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "proxy")?.default,
+      ).toBe(defaultOptions[1]);
+    }
+
+    const interrupt = inspector.getByLabelText("Interrupt existing connections on switch") as HTMLInputElement;
+    expect(interrupt.checked).toBe(false);
+    fireEvent.click(interrupt);
+    expect(
+      useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "proxy")
+        ?.interrupt_exist_connections,
+    ).toBe(true);
+  });
+
+  it("renders urltest candidates as a checklist without a default select", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("node-outbound:auto"));
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByTestId("candidate-checklist")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("Default")).not.toBeInTheDocument();
+    expect(inspector.getByLabelText("Interrupt existing connections on switch")).toBeInTheDocument();
+  });
+
   it("round-trips the settings:log timestamp toggle (timestamp + output placeholder)", () => {
     useProjectStore.getState().loadMinimal();
 
