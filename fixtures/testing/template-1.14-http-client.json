@@ -1,0 +1,107 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "http_clients": [
+    {
+      "tag": "remote-client",
+      "engine": "go"
+    }
+  ],
+  "dns": {
+    "servers": [
+      {
+        "type": "local",
+        "tag": "local-dns"
+      },
+      {
+        "type": "https",
+        "tag": "remote-doh",
+        "server": "1.1.1.1",
+        "server_port": 443,
+        "path": "/dns-query",
+        "detour": "proxy"
+      }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [
+          "cn"
+        ],
+        "server": "local-dns"
+      }
+    ],
+    "final": "remote-doh"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "auto_route": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    },
+    {
+      "type": "socks",
+      "tag": "hk",
+      "server": "127.0.0.1",
+      "server_port": 1081
+    },
+    {
+      "type": "socks",
+      "tag": "jp",
+      "server": "127.0.0.1",
+      "server_port": 1082
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "hk",
+        "jp"
+      ],
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "3m"
+    },
+    {
+      "type": "selector",
+      "tag": "proxy",
+      "outbounds": [
+        "hk",
+        "jp",
+        "auto"
+      ],
+      "default": "auto"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "domain_suffix": [
+          "cn"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "domain_keyword": [
+          "ads"
+        ],
+        "outbound": "block"
+      }
+    ],
+    "final": "proxy",
+    "auto_detect_interface": true,
+    "default_domain_resolver": "local-dns"
+  }
+}

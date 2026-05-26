@@ -7,8 +7,15 @@ export type SingBoxTarget = {
   binaryName: "sing-box-stable" | "sing-box-testing";
 };
 
+export type SingBoxTargetId = "1.12-stable" | "1.13-stable" | "1.14-testing";
+
 export type TaggedConfig = {
   type: string;
+  tag: string;
+  [key: string]: unknown;
+};
+
+export type TaggedResourceConfig = {
   tag: string;
   [key: string]: unknown;
 };
@@ -78,7 +85,7 @@ export type SingBoxConfig = {
   ntp?: Record<string, unknown>;
   certificate?: Record<string, unknown>;
   certificate_providers?: TaggedConfig[];
-  http_clients?: TaggedConfig[];
+  http_clients?: TaggedResourceConfig[];
   endpoints?: TaggedConfig[];
   inbounds?: InboundConfig[];
   outbounds?: OutboundConfig[];

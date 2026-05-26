@@ -3,6 +3,7 @@ import {
   connectSelectorCandidate,
   createStableTunSplitConfig,
   disconnectEdge,
+  ensureSettings,
   moveRouteRule,
   renameTag,
   updateRouteRule,
@@ -10,6 +11,7 @@ import {
 import { deriveGraph } from "../src/canvas/graph";
 import { validateConfig } from "../src/domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../src/domain/serialization";
+import { createTemplatePreset } from "../src/domain/templates";
 
 describe("canonical sing-box domain model", () => {
   it("round-trips stable TUN split config without layout metadata", () => {
@@ -127,8 +129,32 @@ describe("canonical sing-box domain model", () => {
     ];
 
     const { edges } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
-    const candidateEdges = edges.filter((edge) => edge.label === "candidate");
+    const candidateEdges = edges.filter((edge) => edge.id.startsWith("edge:selector:dense:"));
 
     expect(candidateEdges).toHaveLength(96);
+  });
+
+  it("loads curated 1.12, 1.13, and 1.14 template presets with explicit channels", () => {
+    const legacy = createTemplatePreset("template-1.12");
+    const stable = createTemplatePreset("template-1.13");
+    const testing = createTemplatePreset("template-1.14");
+
+    expect(legacy.channel).toBe("stable");
+    expect(stable.channel).toBe("stable");
+    expect(testing.channel).toBe("testing");
+    expect(legacy.version).toBe("1.12");
+    expect(stable.config.route?.final).toBe("proxy");
+    expect(testing.config.http_clients?.[0]?.tag).toBe("remote-client");
+  });
+
+  it("derives independent settings nodes only after the user pins them to the canvas", () => {
+    const config = ensureSettings(createStableTunSplitConfig(), "log");
+
+    expect(deriveGraph(config, { positions: {} }, []).nodes.some((node) => node.id === "settings:log")).toBe(false);
+    expect(
+      deriveGraph(config, { positions: { "settings:log": { x: -300, y: 40 } } }, []).nodes.some(
+        (node) => node.id === "settings:log" && node.data.kind === "settings",
+      ),
+    ).toBe(true);
   });
 });

@@ -4,6 +4,7 @@ import type {
   OutboundConfig,
   SingBoxConfig,
   TaggedConfig,
+  TaggedResourceConfig,
 } from "./types";
 
 export type TaggedEntityKind =
@@ -26,11 +27,11 @@ export type TaggedEntityRef = {
 function pushTagged(
   result: TaggedEntityRef[],
   kind: TaggedEntityKind,
-  item: TaggedConfig | InboundConfig | OutboundConfig | DnsServerConfig,
+  item: TaggedConfig | TaggedResourceConfig | InboundConfig | OutboundConfig | DnsServerConfig,
   path: string,
 ) {
   if (item.tag) {
-    result.push({ kind, tag: item.tag, type: item.type, path });
+    result.push({ kind, tag: item.tag, type: typeof item.type === "string" ? item.type : kind, path });
   }
 }
 

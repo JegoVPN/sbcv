@@ -18,6 +18,21 @@ export function createStableTunSplitConfig(): SingBoxConfig {
   return cloneConfig(STABLE_TUN_SPLIT_CONFIG);
 }
 
+export function ensureSettings(config: SingBoxConfig, path: keyof SingBoxConfig): SingBoxConfig {
+  const next = cloneConfig(config);
+  const current = next[path];
+  if (!current || typeof current !== "object" || Array.isArray(current)) {
+    next[path] = {};
+  }
+  if (path === "log") {
+    next.log = {
+      level: "info",
+      ...(typeof current === "object" && current && !Array.isArray(current) ? current : {}),
+    };
+  }
+  return next;
+}
+
 function ensureArray<T>(array: T[] | undefined): T[] {
   return array ? [...array] : [];
 }
@@ -240,6 +255,12 @@ export function updateEntityField(
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "settings") {
+    const current = next[ref.path];
+    const objectValue =
+      current && typeof current === "object" && !Array.isArray(current) ? current : {};
+    next[ref.path] = { ...objectValue, [field]: value };
+  }
   return next;
 }
 
@@ -309,6 +330,9 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
   }
   if (ref.kind === "route-rule") return deleteRouteRule(config, ref.index);
   if (ref.kind === "dns-rule") return deleteDnsRule(config, ref.index);
+  if (ref.kind === "settings") {
+    delete next[ref.path];
+  }
   return next;
 }
 
