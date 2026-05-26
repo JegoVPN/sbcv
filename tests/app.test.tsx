@@ -337,6 +337,33 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders socks/http inbound users as a structured row editor", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-socks");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const editor = inspector.getByTestId("socks-inbound-users-editor");
+    expect((within(editor).getByLabelText("Username") as HTMLInputElement).value).toBe("user");
+
+    const passwordInput = within(editor).getByLabelText("Password") as HTMLInputElement;
+    expect(passwordInput.type).toBe("password");
+
+    fireEvent.click(within(editor).getByRole("button", { name: /Add user/ }));
+    const after = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "socks");
+    expect(after?.users).toHaveLength(2);
+
+    fireEvent.click(within(editor).getByLabelText("Remove user 1"));
+    const trimmed = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "socks");
+    expect(trimmed?.users).toHaveLength(1);
+  });
+
   it("renders hysteria-realm users as a structured editor with channel banner", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
@@ -928,10 +955,11 @@ describe("SBC editor shell", () => {
       useProjectStore.getState().createFromPalette("inbound-http");
     });
     act(() => {
+      // unknown non-scalar array survives import; AdvancedNonScalarFields surfaces it.
       useProjectStore.getState().updateField(
         { kind: "inbound", tag: "http-in" },
-        "users",
-        [{ username: "alice", password: "secret" }],
+        "custom_extras",
+        [{ note: "alice" }],
       );
     });
 
@@ -941,20 +969,22 @@ describe("SBC editor shell", () => {
     const advanced = inspector.getByText("Advanced JSON fields", { exact: false });
     expect(advanced).toBeInTheDocument();
     fireEvent.click(advanced);
-    expect(inspector.getByText("Users")).toBeInTheDocument();
-    const usersTextarea = inspector.getByText("Users").parentElement?.querySelector("textarea");
-    expect(usersTextarea?.value).toContain("alice");
+    expect(inspector.getByText("Custom Extras")).toBeInTheDocument();
+    const extrasTextarea = inspector.getByText("Custom Extras").parentElement?.querySelector("textarea");
+    expect(extrasTextarea?.value).toContain("alice");
 
     act(() => {
-      const textarea = inspector.getByText("Users").parentElement?.querySelector("textarea") as HTMLTextAreaElement;
+      const textarea = inspector.getByText("Custom Extras").parentElement?.querySelector("textarea") as HTMLTextAreaElement;
       fireEvent.change(textarea, {
-        target: { value: JSON.stringify([{ username: "bob", password: "x" }], null, 2) },
+        target: { value: JSON.stringify([{ note: "bob" }], null, 2) },
       });
     });
 
-    const stored = useProjectStore
-      .getState()
-      .config.inbounds?.find((inbound) => inbound.tag === "http-in")?.users;
-    expect(stored).toEqual([{ username: "bob", password: "x" }]);
+    const stored = (
+      useProjectStore
+        .getState()
+        .config.inbounds?.find((inbound) => inbound.tag === "http-in") as Record<string, unknown> | undefined
+    )?.custom_extras;
+    expect(stored).toEqual([{ note: "bob" }]);
   });
 });
