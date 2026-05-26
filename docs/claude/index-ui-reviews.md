@@ -135,7 +135,7 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 4. **enum 字段用 raw text input**：`method`、`security`、`network`、`version`、`congestion_control`、`stack`、`flow`、`packet_encoding`、`default_mode`、`udp_relay_mode`、`congestion_control` 等等。所有应是 `<select>`，部分应附 optgroup（如 shadowsocks legacy method）。
 
-5. **默认 scaffold 缺 required TLS**：`commands.ts` 的 `createInbound` / `createOutbound` 没有为 trojan / naive / hysteria / hysteria2 / tuic / anytls / shadowtls outbound、trojan / naive / hysteria / hysteria2 / tuic / anytls / vless / vmess inbound、shadowtls inbound 播种 `tls: { enabled: true }`。新建节点直接是无效配置且无 UI 提示。
+5. **默认 scaffold 缺 required TLS**：**FIXED 2026-05-27** — `commands.ts` 现在为 trojan / naive / hysteria / hysteria2 / tuic / anytls / vless inbound、trojan / naive / hysteria / hysteria2 / tuic / anytls / shadowtls / vless outbound 播种 `tls: { enabled: true, server_name: "" }`；shadowtls inbound 额外播种 `handshake: { server: "google.com", server_port: 443 }` 并移除 v2-only `password`。Outstanding: vmess inbound/outbound 不强制 TLS（按官方推荐保持可选），不在本批改动；Reality / ACME / ECH 嵌套对象由后续 atomic 引入结构化编辑。
 
 6. **`domain_resolver` 应是 dns-server tag select**：当前 `sharedFieldRegistry.ts:203` 用 `kind: "text"`。1.14.0+ 在 `server` 为域名时是 required。需要换成 dns-server tag select 并在 `diagnostics.ts` 加 required-when-domain 检查。
 

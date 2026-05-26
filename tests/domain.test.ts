@@ -522,4 +522,20 @@ describe("canonical sing-box domain model", () => {
       }, []).nodes.filter((node) => node.data.kind === "settings"),
     ).toHaveLength(3);
   });
+
+  it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
+    const tlsRequiredInbounds = ["trojan", "naive", "hysteria", "hysteria2", "tuic", "anytls", "vless"];
+    for (const type of tlsRequiredInbounds) {
+      const stub = createInbound(type, `${type}-in`) as Record<string, unknown>;
+      expect(stub.tls, `inbound ${type} should seed default tls block`).toMatchObject({ enabled: true });
+    }
+    const tlsRequiredOutbounds = ["trojan", "naive", "hysteria", "hysteria2", "tuic", "anytls", "shadowtls", "vless"];
+    for (const type of tlsRequiredOutbounds) {
+      const stub = createOutbound(type, `${type}-out`) as Record<string, unknown>;
+      expect(stub.tls, `outbound ${type} should seed default tls block`).toMatchObject({ enabled: true });
+    }
+    const shadowtlsInbound = createInbound("shadowtls", "shadowtls-in") as Record<string, unknown>;
+    expect(shadowtlsInbound.handshake).toMatchObject({ server: "google.com", server_port: 443 });
+    expect(shadowtlsInbound.password).toBeUndefined();
+  });
 });
