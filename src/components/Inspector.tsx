@@ -182,6 +182,10 @@ const outboundHandledFields = new Set([
   "host_key",
   "host_key_algorithms",
   "client_version",
+  "url",
+  "interval",
+  "tolerance",
+  "idle_timeout",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2819,6 +2823,46 @@ export function Inspector() {
               />
               <span>Interrupt existing connections on switch</span>
             </label>
+          ) : null}
+          {entityType === "urltest" ? (
+            <>
+              <label className="field" data-testid="urltest-url-field">
+                <span>Test URL</span>
+                <input
+                  value={String(entity.url ?? "")}
+                  placeholder="https://www.gstatic.com/generate_204"
+                  onChange={(event) => updateField(ref, "url", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Interval</span>
+                <input
+                  value={String(entity.interval ?? "")}
+                  placeholder="3m"
+                  onChange={(event) => updateField(ref, "interval", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Tolerance (ms)</span>
+                <input
+                  type="number"
+                  value={typeof entity.tolerance === "number" ? entity.tolerance : ""}
+                  placeholder="50"
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    updateField(ref, "tolerance", Number.isFinite(next) && next >= 0 ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Idle timeout</span>
+                <input
+                  value={String(entity.idle_timeout ?? "")}
+                  placeholder="30m"
+                  onChange={(event) => updateField(ref, "idle_timeout", event.target.value || undefined)}
+                />
+              </label>
+            </>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={outboundHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={outboundHandledFields} entityRef={ref} updateField={updateField} />

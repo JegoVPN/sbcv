@@ -1120,6 +1120,35 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders urltest url / interval / tolerance / idle_timeout as first-class fields", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("urltest");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const urlInput = inspector.getByLabelText("Test URL") as HTMLInputElement;
+    fireEvent.change(urlInput, { target: { value: "https://example.com/ping" } });
+    let urltest = useProjectStore.getState().config.outbounds?.find((o) => o.type === "urltest") as Record<string, unknown>;
+    expect(urltest.url).toBe("https://example.com/ping");
+
+    const intervalInput = inspector.getByLabelText("Interval") as HTMLInputElement;
+    fireEvent.change(intervalInput, { target: { value: "5m" } });
+    urltest = useProjectStore.getState().config.outbounds?.find((o) => o.type === "urltest") as Record<string, unknown>;
+    expect(urltest.interval).toBe("5m");
+
+    const toleranceInput = inspector.getByLabelText("Tolerance (ms)") as HTMLInputElement;
+    fireEvent.change(toleranceInput, { target: { value: "120" } });
+    urltest = useProjectStore.getState().config.outbounds?.find((o) => o.type === "urltest") as Record<string, unknown>;
+    expect(urltest.tolerance).toBe(120);
+
+    const idleInput = inspector.getByLabelText("Idle timeout") as HTMLInputElement;
+    fireEvent.change(idleInput, { target: { value: "30m" } });
+    urltest = useProjectStore.getState().config.outbounds?.find((o) => o.type === "urltest") as Record<string, unknown>;
+    expect(urltest.idle_timeout).toBe("30m");
+  });
+
   it("renders TUN-specific stack, route_address, and platform.http_proxy controls", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
