@@ -216,6 +216,7 @@ const dnsServerHandledFields = new Set([
   "inet4_range",
   "inet6_range",
   "headers",
+  "interface",
   ...dialSharedFields,
 ]);
 const endpointHandledFields = new Set([
@@ -3379,6 +3380,16 @@ export function Inspector() {
                 </fieldset>
               );
             })()
+          ) : null}
+          {entityType === "dhcp" ? (
+            <label className="field">
+              <span>Interface</span>
+              <input
+                value={typeof entity.interface === "string" ? entity.interface : ""}
+                placeholder="auto (system default)"
+                onChange={(event) => updateField(ref, "interface", event.target.value || undefined)}
+              />
+            </label>
           ) : null}
           {entityType === "https" || entityType === "h3" ? (
             (() => {
