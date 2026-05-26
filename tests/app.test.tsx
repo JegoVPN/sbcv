@@ -617,6 +617,40 @@ describe("SBC editor shell", () => {
     expect(derp?.verify_client_endpoint).toBeUndefined();
   });
 
+  it("inline rule-set editor preserves last valid rules array when JSON is invalid", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("rule-set");
+    });
+    act(() => {
+      const ruleSets = useProjectStore.getState().config.route?.rule_set ?? [];
+      const created = ruleSets[ruleSets.length - 1];
+      if (created?.tag) {
+        useProjectStore.getState().changeEntityType({ kind: "rule-set", tag: created.tag }, "inline");
+        useProjectStore.getState().updateField(
+          { kind: "rule-set", tag: created.tag },
+          "rules",
+          [{ domain: ["example.com"] }],
+        );
+      }
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const textarea = inspector.getByTestId("inline-rules-json") as HTMLTextAreaElement;
+    expect(textarea.value).toContain("example.com");
+
+    fireEvent.change(textarea, { target: { value: "{this is broken json" } });
+    expect(inspector.getByRole("alert")).toBeInTheDocument();
+    // Store still has the last good array (not the bogus string).
+    const ruleSet = useProjectStore.getState().config.route?.rule_set?.find((rs) => rs.type === "inline");
+    expect(Array.isArray((ruleSet as Record<string, unknown> | undefined)?.rules)).toBe(true);
+    expect((ruleSet as Record<string, unknown>).rules).toEqual([{ domain: ["example.com"] }]);
+
+    fireEvent.change(textarea, { target: { value: JSON.stringify([{ domain_suffix: [".cn"] }], null, 2) } });
+    const updated = useProjectStore.getState().config.route?.rule_set?.find((rs) => rs.type === "inline");
+    expect((updated as Record<string, unknown>).rules).toEqual([{ domain_suffix: [".cn"] }]);
+  });
+
   it("surfaces first-class UUID / Password / Auth credentials for proxy outbound types", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
