@@ -187,6 +187,8 @@ const outboundHandledFields = new Set([
   "tolerance",
   "idle_timeout",
   "packet_encoding",
+  "plugin",
+  "plugin_opts",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2714,6 +2716,31 @@ export function Inspector() {
                   </optgroup>
                 </select>
               </label>
+              <label className="field">
+                <span>Plugin (SIP003)</span>
+                <select
+                  value={typeof entity.plugin === "string" ? entity.plugin : ""}
+                  onChange={(event) =>
+                    updateField(ref, "plugin", event.target.value || undefined)
+                  }
+                >
+                  <option value="">(none)</option>
+                  <option value="obfs-local">obfs-local</option>
+                  <option value="v2ray-plugin">v2ray-plugin</option>
+                </select>
+              </label>
+              {typeof entity.plugin === "string" && entity.plugin ? (
+                <label className="field">
+                  <span>Plugin Opts</span>
+                  <input
+                    value={typeof entity.plugin_opts === "string" ? entity.plugin_opts : ""}
+                    placeholder="obfs=tls;obfs-host=example.com"
+                    onChange={(event) =>
+                      updateField(ref, "plugin_opts", event.target.value || undefined)
+                    }
+                  />
+                </label>
+              ) : null}
             </>
           ) : null}
           {entityType === "vmess" ? (

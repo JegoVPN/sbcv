@@ -1132,6 +1132,31 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders shadowsocks plugin select with conditional plugin_opts", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("ss-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const plugin = inspector.getByLabelText("Plugin (SIP003)") as HTMLSelectElement;
+    expect(plugin.tagName).toBe("SELECT");
+    expect(inspector.queryByLabelText("Plugin Opts")).not.toBeInTheDocument();
+
+    fireEvent.change(plugin, { target: { value: "v2ray-plugin" } });
+    let ss = useProjectStore.getState().config.outbounds?.find((o) => o.type === "shadowsocks") as Record<string, unknown>;
+    expect(ss.plugin).toBe("v2ray-plugin");
+
+    const opts = inspector.getByLabelText("Plugin Opts") as HTMLInputElement;
+    fireEvent.change(opts, { target: { value: "mode=websocket;path=/proxy" } });
+    ss = useProjectStore.getState().config.outbounds?.find((o) => o.type === "shadowsocks") as Record<string, unknown>;
+    expect(ss.plugin_opts).toBe("mode=websocket;path=/proxy");
+
+    fireEvent.change(plugin, { target: { value: "" } });
+    expect(inspector.queryByLabelText("Plugin Opts")).not.toBeInTheDocument();
+  });
+
   it("renders packet_encoding select for vmess and vless outbounds", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
