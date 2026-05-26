@@ -337,6 +337,40 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("links SSM API to managed Shadowsocks inbounds and flips managed flag in lock-step", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-ssm-api");
+    });
+    render(<App />);
+
+    // SSM API scaffold auto-creates a shadowsocks inbound + servers mapping
+    const initialStore = useProjectStore.getState();
+    const initialSsm = initialStore.config.services?.find((service) => service.type === "ssm-api");
+    const managedTag = Object.values((initialSsm?.servers ?? {}) as Record<string, string>)[0];
+    expect(typeof managedTag).toBe("string");
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const checklist = inspector.getByTestId("ssm-managed-checklist");
+    const checkbox = within(checklist).getByLabelText(new RegExp(managedTag!)) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+
+    fireEvent.click(checkbox);
+    let store = useProjectStore.getState();
+    const cleared = store.config.services?.find((service) => service.type === "ssm-api");
+    expect(cleared?.servers ?? {}).toEqual({});
+    const clearedInbound = store.config.inbounds?.find((inbound) => inbound.tag === managedTag);
+    expect(clearedInbound?.managed).toBeUndefined();
+
+    fireEvent.click(checkbox);
+    store = useProjectStore.getState();
+    const restored = store.config.services?.find((service) => service.type === "ssm-api");
+    expect(Object.values((restored?.servers ?? {}) as Record<string, string>)).toContain(managedTag);
+    const restoredInbound = store.config.inbounds?.find((inbound) => inbound.tag === managedTag);
+    expect(restoredInbound?.managed).toBe(true);
+  });
+
   it("renders DERP verify_client_endpoint as a multiselect over tailscale endpoint tags", () => {
     useProjectStore.getState().loadMinimal();
 

@@ -2344,20 +2344,57 @@ export function Inspector() {
         <>
           {entityType === "ssm-api" ? (
             <>
-              <label className="field">
-                <span>Managed Shadowsocks Inbound</span>
-                <select
-                  value={String(Object.values(objectField(entity.servers))[0] ?? "")}
-                  onChange={(event) => updateField(ref, "servers", event.target.value ? { "/": event.target.value } : {})}
-                >
-                  <option value="">None</option>
-                  {inboundTags(config, "shadowsocks").map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {(() => {
+                const allShadowsocksInbounds = (config.inbounds ?? []).filter(
+                  (inbound) => inbound.type === "shadowsocks" && typeof inbound.tag === "string",
+                );
+                const managedTags = allShadowsocksInbounds
+                  .filter((inbound) => Boolean(inbound.managed))
+                  .map((inbound) => inbound.tag as string);
+                const serversMap = objectField(entity.servers);
+                const selectedTags = new Set(
+                  Object.values(serversMap).filter((value): value is string => typeof value === "string"),
+                );
+                const toggleManaged = (tag: string) => {
+                  const wasSelected = selectedTags.has(tag);
+                  const nextMap: Record<string, unknown> = { ...serversMap };
+                  for (const key of Object.keys(nextMap)) {
+                    if (nextMap[key] === tag) delete nextMap[key];
+                  }
+                  if (!wasSelected) {
+                    const path = Object.keys(nextMap).length === 0 ? "/" : `/${tag}`;
+                    nextMap[path] = tag;
+                  }
+                  updateField(ref, "servers", nextMap);
+                  updateField({ kind: "inbound", tag }, "managed", !wasSelected || undefined);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="ssm-managed-checklist">
+                    <legend>Managed Shadowsocks Inbounds</legend>
+                    {allShadowsocksInbounds.length === 0 ? (
+                      <p className="field__hint">Add a Shadowsocks inbound first to manage it via SSM API.</p>
+                    ) : null}
+                    {allShadowsocksInbounds.map((inbound) => {
+                      const tag = inbound.tag as string;
+                      const isSelected = selectedTags.has(tag);
+                      const isManaged = managedTags.includes(tag);
+                      return (
+                        <label key={tag} className="toggle-row toggle-row--inline">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleManaged(tag)}
+                          />
+                          <span>
+                            {tag}
+                            {isSelected && !isManaged ? <em> (sets managed=true)</em> : null}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </fieldset>
+                );
+              })()}
               <label className="field">
                 <span>Cache Path</span>
                 <input
@@ -2365,7 +2402,7 @@ export function Inspector() {
                   onChange={(event) => updateField(ref, "cache_path", event.target.value || undefined)}
                 />
               </label>
-              <JsonField label="Endpoint Mapping JSON" value={entity.servers ?? {}} onChange={(value) => updateField(ref, "servers", value)} />
+              <JsonField label="Endpoint Mapping JSON (advanced multi-path)" value={entity.servers ?? {}} onChange={(value) => updateField(ref, "servers", value)} />
             </>
           ) : null}
 
