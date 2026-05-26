@@ -2476,28 +2476,104 @@ export function Inspector() {
                 <input
                   value={toList(entity.address)}
                   onChange={(event) => updateField(ref, "address", fromList(event.target.value))}
+                  placeholder="10.0.0.2/32, fd00::2/128"
                 />
               </label>
-              <label className="field">
-                <span>Private Key</span>
-                <input
-                  value={String(entity.private_key ?? "")}
-                  onChange={(event) => updateField(ref, "private_key", event.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Peers JSON</span>
-                <textarea
-                  value={JSON.stringify(entity.peers ?? [], null, 2)}
-                  onChange={(event) => {
-                    try {
-                      updateField(ref, "peers", JSON.parse(event.target.value));
-                    } catch {
-                      updateField(ref, "peers", event.target.value);
-                    }
-                  }}
-                />
-              </label>
+              <SensitiveTextField
+                label="Private Key"
+                value={String(entity.private_key ?? "")}
+                onChange={(next) => updateField(ref, "private_key", next)}
+              />
+              {(() => {
+                const peers = Array.isArray(entity.peers) ? (entity.peers as Record<string, unknown>[]) : [];
+                const writePeers = (next: Record<string, unknown>[]) => {
+                  updateField(ref, "peers", next.length ? next : undefined);
+                };
+                const patchPeer = (index: number, patch: Record<string, unknown>) => {
+                  writePeers(peers.map((peer, i) => (i === index ? { ...peer, ...patch } : peer)));
+                };
+                const removePeer = (index: number) => writePeers(peers.filter((_, i) => i !== index));
+                const addPeer = () =>
+                  writePeers([
+                    ...peers,
+                    {
+                      server: "192.0.2.1",
+                      server_port: 51820,
+                      public_key: "",
+                      allowed_ips: ["0.0.0.0/0"],
+                    } as Record<string, unknown>,
+                  ]);
+                return (
+                  <fieldset className="field field--checklist" data-testid="wireguard-peers-editor">
+                    <legend>Peers</legend>
+                    {peers.length === 0 ? (
+                      <p className="field__hint">No peers configured. Click Add to create one.</p>
+                    ) : null}
+                    {peers.map((peer, index) => (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>Server</span>
+                          <input
+                            value={String(peer.server ?? "")}
+                            onChange={(event) => patchPeer(index, { server: event.target.value })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Port</span>
+                          <input
+                            type="number"
+                            value={Number(peer.server_port ?? 51820)}
+                            onChange={(event) => patchPeer(index, { server_port: Number(event.target.value) })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Public Key</span>
+                          <input
+                            value={String(peer.public_key ?? "")}
+                            onChange={(event) => patchPeer(index, { public_key: event.target.value })}
+                          />
+                        </label>
+                        <SensitiveTextField
+                          label="Pre-Shared Key"
+                          value={String(peer.pre_shared_key ?? "")}
+                          onChange={(next) => patchPeer(index, { pre_shared_key: next || undefined })}
+                        />
+                        <label className="field">
+                          <span>Allowed IPs</span>
+                          <input
+                            value={Array.isArray(peer.allowed_ips) ? (peer.allowed_ips as string[]).join(", ") : ""}
+                            onChange={(event) => patchPeer(index, { allowed_ips: fromList(event.target.value) })}
+                            placeholder="0.0.0.0/0, ::/0"
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Persistent Keepalive</span>
+                          <input
+                            value={String(peer.persistent_keepalive_interval ?? "")}
+                            onChange={(event) =>
+                              patchPeer(index, {
+                                persistent_keepalive_interval: event.target.value || undefined,
+                              })
+                            }
+                            placeholder="25s"
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          onClick={() => removePeer(index)}
+                          aria-label={`Remove peer ${index + 1}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="palette-action" onClick={addPeer}>
+                      Add peer
+                    </button>
+                  </fieldset>
+                );
+              })()}
             </>
           ) : null}
           {entityType === "tailscale" ? (

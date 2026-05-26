@@ -337,6 +337,34 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders WireGuard peers as a structured editor with sensitive masking", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("endpoint-wireguard");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const privateKey = inspector.getByLabelText("Private Key") as HTMLInputElement;
+    expect(privateKey.type).toBe("password");
+
+    // Scaffold seeds one peer; editor surfaces it as a structured row.
+    const initialEditor = inspector.getByTestId("wireguard-peers-editor");
+    expect((within(initialEditor).getByLabelText("Public Key") as HTMLInputElement).value).toMatch(/^tM4/);
+
+    fireEvent.change(within(initialEditor).getByLabelText("Public Key"), { target: { value: "abc123" } });
+    let updated = useProjectStore.getState().config.endpoints?.find((e) => e.type === "wireguard");
+    expect(((updated as Record<string, unknown>).peers as Record<string, unknown>[])[0]).toMatchObject({ public_key: "abc123" });
+
+    fireEvent.click(within(initialEditor).getByLabelText("Remove peer 1"));
+    updated = useProjectStore.getState().config.endpoints?.find((e) => e.type === "wireguard");
+    expect((updated as Record<string, unknown>).peers).toBeUndefined();
+
+    fireEvent.click(within(inspector.getByTestId("wireguard-peers-editor")).getByRole("button", { name: /Add peer/ }));
+    updated = useProjectStore.getState().config.endpoints?.find((e) => e.type === "wireguard");
+    expect(((updated as Record<string, unknown>).peers as Record<string, unknown>[])[0]).toMatchObject({ server: "192.0.2.1" });
+  });
+
   it("provides a structured predefined hosts editor for dns-server hosts type", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
