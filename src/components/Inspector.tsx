@@ -68,6 +68,7 @@ function fromList(value: string): string[] {
     .filter(Boolean);
 }
 
+const inboundHandledFields = new Set(["tag", "type", "address", "auto_route"]);
 const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default"]);
 
 function labelForField(field: string) {
@@ -77,9 +78,9 @@ function labelForField(field: string) {
     .join(" ");
 }
 
-function editableScalarFields(entity: InspectorEntity) {
+function editableScalarFields(entity: InspectorEntity, handledFields: Set<string>) {
   return Object.entries(entity).filter(([field, value]) => {
-    if (outboundHandledFields.has(field)) return false;
+    if (handledFields.has(field)) return false;
     const valueType = typeof value;
     return valueType === "string" || valueType === "number" || valueType === "boolean";
   });
@@ -236,6 +237,29 @@ export function Inspector() {
             />
             <span>Auto route</span>
           </label>
+          {editableScalarFields(entity, inboundHandledFields).map(([field, value]) =>
+            typeof value === "boolean" ? (
+              <label className="toggle-row" key={field}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(event) => updateField(ref, field, event.target.checked)}
+                />
+                <span>{labelForField(field)}</span>
+              </label>
+            ) : (
+              <label className="field" key={field}>
+                <span>{labelForField(field)}</span>
+                <input
+                  type={typeof value === "number" ? "number" : "text"}
+                  value={String(value)}
+                  onChange={(event) =>
+                    updateField(ref, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
+                  }
+                />
+              </label>
+            ),
+          )}
         </>
       ) : null}
 
@@ -278,7 +302,7 @@ export function Inspector() {
               />
             </label>
           ) : null}
-          {editableScalarFields(entity).map(([field, value]) =>
+          {editableScalarFields(entity, outboundHandledFields).map(([field, value]) =>
             typeof value === "boolean" ? (
               <label className="toggle-row" key={field}>
                 <input

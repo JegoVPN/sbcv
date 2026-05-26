@@ -1,4 +1,5 @@
 import { getUniqueTag } from "./indexes";
+import { preferredInboundTag } from "./protocols";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -44,25 +45,180 @@ export function ensureRoute(config: SingBoxConfig): SingBoxConfig {
   return next;
 }
 
-export function addInbound(config: SingBoxConfig, type: "tun" | "mixed" = "tun"): SingBoxConfig {
+export function addInbound(config: SingBoxConfig, type = "tun", preferredTag?: string): SingBoxConfig {
   const next = cloneConfig(config);
-  const tag = getUniqueTag(next, type === "tun" ? "tun-in" : "mixed-in");
-  const inbound: InboundConfig =
-    type === "tun"
-      ? {
-          type: "tun",
-          tag,
-          address: ["172.19.0.1/30"],
-          auto_route: true,
-        }
-      : {
-          type: "mixed",
-          tag,
-          listen: "127.0.0.1",
-          listen_port: 2080,
-        };
-  next.inbounds = [...(next.inbounds ?? []), inbound];
+  const tag = getUniqueTag(next, preferredTag ?? preferredInboundTag(type));
+  next.inbounds = [...(next.inbounds ?? []), createInbound(type, tag)];
   return next;
+}
+
+export function createInbound(type: string, tag: string): InboundConfig {
+  if (type === "tun") {
+    return {
+      type,
+      tag,
+      address: ["172.19.0.1/30"],
+      auto_route: true,
+    };
+  }
+  if (type === "mixed") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      set_system_proxy: false,
+    };
+  }
+  if (type === "direct") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2081,
+      network: "tcp",
+    };
+  }
+  if (type === "socks") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ username: "user", password: "change-me" }],
+    };
+  }
+  if (type === "http") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ username: "user", password: "change-me" }],
+      set_system_proxy: false,
+    };
+  }
+  if (type === "shadowsocks") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      method: "aes-128-gcm",
+      password: "change-me",
+    };
+  }
+  if (type === "vmess") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ name: "user", uuid: "bf000d23-0752-40b4-affe-68f7707a9661", alterId: 0 }],
+    };
+  }
+  if (type === "trojan") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ name: "user", password: "change-me" }],
+    };
+  }
+  if (type === "naive") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      network: "tcp",
+      users: [{ username: "user", password: "change-me" }],
+    };
+  }
+  if (type === "hysteria") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      up_mbps: 100,
+      down_mbps: 100,
+      users: [{ name: "user", auth_str: "change-me" }],
+    };
+  }
+  if (type === "shadowtls") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      version: 3,
+      password: "change-me",
+      users: [{ name: "user", password: "change-me" }],
+    };
+  }
+  if (type === "vless") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ name: "user", uuid: "bf000d23-0752-40b4-affe-68f7707a9661" }],
+    };
+  }
+  if (type === "tuic") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ name: "user", uuid: "059032a9-7d40-4a96-9bb1-36823d848068", password: "change-me" }],
+      congestion_control: "cubic",
+      auth_timeout: "3s",
+      zero_rtt_handshake: false,
+      heartbeat: "10s",
+    };
+  }
+  if (type === "hysteria2") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      up_mbps: 100,
+      down_mbps: 100,
+      users: [{ name: "user", password: "change-me" }],
+      ignore_client_bandwidth: false,
+    };
+  }
+  if (type === "anytls") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      users: [{ name: "user", password: "change-me" }],
+    };
+  }
+  if (type === "redirect") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+    };
+  }
+  if (type === "tproxy") {
+    return {
+      type,
+      tag,
+      listen: "127.0.0.1",
+      listen_port: 2080,
+      network: "tcp",
+    };
+  }
+  return { type, tag };
 }
 
 export function addOutbound(config: SingBoxConfig, type: string, preferredTag?: string): SingBoxConfig {
