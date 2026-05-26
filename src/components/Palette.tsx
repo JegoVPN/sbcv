@@ -22,6 +22,7 @@ import {
   Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { TEMPLATE_PRESETS, TEMPLATE_PRESET_IDS } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
 import { useProjectStore } from "../state/useProjectStore";
 
@@ -45,18 +46,29 @@ function docs(path = "") {
   return `https://sing-box.sagernet.org/configuration/${path}`;
 }
 
+const templatePresetIdSet = new Set<string>(TEMPLATE_PRESET_IDS);
+
 function isTemplatePresetId(kind: string): kind is TemplatePresetId {
-  return kind === "template-1.12" || kind === "template-1.13" || kind === "template-1.14";
+  return templatePresetIdSet.has(kind);
+}
+
+function templateIcon(id: TemplatePresetId): LucideIcon {
+  if (id === "template-1.12") return RadioTower;
+  if (id === "template-1.14") return Globe2;
+  if (id.includes("bypass")) return GitBranch;
+  return Blocks;
 }
 
 const groups: PaletteGroup[] = [
   {
     title: "Templates",
-    items: [
-      { label: "1.13 Stable TUN Split", kind: "template-1.13", icon: Blocks, docsUrl: docs(), ready: true },
-      { label: "1.12 Legacy Mixed Split", kind: "template-1.12", icon: RadioTower, docsUrl: docs(), ready: true },
-      { label: "1.14 Testing HTTP Client", kind: "template-1.14", icon: Globe2, docsUrl: docs(), ready: true },
-    ],
+    items: TEMPLATE_PRESETS.map((preset) => ({
+      label: preset.label,
+      kind: preset.id,
+      icon: templateIcon(preset.id),
+      docsUrl: preset.docsUrl ?? docs(),
+      ready: true,
+    })),
   },
   {
     title: "Log",
@@ -109,8 +121,8 @@ const groups: PaletteGroup[] = [
   {
     title: "Endpoints",
     items: [
-      { label: "WireGuard", kind: "endpoint-wireguard", icon: Waypoints, docsUrl: docs("endpoint/wireguard/") },
-      { label: "Tailscale", kind: "endpoint-tailscale", icon: Waypoints, docsUrl: docs("endpoint/tailscale/") },
+      { label: "WireGuard", kind: "endpoint-wireguard", icon: Waypoints, docsUrl: docs("endpoint/wireguard/"), status: "setup" },
+      { label: "Tailscale", kind: "endpoint-tailscale", icon: Waypoints, docsUrl: docs("endpoint/tailscale/"), status: "setup" },
     ],
   },
   {
@@ -179,12 +191,12 @@ const groups: PaletteGroup[] = [
   {
     title: "Services",
     items: [
-      { label: "DERP", kind: "service-derp", icon: Server, docsUrl: docs("service/derp/") },
-      { label: "Resolved", kind: "service-resolved", icon: Server, docsUrl: docs("service/resolved/") },
-      { label: "SSM API", kind: "service-ssm-api", icon: Server, docsUrl: docs("service/ssm-api/") },
-      { label: "CCM", kind: "service-ccm", icon: Server, docsUrl: docs("service/ccm/") },
-      { label: "OCM", kind: "service-ocm", icon: Server, docsUrl: docs("service/ocm/") },
-      { label: "Hysteria Realm", kind: "service-hysteria-realm", icon: Plug, docsUrl: docs("service/hysteria-realm/") },
+      { label: "DERP", kind: "service-derp", icon: Server, docsUrl: docs("service/derp/"), status: "setup" },
+      { label: "Resolved", kind: "service-resolved", icon: Server, docsUrl: docs("service/resolved/"), status: "setup" },
+      { label: "SSM API", kind: "service-ssm-api", icon: Server, docsUrl: docs("service/ssm-api/"), status: "setup" },
+      { label: "CCM", kind: "service-ccm", icon: Server, docsUrl: docs("service/ccm/"), status: "setup" },
+      { label: "OCM", kind: "service-ocm", icon: Server, docsUrl: docs("service/ocm/"), status: "setup" },
+      { label: "Hysteria Realm", kind: "service-hysteria-realm", icon: Plug, docsUrl: docs("service/hysteria-realm/"), status: "setup" },
     ],
   },
   {
@@ -234,7 +246,8 @@ const statusLabel: Record<PaletteStatus, string> = {
   pending: "Pending",
 };
 
-function itemStatus(item: PaletteItem): PaletteStatus {
+function itemStatus(item: PaletteItem, channel: string): PaletteStatus {
+  if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
   if (item.status) return item.status;
   if (item.ready || isTemplatePresetId(item.kind)) return "add";
   return "docs";
@@ -258,9 +271,11 @@ export function Palette() {
   const [query, setQuery] = useState("");
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const [activeGroupTitle, setActiveGroupTitle] = useState("Templates");
+  const [activeGroupTitle, setActiveGroupTitle] = useState<string | null>(null);
+  const [loadedTemplateId, setLoadedTemplateId] = useState<TemplatePresetId | null>(null);
   const loadTemplatePreset = useProjectStore((state) => state.loadTemplatePreset);
   const createFromPalette = useProjectStore((state) => state.createFromPalette);
+  const channel = useProjectStore((state) => state.channel);
   const filteredGroups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return [];
@@ -273,7 +288,7 @@ export function Palette() {
       }))
       .filter((group) => group.items.length > 0);
   }, [libraryGroups, query]);
-  const activeGroup = libraryGroups.find((group) => group.title === activeGroupTitle) ?? libraryGroups[0];
+  const activeGroup = activeGroupTitle ? libraryGroups.find((group) => group.title === activeGroupTitle) : null;
   const displayedGroups = query.trim() ? filteredGroups : libraryOpen && activeGroup ? [activeGroup] : [];
 
   return (
@@ -301,6 +316,7 @@ export function Palette() {
           onClick={() => {
             setTemplatesOpen((open) => !open);
             setLibraryOpen(false);
+            setActiveGroupTitle(null);
           }}
         >
           <ChevronRight size={14} />
@@ -313,6 +329,7 @@ export function Palette() {
           onClick={() => {
             setLibraryOpen((open) => !open);
             setTemplatesOpen(false);
+            setActiveGroupTitle(null);
           }}
         >
           <ChevronRight size={14} />
@@ -325,9 +342,11 @@ export function Palette() {
           group={templateGroup}
           loadTemplatePreset={(id) => {
             loadTemplatePreset(id);
-            setTemplatesOpen(false);
+            setLoadedTemplateId(id);
           }}
           createFromPalette={createFromPalette}
+          loadedTemplateId={loadedTemplateId}
+          channel={channel}
         />
       ) : null}
       {!query.trim() && libraryOpen ? (
@@ -337,7 +356,7 @@ export function Palette() {
               key={group.title}
               type="button"
               className={group.title === activeGroupTitle ? "is-active" : ""}
-              onClick={() => setActiveGroupTitle(group.title)}
+              onClick={() => setActiveGroupTitle((current) => (current === group.title ? null : group.title))}
             >
               <ChevronRight size={14} />
               <span>{group.title}</span>
@@ -351,10 +370,9 @@ export function Palette() {
           key={group.title}
           group={group}
           loadTemplatePreset={loadTemplatePreset}
-          createFromPalette={(kind) => {
-            createFromPalette(kind);
-            if (!query.trim()) setLibraryOpen(false);
-          }}
+          createFromPalette={createFromPalette}
+          loadedTemplateId={loadedTemplateId}
+          channel={channel}
         />
       ))}
     </aside>
@@ -365,26 +383,38 @@ function PaletteSection({
   group,
   loadTemplatePreset,
   createFromPalette,
+  loadedTemplateId,
+  channel,
 }: {
   group: PaletteGroup;
   loadTemplatePreset: (id: TemplatePresetId) => void;
   createFromPalette: (kind: string) => void;
+  loadedTemplateId: TemplatePresetId | null;
+  channel: string;
 }) {
+  const isTemplateGroup = group.title === "Templates";
   return (
-    <section className="palette-group" key={group.title}>
+    <section className={`palette-group ${isTemplateGroup ? "palette-group--templates" : ""}`} key={group.title}>
       <h2>{group.title}</h2>
       <div className="palette-list">
         {group.items.map((item) => {
           const Icon = item.icon;
-          const status = itemStatus(item);
+          const status = itemStatus(item, channel);
           const actionable = canActivate(item, status);
+          const templateAdded = isTemplateGroup && isTemplatePresetId(item.kind) && item.kind === loadedTemplateId;
           return (
             <div className="palette-entry" key={item.kind}>
               <button
                 type="button"
-                className={`palette-add palette-add--${status}`}
+                className={`palette-add palette-add--${status} ${templateAdded ? "is-added" : ""}`}
                 disabled={!actionable}
-                aria-label={actionable ? `${statusLabel[status]} ${item.label}` : `${item.label}: ${statusLabel[status]}`}
+                aria-label={
+                  templateAdded
+                    ? `Added ${item.label}`
+                    : actionable
+                      ? `${statusLabel[status]} ${item.label}`
+                      : `${item.label}: ${statusLabel[status]}`
+                }
                 title={statusTitle(status, item.label)}
                 onClick={() => {
                   if (isTemplatePresetId(item.kind)) loadTemplatePreset(item.kind);
@@ -393,11 +423,13 @@ function PaletteSection({
               >
                 <Icon size={16} />
                 <span>{item.label}</span>
-                <small>{statusLabel[status]}</small>
+                <small>{templateAdded ? "Added" : statusLabel[status]}</small>
               </button>
-              <a className="palette-doc-link" href={item.docsUrl} target="_blank" rel="noreferrer">
-                Docs
-              </a>
+              {isTemplateGroup ? null : (
+                <a className="palette-doc-link" href={item.docsUrl} target="_blank" rel="noreferrer">
+                  Docs
+                </a>
+              )}
             </div>
           );
         })}

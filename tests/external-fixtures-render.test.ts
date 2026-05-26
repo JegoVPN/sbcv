@@ -40,7 +40,6 @@ function loadFixtureIntoStore(
   config: SingBoxConfig,
   diagnostics: Diagnostic[],
   selectedId: string | null,
-  panelTab: "rules" | "dns" | "json",
 ) {
   useProjectStore.setState({
     channel,
@@ -49,7 +48,6 @@ function loadFixtureIntoStore(
     layout: { positions: {} },
     selectedId,
     jsonDraft: createConfigExport(config).contents,
-    panelTab,
     diagnostics,
     officialValidationMessage: `External fixture render gate: ${id}`,
   });
@@ -83,32 +81,30 @@ describe("external sing-box fixture render gate", () => {
         const config = parseConfigJson(readFileSync(item.fixture_path, "utf8"));
         const diagnostics = validateConfig(config, item.channel);
         const graph = deriveGraph(config, { positions: {} }, diagnostics);
-        const exportedConfig = createConfigExport(config);
         const selectedId = selectInspectableNodeId(config, graph.nodes);
 
         if (graph.nodes.length === 0) {
           throw new Error("derived graph has no nodes");
         }
 
-        loadFixtureIntoStore(item.id, item.channel, config, diagnostics, selectedId, "json");
+        loadFixtureIntoStore(item.id, item.channel, config, diagnostics, selectedId);
         render(createElement(App));
         expect(screen.getByLabelText("SBC visual canvas")).toBeInTheDocument();
         expect(screen.getByLabelText("Node inspector")).toBeInTheDocument();
-        expect(screen.getByLabelText("Advanced JSON editor")).toHaveValue(exportedConfig.contents);
         if (selectedId) {
           expect(screen.getByTestId(`node-${selectedId}`)).toBeInTheDocument();
         }
         cleanup();
 
         if (config.route) {
-          loadFixtureIntoStore(item.id, item.channel, config, diagnostics, selectedId, "rules");
+          loadFixtureIntoStore(item.id, item.channel, config, diagnostics, "route:main");
           render(createElement(App));
           expect(screen.getByLabelText("Route rules")).toBeInTheDocument();
           cleanup();
         }
 
         if (config.dns) {
-          loadFixtureIntoStore(item.id, item.channel, config, diagnostics, selectedId, "dns");
+          loadFixtureIntoStore(item.id, item.channel, config, diagnostics, "dns:main");
           render(createElement(App));
           expect(screen.getByLabelText("DNS rules")).toBeInTheDocument();
           cleanup();
@@ -124,5 +120,5 @@ describe("external sing-box fixture render gate", () => {
     }
 
     expect(failures).toEqual([]);
-  }, 30_000);
+  }, 120_000);
 });

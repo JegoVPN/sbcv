@@ -1,8 +1,8 @@
-import { Braces, FileCheck2, ListChecks, ServerCog } from "lucide-react";
+import { Braces, FileCheck2, ListChecks, ServerCog, X } from "lucide-react";
 import { useProjectStore } from "../state/useProjectStore";
 import { DnsRulesTable, RouteRulesTable } from "./RuleTables";
 
-export function InspectorPanels() {
+export function InspectorPanels({ onClose }: { onClose?: () => void }) {
   const panelTab = useProjectStore((state) => state.panelTab);
   const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const jsonDraft = useProjectStore((state) => state.jsonDraft);
@@ -14,6 +14,14 @@ export function InspectorPanels() {
 
   return (
     <section className="inspector-panels" aria-label="Rules, JSON, and diagnostics">
+      {onClose ? (
+        <div className="inspector-panels__header">
+          <span>Config editor</span>
+          <button type="button" className="node-icon-button" aria-label="Close config editor" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+      ) : null}
       <nav className="panel-tabs" aria-label="Inspector editor panels">
         <button
           type="button"

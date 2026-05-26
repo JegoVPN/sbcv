@@ -6,7 +6,6 @@ const toolsDir = ".tools";
 const binDir = join(toolsDir, "bin");
 
 const binaries = [
-  { command: "sing-box-1.11", version: "1.11.15" },
   { command: "sing-box-1.12", version: "1.12.25" },
   { command: "sing-box-stable", version: "1.13.12" },
   { command: "sing-box-testing", version: "1.14.0-alpha.25" },
@@ -60,4 +59,3 @@ function installBinary({ command, version }) {
 
 mkdirSync(binDir, { recursive: true });
 for (const binary of binaries) installBinary(binary);
-

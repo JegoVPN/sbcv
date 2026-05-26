@@ -16,31 +16,38 @@ const cases: PortCase[] = [
   { kind: "dns", type: "dns", inputKeys: ["inbound-query"], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
   { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound"] },
+  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound", "endpoint"] },
+  { kind: "endpoint", type: "wireguard", inputKeys: [], outputKeys: ["dial-detour"] },
+  { kind: "endpoint", type: "tailscale", inputKeys: ["dns-server", "derp-service"], outputKeys: ["dial-detour"] },
   { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
   {
     kind: "outbound",
     type: "direct",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
-    outputKeys: [],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
+    outputKeys: ["dial-detour"],
   },
   {
     kind: "outbound",
     type: "socks",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
     outputKeys: ["dial-detour"],
   },
   {
     kind: "outbound",
     type: "selector",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
     outputKeys: ["outbound-member"],
   },
   {
     kind: "outbound",
     type: "urltest",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
     outputKeys: ["outbound-member"],
   },
+  { kind: "service", type: "ssm-api", inputKeys: ["managed-inbound"], outputKeys: [] },
+  { kind: "service", type: "derp", inputKeys: [], outputKeys: ["verify-client-endpoint"] },
+  { kind: "service", type: "ccm", inputKeys: [], outputKeys: ["detour"] },
+  { kind: "service", type: "resolved", inputKeys: [], outputKeys: [] },
 ];
 
 describe("SBC node port registry", () => {

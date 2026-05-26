@@ -18,6 +18,7 @@ import {
   Shield,
   Shuffle,
   Trash2,
+  Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
@@ -31,6 +32,8 @@ const iconMap = {
   dns: Globe2,
   "dns-server": Server,
   "dns-rule": GitBranch,
+  endpoint: Waypoints,
+  service: Server,
   outbound: Network,
   "rule-set": Layers3,
   settings: Braces,
@@ -57,7 +60,7 @@ export function getNodeIcon(kind: SbcNodeKind, type: string): LucideIcon {
 }
 
 function supportsDialDetour(type: string) {
-  return !["direct", "block", "selector", "urltest", "dns"].includes(type);
+  return !["block", "selector", "urltest", "dns"].includes(type);
 }
 
 export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
@@ -83,10 +86,20 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
       ];
     }
     if (kind === "dns-server") {
-      return [
+      const ports: PortSpec[] = [
         { key: "dns", label: "DNS final server", nodeKind: "dns", icon: Globe2 },
         { key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch },
       ];
+      return ports;
+    }
+    if (kind === "endpoint") {
+      if (type === "tailscale") {
+        return [
+          { key: "dns-server", label: "Upstream Tailscale DNS server", nodeKind: "dns-server", nodeType: "tailscale", icon: Server },
+          { key: "derp-service", label: "Upstream DERP service", nodeKind: "service", nodeType: "derp", icon: Server },
+        ];
+      }
+      return [];
     }
     if (kind === "outbound") {
       const routingInputs: PortSpec[] = [
@@ -99,18 +112,35 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
         { key: "urltest-group", label: "Upstream URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
         { key: "dns-detour", label: "Upstream DNS detour target", nodeKind: "dns-server", icon: Server },
         { key: "detour-target", label: "Upstream Dial detour target", nodeKind: "outbound", icon: Network },
+        { key: "service-detour", label: "Upstream service detour target", nodeKind: "service", icon: Server },
         { key: "rule-set-download", label: "Upstream Rule Set download detour", nodeKind: "rule-set", icon: Layers3 },
       ];
+    }
+    if (kind === "service") {
+      if (type === "ssm-api") {
+        return [
+          {
+            key: "managed-inbound",
+            label: "Managed Shadowsocks inbound",
+            nodeKind: "inbound",
+            nodeType: "shadowsocks",
+            icon: RadioTower,
+          },
+        ];
+      }
+      return [];
     }
     return [];
   }
 
   if (kind === "inbound") {
-    return [
+    const ports: PortSpec[] = [
       { key: "route", label: "Route hub", nodeKind: "route", icon: Route },
       { key: "route-rule-match", label: "Route rule matcher", nodeKind: "route-rule", icon: GitBranch },
       { key: "dns-rule-match", label: "DNS rule matcher", nodeKind: "dns-rule", icon: GitBranch },
     ];
+    if (type === "shadowsocks") ports.push({ key: "service", label: "SSM API service", nodeKind: "service", nodeType: "ssm-api", icon: Server });
+    return ports;
   }
   if (kind === "route") {
     return [
@@ -137,12 +167,33 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
     ];
   }
   if (kind === "rule-set") return [{ key: "download-detour", label: "Download detour", nodeKind: "outbound", icon: Network }];
-  if (kind === "dns-server") return [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
+  if (kind === "dns-server") {
+    const ports: PortSpec[] = [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
+    if (type === "tailscale") ports.push({ key: "endpoint", label: "Tailscale endpoint", nodeKind: "endpoint", nodeType: "tailscale", icon: Waypoints });
+    return ports;
+  }
+  if (kind === "endpoint") return [{ key: "dial-detour", label: "Dial detour outbound", nodeKind: "outbound", icon: Network }];
   if (kind === "outbound" && (type === "selector" || type === "urltest")) {
     return [{ key: "outbound-member", label: "Downstream candidate", nodeKind: "outbound", icon: Network }];
   }
   if (kind === "outbound" && supportsDialDetour(type)) {
     return [{ key: "dial-detour", label: "Downstream dial detour", nodeKind: "outbound", icon: Network }];
+  }
+  if (kind === "service") {
+    const ports: PortSpec[] = [];
+    if (type === "derp") {
+      ports.push({
+        key: "verify-client-endpoint",
+        label: "Verify client endpoint",
+        nodeKind: "endpoint",
+        nodeType: "tailscale",
+        icon: Waypoints,
+      });
+    }
+    if (type === "ccm" || type === "ocm") {
+      ports.push({ key: "detour", label: "API detour outbound", nodeKind: "outbound", icon: Network });
+    }
+    return ports;
   }
   return [];
 }
@@ -188,6 +239,17 @@ function isPortConnected(
       return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
     }
     if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
+    if (kind === "endpoint" && portKey === "dns-server") {
+      return config.dns?.servers?.some((server) => server.type === "tailscale" && server.endpoint === value) ?? false;
+    }
+    if (kind === "endpoint" && portKey === "derp-service") {
+      return (
+        config.services?.some((service) => {
+          const refs = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
+          return service.type === "derp" && refs.includes(value);
+        }) ?? false
+      );
+    }
     if (kind === "outbound" && portKey === "route") return config.route?.final === value;
     if (kind === "outbound" && portKey === "route-rule") {
       return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
@@ -202,10 +264,20 @@ function isPortConnected(
       return config.dns?.servers?.some((server) => server.detour === value) ?? false;
     }
     if (kind === "outbound" && portKey === "detour-target") {
-      return config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ?? false;
+      return Boolean(
+        config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
+          config.endpoints?.some((endpoint) => endpoint.detour === value),
+      );
+    }
+    if (kind === "outbound" && portKey === "service-detour") {
+      return config.services?.some((service) => service.detour === value) ?? false;
     }
     if (kind === "outbound" && portKey === "rule-set-download") {
       return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
+    }
+    if (kind === "service" && portKey === "managed-inbound") {
+      const service = config.services?.find((item) => item.tag === value);
+      return Boolean(service?.servers && Object.values(service.servers).length > 0);
     }
     if (kind === "rule-set" && portKey === "route-rule") {
       return config.route?.rules?.some((rule) => {
@@ -228,6 +300,16 @@ function isPortConnected(
   }
   if (kind === "inbound" && portKey === "dns-rule-match") {
     return config.dns?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
+  }
+  if (kind === "inbound" && portKey === "service") {
+    return (
+      config.services?.some(
+        (service) =>
+          service.type === "ssm-api" &&
+          service.servers &&
+          Object.values(service.servers).includes(value),
+      ) ?? false
+    );
   }
   if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
   if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
@@ -255,11 +337,24 @@ function isPortConnected(
   if (kind === "dns-server" && portKey === "outbound") {
     return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
   }
+  if (kind === "dns-server" && portKey === "endpoint") {
+    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.endpoint);
+  }
+  if (kind === "endpoint" && portKey === "dial-detour") {
+    return Boolean(config.endpoints?.find((endpoint) => endpoint.tag === value)?.detour);
+  }
   if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
     return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
   }
   if (kind === "outbound" && portKey === "dial-detour") {
     return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.detour);
+  }
+  if (kind === "service" && portKey === "verify-client-endpoint") {
+    const service = config.services?.find((item) => item.tag === value);
+    return stringRefs(service?.verify_client_endpoint as string | string[] | undefined).length > 0;
+  }
+  if (kind === "service" && portKey === "detour") {
+    return Boolean(config.services?.find((service) => service.tag === value)?.detour);
   }
   return false;
 }
@@ -267,7 +362,6 @@ function isPortConnected(
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const config = useProjectStore((state) => state.config);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
-  const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const createCompatible = useProjectStore((state) => state.createCompatible);
   const togglePortConnection = useProjectStore((state) => state.togglePortConnection);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
@@ -318,10 +412,15 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               >
                 <Handle
                   id={port.key}
-                  className="sbc-handle sbc-handle--in"
+                  className="sbc-handle sbc-handle--in sbc-handle--target"
                   type="target"
                   position={Position.Left}
-                  isConnectable={false}
+                />
+                <Handle
+                  id={port.key}
+                  className="sbc-handle sbc-handle--in sbc-handle--source"
+                  type="source"
+                  position={Position.Left}
                 />
                 <port.icon size={15} />
                 <span className="sbc-port__label">{port.label}</span>
@@ -352,10 +451,15 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               >
                 <Handle
                   id={port.key}
-                  className="sbc-handle sbc-handle--out"
+                  className="sbc-handle sbc-handle--out sbc-handle--target"
+                  type="target"
+                  position={Position.Right}
+                />
+                <Handle
+                  id={port.key}
+                  className="sbc-handle sbc-handle--out sbc-handle--source"
                   type="source"
                   position={Position.Right}
-                  isConnectable={false}
                 />
                 <port.icon size={15} />
                 <span className="sbc-port__label">{port.label}</span>
@@ -401,13 +505,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
             onClick={(event) => {
               event.stopPropagation();
               setSelectedId(id);
-              setPanelTab(
-                data.kind === "dns" || data.kind === "dns-rule"
-                  ? "dns"
-                  : data.kind === "route" || data.kind === "route-rule"
-                    ? "rules"
-                    : "json",
-              );
             }}
           >
             <Settings2 size={15} />

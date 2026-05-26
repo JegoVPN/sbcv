@@ -1,169 +1,5 @@
 [
   {
-    "id": "agustyuzu-confexamples-singbox-leastping.json-84cfe9e7",
-    "source_repo": "agustyuzu/confexamples",
-    "source_path": "singbox leastping.json",
-    "source_commit": "b79df149f6a071a488827e7bc1ae982944efa0e9",
-    "fixture_path": "fixtures/external/agustyuzu-confexamples-singbox-leastping.json-84cfe9e7.json",
-    "normalized_hash": "84cfe9e77e8c7730b14c4733424f5710a46f5d94c91092a47cca2fad1c6cdcba",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "agustyuzu-confexamples-xray-leastping.json-720c44e7",
-    "source_repo": "agustyuzu/confexamples",
-    "source_path": "xray leastping.json",
-    "source_commit": "b79df149f6a071a488827e7bc1ae982944efa0e9",
-    "fixture_path": "fixtures/external/agustyuzu-confexamples-xray-leastping.json-720c44e7.json",
-    "normalized_hash": "720c44e791d73b9e42192eab63afdec9bf61a4c99d65c1c64f55d3a736dde8d6",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "aleskxyz-serverless-google-sing-box-v1.10.json-d8e2f2b1",
-    "source_repo": "aleskxyz/serverless",
-    "source_path": "google/sing-box/v1.10.json",
-    "source_commit": "9b6922c6270d1904a1aae001e2d50a6418ea5c52",
-    "fixture_path": "fixtures/external/aleskxyz-serverless-google-sing-box-v1.10.json-d8e2f2b1.json",
-    "normalized_hash": "d8e2f2b15d63070f44114b5eb723a83a09b8cb90b6e1b679e17b0e01e3f8f153",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "aleskxyz-serverless-google-sing-box-v1.11.json-68e74941",
-    "source_repo": "aleskxyz/serverless",
-    "source_path": "google/sing-box/v1.11.json",
-    "source_commit": "9b6922c6270d1904a1aae001e2d50a6418ea5c52",
-    "fixture_path": "fixtures/external/aleskxyz-serverless-google-sing-box-v1.11.json-68e74941.json",
-    "normalized_hash": "68e749416a1cd61f900f398991f840630dac642bc250ad82e63fea4e5fa4fb76",
-    "detected_version": "1.11",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render",
-      "official-check"
-    ],
-    "official_check": "sing-box-1.11",
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
-    }
-  },
-  {
-    "id": "aleskxyz-serverless-google-sing-box-v1.12.json-d13e8855",
-    "source_repo": "aleskxyz/serverless",
-    "source_path": "google/sing-box/v1.12.json",
-    "source_commit": "9b6922c6270d1904a1aae001e2d50a6418ea5c52",
-    "fixture_path": "fixtures/external/aleskxyz-serverless-google-sing-box-v1.12.json-d13e8855.json",
-    "normalized_hash": "d13e8855babb66af413c8fe4dc56fb918cc67993bab27aa441e7a602e6a3849b",
-    "detected_version": "1.12",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render",
-      "official-check"
-    ],
-    "official_check": "sing-box-1.12",
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.12"
-    }
-  },
-  {
-    "id": "aleskxyz-serverless-google-xray-all.json-1f57b5eb",
-    "source_repo": "aleskxyz/serverless",
-    "source_path": "google/xray/all.json",
-    "source_commit": "9b6922c6270d1904a1aae001e2d50a6418ea5c52",
-    "fixture_path": "fixtures/external/aleskxyz-serverless-google-xray-all.json-1f57b5eb.json",
-    "normalized_hash": "1f57b5eb6bf239c505dadfd75aa94bda2d29e990460d80be1ac4c2e98047552a",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
     "id": "baiyian-sing-box-config-template-1.11.x-iphone.json-5deac0c4",
     "source_repo": "baiyian/sing-box-config-template",
     "source_path": "1.11.x/iPhone.json",
@@ -181,16 +17,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -211,16 +46,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -241,16 +75,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -271,16 +104,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -301,16 +133,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -331,16 +162,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -361,16 +191,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -391,16 +220,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -421,9 +249,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -451,9 +279,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -481,9 +309,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -511,16 +339,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-stable",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-VR6z7z/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-7qUoDc/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
     }
   },
   {
@@ -541,9 +369,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -571,9 +399,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -601,9 +429,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -631,9 +459,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -661,9 +489,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-testing",
@@ -691,9 +519,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -720,9 +548,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -747,9 +575,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -774,9 +602,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -801,9 +629,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -828,9 +656,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -855,9 +683,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -882,9 +710,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -909,9 +737,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -936,9 +764,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -963,9 +791,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -990,9 +818,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1017,9 +845,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1044,9 +872,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1071,9 +899,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1098,16 +926,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize router: parse rule-set[0]: open geosite-geolocation-!cn.srs: no such file or directory"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -1126,9 +953,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1153,9 +980,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1180,9 +1007,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1207,9 +1034,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1234,9 +1061,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1261,9 +1088,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1288,9 +1115,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1315,9 +1142,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1342,9 +1169,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1369,9 +1196,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1396,9 +1223,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1423,9 +1250,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1450,9 +1277,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1477,9 +1304,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1504,9 +1331,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1531,9 +1358,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1558,9 +1385,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1585,9 +1412,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1612,9 +1439,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1639,9 +1466,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1666,9 +1493,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1693,9 +1520,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -1721,9 +1548,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1748,9 +1575,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1775,9 +1602,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1802,9 +1629,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1829,9 +1656,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1856,9 +1683,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1883,9 +1710,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1910,9 +1737,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1937,9 +1764,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1964,9 +1791,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -1991,9 +1818,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2018,9 +1845,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2047,16 +1874,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2077,16 +1903,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ks74nB/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Hmotl4/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2107,16 +1933,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Qa3p0a/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-RTwOmY/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2137,16 +1963,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-fEEYlN/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-j7Xv0z/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2167,16 +1993,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2197,16 +2022,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-UIODgn/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-zSlL0m/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2227,16 +2052,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-gOdYy5/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-7i1nnt/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2257,16 +2082,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-REFWpp/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-2ChhvD/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2287,16 +2112,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-HNO3Q5/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-STdT6x/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2317,16 +2142,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2347,16 +2171,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2377,16 +2200,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-CVVhqi/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-68zR33/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2407,16 +2230,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-10Nm43/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-okkusC/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2437,16 +2260,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-aAndG3/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-330CcY/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2467,16 +2290,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-G7t6Sg/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2497,16 +2319,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Yy2wGV/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2527,16 +2348,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-V2dzEq/config.json: outbounds[10].filter: json: unknown field \"filter\""
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -2557,9 +2377,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2586,9 +2406,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2615,16 +2435,16 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-testing",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-testing"
+      "status": "warning",
+      "binary": "sing-box-testing",
+      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache"
     }
   },
   {
@@ -2645,16 +2465,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing"
+      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-dns-rule-action-strategy-to-rule-items"
     }
   },
   {
@@ -2675,16 +2495,16 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-testing",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-testing"
+      "status": "warning",
+      "binary": "sing-box-testing",
+      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache"
     }
   },
   {
@@ -2705,16 +2525,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing"
+      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-dns-rule-action-strategy-to-rule-items"
     }
   },
   {
@@ -2735,16 +2555,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing"
+      "reason": "WARN[0000] `independent_cache` DNS option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-independent-dns-cache FATAL[0000] initialize dns router: Legacy `strategy` DNS rule action option is deprecated in sing-box 1.14.0 and will be removed in sing-box 1.16.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-dns-rule-action-strategy-to-rule-items"
     }
   },
   {
@@ -2765,9 +2585,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -2794,218 +2614,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.11.x-config_ios-1.11.x-.json-7bbd5ac2",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.11.x/config_ios 1.11.x .json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.11.x-config_ios-1.11.x-.json-7bbd5ac2.json",
-    "normalized_hash": "7bbd5ac2bf003220c04663262d8559589063f618c27f8b3d4cfb40a2bc9df163",
-    "detected_version": "1.11",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ieXXWD/config.json: out"
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.11.x-config_mixed.json-51c59e61",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.11.x/config_mixed.json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.11.x-config_mixed.json-51c59e61.json",
-    "normalized_hash": "51c59e61a1ad0d2dfdd7f7c377da8ea578e737c9c22370258deedced29d589d9",
-    "detected_version": "1.11",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-xlJyKB/config.json: out"
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.11.x-config_test.json-01b0b156",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.11.x/config_test.json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.11.x-config_test.json-01b0b156.json",
-    "normalized_hash": "01b0b156eb2f6d76bb30bc15bbc873bbb98ce37932cf80b7a78267d3a3190bf6",
-    "detected_version": "1.11",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-D30WKi/config.json: out"
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.11.x-config_tproxy.json-5651b687",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.11.x/config_tproxy.json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.11.x-config_tproxy.json-5651b687.json",
-    "normalized_hash": "5651b687f81e2e32b429f83c0a21b1a0ea3a2ac04770defe8b6ebbba8685373e",
-    "detected_version": "1.11",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-VqS0uZ/config.json: out"
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.12.x-config_android-1.12.x-.json-a2f849da",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.12.x/config_android 1.12.x .json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.12.x-config_android-1.12.x-.json-a2f849da.json",
-    "normalized_hash": "a2f849daf3d3ac2826cf362e3fcde07de95e264e420717d768e4bec305acaefa",
-    "detected_version": "1.12",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-LAGptB/config.json: outbounds[14].filter: json: unknown field \"filter\""
-    }
-  },
-  {
-    "id": "feiaolin-ios_rule-sing-box-1.12.x-config_ios-1.12.x-.json-ce2e4598",
-    "source_repo": "FeiaoLin/ios_rule",
-    "source_path": "sing-box/1.12.x/config_ios 1.12.x .json",
-    "source_commit": "88b02608c826c542fa5a71663c7f4c2f3c80abc0",
-    "fixture_path": "fixtures/external/feiaolin-ios_rule-sing-box-1.12.x-config_ios-1.12.x-.json-ce2e4598.json",
-    "normalized_hash": "ce2e459817bd17a49057cd57923b31a3ed246e4c6f942847db7435be0aaafaf3",
-    "detected_version": "1.12",
-    "channel": "stable",
-    "fixture_class": "legacy",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-a4gleZ/config.json: outbounds[14].filter: json: unknown field \"filter\""
-    }
-  },
-  {
-    "id": "gg4924-sing-box-subscribe-config_template-config_template_tun.json-8fc6102d",
-    "source_repo": "gg4924/sing-box-subscribe",
-    "source_path": "config_template/config_template_tun.json",
-    "source_commit": "d197d6093718a793137682178566977bb6b57f6d",
-    "fixture_path": "fixtures/external/gg4924-sing-box-subscribe-config_template-config_template_tun.json-8fc6102d.json",
-    "normalized_hash": "8fc6102de4556a1ed67ae17bb47e15f53efd603c35a27b71ac85299083d294b2",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display-extension",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3030,9 +2641,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3059,9 +2670,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3088,16 +2699,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-2RMiVH/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-RYqGu4/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -3118,9 +2729,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3147,9 +2758,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3176,9 +2787,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3205,9 +2816,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3232,9 +2843,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3259,9 +2870,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3286,9 +2897,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3313,9 +2924,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3340,16 +2951,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3368,16 +2978,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3396,9 +3005,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3423,9 +3032,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3450,16 +3059,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "WARN[0000] legacy DNS servers is deprecated in sing-box 1.12.0 and will be removed in sing-box 1.14.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats ERROR[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migrati"
+      "reason": "WARN[0000] legacy DNS servers is deprecated in sing-box 1.12.0 and will be removed in sing-box 1.14.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats ERROR[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] to continuing using this feature, set environment variable ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS=true"
     }
   },
   {
@@ -3478,16 +3087,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3506,16 +3114,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[1]: decode psk: illegal base64 data at input byte 3"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3534,9 +3141,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3562,9 +3169,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3590,9 +3197,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3618,9 +3225,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3646,9 +3253,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3674,9 +3281,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3701,9 +3308,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3728,9 +3335,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3755,9 +3362,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3782,9 +3389,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3809,9 +3416,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3836,16 +3443,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3864,16 +3470,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3892,16 +3497,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3920,16 +3524,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize outbound[0]: missing password"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -3948,9 +3551,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -3976,9 +3579,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4004,9 +3607,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4032,9 +3635,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4042,64 +3645,6 @@
       "status": "failed",
       "binary": "sing-box-1.12",
       "reason": "FATAL[0000] initialize outbound[0]: decode public_key: illegal base64 data at input byte 43"
-    }
-  },
-  {
-    "id": "huskydsb-singbox-for-sub-store-template-sfa.json-6e4f1ced",
-    "source_repo": "huskydsb/singbox-for-sub-store-template",
-    "source_path": "SFA.json",
-    "source_commit": "5527fac63b3812ee4e176ddeb81d84f9d25bdfa7",
-    "fixture_path": "fixtures/external/huskydsb-singbox-for-sub-store-template-sfa.json-6e4f1ced.json",
-    "normalized_hash": "6e4f1ced627d379132b38dd117150e98dfa19bb876b24df10c9aaa12d0520878",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [
-      "fill-empty-selector-with-mock-outbounds"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "huskydsb-singbox-for-sub-store-template-sfi.json-1a15ab1b",
-    "source_repo": "huskydsb/singbox-for-sub-store-template",
-    "source_path": "SFI.json",
-    "source_commit": "5527fac63b3812ee4e176ddeb81d84f9d25bdfa7",
-    "fixture_path": "fixtures/external/huskydsb-singbox-for-sub-store-template-sfi.json-1a15ab1b.json",
-    "normalized_hash": "1a15ab1bec06b7827745863b9bb21b37ce638e40b6dc494e0d3bb71770ca1530",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [
-      "fill-empty-selector-with-mock-outbounds"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4118,9 +3663,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4145,9 +3690,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4172,9 +3717,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4199,36 +3744,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "ivansolis1989-smart-config-kit-singbox-singbox-sing-box--full.json-ad3f5989",
-    "source_repo": "IvanSolis1989/Smart-Config-Kit",
-    "source_path": "SingBox/SingBox(sing-box)-full.json",
-    "source_commit": "fafeda90981afeb645eb9f4c5325aa2d9152d31f",
-    "fixture_path": "fixtures/external/ivansolis1989-smart-config-kit-singbox-singbox-sing-box--full.json-ad3f5989.json",
-    "normalized_hash": "ad3f5989e6992bd8c2649cc6d220270aa8ca69ce271e7188f418391969f8327a",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -4255,16 +3773,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4285,16 +3802,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4315,16 +3831,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4345,16 +3860,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4375,16 +3889,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4405,16 +3918,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -4435,9 +3947,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4465,9 +3977,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4495,9 +4007,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4525,9 +4037,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4555,9 +4067,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4585,9 +4097,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4615,9 +4127,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4645,9 +4157,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4675,9 +4187,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4705,9 +4217,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4735,9 +4247,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4765,9 +4277,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4795,9 +4307,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4825,9 +4337,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4855,9 +4367,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4885,9 +4397,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4915,9 +4427,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4945,9 +4457,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -4955,64 +4467,6 @@
     "official_check_result": {
       "status": "pass",
       "binary": "sing-box-1.12"
-    }
-  },
-  {
-    "id": "lorcha-wu-sing-box-rules-config_tun.json-88f68fa0",
-    "source_repo": "Lorcha-Wu/sing-box-rules",
-    "source_path": "config_tun.json",
-    "source_commit": "1ff23f3e6a7af97a0ffc77af618a2dfe026c325d",
-    "fixture_path": "fixtures/external/lorcha-wu-sing-box-rules-config_tun.json-88f68fa0.json",
-    "normalized_hash": "88f68fa09b94fe71347e3c8288f1c83f884e312dc04173634789d1e8cf958b10",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display-extension",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "lorcha-wu-sing-box-rules-config.json-43c5bb83",
-    "source_repo": "Lorcha-Wu/sing-box-rules",
-    "source_path": "config.json",
-    "source_commit": "1ff23f3e6a7af97a0ffc77af618a2dfe026c325d",
-    "fixture_path": "fixtures/external/lorcha-wu-sing-box-rules-config.json-43c5bb83.json",
-    "normalized_hash": "43c5bb83911bfb45c1cc6f16f05ef101087f1e242fc09f660cc4da2768bc1d3a",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display-extension",
-    "transformations": [
-      "expand-all-placeholder"
-    ],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5031,9 +4485,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5058,9 +4512,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5085,9 +4539,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5112,9 +4566,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5139,9 +4593,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5166,9 +4620,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5193,9 +4647,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5220,9 +4674,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5247,9 +4701,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5274,9 +4728,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5301,9 +4755,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5328,16 +4782,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5356,16 +4809,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5384,16 +4836,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5412,16 +4863,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5440,16 +4890,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5468,9 +4917,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -5498,16 +4947,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "WARN[0000] legacy special outbounds is deprecated in sing-box 1.11.0 and will be removed in sing-box 1.13.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-legacy-special-outbounds-to-rule-actions FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-X5ev0l/config.json: out"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5528,16 +4976,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-O8ycaG/config.json: outbounds[13].filter: json: unknown field \"filter\""
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5556,16 +5003,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] initialize inbound[0]: initialize auto-redirect: invalid argument"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5586,16 +5032,15 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "failed",
-      "binary": "sing-box-1.11",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Tp61FK/config.json: outbounds[13].filter: json: unknown field \"filter\""
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -5616,16 +5061,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Ye447c/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-9AEz8m/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5646,16 +5091,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-QGAoyE/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-GosbH5/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5676,16 +5121,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-EXVunz/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-z84nNE/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5706,16 +5151,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-f0rOqc/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-BY51jo/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5736,16 +5181,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-BnTSNI/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-leLm74/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5766,9 +5211,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -5794,9 +5239,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -5824,16 +5269,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-I5WRCl/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-v6E9qE/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5854,16 +5299,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-27KnCi/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-jav4uQ/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5884,16 +5329,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-yqt3Ob/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-hXPiw9/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5914,16 +5359,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-mWrdUl/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-m0iNGV/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5944,16 +5389,16 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-6begBW/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-H6Sat0/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5974,9 +5419,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6002,9 +5447,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6030,9 +5475,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6058,9 +5503,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6068,61 +5513,6 @@
       "status": "failed",
       "binary": "sing-box-stable",
       "reason": "FATAL[0000] initialize outbound[0]: decode public_key: illegal base64 data at input byte 43"
-    }
-  },
-  {
-    "id": "quart233-singboxmerge-templates-mobile.json-75e60707",
-    "source_repo": "Quart233/SingBoxMerge",
-    "source_path": "templates/mobile.json",
-    "source_commit": "27f292cf27b7263baa2f60afb19325c00c6fb699",
-    "fixture_path": "fixtures/external/quart233-singboxmerge-templates-mobile.json-75e60707.json",
-    "normalized_hash": "75e60707b53e33c1bfda845de6f16c23feedec391bed33efaa2d30615dbb6050",
-    "detected_version": "unknown",
-    "channel": "stable",
-    "fixture_class": "display-extension",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render"
-    ],
-    "official_check": null,
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "not-applicable",
-      "reason": "No declared or inferred sing-box version for this display fixture."
-    }
-  },
-  {
-    "id": "quart233-singboxmerge-templates-socks5.json-33fbcc15",
-    "source_repo": "Quart233/SingBoxMerge",
-    "source_path": "templates/socks5.json",
-    "source_commit": "27f292cf27b7263baa2f60afb19325c00c6fb699",
-    "fixture_path": "fixtures/external/quart233-singboxmerge-templates-socks5.json-33fbcc15.json",
-    "normalized_hash": "33fbcc157dde2b212c97b3f61949e8f4cb755a993f02b2d1bbaaa88dfe748f20",
-    "detected_version": "1.13",
-    "channel": "stable",
-    "fixture_class": "stable-extension",
-    "transformations": [],
-    "expected_gates": [
-      "json-parse",
-      "import",
-      "derive-graph",
-      "diagnostics",
-      "json-round-trip",
-      "export",
-      "render",
-      "official-check"
-    ],
-    "official_check": "sing-box-stable",
-    "counts_toward_200": true,
-    "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-stable"
     }
   },
   {
@@ -6143,9 +5533,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6172,16 +5562,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -6202,16 +5591,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -6232,16 +5620,15 @@
       "import",
       "derive-graph",
       "diagnostics",
-      "json-round-trip",
-      "export",
       "render",
-      "official-check"
+      "json-round-trip",
+      "export"
     ],
-    "official_check": "sing-box-1.11",
+    "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
-      "status": "pass",
-      "binary": "sing-box-1.11"
+      "status": "not-applicable",
+      "reason": "No declared or inferred sing-box version for this display fixture."
     }
   },
   {
@@ -6262,9 +5649,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-stable",
@@ -6292,9 +5679,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6321,9 +5708,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6350,9 +5737,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6379,9 +5766,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6408,9 +5795,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6435,9 +5822,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6462,9 +5849,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6491,9 +5878,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6521,9 +5908,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6551,9 +5938,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
       "export",
-      "render",
       "official-check"
     ],
     "official_check": "sing-box-1.12",
@@ -6581,9 +5968,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6610,9 +5997,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6639,9 +6026,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6668,23 +6055,23 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Zxxf8r/config.json: outbounds[18].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-McE5lD/config.json: outbounds[18].filter: json: unknown field \"filter\""
     }
   },
   {
     "id": "use4free-breakfree-templates-template-cn-notun.json-cff9c33e",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-cn-notun.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-cn-notun.json-cff9c33e.json",
     "normalized_hash": "cff9c33e956db2c515719f191e89e23008c5c17eca66365a731ce400b1b28b95",
     "detected_version": "unknown",
@@ -6698,9 +6085,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6713,7 +6100,7 @@
     "id": "use4free-breakfree-templates-template-cn-sfw.json-0cb45c59",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-cn-sfw.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-cn-sfw.json-0cb45c59.json",
     "normalized_hash": "0cb45c59f492e6d972233ff755a2a0fbffe0fa2513487637ab30d8dec752bddb",
     "detected_version": "unknown",
@@ -6727,9 +6114,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6742,7 +6129,7 @@
     "id": "use4free-breakfree-templates-template-cn.json-d285810e",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-cn.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-cn.json-d285810e.json",
     "normalized_hash": "d285810e88925cf6287bc4467139f4d25dddabab379f73b54250efdd74e3e9df",
     "detected_version": "unknown",
@@ -6756,9 +6143,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6771,7 +6158,7 @@
     "id": "use4free-breakfree-templates-template-ir-notun.json-87036075",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-ir-notun.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-ir-notun.json-87036075.json",
     "normalized_hash": "870360751e464f8273a64adc483415cc3585302251da2f1aa79bb47060c41670",
     "detected_version": "unknown",
@@ -6785,9 +6172,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6800,7 +6187,7 @@
     "id": "use4free-breakfree-templates-template-ir-sfw.json-90423bb0",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-ir-sfw.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-ir-sfw.json-90423bb0.json",
     "normalized_hash": "90423bb0b8973ce26b45802b99f2adc6e946edf80864f6f2f802b50cba568876",
     "detected_version": "unknown",
@@ -6814,9 +6201,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,
@@ -6829,7 +6216,7 @@
     "id": "use4free-breakfree-templates-template-ir.json-b907ef16",
     "source_repo": "Use4Free/breakfree",
     "source_path": "templates/template-ir.json",
-    "source_commit": "00059dbc0d7a493e336b03ff9531fcba39f8c7df",
+    "source_commit": "221467d68ca5934d1037d62cb997e75e7259e08b",
     "fixture_path": "fixtures/external/use4free-breakfree-templates-template-ir.json-b907ef16.json",
     "normalized_hash": "b907ef16c2f22a25bebcde6748f2eb42b6740c9594b47dc8e2b2f3a2aa7a681b",
     "detected_version": "unknown",
@@ -6843,9 +6230,9 @@
       "import",
       "derive-graph",
       "diagnostics",
+      "render",
       "json-round-trip",
-      "export",
-      "render"
+      "export"
     ],
     "official_check": null,
     "counts_toward_200": true,

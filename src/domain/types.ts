@@ -1,10 +1,11 @@
 export type SingBoxChannel = "stable" | "testing";
+export type SingBoxBinaryName = "sing-box-1.12" | "sing-box-stable" | "sing-box-testing";
 
 export type SingBoxTarget = {
   channel: SingBoxChannel;
   version: string;
   docsBaseUrl: string;
-  binaryName: "sing-box-stable" | "sing-box-testing";
+  binaryName: SingBoxBinaryName;
 };
 
 export type SingBoxTargetId = "1.12-stable" | "1.13-stable" | "1.14-testing";
@@ -36,10 +37,25 @@ export type OutboundConfig = TaggedConfig & {
 
 export type DnsServerConfig = TaggedConfig & {
   detour?: string;
+  endpoint?: string;
   address?: string;
   server?: string;
   server_port?: number;
   path?: string;
+};
+
+export type EndpointConfig = TaggedConfig & {
+  detour?: string;
+  address?: string[];
+  private_key?: string;
+};
+
+export type ServiceConfig = TaggedConfig & {
+  listen?: string;
+  listen_port?: number;
+  detour?: string;
+  verify_client_endpoint?: string | string[];
+  servers?: Record<string, string>;
 };
 
 export type RouteRule = {
@@ -88,11 +104,11 @@ export type SingBoxConfig = {
   certificate?: Record<string, unknown>;
   certificate_providers?: TaggedConfig[];
   http_clients?: TaggedResourceConfig[];
-  endpoints?: TaggedConfig[];
+  endpoints?: EndpointConfig[];
   inbounds?: InboundConfig[];
   outbounds?: OutboundConfig[];
   route?: RouteConfig;
-  services?: TaggedConfig[];
+  services?: ServiceConfig[];
   experimental?: Record<string, unknown>;
   [key: string]: unknown;
 };
@@ -113,6 +129,8 @@ export type EntityRef =
   | { kind: "inbound"; tag: string }
   | { kind: "outbound"; tag: string }
   | { kind: "dns-server"; tag: string }
+  | { kind: "endpoint"; tag: string }
+  | { kind: "service"; tag: string }
   | { kind: "rule-set"; tag: string }
   | { kind: "route"; id: "main" }
   | { kind: "route-rule"; index: number }

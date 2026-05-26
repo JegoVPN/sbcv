@@ -2,10 +2,12 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { assertCleanSingBoxCheck } from "./singbox-check-policy.mjs";
+import { binaryForFixturePath } from "./singbox-target-policy.mjs";
 
 const fixtureGroups = [
-  { channel: "stable", binary: "sing-box-stable", dir: "fixtures/stable" },
-  { channel: "testing", binary: "sing-box-testing", dir: "fixtures/testing" },
+  { channel: "stable", dir: "fixtures/stable" },
+  { channel: "testing", dir: "fixtures/testing" },
 ];
 
 function resolveCommand(command) {
@@ -22,9 +24,7 @@ function validateJson(file) {
 
 function runSingBoxCheck(binary, file) {
   const result = spawnSync(binary, ["check", "-c", file], { encoding: "utf8" });
-  if (result.status !== 0) {
-    throw new Error(`${binary} check failed for ${file}\n${result.stdout}\n${result.stderr}`);
-  }
+  assertCleanSingBoxCheck({ binary, file, status: result.status, stdout: result.stdout, stderr: result.stderr });
 }
 
 let officialChecks = 0;
@@ -36,16 +36,20 @@ for (const group of fixtureGroups) {
   for (const file of files) {
     const fixturePath = join(group.dir, file);
     validateJson(fixturePath);
-    const binary = resolveCommand(group.binary);
+    const expectedBinary = binaryForFixturePath(fixturePath, group.channel);
+    const binary = resolveCommand(expectedBinary);
     if (binary) {
       const tempDir = mkdtempSync(join(tmpdir(), "sbc-fixture-"));
       const tempFile = join(tempDir, "config.json");
-      writeFileSync(tempFile, readFileSync(fixturePath));
-      runSingBoxCheck(binary, tempFile);
-      rmSync(tempDir, { recursive: true, force: true });
+      try {
+        writeFileSync(tempFile, readFileSync(fixturePath));
+        runSingBoxCheck(binary, tempFile);
+      } finally {
+        rmSync(tempDir, { recursive: true, force: true });
+      }
       officialChecks += 1;
     } else {
-      skipped.push(`${group.binary} missing for ${fixturePath}`);
+      skipped.push(`${expectedBinary} missing for ${fixturePath}`);
     }
   }
 }

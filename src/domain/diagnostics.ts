@@ -1,4 +1,4 @@
-import { buildTagIndex, getDnsServerTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { buildTagIndex, getDnsServerTags, getEndpointTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
 function listItems<T>(value: T[] | undefined): T[] {
@@ -37,10 +37,13 @@ export function validateConfig(
   const outboundTags = getOutboundTags(config);
   const inboundTags = getInboundTags(config);
   const dnsServerTags = getDnsServerTags(config);
+  const endpointTags = getEndpointTags(config);
   const ruleSetTags = getRuleSetTags(config);
   const outbounds = listItems(config.outbounds);
   const routeRules = listItems(config.route?.rules);
   const dnsRules = listItems(config.dns?.rules);
+  const endpoints = listItems(config.endpoints);
+  const services = listItems(config.services);
 
   const routeFinal = config.route?.final;
   if (routeFinal && !outboundTags.has(routeFinal)) {
@@ -105,6 +108,122 @@ export function validateConfig(
     }
   });
 
+  endpoints.forEach((endpoint, index) => {
+    if (endpoint.detour && !outboundTags.has(endpoint.detour)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-endpoint-detour",
+        `/endpoints/${index}/detour`,
+        `Endpoint "${endpoint.tag}" references missing detour outbound "${endpoint.detour}".`,
+      );
+    }
+  });
+
+  services.forEach((service, index) => {
+    if (service.detour && !outboundTags.has(service.detour)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-service-detour",
+        `/services/${index}/detour`,
+        `Service "${service.tag}" references missing detour outbound "${service.detour}".`,
+      );
+    }
+
+    if (service.type === "ssm-api") {
+      const servers = service.servers && typeof service.servers === "object" && !Array.isArray(service.servers) ? service.servers : {};
+      if (Object.keys(servers).length === 0) {
+        push(
+          diagnostics,
+          "warning",
+          "ssm-api-no-managed-inbound",
+          `/services/${index}/servers`,
+          "SSM API needs at least one managed Shadowsocks inbound mapping.",
+        );
+      }
+      Object.entries(servers).forEach(([path, tag]) => {
+        const inbound = config.inbounds?.find((item) => item.tag === tag);
+        if (!inbound) {
+          push(
+            diagnostics,
+            "error",
+            "missing-ssm-api-inbound",
+            `/services/${index}/servers/${path}`,
+            `SSM API endpoint "${path}" references missing inbound "${tag}".`,
+          );
+        } else if (inbound.type !== "shadowsocks" || !inbound.managed) {
+          push(
+            diagnostics,
+            "warning",
+            "ssm-api-inbound-not-managed-shadowsocks",
+            `/services/${index}/servers/${path}`,
+            `SSM API endpoint "${path}" should reference a Shadowsocks inbound with managed enabled.`,
+          );
+        }
+      });
+    }
+
+    if (service.type === "derp") {
+      const refs = Array.isArray(service.verify_client_endpoint)
+        ? service.verify_client_endpoint
+        : service.verify_client_endpoint
+          ? [service.verify_client_endpoint]
+          : [];
+      refs.forEach((tag) => {
+        const endpoint = config.endpoints?.find((item) => item.tag === tag);
+        if (!endpoint) {
+          push(
+            diagnostics,
+            "error",
+            "missing-derp-verify-endpoint",
+            `/services/${index}/verify_client_endpoint`,
+            `DERP service "${service.tag}" references missing endpoint "${tag}".`,
+          );
+        } else if (endpoint.type !== "tailscale") {
+          push(
+            diagnostics,
+            "warning",
+            "derp-verify-endpoint-not-tailscale",
+            `/services/${index}/verify_client_endpoint`,
+            `DERP service "${service.tag}" should verify clients with a Tailscale endpoint.`,
+          );
+        }
+      });
+      const tls = service.tls;
+      const tlsEnabled = tls && typeof tls === "object" && !Array.isArray(tls) ? Boolean((tls as Record<string, unknown>).enabled) : false;
+      if (!tlsEnabled) {
+        push(
+          diagnostics,
+          "warning",
+          "derp-service-needs-tls",
+          `/services/${index}/tls`,
+          "DERP service requires TLS for official sing-box checks.",
+        );
+      }
+    }
+
+    if (service.type === "resolved") {
+      push(
+        diagnostics,
+        "warning",
+        "resolved-service-linux-only",
+        `/services/${index}`,
+        "Resolved service is Linux/systemd-specific; official checks may fail on other platforms.",
+      );
+    }
+
+    if (service.type === "hysteria-realm" && channel !== "testing") {
+      push(
+        diagnostics,
+        "error",
+        "hysteria-realm-testing-only",
+        `/services/${index}`,
+        "Hysteria Realm service is available only for the 1.14 testing target.",
+      );
+    }
+  });
+
   const dnsFinal = config.dns?.final;
   if (dnsFinal && !dnsServerTags.has(dnsFinal)) {
     push(
@@ -113,6 +232,16 @@ export function validateConfig(
       "missing-dns-final",
       "/dns/final",
       `DNS final server "${dnsFinal}" does not exist.`,
+    );
+  }
+
+  if (channel === "testing" && config.dns?.independent_cache !== undefined) {
+    push(
+      diagnostics,
+      "warning",
+      "deprecated-dns-independent-cache",
+      "/dns/independent_cache",
+      "dns.independent_cache is deprecated in sing-box 1.14 and will be removed in 1.16. Migrate to the independent DNS cache model.",
     );
   }
 
@@ -150,6 +279,27 @@ export function validateConfig(
         );
       }
     });
+  });
+
+  listItems(config.dns?.servers).forEach((server, index) => {
+    if (server.detour && !outboundTags.has(server.detour)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-dns-server-detour",
+        `/dns/servers/${index}/detour`,
+        `DNS server "${server.tag}" references missing detour outbound "${server.detour}".`,
+      );
+    }
+    if (server.endpoint && !endpointTags.has(server.endpoint)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-dns-server-endpoint",
+        `/dns/servers/${index}/endpoint`,
+        `DNS server "${server.tag}" references missing endpoint "${server.endpoint}".`,
+      );
+    }
   });
 
   if (channel === "stable") {

@@ -1,0 +1,38 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "endpoints": [
+    {
+      "type": "wireguard",
+      "tag": "wg-ep",
+      "system": false,
+      "name": "wg0",
+      "mtu": 1408,
+      "address": [
+        "172.16.0.2/32"
+      ],
+      "private_key": "EEKlAzKfS87ShJPnvEF3AiJjGS9JHEzgn2jB3J7yMkY=",
+      "peers": [
+        {
+          "address": "127.0.0.1",
+          "port": 51820,
+          "public_key": "tM4NaeCZrzxQ6BfhyeuQMy5jDReji4o8h5LVAGpI1HQ=",
+          "allowed_ips": [
+            "0.0.0.0/0"
+          ]
+        }
+      ],
+      "udp_timeout": "5m"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "log": {
+    "level": "info"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "services": [
+    {
+      "type": "hysteria-realm",
+      "tag": "hy-realm",
+      "listen": "127.0.0.1",
+      "listen_port": 8444,
+      "users": [
+        {
+          "name": "user",
+          "token": "change-me",
+          "max_realms": 1
+        }
+      ]
+    }
+  ]
+}

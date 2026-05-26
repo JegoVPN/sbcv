@@ -140,7 +140,7 @@ type SingBoxTarget = {
 默认行为：
 
 - 新项目默认选择 `stable`。
-- UI 目标版本只提供三个高频选项：`1.13 stable`、`1.12 Legacy`（stable binary 校验）、`1.14 testing`。
+- UI 目标版本只提供三个高频选项：`1.13 stable`（`sing-box-stable`）、`1.12 Legacy`（`sing-box-1.12`）、`1.14 testing`（`sing-box-testing`）。
 - 模板默认生成 stable 可用配置。
 - stable 模式下不默认生成 stable 文档未列出的字段；如果用户显式启用，必须标记版本风险并以 stable binary 校验结果为准。
 - testing 模式下可以显示前瞻字段，但字段必须带 `testing` 标记。
