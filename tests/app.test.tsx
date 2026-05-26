@@ -337,6 +337,31 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("masks sensitive fields in AdvancedScalarFields and toggles visibility", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("http-out");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    fireEvent.click(inspector.getByText(/Advanced fields/));
+
+    const passwordInput = inspector.getByLabelText("Password") as HTMLInputElement;
+    expect(passwordInput).toBeInTheDocument();
+    expect(passwordInput.type).toBe("password");
+    expect(passwordInput.value).toBe("change-me");
+
+    const showButton = inspector.getByRole("button", { name: "Show Password" });
+    fireEvent.click(showButton);
+    expect(passwordInput.type).toBe("text");
+
+    fireEvent.change(passwordInput, { target: { value: "stronger-secret" } });
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.password).toBe("stronger-secret");
+  });
+
   it("shows platform / build-tag / deprecation banners only for matching node types", () => {
     useProjectStore.getState().loadMinimal();
 
