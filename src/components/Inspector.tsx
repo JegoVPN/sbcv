@@ -639,6 +639,59 @@ function AdvancedScalarFields({
   );
 }
 
+function InlineRuleSetEditor({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const initial = Array.isArray(value) ? value : [];
+  const [draft, setDraft] = useState(() => JSON.stringify(initial, null, 2));
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (Array.isArray(value)) {
+      const serialized = JSON.stringify(value, null, 2);
+      if (serialized !== draft && !error) setDraft(serialized);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return (
+    <label className="field">
+      <span>Rules JSON</span>
+      <textarea
+        value={draft}
+        onChange={(event) => {
+          const next = event.target.value;
+          setDraft(next);
+          if (!next.trim()) {
+            setError(null);
+            onChange([]);
+            return;
+          }
+          try {
+            const parsed = JSON.parse(next);
+            if (!Array.isArray(parsed)) {
+              setError("Expected a JSON array of headless rule objects.");
+              return;
+            }
+            setError(null);
+            onChange(parsed);
+          } catch (cause) {
+            setError(cause instanceof Error ? cause.message : "Invalid JSON.");
+          }
+        }}
+        data-testid="inline-rules-json"
+      />
+      {error ? (
+        <span className="field__hint field__hint--error" role="alert">
+          {error} The previous valid rules array is still stored — fix the JSON and the editor will sync back.
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 function PlatformBanner({ kind, text }: { kind: "platform" | "build-tag" | "deprecated" | "channel"; text: string }) {
   return (
     <div className={`inspector-banner inspector-banner--${kind}`} role="note" aria-label={text}>
@@ -3257,19 +3310,10 @@ export function Inspector() {
             </label>
           ) : null}
           {entity.type === "inline" ? (
-            <label className="field">
-              <span>Rules JSON</span>
-              <textarea
-                value={JSON.stringify(entity.rules ?? [], null, 2)}
-                onChange={(event) => {
-                  try {
-                    updateField(ref, "rules", JSON.parse(event.target.value));
-                  } catch {
-                    updateField(ref, "rules", event.target.value);
-                  }
-                }}
-              />
-            </label>
+            <InlineRuleSetEditor
+              value={entity.rules}
+              onChange={(value) => updateField(ref, "rules", value)}
+            />
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
