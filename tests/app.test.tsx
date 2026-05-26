@@ -337,6 +337,92 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders extended TLS shared fields including server key, Reality, uTLS, ECH and fragment", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-http");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    fireEvent.click(inspector.getByText("TLS"));
+
+    expect(inspector.getByLabelText("Key Path (server)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Key (PEM lines or list, server)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Certificate (PEM lines or list)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Client Authentication (server)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("uTLS Enabled (client, 1.10+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("uTLS Fingerprint")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reality Enabled")).toBeInTheDocument();
+    expect(inspector.getByLabelText("ECH Enabled")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Fragment (client, 1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Record Fragment (client, 1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Curve Preferences (1.13+)")).toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("Key Path (server)"), { target: { value: "/etc/tls/server.key" } });
+    expect((useProjectStore.getState().config.inbounds?.at(-1)?.tls as Record<string, unknown> | undefined)?.key_path).toBe(
+      "/etc/tls/server.key",
+    );
+  });
+
+  it("renders the full official Listen Fields set including 1.13 keep-alive, udp_fragment and inbound detour", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-http");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    fireEvent.click(inspector.getByText("Listen Fields"));
+
+    expect(inspector.getByLabelText("TCP Multi Path")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Disable TCP Keep Alive (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Keep Alive (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Keep Alive Interval")).toBeInTheDocument();
+    expect(inspector.getByLabelText("UDP Fragment")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Inbound Detour")).toBeInTheDocument();
+
+    fireEvent.click(inspector.getByLabelText("UDP Fragment"));
+    expect(useProjectStore.getState().config.inbounds?.at(-1)?.udp_fragment).toBe(true);
+  });
+
+  it("renders the full official Dial Fields set including 1.13 keep-alive and Linux-only fields", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("socks");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    fireEvent.click(inspector.getByText("Dial Fields"));
+
+    expect(inspector.getByLabelText("IPv4 Bind Address")).toBeInTheDocument();
+    expect(inspector.getByLabelText("IPv6 Bind Address")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Bind Address No Port (Linux, 1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Routing Mark (Linux)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reuse Address")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Network Namespace (Linux, 1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Fast Open")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Multi Path")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Disable TCP Keep Alive (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Keep Alive (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("TCP Keep Alive Interval (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("UDP Fragment")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Domain Strategy (deprecated 1.12+)")).toBeInTheDocument();
+
+    fireEvent.click(inspector.getByLabelText("TCP Fast Open"));
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.tcp_fast_open).toBe(true);
+
+    fireEvent.change(inspector.getByLabelText("Routing Mark (Linux)"), { target: { value: "0x1234" } });
+    expect(useProjectStore.getState().config.outbounds?.at(-1)?.routing_mark).toBe("0x1234");
+  });
+
   it("renders selector candidates as a constrained checklist and default select", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

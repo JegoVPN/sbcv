@@ -100,17 +100,36 @@ const listenSharedFields = [
   "reuse_addr",
   "netns",
   "tcp_fast_open",
+  "tcp_multi_path",
+  "disable_tcp_keep_alive",
+  "tcp_keep_alive",
+  "tcp_keep_alive_interval",
+  "udp_fragment",
   "udp_timeout",
+  "detour",
 ];
 const dialSharedFields = [
   "detour",
   "bind_interface",
+  "inet4_bind_address",
+  "inet6_bind_address",
+  "bind_address_no_port",
+  "routing_mark",
+  "reuse_addr",
+  "netns",
   "connect_timeout",
+  "tcp_fast_open",
+  "tcp_multi_path",
+  "disable_tcp_keep_alive",
+  "tcp_keep_alive",
+  "tcp_keep_alive_interval",
+  "udp_fragment",
   "domain_resolver",
   "network_strategy",
   "network_type",
   "fallback_network_type",
   "fallback_delay",
+  "domain_strategy",
 ];
 const quicSharedFields = ["initial_packet_size", "disable_path_mtu_discovery", "idle_timeout", "keep_alive_period"];
 const inboundHandledFields = new Set([
@@ -887,15 +906,24 @@ function sharedFieldDefinitions(
     .filter((tag): tag is string => Boolean(tag));
 
   if (group === "listen") {
+    const inboundOptions = (config.inbounds ?? [])
+      .map((inbound) => inbound.tag)
+      .filter((tag): tag is string => Boolean(tag && (ref.kind !== "inbound" || tag !== ref.tag)));
     return [
       { label: "Listen", path: ["listen"], kind: "text" },
       { label: "Listen Port", path: ["listen_port"], kind: "number" },
-      { label: "Bind Interface", path: ["bind_interface"], kind: "text" },
-      { label: "Routing Mark", path: ["routing_mark"], kind: "number" },
-      { label: "Reuse Address", path: ["reuse_addr"], kind: "boolean" },
-      { label: "Network Namespace", path: ["netns"], kind: "text" },
+      { label: "Bind Interface (1.12+)", path: ["bind_interface"], kind: "text" },
+      { label: "Routing Mark (Linux)", path: ["routing_mark"], kind: "text" },
+      { label: "Reuse Address (1.12+)", path: ["reuse_addr"], kind: "boolean" },
+      { label: "Network Namespace (Linux, 1.12+)", path: ["netns"], kind: "text" },
       { label: "TCP Fast Open", path: ["tcp_fast_open"], kind: "boolean" },
+      { label: "TCP Multi Path", path: ["tcp_multi_path"], kind: "boolean" },
+      { label: "Disable TCP Keep Alive (1.13+)", path: ["disable_tcp_keep_alive"], kind: "boolean" },
+      { label: "TCP Keep Alive (1.13+)", path: ["tcp_keep_alive"], kind: "text" },
+      { label: "TCP Keep Alive Interval", path: ["tcp_keep_alive_interval"], kind: "text" },
+      { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
       { label: "UDP Timeout", path: ["udp_timeout"], kind: "text" },
+      { label: "Inbound Detour", path: ["detour"], kind: "select", options: inboundOptions },
     ];
   }
 
@@ -922,12 +950,25 @@ function sharedFieldDefinitions(
     return [
       { label: "Detour", path: ["detour"], kind: "select", options: outboundOptions },
       { label: "Bind Interface", path: ["bind_interface"], kind: "text" },
+      { label: "IPv4 Bind Address", path: ["inet4_bind_address"], kind: "text" },
+      { label: "IPv6 Bind Address", path: ["inet6_bind_address"], kind: "text" },
+      { label: "Bind Address No Port (Linux, 1.13+)", path: ["bind_address_no_port"], kind: "boolean" },
+      { label: "Routing Mark (Linux)", path: ["routing_mark"], kind: "text" },
+      { label: "Reuse Address", path: ["reuse_addr"], kind: "boolean" },
+      { label: "Network Namespace (Linux, 1.12+)", path: ["netns"], kind: "text" },
       { label: "Connect Timeout", path: ["connect_timeout"], kind: "text" },
+      { label: "TCP Fast Open", path: ["tcp_fast_open"], kind: "boolean" },
+      { label: "TCP Multi Path", path: ["tcp_multi_path"], kind: "boolean" },
+      { label: "Disable TCP Keep Alive (1.13+)", path: ["disable_tcp_keep_alive"], kind: "boolean" },
+      { label: "TCP Keep Alive (1.13+)", path: ["tcp_keep_alive"], kind: "text" },
+      { label: "TCP Keep Alive Interval (1.13+)", path: ["tcp_keep_alive_interval"], kind: "text" },
+      { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
       { label: "Domain Resolver", path: ["domain_resolver"], kind: "text" },
       { label: "Network Strategy", path: ["network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Network Type", path: ["network_type"], kind: "list" },
       { label: "Fallback Network", path: ["fallback_network_type"], kind: "list" },
       { label: "Fallback Delay", path: ["fallback_delay"], kind: "text" },
+      { label: "Domain Strategy (deprecated 1.12+)", path: ["domain_strategy"], kind: "text" },
     ];
   }
 
@@ -935,12 +976,29 @@ function sharedFieldDefinitions(
     return [
       { label: "Enabled", path: ["tls", "enabled"], kind: "boolean" },
       { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
-      { label: "Insecure", path: ["tls", "insecure"], kind: "boolean" },
+      { label: "Disable SNI (client only)", path: ["tls", "disable_sni"], kind: "boolean" },
+      { label: "Insecure (client only)", path: ["tls", "insecure"], kind: "boolean" },
       { label: "ALPN", path: ["tls", "alpn"], kind: "list" },
       { label: "Min Version", path: ["tls", "min_version"], kind: "select", options: tlsVersionOptions },
       { label: "Max Version", path: ["tls", "max_version"], kind: "select", options: tlsVersionOptions },
+      { label: "Cipher Suites", path: ["tls", "cipher_suites"], kind: "list" },
+      { label: "Curve Preferences (1.13+)", path: ["tls", "curve_preferences"], kind: "list" },
+      { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
       { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
+      { label: "Key (PEM lines or list, server)", path: ["tls", "key"], kind: "list" },
+      { label: "Key Path (server)", path: ["tls", "key_path"], kind: "text" },
+      { label: "Certificate Public Key SHA256 (client only)", path: ["tls", "certificate_public_key_sha256"], kind: "list" },
+      { label: "Client Authentication (server)", path: ["tls", "client_authentication"], kind: "select", options: ["", "request", "require", "verify-if-given", "require-and-verify"] },
       { label: "Certificate Provider", path: ["tls", "certificate_provider"], kind: "text" },
+      { label: "Fragment (client, 1.12+)", path: ["tls", "fragment"], kind: "boolean" },
+      { label: "Fragment Fallback Delay (1.12+)", path: ["tls", "fragment_fallback_delay"], kind: "text" },
+      { label: "Record Fragment (client, 1.12+)", path: ["tls", "record_fragment"], kind: "boolean" },
+      { label: "uTLS Enabled (client, 1.10+)", path: ["tls", "utls", "enabled"], kind: "boolean" },
+      { label: "uTLS Fingerprint", path: ["tls", "utls", "fingerprint"], kind: "select", options: ["", "chrome", "firefox", "edge", "safari", "360", "qq", "ios", "android", "random", "randomized"] },
+      { label: "Reality Enabled", path: ["tls", "reality", "enabled"], kind: "boolean" },
+      { label: "Reality Public Key (client)", path: ["tls", "reality", "public_key"], kind: "text" },
+      { label: "Reality Short ID (client)", path: ["tls", "reality", "short_id"], kind: "text" },
+      { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
     ];
   }
 
