@@ -1217,6 +1217,8 @@ type SharedFieldDefinition = {
   path: string[];
   kind: SharedFieldKind;
   options?: string[];
+  /** Hide this field unless the boolean value at this path is true. */
+  gatedBy?: string[];
 };
 
 const networkStrategyOptions = ["default", "hybrid", "fallback"];
@@ -1380,10 +1382,10 @@ function sharedFieldDefinitions(
       { label: "Fragment Fallback Delay (1.12+)", path: ["tls", "fragment_fallback_delay"], kind: "text" },
       { label: "Record Fragment (client, 1.12+)", path: ["tls", "record_fragment"], kind: "boolean" },
       { label: "uTLS Enabled (client, 1.10+)", path: ["tls", "utls", "enabled"], kind: "boolean" },
-      { label: "uTLS Fingerprint", path: ["tls", "utls", "fingerprint"], kind: "select", options: ["", "chrome", "firefox", "edge", "safari", "360", "qq", "ios", "android", "random", "randomized"] },
+      { label: "uTLS Fingerprint", path: ["tls", "utls", "fingerprint"], kind: "select", options: ["", "chrome", "firefox", "edge", "safari", "360", "qq", "ios", "android", "random", "randomized"], gatedBy: ["tls", "utls", "enabled"] },
       { label: "Reality Enabled", path: ["tls", "reality", "enabled"], kind: "boolean" },
-      { label: "Reality Public Key (client)", path: ["tls", "reality", "public_key"], kind: "text" },
-      { label: "Reality Short ID (client)", path: ["tls", "reality", "short_id"], kind: "text" },
+      { label: "Reality Public Key (client)", path: ["tls", "reality", "public_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Short ID (client)", path: ["tls", "reality", "short_id"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
     ];
   }
@@ -1564,15 +1566,20 @@ function SharedFieldCards({
         const active = card.definitions.some((definition) => isSharedValueActive(sharedValueAt(entity, definition.path)));
         return (
           <ModuleCard key={card.group} title={sharedGroupTitles[card.group]} active={active}>
-            {card.definitions.map((definition) => (
-              <SharedFieldControl
-                key={definition.path.join(".")}
-                definition={definition}
-                entity={entity}
-                entityRef={entityRef}
-                updateField={updateField}
-              />
-            ))}
+            {card.definitions
+              .filter((definition) => {
+                if (!definition.gatedBy) return true;
+                return Boolean(sharedValueAt(entity, definition.gatedBy));
+              })
+              .map((definition) => (
+                <SharedFieldControl
+                  key={definition.path.join(".")}
+                  definition={definition}
+                  entity={entity}
+                  entityRef={entityRef}
+                  updateField={updateField}
+                />
+              ))}
           </ModuleCard>
         );
       })}
