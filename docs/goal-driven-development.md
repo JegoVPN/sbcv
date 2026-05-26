@@ -149,6 +149,7 @@ Once the app exists:
 
 - package manager install/build check
 - TypeScript check
+- React implementation/review against `vercel-react-best-practices`
 - unit tests for domain commands
 - round-trip tests for config fixtures
 - E2E/smoke test for the user path covered by the goal
@@ -159,14 +160,15 @@ Once the app exists:
 
 Recommended order:
 
-1. Project scaffold and baseline UI shell.
-2. Stable-first `SingBoxConfig` type and top-level normalize/import/export.
-3. Config document inventory to schema registry seed.
-4. Domain command layer for create/rename/delete/connect.
-5. React Flow derived graph for inbounds, route, outbounds, selector, URLTest.
-6. Inspector panel for selected node.
-7. Route Rules table.
-8. DNS Server nodes and DNS Rules table.
-9. Stable/testing binary validation service.
+1. [Stable-First SBC Visual Editor Release](goals/stable-first-sbc-visual-editor-release.md).
+2. Project scaffold and baseline UI shell.
+3. Stable-first `SingBoxConfig` type and top-level normalize/import/export.
+4. Config document inventory to schema registry seed.
+5. Domain command layer for create/rename/delete/connect.
+6. React Flow derived graph for inbounds, route, outbounds, selector, URLTest.
+7. Inspector panel for selected node.
+8. Route Rules table.
+9. DNS Server nodes and DNS Rules table.
+10. Stable/testing binary validation service.
 
 Do not start deep protocol form coverage before import/export, domain commands, and stable validation are working.

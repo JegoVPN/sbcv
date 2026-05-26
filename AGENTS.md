@@ -9,6 +9,7 @@ Read these before changing product behavior, schema, validation, or node UI:
 - [SBC React Flow R&D Plan](docs/sbc-react-flow-rd-plan.md)
 - [sing-box Config Document Inventory](docs/sing-box-config-doc-inventory.md)
 - [Goal-Driven Development](docs/goal-driven-development.md)
+- `vercel-react-best-practices` skill when writing, reviewing, or refactoring React/Next.js code.
 
 The canvas is never the config source file. `SingBoxConfig` / domain model is the source of truth; React Flow nodes and edges are a derived editing view.
 
@@ -24,6 +25,7 @@ The canvas is never the config source file. `SingBoxConfig` / domain model is th
 8. **Small atomics**: one concern per commit. Prefer changes under 400 logical lines; split larger work.
 9. **No silent validation gaps**: if `sing-box check` cannot run, state that clearly in the final answer and keep schema/semantic validation separate from official validation.
 10. **No unrelated cleanup**: do not refactor unrelated files while implementing a goal.
+11. **React performance discipline**: frontend implementation and review must apply the `vercel-react-best-practices` skill, especially bundle size, rerender control, and async/data waterfall avoidance.
 
 ## Development Protocol
 
@@ -39,6 +41,7 @@ During implementation:
 - Keep config/domain logic separate from canvas layout.
 - Add or update docs when behavior, schema, or validation policy changes.
 - Prefer registry-driven node/schema/form additions over ad hoc component branching.
+- For React/Next code, apply `vercel-react-best-practices`: direct imports, lazy-load heavy editors, avoid broad state subscriptions, memoize expensive derived graph work, and keep frequent canvas hover/drag state out of global rerender paths.
 - Preserve existing user changes; never discard unrelated work.
 
 Before committing:
