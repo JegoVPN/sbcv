@@ -1395,6 +1395,7 @@ function SharedFieldCards({
 export function Inspector() {
   const selectedId = useProjectStore((state) => state.selectedId);
   const config = useProjectStore((state) => state.config);
+  const channel = useProjectStore((state) => state.channel);
   const updateField = useProjectStore((state) => state.updateField);
   const updateRouteRule = useProjectStore((state) => state.updateRouteRule);
   const updateDnsRule = useProjectStore((state) => state.updateDnsRule);
@@ -1808,6 +1809,7 @@ export function Inspector() {
                   <input
                     value={String(cacheFile.path ?? "")}
                     onChange={(event) => updateField(ref, "cache_file", { ...cacheFile, path: event.target.value })}
+                    placeholder="cache.db"
                   />
                 </label>
                 <label className="field">
@@ -1825,6 +1827,55 @@ export function Inspector() {
                   />
                   <span>Store FakeIP</span>
                 </label>
+                {channel === "testing" && Boolean(cacheFile.store_rdrc) ? (
+                  <PlatformBanner
+                    kind="deprecated"
+                    text="store_rdrc is deprecated in sing-box 1.14 testing. Migrate to store_dns; both fields round-trip but only store_dns is recommended."
+                  />
+                ) : null}
+                <label className="toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(cacheFile.store_rdrc)}
+                    onChange={(event) =>
+                      updateField(ref, "cache_file", {
+                        ...cacheFile,
+                        store_rdrc: event.target.checked || undefined,
+                      })
+                    }
+                  />
+                  <span>Store RDRC (DNS cache reasons)</span>
+                </label>
+                {Boolean(cacheFile.store_rdrc) ? (
+                  <label className="field">
+                    <span>RDRC Timeout</span>
+                    <input
+                      value={String(cacheFile.rdrc_timeout ?? "")}
+                      onChange={(event) =>
+                        updateField(ref, "cache_file", {
+                          ...cacheFile,
+                          rdrc_timeout: event.target.value || undefined,
+                        })
+                      }
+                      placeholder="30m"
+                    />
+                  </label>
+                ) : null}
+                {channel === "testing" ? (
+                  <label className="toggle-row">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(cacheFile.store_dns)}
+                      onChange={(event) =>
+                        updateField(ref, "cache_file", {
+                          ...cacheFile,
+                          store_dns: event.target.checked || undefined,
+                        })
+                      }
+                    />
+                    <span>Store DNS responses (1.14 testing)</span>
+                  </label>
+                ) : null}
               </ModuleCard>
 
               <ModuleCard title="Clash API" active={clashEnabled}>

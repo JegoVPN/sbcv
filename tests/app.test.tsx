@@ -337,6 +337,36 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders cache_file store_rdrc/rdrc_timeout and store_dns (testing only) with deprecation banner", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().setChannel("testing");
+    });
+    act(() => {
+      useProjectStore.getState().createFromPalette("settings-experimental");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const storeRdrc = inspector.getByLabelText("Store RDRC (DNS cache reasons)") as HTMLInputElement;
+    expect(storeRdrc).toBeInTheDocument();
+    expect(inspector.queryByLabelText("RDRC Timeout")).not.toBeInTheDocument();
+    expect(inspector.getByLabelText("Store DNS responses (1.14 testing)")).toBeInTheDocument();
+
+    fireEvent.click(storeRdrc);
+    expect(inspector.getByLabelText("RDRC Timeout")).toBeInTheDocument();
+    expect(inspector.getByText(/store_rdrc is deprecated in sing-box 1.14/)).toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("RDRC Timeout"), { target: { value: "1h" } });
+    const cf = (useProjectStore.getState().config.experimental ?? {}) as Record<string, Record<string, unknown>>;
+    expect(cf.cache_file?.rdrc_timeout).toBe("1h");
+
+    act(() => {
+      useProjectStore.getState().setChannel("stable");
+    });
+    expect(screen.queryByLabelText("Store DNS responses (1.14 testing)")).not.toBeInTheDocument();
+  });
+
   it("links SSM API to managed Shadowsocks inbounds and flips managed flag in lock-step", () => {
     useProjectStore.getState().loadMinimal();
 
