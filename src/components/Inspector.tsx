@@ -1046,9 +1046,13 @@ function sharedFieldDefinitions(
     ];
   }
 
+  const dnsServerOptions = (config.dns?.servers ?? [])
+    .map((server) => server.tag)
+    .filter((tag): tag is string => Boolean(tag));
+
   if (group === "dial" && ref.kind === "route") {
     return [
-      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "text" },
+      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "select", options: ["", ...dnsServerOptions] },
       { label: "Default Network Strategy", path: ["default_network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Default Network Type", path: ["default_network_type"], kind: "list" },
       { label: "Default Fallback Network", path: ["default_fallback_network_type"], kind: "list" },
@@ -1082,7 +1086,7 @@ function sharedFieldDefinitions(
       { label: "TCP Keep Alive (1.13+)", path: ["tcp_keep_alive"], kind: "text" },
       { label: "TCP Keep Alive Interval (1.13+)", path: ["tcp_keep_alive_interval"], kind: "text" },
       { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
-      { label: "Domain Resolver", path: ["domain_resolver"], kind: "text" },
+      { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions] },
       { label: "Network Strategy", path: ["network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Network Type", path: ["network_type"], kind: "list" },
       { label: "Fallback Network", path: ["fallback_network_type"], kind: "list" },

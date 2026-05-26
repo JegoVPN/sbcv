@@ -137,7 +137,7 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 5. **默认 scaffold 缺 required TLS**：**FIXED 2026-05-27** — `commands.ts` 现在为 trojan / naive / hysteria / hysteria2 / tuic / anytls / vless inbound、trojan / naive / hysteria / hysteria2 / tuic / anytls / shadowtls / vless outbound 播种 `tls: { enabled: true, server_name: "" }`；shadowtls inbound 额外播种 `handshake: { server: "google.com", server_port: 443 }` 并移除 v2-only `password`。Outstanding: vmess inbound/outbound 不强制 TLS（按官方推荐保持可选），不在本批改动；Reality / ACME / ECH 嵌套对象由后续 atomic 引入结构化编辑。
 
-6. **`domain_resolver` 应是 dns-server tag select**：当前 `sharedFieldRegistry.ts:203` 用 `kind: "text"`。1.14.0+ 在 `server` 为域名时是 required。需要换成 dns-server tag select 并在 `diagnostics.ts` 加 required-when-domain 检查。
+6. **`domain_resolver` 应是 dns-server tag select**：**FIXED 2026-05-27** — Inspector dial 字段表（含 route hub 的 `default_domain_resolver`）现在使用 `<select>`，options 来自 `config.dns.servers[].tag` 加空 "None"。`diagnostics.ts` 新增 `outbound-domain-without-resolver` 和 `dns-server-domain-without-resolver` 两条 warning，当 outbound/dns-server 的 server 像域名（含字母、不是 IPv4/IPv6）且未填 `domain_resolver` 时触发。**待办**：对象形态的 `domain_resolver`（带 strategy / cache 等子字段）UI 尚未做结构化编辑器，目前依赖 AdvancedNonScalarFields 兜底。
 
 7. **deprecated 字段无 UI 提示**：**部分 FIXED 2026-05-27** — Inspector 为 `outbound:block`、`outbound:hysteria`（v1）渲染 deprecated banner；dial 字段表把 `domain_strategy` 标注为 `(deprecated 1.12+)`。**待办**：`override_address` / `override_port`（outbound direct）、`store_rdrc`（cache_file）、Clash API `store_*` / `cache_file` / `cache_id`、route `geoip` / `geosite`、rule-set `download_detour`（testing 1.14）；`PaletteStatus` 仍缺 `"deprecated"` 状态用于 Library 视觉区分。
 
