@@ -3269,12 +3269,119 @@ export function Inspector() {
                   placeholder="blank or redirect URL"
                 />
               </label>
-              <JsonField
-                label="Verify Client URL JSON"
-                value={entity.verify_client_url ?? []}
-                onChange={(value) => updateField(ref, "verify_client_url", value)}
-              />
-              <JsonField label="Mesh With JSON" value={entity.mesh_with ?? []} onChange={(value) => updateField(ref, "mesh_with", value)} />
+              {(() => {
+                const rows = Array.isArray(entity.verify_client_url)
+                  ? (entity.verify_client_url as InspectorEntity[])
+                  : [];
+                const writeRows = (next: InspectorEntity[]) =>
+                  updateField(ref, "verify_client_url", next.length ? next : undefined);
+                const patchRow = (index: number, patch: InspectorEntity) =>
+                  writeRows(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+                return (
+                  <fieldset className="field field--checklist" data-testid="derp-verify-client-url">
+                    <legend>Verify Client URL</legend>
+                    {rows.length === 0 ? (
+                      <p className="field__hint">No verify-client URLs configured. Add one to enforce client identity at HTTP layer.</p>
+                    ) : null}
+                    {rows.map((row, index) => (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>URL</span>
+                          <input
+                            value={typeof row.url === "string" ? row.url : ""}
+                            placeholder="https://verify.example.com/check"
+                            onChange={(event) => patchRow(index, { url: event.target.value || undefined })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Detour</span>
+                          <input
+                            value={typeof row.detour === "string" ? row.detour : ""}
+                            placeholder="(outbound tag)"
+                            onChange={(event) => patchRow(index, { detour: event.target.value || undefined })}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          aria-label={`Remove verify URL ${index + 1}`}
+                          onClick={() => writeRows(rows.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" className="palette-action" onClick={() => writeRows([...rows, { url: "" }])}>
+                      Add verify URL
+                    </button>
+                  </fieldset>
+                );
+              })()}
+              {(() => {
+                const peers = Array.isArray(entity.mesh_with)
+                  ? (entity.mesh_with as InspectorEntity[])
+                  : [];
+                const writePeers = (next: InspectorEntity[]) =>
+                  updateField(ref, "mesh_with", next.length ? next : undefined);
+                const patchPeer = (index: number, patch: InspectorEntity) =>
+                  writePeers(peers.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+                return (
+                  <fieldset className="field field--checklist" data-testid="derp-mesh-with">
+                    <legend>Mesh peers (mesh_with)</legend>
+                    {peers.length === 0 ? (
+                      <p className="field__hint">No mesh peers configured.</p>
+                    ) : null}
+                    {peers.map((peer, index) => (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>Server (required)</span>
+                          <input
+                            value={typeof peer.server === "string" ? peer.server : ""}
+                            placeholder="derp2.example.com"
+                            onChange={(event) => patchPeer(index, { server: event.target.value || undefined })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Server port (required)</span>
+                          <input
+                            type="number"
+                            value={typeof peer.server_port === "number" ? peer.server_port : ""}
+                            placeholder="8443"
+                            onChange={(event) => {
+                              const next = Number(event.target.value);
+                              patchPeer(index, {
+                                server_port: Number.isFinite(next) && next > 0 ? next : undefined,
+                              });
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Host (optional)</span>
+                          <input
+                            value={typeof peer.host === "string" ? peer.host : ""}
+                            onChange={(event) => patchPeer(index, { host: event.target.value || undefined })}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          aria-label={`Remove mesh peer ${index + 1}`}
+                          onClick={() => writePeers(peers.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="palette-action"
+                      onClick={() => writePeers([...peers, { server: "", server_port: 8443 }])}
+                    >
+                      Add mesh peer
+                    </button>
+                  </fieldset>
+                );
+              })()}
               <label className="field">
                 <span>Mesh PSK</span>
                 <input
@@ -3289,7 +3396,65 @@ export function Inspector() {
                   onChange={(event) => updateField(ref, "mesh_psk_file", event.target.value || undefined)}
                 />
               </label>
-              <JsonField label="STUN JSON" value={entity.stun ?? { enabled: false }} onChange={(value) => updateField(ref, "stun", value)} />
+              {(() => {
+                const stunValue = entity.stun;
+                const isShorthand = typeof stunValue === "number";
+                const stun = isShorthand
+                  ? ({ enabled: true, listen_port: stunValue } as InspectorEntity)
+                  : objectField(stunValue);
+                const writeStun = (patch: InspectorEntity) => {
+                  const merged: InspectorEntity = { ...stun, ...patch };
+                  if (merged.enabled === undefined || merged.enabled === false) {
+                    const next: InspectorEntity = {};
+                    for (const [k, v] of Object.entries(merged)) {
+                      if (k === "enabled") continue;
+                      if (v === undefined || v === "") continue;
+                      next[k] = v;
+                    }
+                    updateField(ref, "stun", Object.keys(next).length ? { enabled: false, ...next } : undefined);
+                    return;
+                  }
+                  const cleaned: InspectorEntity = {};
+                  for (const [k, v] of Object.entries(merged)) {
+                    if (v === undefined || v === "") continue;
+                    cleaned[k] = v;
+                  }
+                  updateField(ref, "stun", cleaned);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="derp-stun">
+                    <legend>STUN</legend>
+                    <label className="toggle-row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(stun.enabled)}
+                        onChange={(event) => writeStun({ enabled: event.target.checked })}
+                      />
+                      <span>Enabled</span>
+                    </label>
+                    <label className="field">
+                      <span>Listen</span>
+                      <input
+                        value={typeof stun.listen === "string" ? stun.listen : ""}
+                        placeholder="::"
+                        onChange={(event) => writeStun({ listen: event.target.value || undefined })}
+                      />
+                    </label>
+                    <label className="field">
+                      <span>Listen port</span>
+                      <input
+                        type="number"
+                        value={typeof stun.listen_port === "number" ? stun.listen_port : ""}
+                        placeholder="3478"
+                        onChange={(event) => {
+                          const next = Number(event.target.value);
+                          writeStun({ listen_port: Number.isFinite(next) && next > 0 ? next : undefined });
+                        }}
+                      />
+                    </label>
+                  </fieldset>
+                );
+              })()}
             </>
           ) : null}
 
