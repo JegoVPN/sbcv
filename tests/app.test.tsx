@@ -617,6 +617,55 @@ describe("SBC editor shell", () => {
     expect(derp?.verify_client_endpoint).toBeUndefined();
   });
 
+  it("renders DERP verify_client_url / mesh_with / stun as structured editors", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-derp");
+    });
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const verifyBlock = within(inspector.getByTestId("derp-verify-client-url"));
+    fireEvent.click(verifyBlock.getByRole("button", { name: "Add verify URL" }));
+    const urlInput = verifyBlock.getByLabelText("URL") as HTMLInputElement;
+    fireEvent.change(urlInput, { target: { value: "https://verify.example.com/check" } });
+    const detourInput = verifyBlock.getByLabelText("Detour") as HTMLInputElement;
+    fireEvent.change(detourInput, { target: { value: "proxy-out" } });
+    let derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp") as Record<string, unknown>;
+    expect((derp.verify_client_url as Record<string, unknown>[])[0]).toMatchObject({
+      url: "https://verify.example.com/check",
+      detour: "proxy-out",
+    });
+
+    const meshBlock = within(inspector.getByTestId("derp-mesh-with"));
+    fireEvent.click(meshBlock.getByRole("button", { name: "Add mesh peer" }));
+    const serverInput = meshBlock.getByLabelText("Server (required)") as HTMLInputElement;
+    fireEvent.change(serverInput, { target: { value: "derp2.example.com" } });
+    const portInput = meshBlock.getByLabelText("Server port (required)") as HTMLInputElement;
+    fireEvent.change(portInput, { target: { value: "8443" } });
+    const hostInput = meshBlock.getByLabelText("Host (optional)") as HTMLInputElement;
+    fireEvent.change(hostInput, { target: { value: "derp2-alt" } });
+
+    derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp") as Record<string, unknown>;
+    expect((derp.mesh_with as Record<string, unknown>[])[0]).toMatchObject({
+      server: "derp2.example.com",
+      server_port: 8443,
+      host: "derp2-alt",
+    });
+
+    const stunBlock = within(inspector.getByTestId("derp-stun"));
+    const stunEnabled = stunBlock.getByLabelText("Enabled") as HTMLInputElement;
+    expect(stunEnabled.checked).toBe(false);
+    fireEvent.click(stunEnabled);
+    const stunPort = stunBlock.getByLabelText("Listen port") as HTMLInputElement;
+    fireEvent.change(stunPort, { target: { value: "3479" } });
+    derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp") as Record<string, unknown>;
+    const stun = derp.stun as Record<string, unknown>;
+    expect(stun.enabled).toBe(true);
+    expect(stun.listen_port).toBe(3479);
+  });
+
   it("inline rule-set editor preserves last valid rules array when JSON is invalid", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
