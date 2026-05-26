@@ -123,6 +123,28 @@ describe("SBC editor shell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Use for DNS server detour" }));
     expect(useProjectStore.getState().config.dns?.servers?.some((server) => server.detour === "naive-out")).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Use as Dial detour target" }));
+    expect(useProjectStore.getState().config.outbounds?.some((outbound) => outbound.detour === "naive-out")).toBe(true);
+  });
+
+  it("links newly created outbounds to the selected upstream context", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("node-route:main"));
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outbounds/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Naive" }));
+
+    expect(useProjectStore.getState().config.route?.rules?.at(-1)?.outbound).toBe("naive-out");
+
+    fireEvent.click(screen.getByTestId("node-outbound:proxy"));
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+
+    const proxy = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "proxy");
+    expect(proxy?.outbounds).toContain("http-out");
   });
 
   it("adds inbound setup drafts from the Library and opens editable listen fields", () => {

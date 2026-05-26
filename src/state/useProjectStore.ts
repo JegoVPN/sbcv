@@ -163,6 +163,47 @@ function firstDirectOutboundTag(config: SingBoxConfig, excludedTag: string) {
   return config.outbounds?.find((outbound) => outbound.tag !== excludedTag && outbound.type === "direct")?.tag;
 }
 
+function supportsOutboundDetour(type: string | undefined) {
+  return Boolean(type && !["direct", "block", "selector", "urltest", "dns"].includes(type));
+}
+
+function connectCreatedOutboundForSelection(
+  config: SingBoxConfig,
+  selectedId: string | null,
+  createdTag: string,
+): SingBoxConfig {
+  if (!selectedId) return config;
+
+  const selected = parseNodeId(selectedId);
+
+  if (selected.kind === "route") {
+    const withRoute = ensureRoute(config);
+    if (!withRoute.route?.final) return setRouteFinal(withRoute, createdTag);
+    return addRouteRule(withRoute, { domain_suffix: ["example"], outbound: createdTag });
+  }
+
+  if (selected.kind === "route-rule") {
+    const index = Number(selected.value);
+    if (Number.isInteger(index)) return updateRouteRule(config, index, { outbound: createdTag });
+  }
+
+  if (selected.kind === "outbound") {
+    const parent = config.outbounds?.find((outbound) => outbound.tag === selected.value);
+    if (parent?.type === "selector" || parent?.type === "urltest") {
+      return connectSelectorCandidate(config, parent.tag, createdTag);
+    }
+    if (parent?.tag && supportsOutboundDetour(parent.type)) {
+      return updateEntityField(config, { kind: "outbound", tag: parent.tag }, "detour", createdTag);
+    }
+  }
+
+  if (selected.kind === "dns-server") {
+    return updateEntityField(config, { kind: "dns-server", tag: selected.value }, "detour", createdTag);
+  }
+
+  return config;
+}
+
 function disconnectSelectorMember(config: SingBoxConfig, parentTag: string, childTag: string, parentType: string) {
   return disconnectEdge(config, `edge:${parentType}:${parentTag}:${childTag}`);
 }
@@ -260,7 +301,10 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
         config = addOutbound(config, outboundType, preferredOutboundTag(outboundType));
         const created = config.outbounds?.[config.outbounds.length - 1];
-        if (created) selectedId = `outbound:${created.tag}`;
+        if (created) {
+          config = connectCreatedOutboundForSelection(config, state.selectedId, created.tag);
+          selectedId = `outbound:${created.tag}`;
+        }
       }
       if (kind === "dns-hub") config = config.dns ? config : addDnsServer(config, "local");
       const dnsServerType = dnsServerTypeForPaletteKind(kind);

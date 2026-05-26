@@ -149,6 +149,7 @@ export function Inspector() {
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const connectOutboundReference = useProjectStore((state) => state.connectOutboundReference);
   const createCompatible = useProjectStore((state) => state.createCompatible);
+  const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const ref = useMemo(() => selectedRefFromId(selectedId), [selectedId]);
   const entity = useMemo<InspectorEntity | null>(() => {
     if (!ref) return null;
@@ -517,41 +518,49 @@ export function Inspector() {
               <div className="inspector-section-title">Connections</div>
               <div className="reference-card">
                 <div>
-                  <span>Route final</span>
+                  <span>Upstream route final</span>
                   <strong>{selectedOutboundReferences?.routeFinal ? "active" : "none"}</strong>
                 </div>
                 <div>
-                  <span>Route rules</span>
+                  <span>Upstream route rules</span>
                   <strong>{formatReferenceList(selectedOutboundReferences?.routeRules ?? [])}</strong>
                 </div>
                 <div>
-                  <span>Selector groups</span>
+                  <span>Upstream selector groups</span>
                   <strong>{formatReferenceList(selectedOutboundReferences?.selectors ?? [])}</strong>
                 </div>
                 <div>
-                  <span>URLTest groups</span>
+                  <span>Upstream URLTest groups</span>
                   <strong>{formatReferenceList(selectedOutboundReferences?.urltests ?? [])}</strong>
                 </div>
                 <div>
-                  <span>DNS detours</span>
+                  <span>Upstream DNS detours</span>
                   <strong>{formatReferenceList(selectedOutboundReferences?.dnsDetours ?? [])}</strong>
                 </div>
                 <div>
-                  <span>Dial detours</span>
+                  <span>Upstream dial detour targets</span>
                   <strong>{formatReferenceList(selectedOutboundReferences?.outboundDetours ?? [])}</strong>
                 </div>
               </div>
+              <div className="inspector-section-title">Connect Upstream</div>
               <div className="inspector-action-grid">
-                <button
-                  type="button"
-                  onClick={() => connectOutboundReference(tagValue, "route-final")}
-                  disabled={Boolean(selectedOutboundReferences?.routeFinal)}
-                >
-                  Set Route final
-                </button>
+                {selectedOutboundReferences?.routeFinal ? (
+                  <button type="button" onClick={() => disconnectEdge(`edge:route-final:${tagValue}`)}>
+                    Remove Route final
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => connectOutboundReference(tagValue, "route-final")}>
+                    Set Route final
+                  </button>
+                )}
                 <button type="button" onClick={() => connectOutboundReference(tagValue, "route-rule")}>
                   Add Route rule to this outbound
                 </button>
+                {selectedOutboundReferences?.selectors.map((selectorTag) => (
+                  <button key={selectorTag} type="button" onClick={() => disconnectEdge(`edge:selector:${selectorTag}:${tagValue}`)}>
+                    Remove from selector {selectorTag}
+                  </button>
+                ))}
                 <button
                   type="button"
                   onClick={() => connectOutboundReference(tagValue, "selector-member", firstSelector?.tag)}
@@ -559,6 +568,11 @@ export function Inspector() {
                 >
                   {firstSelector ? `Add to selector ${firstSelector.tag}` : selectorGroups.length ? "Already in every selector" : "Create selector + add"}
                 </button>
+                {selectedOutboundReferences?.urltests.map((urltestTag) => (
+                  <button key={urltestTag} type="button" onClick={() => disconnectEdge(`edge:urltest:${urltestTag}:${tagValue}`)}>
+                    Remove from URLTest {urltestTag}
+                  </button>
+                ))}
                 <button
                   type="button"
                   onClick={() => connectOutboundReference(tagValue, "urltest-member", firstUrltest?.tag)}
@@ -566,33 +580,51 @@ export function Inspector() {
                 >
                   {firstUrltest ? `Add to URLTest ${firstUrltest.tag}` : urltestGroups.length ? "Already in every URLTest" : "Create URLTest + add"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => connectOutboundReference(tagValue, "dns-detour")}
-                  disabled={Boolean(selectedOutboundReferences?.dnsDetours.length)}
-                >
-                  Use for DNS server detour
-                </button>
+                {selectedOutboundReferences?.dnsDetours.length ? (
+                  selectedOutboundReferences.dnsDetours.map((serverTag) => (
+                    <button key={serverTag} type="button" onClick={() => updateField({ kind: "dns-server", tag: serverTag }, "detour", undefined)}>
+                      Remove DNS detour {serverTag}
+                    </button>
+                  ))
+                ) : (
+                  <button type="button" onClick={() => connectOutboundReference(tagValue, "dns-detour")}>
+                    Use for DNS server detour
+                  </button>
+                )}
+                {selectedOutboundReferences?.outboundDetours.length ? (
+                  selectedOutboundReferences.outboundDetours.map((childTag) => (
+                    <button key={childTag} type="button" onClick={() => updateField({ kind: "outbound", tag: childTag }, "detour", undefined)}>
+                      Remove dial detour {childTag}
+                    </button>
+                  ))
+                ) : (
+                  <button type="button" onClick={() => connectOutboundReference(tagValue, "outbound-detour")}>
+                    Use as Dial detour target
+                  </button>
+                )}
               </div>
               {supportsDialDetour(entityType) ? (
-                <label className="field">
-                  <span>Dial Detour</span>
-                  <select
-                    value={String(entity.detour ?? "")}
-                    onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
-                  >
-                    <option value="">None</option>
-                    {outboundTags(config, tagValue).map((tag) => (
-                      <option key={tag} value={tag}>
-                        {tag}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <>
+                  <div className="inspector-section-title">Connect Downstream</div>
+                  <label className="field">
+                    <span>Dial via outbound</span>
+                    <select
+                      value={String(entity.detour ?? "")}
+                      onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
+                    >
+                      <option value="">None</option>
+                      {outboundTags(config, tagValue).map((tag) => (
+                        <option key={tag} value={tag}>
+                          {tag}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
               ) : null}
               {entityType === "selector" || entityType === "urltest" ? (
                 <>
-                  <div className="inspector-section-title">Downstream Candidates</div>
+                  <div className="inspector-section-title">Connect Downstream</div>
                   <div className="inspector-action-grid inspector-action-grid--compact">
                     <button type="button" onClick={() => createCompatible(`outbound:${tagValue}`, "SOCKS")}>
                       Add SOCKS candidate

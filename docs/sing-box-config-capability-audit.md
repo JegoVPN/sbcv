@@ -42,6 +42,8 @@ The third closed usability gap is DNS Server setup: users can now add Hosts, TCP
 
 The fourth closed usability gap is independent settings setup: users can now add NTP, Certificate, and Experimental settings from Library. These create canonical top-level `ntp`, `certificate`, and `experimental` objects, pin independent settings cards on the canvas, and expose editable NTP server/interval, certificate store/path, cache file, Clash API, and V2Ray API fields in the Inspector. The stable fixture `fixtures/stable/global-settings.json` validates the emitted stable-safe subset with `sing-box-stable`.
 
+The fifth closed usability gap is outbound upstream ownership: newly created outbounds now respect the selected canonical owner. Route, Route Rule, Selector, URLTest, and DNS Server selections connect the new outbound through the corresponding official tag field. Orphan outbounds expose explicit Inspector actions for route final, route rule, selector/urltest membership, DNS detour target, and Dial detour target, so users do not need to infer those references from side-port icons alone.
+
 Remaining chain-node gaps reported by the audit:
 
 - Outbound `wireguard` and `dns` remain documentation/migration entries until the target-specific migration policy is implemented.
