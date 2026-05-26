@@ -312,6 +312,12 @@ const routeRulePrimaryFields = new Set([
   "outbound",
   "action",
   "invert",
+  "method",
+  "no_drop",
+  "sniffer",
+  "timeout",
+  "server",
+  "strategy",
 ]);
 
 const dnsRulePrimaryFields = new Set([
@@ -671,7 +677,17 @@ function RouteRuleInspector({
       <div className="inspector-section-title">Action</div>
       <label className="field">
         <span>Action</span>
-        <select value={String(rule.action ?? "route")} onChange={(event) => patch({ action: event.target.value })}>
+        <select
+          value={String(rule.action ?? "route")}
+          onChange={(event) => {
+            const nextAction = event.target.value;
+            const cleared: Record<string, unknown> = { action: nextAction };
+            if (nextAction !== "route" && nextAction !== "bypass" && rule.outbound !== undefined) {
+              cleared.outbound = undefined;
+            }
+            patch(cleared);
+          }}
+        >
           <option value="route">route</option>
           <option value="bypass">bypass</option>
           <option value="reject">reject</option>
@@ -681,17 +697,71 @@ function RouteRuleInspector({
           <option value="resolve">resolve</option>
         </select>
       </label>
-      <label className="field">
-        <span>Outbound</span>
-        <select value={String(rule.outbound ?? "")} onChange={(event) => patch({ outbound: event.target.value || undefined })}>
-          <option value="">None</option>
-          {(config.outbounds ?? []).map((outbound, outboundIndex) => (
-            <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
-              {outbound.tag ?? `untagged-${outboundIndex + 1}`}
-            </option>
-          ))}
-        </select>
-      </label>
+      {String(rule.action ?? "route") === "route" ? (
+        <label className="field">
+          <span>Outbound</span>
+          <select value={String(rule.outbound ?? "")} onChange={(event) => patch({ outbound: event.target.value || undefined })}>
+            <option value="">None</option>
+            {(config.outbounds ?? []).map((outbound, outboundIndex) => (
+              <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
+                {outbound.tag ?? `untagged-${outboundIndex + 1}`}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+      {String(rule.action) === "reject" ? (
+        <>
+          <label className="field">
+            <span>Reject Method</span>
+            <select value={String(rule.method ?? "default")} onChange={(event) => patch({ method: event.target.value === "default" ? undefined : event.target.value })}>
+              <option value="default">default</option>
+              <option value="drop">drop</option>
+            </select>
+          </label>
+          <label className="toggle-row">
+            <input type="checkbox" checked={Boolean(rule.no_drop)} onChange={(event) => patch({ no_drop: event.target.checked || undefined })} />
+            <span>No drop (only return)</span>
+          </label>
+        </>
+      ) : null}
+      {String(rule.action) === "sniff" ? (
+        <>
+          <RuleListField label="Sniffer" value={rule.sniffer} onChange={(value) => patch({ sniffer: value })} />
+          <label className="field">
+            <span>Sniff Timeout</span>
+            <input type="text" value={String(rule.timeout ?? "")} onChange={(event) => patch({ timeout: event.target.value || undefined })} placeholder="300ms" />
+          </label>
+        </>
+      ) : null}
+      {String(rule.action) === "resolve" ? (
+        <>
+          <label className="field">
+            <span>Resolve Server</span>
+            <select value={String(rule.server ?? "")} onChange={(event) => patch({ server: event.target.value || undefined })}>
+              <option value="">(default)</option>
+              {(config.dns?.servers ?? [])
+                .map((server) => server.tag)
+                .filter((tag): tag is string => Boolean(tag))
+                .map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Resolve Strategy</span>
+            <select value={String(rule.strategy ?? "")} onChange={(event) => patch({ strategy: event.target.value || undefined })}>
+              <option value="">(default)</option>
+              <option value="prefer_ipv4">prefer_ipv4</option>
+              <option value="prefer_ipv6">prefer_ipv6</option>
+              <option value="ipv4_only">ipv4_only</option>
+              <option value="ipv6_only">ipv6_only</option>
+            </select>
+          </label>
+        </>
+      ) : null}
       <label className="toggle-row">
         <input type="checkbox" checked={Boolean(rule.invert)} onChange={(event) => patch({ invert: event.target.checked || undefined })} />
         <span>Invert match</span>
