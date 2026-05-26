@@ -140,6 +140,7 @@ type SingBoxTarget = {
 默认行为：
 
 - 新项目默认选择 `stable`。
+- UI 目标版本只提供三个高频选项：`1.13 stable`、`1.12 Legacy`（stable binary 校验）、`1.14 testing`。
 - 模板默认生成 stable 可用配置。
 - stable 模式下不默认生成 stable 文档未列出的字段；如果用户显式启用，必须标记版本风险并以 stable binary 校验结果为准。
 - testing 模式下可以显示前瞻字段，但字段必须带 `testing` 标记。
@@ -175,10 +176,10 @@ SBC 的 domain model 必须覆盖官方 `#fields` 中列出的完整顶层结构
 
 | sing-box 模块 | SBC 表达方式 | 是否放画布 | 通道策略 | 备注 |
 | --- | --- | --- | --- | --- |
-| `log` | Settings 面板 | 否 | stable 默认 | 全局日志设置 |
+| `log` | 独立 Settings 节点 + Inspector | 可选独立节点 | stable 默认 | 全局日志设置，不参与链路连线 |
 | `dns` | DNS Hub 节点 + DNS Rules 表 + DNS Server 节点 | 是 | stable 默认 | `dns.rules` 顺序必须表格化 |
-| `ntp` | Settings 面板 | 否 | stable 默认 | 全局时间同步设置 |
-| `certificate` | Certificate 设置面板 | 部分 | stable 默认 | 证书全局配置 |
+| `ntp` | 独立 Settings 节点 + Inspector | 可选独立节点 | stable 默认 | 全局时间同步设置，不参与链路连线 |
+| `certificate` | 独立 Settings 节点 + Inspector | 可选独立节点 | stable 默认 | 证书全局配置，不参与流量链路 |
 | `certificate_providers[]` | Certificate Provider 资源列表/节点 | 部分 | version-gated | 官方站点/testing 有；stable 文档缺失时需 stable binary 验证 |
 | `http_clients[]` | HTTP Client 资源列表/节点 | 部分 | version-gated | 远程 rule-set、route default HTTP client 等会引用 |
 | `endpoints[]` | Endpoint 节点 | 是 | stable 默认 | WireGuard、Tailscale 等底层接口 |
@@ -186,7 +187,14 @@ SBC 的 domain model 必须覆盖官方 `#fields` 中列出的完整顶层结构
 | `outbounds[]` | Outbound 节点 | 是 | stable 默认 | Direct、Block、Proxy、Selector、URLTest |
 | `route` | Route Hub 节点 + Route Rules 表 | 是 | stable 默认 | `route.rules` 顺序由表格维护 |
 | `services[]` | Service 节点/列表 | 后期 | stable 默认 | DERP、Resolved、SSM API 等 |
-| `experimental` | Settings 面板 | 否 | stable 默认 | Cache File、Clash API、V2Ray API 等 |
+| `experimental` | 独立 Settings 节点 + Inspector | 可选独立节点 | stable 默认 | Cache File、Clash API、V2Ray API 等，不参与链路连线 |
+
+画布添加策略：
+
+- **链路节点**：Inbound、Route、Route Rule、DNS、DNS Rule、DNS Server、Outbound、Endpoint、Service。它们有输入/输出端口，端口代表 tag 引用、final 引用、detour 引用或成员列表引用。
+- **独立设置节点**：Log、NTP、Certificate、Experimental。它们可以从 Palette 添加到画布，点击后在 Inspector 编辑顶层对象，但没有左右端口，不参与边关系。
+- **资源节点**：HTTP Client、Certificate Provider、Rule Set。它们不是流量节点，但可能被其它节点引用；初期可以作为资源表/独立节点，ready 前只能作为 Docs 入口。
+- **Shared 字段族**：Listen、Dial、TLS、HTTP2、QUIC、DNS01 Challenge、Pre-match、Multiplex、V2Ray Transport、UDP over TCP、TCP Brutal、Wi-Fi State、Neighbor Resolution。它们不能直接拖成节点，必须嵌入所属节点的 Inspector 子表单。
 
 画布派生对象还包括：
 

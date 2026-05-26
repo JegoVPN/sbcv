@@ -13,10 +13,10 @@
 
 | Key | Format | 官方入口 | SBC 表达方式 |
 | --- | --- | --- | --- |
-| `log` | Log | https://sing-box.sagernet.org/configuration/log/ | Settings 面板 |
+| `log` | Log | https://sing-box.sagernet.org/configuration/log/ | 独立 Settings 节点 + Inspector |
 | `dns` | DNS | https://sing-box.sagernet.org/configuration/dns/ | DNS Hub 节点 + DNS 表格 |
-| `ntp` | NTP | https://sing-box.sagernet.org/configuration/ntp/ | Settings 面板 |
-| `certificate` | Certificate | https://sing-box.sagernet.org/configuration/certificate/ | Certificate 设置面板 |
+| `ntp` | NTP | https://sing-box.sagernet.org/configuration/ntp/ | 独立 Settings 节点 + Inspector |
+| `certificate` | Certificate | https://sing-box.sagernet.org/configuration/certificate/ | 独立 Settings 节点 + Inspector |
 | `certificate_providers` | Certificate Provider | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | 资源列表/节点 |
 | `http_clients` | HTTP Client | https://sing-box.sagernet.org/configuration/shared/http-client/ | 资源列表/节点 |
 | `endpoints` | Endpoint | https://sing-box.sagernet.org/configuration/endpoint/ | Endpoint 节点 |
@@ -24,7 +24,7 @@
 | `outbounds` | Outbound | https://sing-box.sagernet.org/configuration/outbound/ | Outbound 节点 |
 | `route` | Route | https://sing-box.sagernet.org/configuration/route/ | Route Hub 节点 + Route Rules 表 |
 | `services` | Service | https://sing-box.sagernet.org/configuration/service/ | Service 列表/节点 |
-| `experimental` | Experimental | https://sing-box.sagernet.org/configuration/experimental/ | Settings 面板 |
+| `experimental` | Experimental | https://sing-box.sagernet.org/configuration/experimental/ | 独立 Settings 节点 + Inspector |
 
 ## DNS
 
@@ -81,28 +81,32 @@
 
 ## Shared
 
-共享配置通常不会单独生成画布节点，但会驱动多个 Inspector 子表单和 schema 片段。
+共享配置通常不会单独生成画布节点，但会驱动多个 Inspector 子表单和 schema 片段。Shared 条目分成三类：
+
+- **嵌入字段族**：不能直接添加到画布，必须在所属节点 Inspector 中编辑。
+- **资源对象**：有顶层数组或可被其它对象引用，可以做独立资源节点/资源表。
+- **版本门控字段**：stable/testing 文档差异明显，必须通过目标通道 binary 校验后再标记 ready。
 
 | Entry | 官方入口 | SBC 表达方式 |
 | --- | --- | --- |
-| Listen Fields | https://sing-box.sagernet.org/configuration/shared/listen/ | Inbound shared form |
-| Dial Fields | https://sing-box.sagernet.org/configuration/shared/dial/ | Outbound/Endpoint shared form |
-| TLS | https://sing-box.sagernet.org/configuration/shared/tls/ | TLS 子表单 |
-| HTTP Client | https://sing-box.sagernet.org/configuration/shared/http-client/ | `http_clients[]` 资源表单 |
-| HTTP2 Fields | https://sing-box.sagernet.org/configuration/shared/http2/ | HTTP/TLS shared form |
-| QUIC Fields | https://sing-box.sagernet.org/configuration/shared/quic/ | QUIC shared form |
-| Certificate Provider | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | `certificate_providers[]` 资源表单 |
+| Listen Fields | https://sing-box.sagernet.org/configuration/shared/listen/ | Inbound Inspector 嵌入字段族 |
+| Dial Fields | https://sing-box.sagernet.org/configuration/shared/dial/ | Outbound、Endpoint、DNS Server detour Inspector 嵌入字段族 |
+| TLS | https://sing-box.sagernet.org/configuration/shared/tls/ | Inbound/Outbound/Endpoint TLS 子表单 |
+| HTTP Client | https://sing-box.sagernet.org/configuration/shared/http-client/ | `http_clients[]` 资源对象；testing ready、stable gated |
+| HTTP2 Fields | https://sing-box.sagernet.org/configuration/shared/http2/ | HTTP/TLS 子表单字段族 |
+| QUIC Fields | https://sing-box.sagernet.org/configuration/shared/quic/ | QUIC/Hysteria/TUIC 子表单字段族 |
+| Certificate Provider | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | `certificate_providers[]` 资源对象；testing/stable gated |
 | Certificate Provider / ACME | https://sing-box.sagernet.org/configuration/shared/certificate-provider/acme/ | Certificate Provider 类型 |
 | Certificate Provider / Tailscale | https://sing-box.sagernet.org/configuration/shared/certificate-provider/tailscale/ | Certificate Provider 类型 |
 | Certificate Provider / Cloudflare Origin CA | https://sing-box.sagernet.org/configuration/shared/certificate-provider/cloudflare-origin-ca/ | Certificate Provider 类型 |
-| DNS01 Challenge Fields | https://sing-box.sagernet.org/configuration/shared/dns01_challenge/ | ACME 子表单 |
-| Pre-match | https://sing-box.sagernet.org/configuration/shared/pre-match/ | Shared matching schema |
-| Multiplex | https://sing-box.sagernet.org/configuration/shared/multiplex/ | Outbound shared form |
-| V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | Proxy protocol shared form |
-| UDP over TCP | https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/ | Proxy protocol shared form |
-| TCP Brutal | https://sing-box.sagernet.org/configuration/shared/tcp-brutal/ | Proxy protocol shared form |
-| Wi-Fi State | https://sing-box.sagernet.org/configuration/shared/wifi-state/ | Route/DNS rule shared form |
-| Neighbor Resolution | https://sing-box.sagernet.org/configuration/shared/neighbor/ | Route/DNS rule shared form |
+| DNS01 Challenge Fields | https://sing-box.sagernet.org/configuration/shared/dns01_challenge/ | ACME Provider 子表单字段族 |
+| Pre-match | https://sing-box.sagernet.org/configuration/shared/pre-match/ | Route Rule / DNS Rule 匹配条件子表单 |
+| Multiplex | https://sing-box.sagernet.org/configuration/shared/multiplex/ | Outbound/Endpoint Inspector 嵌入字段族 |
+| V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | VMess/VLESS/Trojan/Shadowsocks 等协议子表单 |
+| UDP over TCP | https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/ | Outbound/Inbound 协议子表单字段族 |
+| TCP Brutal | https://sing-box.sagernet.org/configuration/shared/tcp-brutal/ | Outbound/Endpoint 传输子表单字段族 |
+| Wi-Fi State | https://sing-box.sagernet.org/configuration/shared/wifi-state/ | Route Rule / DNS Rule 条件字段族 |
+| Neighbor Resolution | https://sing-box.sagernet.org/configuration/shared/neighbor/ | Route/DNS rule 或 testing route 邻居解析字段族 |
 
 ## Endpoint
 
