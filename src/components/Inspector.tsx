@@ -189,6 +189,8 @@ const outboundHandledFields = new Set([
   "packet_encoding",
   "plugin",
   "plugin_opts",
+  "udp_relay_mode",
+  "udp_over_stream",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -2785,17 +2787,49 @@ export function Inspector() {
             </label>
           ) : null}
           {entityType === "tuic" ? (
-            <label className="field">
-              <span>Congestion Control</span>
-              <select
-                value={typeof entity.congestion_control === "string" ? entity.congestion_control : "cubic"}
-                onChange={(event) => updateField(ref, "congestion_control", event.target.value)}
-              >
-                <option value="cubic">cubic</option>
-                <option value="new_reno">new_reno</option>
-                <option value="bbr">bbr</option>
-              </select>
-            </label>
+            <>
+              <label className="field">
+                <span>Congestion Control</span>
+                <select
+                  value={typeof entity.congestion_control === "string" ? entity.congestion_control : "cubic"}
+                  onChange={(event) => updateField(ref, "congestion_control", event.target.value)}
+                >
+                  <option value="cubic">cubic</option>
+                  <option value="new_reno">new_reno</option>
+                  <option value="bbr">bbr</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>UDP Relay Mode</span>
+                <select
+                  value={typeof entity.udp_relay_mode === "string" ? entity.udp_relay_mode : ""}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    updateField(ref, "udp_relay_mode", next || undefined);
+                    if (next && entity.udp_over_stream) {
+                      updateField(ref, "udp_over_stream", undefined);
+                    }
+                  }}
+                >
+                  <option value="">(default: native)</option>
+                  <option value="native">native</option>
+                  <option value="quic">quic</option>
+                </select>
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.udp_over_stream)}
+                  onChange={(event) => {
+                    updateField(ref, "udp_over_stream", event.target.checked || undefined);
+                    if (event.target.checked && entity.udp_relay_mode) {
+                      updateField(ref, "udp_relay_mode", undefined);
+                    }
+                  }}
+                />
+                <span>UDP over Stream (conflicts with udp_relay_mode)</span>
+              </label>
+            </>
           ) : null}
           {entityType === "socks" ? (
             <label className="field">

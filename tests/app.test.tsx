@@ -1132,6 +1132,27 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders TUIC udp_relay_mode select + udp_over_stream toggle with mutual exclusion", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tuic-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const relayMode = inspector.getByLabelText("UDP Relay Mode") as HTMLSelectElement;
+    expect(relayMode.tagName).toBe("SELECT");
+    fireEvent.change(relayMode, { target: { value: "quic" } });
+    let tuic = useProjectStore.getState().config.outbounds?.find((o) => o.type === "tuic") as Record<string, unknown>;
+    expect(tuic.udp_relay_mode).toBe("quic");
+
+    const overStream = inspector.getByLabelText("UDP over Stream (conflicts with udp_relay_mode)") as HTMLInputElement;
+    fireEvent.click(overStream);
+    tuic = useProjectStore.getState().config.outbounds?.find((o) => o.type === "tuic") as Record<string, unknown>;
+    expect(tuic.udp_over_stream).toBe(true);
+    expect(tuic.udp_relay_mode).toBeUndefined();
+  });
+
   it("renders shadowsocks plugin select with conditional plugin_opts", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

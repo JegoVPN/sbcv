@@ -601,6 +601,29 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("tun-dns-mode-testing-only");
   });
 
+  it("flags tuic udp_over_stream + udp_relay_mode mutual exclusion", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        {
+          type: "tuic",
+          tag: "tuic-conflict",
+          server: "1.1.1.1",
+          server_port: 443,
+          uuid: "11111111-2222-3333-4444-555555555555",
+          password: "x",
+          tls: { enabled: true },
+          udp_relay_mode: "quic",
+          udp_over_stream: true,
+        },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("tuic-udp-mode-conflict");
+  });
+
   it("flags urltest missing url + invalid scheme", () => {
     const base = createStableTunSplitConfig();
     const config = {
