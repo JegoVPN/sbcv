@@ -651,6 +651,31 @@ describe("SBC editor shell", () => {
     expect((updated as Record<string, unknown>).rules).toEqual([{ domain_suffix: [".cn"] }]);
   });
 
+  it("renders SSH outbound credentials and host_key fields as first-class controls", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("ssh-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    expect(inspector.getByLabelText("SSH User")).toBeInTheDocument();
+    const password = inspector.getByLabelText("Password") as HTMLInputElement;
+    expect(password.type).toBe("password");
+    const privateKey = inspector.getByLabelText("Private Key (PEM)") as HTMLInputElement;
+    expect(privateKey.type).toBe("password");
+
+    const hostKey = inspector.getByLabelText("Host Key (newline-separated SHA256)") as HTMLTextAreaElement;
+    fireEvent.change(hostKey, { target: { value: "SHA256:abc\nSHA256:def" } });
+    const ssh = useProjectStore.getState().config.outbounds?.find((o) => o.type === "ssh");
+    expect((ssh as Record<string, unknown>).host_key).toEqual(["SHA256:abc", "SHA256:def"]);
+
+    const algos = inspector.getByLabelText("Host Key Algorithms") as HTMLInputElement;
+    fireEvent.change(algos, { target: { value: "ssh-ed25519, ssh-rsa" } });
+    const updated = useProjectStore.getState().config.outbounds?.find((o) => o.type === "ssh");
+    expect((updated as Record<string, unknown>).host_key_algorithms).toEqual(["ssh-ed25519", "ssh-rsa"]);
+  });
+
   it("surfaces first-class UUID / Password / Auth credentials for proxy outbound types", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
