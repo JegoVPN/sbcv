@@ -358,6 +358,39 @@ export function validateConfig(
     }
   }
 
+  const experimental = config.experimental;
+  if (experimental && typeof experimental === "object" && !Array.isArray(experimental)) {
+    const clashApi = (experimental as Record<string, unknown>).clash_api;
+    if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
+      const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
+      if (typeof detour === "string" && detour.length > 0 && !outboundTags.has(detour)) {
+        push(
+          diagnostics,
+          "error",
+          "clash-api-download-detour-missing",
+          "/experimental/clash_api/external_ui_download_detour",
+          `experimental.clash_api.external_ui_download_detour references missing outbound "${detour}".`,
+        );
+      }
+      const controller = (clashApi as Record<string, unknown>).external_controller;
+      const secret = (clashApi as Record<string, unknown>).secret;
+      if (
+        typeof controller === "string" &&
+        controller.length > 0 &&
+        (controller.startsWith("0.0.0.0") || controller.startsWith("[::]")) &&
+        (typeof secret !== "string" || secret.length === 0)
+      ) {
+        push(
+          diagnostics,
+          "warning",
+          "clash-api-public-listen-without-secret",
+          "/experimental/clash_api/secret",
+          "Clash API binds to a public address but no secret is set. Any client on the network can control sing-box.",
+        );
+      }
+    }
+  }
+
   listItems(config.route?.rule_set).forEach((ruleSet, index) => {
     const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : `rule-set-${index}`;
     const type = typeof ruleSet.type === "string" ? ruleSet.type : undefined;

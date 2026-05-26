@@ -523,6 +523,44 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("flags Clash API misconfigurations (dangling download_detour, public listen without secret)", () => {
+    const base = createStableTunSplitConfig();
+    const dangling = {
+      ...base,
+      experimental: {
+        ...(base.experimental ?? {}),
+        clash_api: {
+          external_controller: "127.0.0.1:9090",
+          external_ui_download_detour: "no-such-outbound",
+        },
+      },
+    } as typeof base;
+    expect(validateConfig(dangling, "stable").some((d) => d.code === "clash-api-download-detour-missing")).toBe(true);
+
+    const publicListen = {
+      ...base,
+      experimental: {
+        ...(base.experimental ?? {}),
+        clash_api: {
+          external_controller: "0.0.0.0:9090",
+        },
+      },
+    } as typeof base;
+    expect(validateConfig(publicListen, "stable").some((d) => d.code === "clash-api-public-listen-without-secret")).toBe(true);
+
+    const secured = {
+      ...base,
+      experimental: {
+        ...(base.experimental ?? {}),
+        clash_api: {
+          external_controller: "0.0.0.0:9090",
+          secret: "shhh",
+        },
+      },
+    } as typeof base;
+    expect(validateConfig(secured, "stable").some((d) => d.code === "clash-api-public-listen-without-secret")).toBe(false);
+  });
+
   it("flags rule-set issues (missing url/path/detour reference, empty inline rules, testing deprecation)", () => {
     const config = createStableTunSplitConfig();
     const ruleSets = (config.route?.rule_set ?? []).slice();
