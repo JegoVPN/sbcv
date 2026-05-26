@@ -215,6 +215,7 @@ const dnsServerHandledFields = new Set([
   "predefined",
   "inet4_range",
   "inet6_range",
+  "headers",
   ...dialSharedFields,
 ]);
 const endpointHandledFields = new Set([
@@ -3374,6 +3375,65 @@ export function Inspector() {
                   ))}
                   <button type="button" className="palette-action" onClick={addRow}>
                     Add host mapping
+                  </button>
+                </fieldset>
+              );
+            })()
+          ) : null}
+          {entityType === "https" || entityType === "h3" ? (
+            (() => {
+              const headers = objectField(entity.headers);
+              const entries = Object.entries(headers);
+              const writeHeaders = (next: InspectorEntity) =>
+                updateField(ref, "headers", Object.keys(next).length ? next : undefined);
+              return (
+                <fieldset className="field field--checklist" data-testid="dns-https-headers">
+                  <legend>HTTP Headers</legend>
+                  {entries.length === 0 ? (
+                    <p className="field__hint">No custom DoH headers. Click Add to set User-Agent, Authorization, etc.</p>
+                  ) : null}
+                  {entries.map(([key, value], idx) => (
+                    <div key={`${key}-${idx}`} className="rule-row">
+                      <label className="field">
+                        <span>Name</span>
+                        <input
+                          value={key}
+                          onChange={(event) => {
+                            const newKey = event.target.value;
+                            if (!newKey || newKey === key) return;
+                            const next: InspectorEntity = {};
+                            for (const [k, v] of entries) next[k === key ? newKey : k] = v;
+                            writeHeaders(next);
+                          }}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Value</span>
+                        <input
+                          value={typeof value === "string" ? value : String(value ?? "")}
+                          onChange={(event) => writeHeaders({ ...headers, [key]: event.target.value })}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="icon-danger"
+                        aria-label={`Remove header ${key}`}
+                        onClick={() => {
+                          const next: InspectorEntity = { ...headers };
+                          delete next[key];
+                          writeHeaders(next);
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="palette-action"
+                    onClick={() => writeHeaders({ ...headers, "": "" })}
+                  >
+                    Add header
                   </button>
                 </fieldset>
               );
