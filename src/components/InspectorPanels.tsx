@@ -2,7 +2,7 @@ import { Braces, FileCheck2, ListChecks, ServerCog } from "lucide-react";
 import { useProjectStore } from "../state/useProjectStore";
 import { DnsRulesTable, RouteRulesTable } from "./RuleTables";
 
-export function BottomPanel() {
+export function InspectorPanels() {
   const panelTab = useProjectStore((state) => state.panelTab);
   const setPanelTab = useProjectStore((state) => state.setPanelTab);
   const jsonDraft = useProjectStore((state) => state.jsonDraft);
@@ -13,8 +13,8 @@ export function BottomPanel() {
   const officialValidationMessage = useProjectStore((state) => state.officialValidationMessage);
 
   return (
-    <section className="bottom-panel" aria-label="Rules, JSON, and diagnostics">
-      <nav className="panel-tabs" aria-label="Editor panels">
+    <section className="inspector-panels" aria-label="Rules, JSON, and diagnostics">
+      <nav className="panel-tabs" aria-label="Inspector editor panels">
         <button
           type="button"
           className={panelTab === "rules" ? "is-active" : ""}
@@ -60,7 +60,7 @@ export function BottomPanel() {
                   Refresh
                 </button>
                 <button type="button" onClick={applyJsonDraft}>
-                  Apply JSON
+                  Apply
                 </button>
               </div>
             </div>

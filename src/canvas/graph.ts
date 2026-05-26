@@ -35,17 +35,21 @@ const ROUTE_RULE_START_Y = 60;
 const ROUTE_HUB_Y = 260;
 const DNS_LANE_MIN_Y = 900;
 const MAX_OUTBOUND_DEPTH = 2;
+const SETTINGS_NODE_IDS = ["settings:log", "settings:ntp", "settings:certificate", "settings:experimental"] as const;
 
 const COLUMNS = {
-  inbound: 60,
-  hub: 420,
-  rule: 780,
-  target: 1140,
-  member: 1500,
-  leaf: 1860,
+  settings: -300,
+  inbound: 0,
+  hub: 720,
+  rule: 1440,
+  target: 2160,
+  member: 2880,
+  leaf: 3600,
 } as const;
 
 type LayoutColumn = keyof typeof COLUMNS;
+type SettingsNodeId = (typeof SETTINGS_NODE_IDS)[number];
+type SettingsPath = SettingsNodeId extends `settings:${infer Path}` ? Path : never;
 
 function nodePosition(layout: ProjectLayout, id: string, fallback: { x: number; y: number }) {
   return layout.positions[id] ?? DEFAULT_POSITIONS[id] ?? fallback;
@@ -113,6 +117,24 @@ function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
 }
 
+function makeEdge(
+  id: string,
+  source: string,
+  target: string,
+  sourceHandle: string,
+  targetHandle: string,
+  animated = false,
+): Edge {
+  return {
+    id,
+    source,
+    target,
+    sourceHandle,
+    targetHandle,
+    animated,
+  };
+}
+
 export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
   const nodes: SbcFlowNode[] = [];
   const edges: Edge[] = [];
@@ -130,6 +152,29 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const outboundY = new Map<string, number>();
   const memberY = new Map<string, number>();
   const memberTags = new Set<string>();
+
+  SETTINGS_NODE_IDS.forEach((id, index) => {
+    if (!layout.positions[id]) return;
+    const path = id.slice("settings:".length) as SettingsPath;
+    const entity = config[path];
+    if (!entity || typeof entity !== "object" || Array.isArray(entity)) return;
+    nodes.push(
+      makeNode(
+        id,
+        {
+          ref: { kind: "settings", path },
+          kind: "settings",
+          type: path,
+          title: path[0] ? `${path[0].toUpperCase()}${path.slice(1)}` : path,
+          subtitle: "global settings",
+          status: diagnosticStatus(`/${path}`, diagnostics),
+          compatible: [],
+        },
+        layout,
+        { x: COLUMNS.settings, y: ROUTE_HUB_Y + index * NODE_SLOT_Y },
+      ),
+    );
+  });
 
   outbounds.forEach((outbound, index) => {
     outboundByTag.set(entityTag(outbound.tag, "outbound", index), outbound);
@@ -164,13 +209,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
     if (config.route) {
-      edges.push({
-        id: `edge:inbound:${tag}:route`,
-        source: id,
-        target: "route:main",
-        animated: true,
-        label: "traffic",
-      });
+      edges.push(makeEdge(`edge:inbound:${tag}:route`, id, "route:main", "route", "inbound", true));
     }
   });
 
@@ -224,19 +263,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             { x: COLUMNS.rule, y },
           ),
         );
-        edges.push({
-          id: `edge:route-rule-order:${index}`,
-          source: "route:main",
-          target: id,
-          label: "ordered",
-        });
+        edges.push(makeEdge(`edge:route-rule-order:${index}`, "route:main", id, "route-rule", "route"));
         if (rule.outbound) {
-          edges.push({
-            id: `edge:route-rule:${index}:${rule.outbound}`,
-            source: id,
-            target: `outbound:${rule.outbound}`,
-            label: "outbound",
-          });
+          edges.push(makeEdge(`edge:route-rule:${index}:${rule.outbound}`, id, `outbound:${rule.outbound}`, "outbound", "route-rule"));
         }
       });
     }
@@ -249,13 +278,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             Math.max(1, Math.min(routeRules.length, MAX_VISUAL_RULE_NODES)) * NODE_SLOT_Y,
         );
       }
-      edges.push({
-        id: `edge:route-final:${config.route.final}`,
-        source: "route:main",
-        target: `outbound:${config.route.final}`,
-        label: "final",
-        animated: true,
-      });
+      edges.push(makeEdge(`edge:route-final:${config.route.final}`, "route:main", `outbound:${config.route.final}`, "outbound", "route", true));
     }
   }
 
@@ -340,12 +363,15 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       outbound.outbounds.forEach((candidateTag, candidateIndex) => {
         if (visualCandidateEdges >= MAX_VISUAL_CANDIDATE_EDGES) return;
         visualCandidateEdges += 1;
-        edges.push({
-          id: `edge:${outbound.type}:${tag}:${candidateIndex}:${candidateTag}`,
-          source: id,
-          target: `outbound:${candidateTag}`,
-          label: "candidate",
-        });
+        edges.push(
+          makeEdge(
+            `edge:${outbound.type}:${tag}:${candidateIndex}:${candidateTag}`,
+            id,
+            `outbound:${candidateTag}`,
+            "outbound-member",
+            outbound.type === "selector" ? "selector-group" : "urltest-group",
+          ),
+        );
       });
     }
   });
@@ -421,30 +447,15 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             { x: COLUMNS.rule, y },
           ),
         );
-        edges.push({
-          id: `edge:dns-rule-order:${index}`,
-          source: "dns:main",
-          target: id,
-          label: "ordered",
-        });
+        edges.push(makeEdge(`edge:dns-rule-order:${index}`, "dns:main", id, "dns-rule", "dns"));
         if (rule.server) {
-          edges.push({
-            id: `edge:dns-rule:${index}:${rule.server}`,
-            source: id,
-            target: `dns-server:${rule.server}`,
-            label: "server",
-          });
+          edges.push(makeEdge(`edge:dns-rule:${index}:${rule.server}`, id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
       });
     }
 
     if (config.dns.final) {
-      edges.push({
-        id: `edge:dns-final:${config.dns.final}`,
-        source: "dns:main",
-        target: `dns-server:${config.dns.final}`,
-        label: "final",
-      });
+      edges.push(makeEdge(`edge:dns-final:${config.dns.final}`, "dns:main", `dns-server:${config.dns.final}`, "dns-server", "dns"));
     }
   }
 

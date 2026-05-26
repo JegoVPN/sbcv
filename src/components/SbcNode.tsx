@@ -61,7 +61,10 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
     if (kind === "dns") return [{ key: "inbound-query", label: "DNS query source", nodeKind: "inbound", icon: RadioTower }];
     if (kind === "dns-rule") return [{ key: "dns", label: "DNS resolver", nodeKind: "dns", icon: Globe2 }];
     if (kind === "dns-server") {
-      return [{ key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch }];
+      return [
+        { key: "dns", label: "DNS final server", nodeKind: "dns", icon: Globe2 },
+        { key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch },
+      ];
     }
     if (kind === "outbound") {
       const routingInputs: PortSpec[] = [
@@ -127,6 +130,7 @@ function isPortConnected(
     if (kind === "dns-server" && portKey === "dns-rule") {
       return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
     }
+    if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
     if (kind === "outbound" && portKey === "route") return config.route?.final === value;
     if (kind === "outbound" && portKey === "route-rule") {
       return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
@@ -196,7 +200,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         ) : null}
 
         <div className="sbc-node__ports sbc-node__ports--left" data-testid="node-left-ports">
-          <Handle className="sbc-handle sbc-handle--in" type="target" position={Position.Left} />
           {inputPorts.map((port) => {
             const connected = isPortConnected(config, id, data.kind, data.type, "input", port.key);
             return (
@@ -215,6 +218,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   togglePortConnection(id, "input", port);
                 }}
               >
+                <Handle
+                  id={port.key}
+                  className="sbc-handle sbc-handle--in"
+                  type="target"
+                  position={Position.Left}
+                  isConnectable={false}
+                />
                 <port.icon size={15} />
                 <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
               </button>
@@ -223,7 +233,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         </div>
 
         <div className="sbc-node__ports sbc-node__ports--right" data-testid="node-right-ports">
-          <Handle className="sbc-handle sbc-handle--out" type="source" position={Position.Right} />
           {outputPorts.map((port) => {
             const connected = isPortConnected(config, id, data.kind, data.type, "output", port.key);
             return (
@@ -242,6 +251,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   togglePortConnection(id, "output", port);
                 }}
               >
+                <Handle
+                  id={port.key}
+                  className="sbc-handle sbc-handle--out"
+                  type="source"
+                  position={Position.Right}
+                  isConnectable={false}
+                />
                 <port.icon size={15} />
                 <span className="sbc-port__action">{connected ? <Trash2 size={10} /> : <Plus size={11} />}</span>
               </button>

@@ -12,6 +12,7 @@ import {
   deleteEntity,
   deleteRouteRule,
   disconnectEdge,
+  ensureSettings,
   ensureRoute,
   moveDnsRule,
   moveRouteRule,
@@ -24,7 +25,10 @@ import {
 } from "../domain/commands";
 import { validateConfig } from "../domain/diagnostics";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
-import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfig } from "../domain/types";
+import { targetById } from "../domain/targets";
+import { createTemplatePreset } from "../domain/templates";
+import type { TemplatePresetId } from "../domain/templates";
+import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfig, SingBoxTargetId } from "../domain/types";
 
 type PanelTab = "rules" | "dns" | "json" | "diagnostics";
 type PortDirection = "input" | "output";
@@ -48,7 +52,9 @@ type ProjectStore = {
   setSelectedId: (id: string | null) => void;
   setPanelTab: (tab: PanelTab) => void;
   setChannel: (channel: SingBoxChannel) => void;
+  setTarget: (id: SingBoxTargetId) => void;
   loadTemplate: () => void;
+  loadTemplatePreset: (id: TemplatePresetId) => void;
   loadMinimal: () => void;
   createFromPalette: (kind: string) => void;
   createCompatible: (sourceId: string, kind: string) => void;
@@ -95,6 +101,15 @@ function nextLayout(layout: ProjectLayout, id: string, x: number, y: number): Pr
   };
 }
 
+function pinLayout(layout: ProjectLayout, id: string, x: number, y: number): ProjectLayout {
+  return {
+    positions: {
+      ...layout.positions,
+      [id]: layout.positions[id] ?? { x, y },
+    },
+  };
+}
+
 function parseNodeId(nodeId: string) {
   const [kind, ...rest] = nodeId.split(":");
   return { kind: kind ?? "", value: rest.join(":") };
@@ -123,10 +138,10 @@ const initialConfig = createStableTunSplitConfig();
 
 export const useProjectStore = create<ProjectStore>((set) => ({
   channel: "stable",
-  version: "stable",
+  version: "1.13",
   config: initialConfig,
   layout: { positions: {} },
-  selectedId: "route:main",
+  selectedId: null,
   jsonDraft: stringifyConfig(initialConfig),
   panelTab: "rules",
   diagnostics: computeDiagnostics(initialConfig, "stable"),
@@ -135,24 +150,70 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 
   setSelectedId: (id) => set({ selectedId: id }),
   setPanelTab: (tab) => set({ panelTab: tab }),
-  setChannel: (channel) => set((state) => ({ channel, diagnostics: computeDiagnostics(state.config, channel) })),
+  setChannel: (channel) =>
+    set((state) => ({
+      channel,
+      version: channel === "stable" ? "1.13" : "1.14",
+      diagnostics: computeDiagnostics(state.config, channel),
+    })),
+  setTarget: (id) =>
+    set((state) => {
+      const target = targetById(id);
+      return {
+        channel: target.channel,
+        version: target.version,
+        diagnostics: computeDiagnostics(state.config, target.channel),
+      };
+    }),
 
-  loadTemplate: () => set((state) => sync(createStableTunSplitConfig(), state.channel)),
-  loadMinimal: () => set((state) => sync(createMinimalConfig(), state.channel)),
+  loadTemplate: () =>
+    set((state) => ({
+      ...sync(createStableTunSplitConfig(), state.channel),
+      layout: { positions: {} },
+      selectedId: null,
+    })),
+  loadTemplatePreset: (id) =>
+    set(() => {
+      const preset = createTemplatePreset(id);
+      return {
+        ...sync(preset.config, preset.channel),
+        channel: preset.channel,
+        version: preset.version,
+        layout: { positions: {} },
+        selectedId: null,
+      };
+    }),
+  loadMinimal: () =>
+    set((state) => ({
+      ...sync(createMinimalConfig(), state.channel),
+      layout: { positions: {} },
+      selectedId: null,
+    })),
 
   createFromPalette: (kind) =>
     set((state) => {
       let config = state.config;
+      let layout = state.layout;
+      let selectedId = state.selectedId;
+      if (kind === "settings-log") {
+        config = ensureSettings(config, "log");
+        layout = pinLayout(layout, "settings:log", -300, 40);
+        selectedId = "settings:log";
+      }
       if (kind === "tun") config = addInbound(config, "tun");
+      if (kind === "mixed") config = addInbound(config, "mixed");
       if (kind === "route") config = ensureRoute(config);
+      if (kind === "route-rule") config = addRouteRule(config);
       if (kind === "direct") config = addOutbound(config, "direct", "direct");
       if (kind === "block") config = addOutbound(config, "block", "block");
       if (kind === "selector") config = addOutbound(config, "selector", "proxy");
       if (kind === "urltest") config = addOutbound(config, "urltest", "auto");
       if (kind === "socks") config = addOutbound(config, "socks", "proxy-out");
+      if (kind === "dns-hub") config = config.dns ? config : addDnsServer(config, "local");
       if (kind === "dns-local") config = addDnsServer(config, "local");
       if (kind === "dns-https") config = addDnsServer(config, "https");
-      return sync(config, state.channel);
+      if (kind === "dns-rule") config = addDnsRule(config);
+      return { ...sync(config, state.channel), layout, selectedId };
     }),
 
   createCompatible: (sourceId, kind) =>
@@ -220,6 +281,11 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         if (node.kind === "dns-server" && port.key === "dns-rule") {
           const index = firstDnsRuleIndex(config, node.value);
           config = index >= 0 ? disconnectEdge(config, `edge:dns-rule:${index}:${node.value}`) : addDnsRule(config, { domain_suffix: ["example"], server: node.value });
+          return sync(config, state.channel);
+        }
+
+        if (node.kind === "dns-server" && port.key === "dns") {
+          config = config.dns?.final === node.value ? disconnectEdge(config, `edge:dns-final:${node.value}`) : setDnsFinal(config, node.value);
           return sync(config, state.channel);
         }
 
@@ -372,7 +438,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   importJson: (value) =>
     set((state) => {
       try {
-        return sync(parseConfigJson(value), state.channel);
+        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} } };
       } catch (error) {
         return {
           jsonDraft: value,
@@ -416,6 +482,7 @@ export function getSelectedRef(): EntityRef | null {
   if (kind === "dns-server" && rest) return { kind: "dns-server", tag: rest };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };
+  if (kind === "settings" && rest) return { kind: "settings", path: rest as keyof SingBoxConfig };
   if (kind === "route-rule") {
     const index = Number(rest);
     if (Number.isInteger(index) && config.route?.rules?.[index]) return { kind: "route-rule", index };

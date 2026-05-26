@@ -3,18 +3,22 @@ import { useRef } from "react";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
+import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
+import type { SingBoxTargetId } from "../domain/types";
 
 export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const channel = useProjectStore((state) => state.channel);
-  const setChannel = useProjectStore((state) => state.setChannel);
+  const version = useProjectStore((state) => state.version);
+  const setTarget = useProjectStore((state) => state.setTarget);
   const config = useProjectStore((state) => state.config);
   const diagnostics = useProjectStore((state) => state.diagnostics);
   const validateNow = useProjectStore((state) => state.validateNow);
   const loadMinimal = useProjectStore((state) => state.loadMinimal);
   const importJson = useProjectStore((state) => state.importJson);
   const status = summarizeDiagnostics(diagnostics);
+  const target = targetFromVersion(channel, version);
 
   function exportConfig() {
     const exportedConfig = createConfigExport(config);
@@ -45,10 +49,17 @@ export function TopBar() {
       </div>
       <div className="topbar-actions">
         <label className="channel-select">
-          <span>Channel</span>
-          <select value={channel} onChange={(event) => setChannel(event.target.value as "stable" | "testing")}>
-            <option value="stable">stable</option>
-            <option value="testing">testing</option>
+          <span>Target</span>
+          <select
+            aria-label="Sing-box target"
+            value={target.id}
+            onChange={(event) => setTarget(event.target.value as SingBoxTargetId)}
+          >
+            {SING_BOX_TARGETS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
           </select>
         </label>
         <button type="button" onClick={loadMinimal}>

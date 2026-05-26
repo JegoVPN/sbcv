@@ -15,7 +15,7 @@ const cases: PortCase[] = [
   { kind: "route-rule", type: "route-rule", inputKeys: ["route"], outputKeys: ["outbound"] },
   { kind: "dns", type: "dns", inputKeys: ["inbound-query"], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns"], outputKeys: ["dns-server"] },
-  { kind: "dns-server", type: "https", inputKeys: ["dns-rule"], outputKeys: ["outbound"] },
+  { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound"] },
   {
     kind: "outbound",
     type: "direct",
