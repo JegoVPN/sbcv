@@ -139,7 +139,7 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 6. **`domain_resolver` 应是 dns-server tag select**：**FIXED 2026-05-27** — Inspector dial 字段表（含 route hub 的 `default_domain_resolver`）现在使用 `<select>`，options 来自 `config.dns.servers[].tag` 加空 "None"。`diagnostics.ts` 新增 `outbound-domain-without-resolver` 和 `dns-server-domain-without-resolver` 两条 warning，当 outbound/dns-server 的 server 像域名（含字母、不是 IPv4/IPv6）且未填 `domain_resolver` 时触发。**待办**：对象形态的 `domain_resolver`（带 strategy / cache 等子字段）UI 尚未做结构化编辑器，目前依赖 AdvancedNonScalarFields 兜底。
 
-7. **deprecated 字段无 UI 提示**：**部分 FIXED 2026-05-27** — Inspector 为 `outbound:block`、`outbound:hysteria`（v1）渲染 deprecated banner；dial 字段表把 `domain_strategy` 标注为 `(deprecated 1.12+)`。`diagnostics.ts` 新增 `direct-override-deprecated`、`cache-file-store-rdrc-deprecated`、`legacy-fakeip-deprecated`。**待办**：Clash API `store_*` / `cache_file` / `cache_id`、route `geoip` / `geosite`、rule-set `download_detour`（testing 1.14）；`PaletteStatus` 仍缺 `"deprecated"` 状态用于 Library 视觉区分。
+7. **deprecated 字段无 UI 提示**：**部分 FIXED 2026-05-27** — Inspector 为 `outbound:block`、`outbound:hysteria`（v1）渲染 deprecated banner；dial 字段表把 `domain_strategy` 标注为 `(deprecated 1.12+)`。`diagnostics.ts` 新增 `direct-override-deprecated`、`cache-file-store-rdrc-deprecated`、`legacy-fakeip-deprecated`。`PaletteStatus` 新增 `deprecated`，应用到 `block` / `hysteria-out` / `dns-fakeip`（顶层 legacy fakeip），label 显示 "Legacy"，title 显示 "deprecated by sing-box"。**待办**：Clash API `store_*` / `cache_file` / `cache_id`、route `geoip` / `geosite`、rule-set `download_detour`（testing 1.14）；deprecation banner 视觉样式（红/黄）和 Palette 视觉区分由 styles.css 后续 atomic 实装。
 
 8. **testing-only 字段无 channel gate**：**FIXED 2026-05-27** — `diagnostics.ts` 在 channel === "stable" 时新增 warning：`hysteria2-realm-testing-only` / `hysteria2-bbr-profile-testing-only` / `hysteria2-hop-interval-max-testing-only`、`tun-dns-mode-testing-only` / `tun-dns-address-testing-only` / `tun-mac-address-filter-testing-only`、`ssh-cipher-testing-only` / `ssh-mac-testing-only` / `ssh-kex-algorithm-testing-only`、`dns-server-tailscale-accept-search-domain-testing-only`、`cache-file-store-dns-testing-only`、`route-find-neighbor-testing-only` / `route-dhcp-lease-files-testing-only` / `route-default-http-client-testing-only`、`dns-rule-{source-mac-address,source-hostname,preferred-by,match-response,package-name-regex}-testing-only`。整节点门控的 `service:hysteria-realm` 已经渲染 `<PlatformBanner kind="channel">`。Anytls 节点是 1.12.0 stable，无需 testing gate。
 
@@ -149,9 +149,9 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 11. **节点命名不一致**：`kind: "mixed"`（其它 inbound 都是 `inbound-*`）、`kind: "dns-http3"`（应叫 `dns-h3` 与官方 type 对齐）、`kind: "hysteria-out"` / `"shadowtls-out"` / `"hysteria2-out"`（其它 outbound 是 `outbound-*`）。本身能跑，但任何按命名约定过滤的代码会失效。
 
-12. **Singleton 没有 idempotency guard**：`settings:log` / `settings:ntp` / `settings:certificate` / `settings:experimental` / `hub:route` / `hub:dns` 是单例节点；二次点击 Library 无反馈也不切换到 OPEN。Palette label 需要 status === "open" 或 "selected" 的状态。
+12. **Singleton 没有 idempotency guard**：**FIXED 2026-05-27** — Palette 新增 `open` status；当 `config.log` / `config.ntp` / `config.certificate` / `config.experimental` / `config.route` / `config.dns` 非空时，对应 Library 按钮显示 "Open" 而非 "Add" / "Setup"，title 提示 "<label> already exists — click to open the Inspector"，点击会同时调用幂等的 `createFromPalette` + `setSelectedId` 跳转到 Inspector。
 
-13. **canvas `+` 加号在 `compatible: []` 时仍渲染但不工作**：所有 settings / 部分 service 节点都中招。
+13. **canvas `+` 加号在 `compatible: []` 时仍渲染但不工作**：**FIXED 2026-05-27** — `SbcNode.tsx` 现在仅在 `data.compatible.length > 0` 时渲染 `+` 按钮，settings / hub / 无下游的 service 节点不再渲染失效的按钮。
 
 14. **tag 引用未用 select / multiselect**：
    - `outbound:selector.outbounds[]` 仍是 CSV `<input>`；`default` 是 raw text。
