@@ -557,6 +557,55 @@ describe("canonical sing-box domain model", () => {
     expect(codes).toContain("user-missing-uuid");
   });
 
+  it("emits reality + xtls-rprx-vision diagnostics", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        {
+          type: "vless",
+          tag: "reality-out",
+          server: "1.1.1.1",
+          server_port: 443,
+          uuid: "11111111-2222-3333-4444-555555555555",
+          tls: {
+            enabled: true,
+            server_name: "x",
+            reality: { enabled: true, public_key: "", short_id: "ZZ" },
+          },
+        },
+        {
+          type: "vless",
+          tag: "flow-without-tls",
+          server: "1.1.1.1",
+          server_port: 443,
+          uuid: "11111111-2222-3333-4444-555555555555",
+          flow: "xtls-rprx-vision",
+          tls: { enabled: false },
+        },
+      ],
+      inbounds: [
+        ...(base.inbounds ?? []),
+        {
+          type: "vless",
+          tag: "reality-in",
+          listen: "::",
+          listen_port: 2080,
+          users: [{ name: "u", uuid: "11111111-2222-3333-4444-555555555555" }],
+          tls: { enabled: true, reality: { enabled: true } },
+        },
+      ],
+    } as typeof base;
+    const diagnostics = validateConfig(config, "stable");
+    const codes = diagnostics.map((d) => d.code);
+    expect(codes).toContain("reality-public-key-missing");
+    expect(codes).toContain("reality-short-id-invalid");
+    expect(codes).toContain("vless-flow-requires-tls");
+    expect(codes).toContain("reality-private-key-missing");
+    expect(codes).toContain("reality-handshake-server-missing");
+  });
+
   it("emits required-server / required-TLS / selector-default diagnostics", () => {
     const base = createStableTunSplitConfig();
     const config = {

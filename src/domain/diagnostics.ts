@@ -538,6 +538,57 @@ export function validateConfig(
           `Outbound "${tag}" enables both flow=xtls-rprx-vision and multiplex; the two are mutually exclusive.`,
         );
       }
+      const tls = (outbound as Record<string, unknown>).tls;
+      const tlsEnabled =
+        tls && typeof tls === "object" && !Array.isArray(tls)
+          ? Boolean((tls as Record<string, unknown>).enabled)
+          : false;
+      if (flow === "xtls-rprx-vision" && !tlsEnabled) {
+        push(
+          diagnostics,
+          "error",
+          "vless-flow-requires-tls",
+          `/outbounds/${index}/flow`,
+          `Outbound "${tag}" enables flow=xtls-rprx-vision but tls.enabled is not true; xtls-rprx-vision requires TLS.`,
+        );
+      }
+    }
+    const tls = (outbound as Record<string, unknown>).tls;
+    if (tls && typeof tls === "object" && !Array.isArray(tls)) {
+      const reality = (tls as Record<string, unknown>).reality;
+      if (reality && typeof reality === "object" && !Array.isArray(reality)) {
+        const realityObj = reality as Record<string, unknown>;
+        if (realityObj.enabled === true) {
+          const publicKey = typeof realityObj.public_key === "string" ? realityObj.public_key.trim() : "";
+          const shortId = typeof realityObj.short_id === "string" ? realityObj.short_id.trim() : "";
+          if (!publicKey) {
+            push(
+              diagnostics,
+              "error",
+              "reality-public-key-missing",
+              `/outbounds/${index}/tls/reality/public_key`,
+              `Outbound "${tag}" enables tls.reality but public_key is empty; required to negotiate the Reality handshake.`,
+            );
+          }
+          if (!shortId) {
+            push(
+              diagnostics,
+              "error",
+              "reality-short-id-missing",
+              `/outbounds/${index}/tls/reality/short_id`,
+              `Outbound "${tag}" enables tls.reality but short_id is empty; required to match the server's allowed short_ids.`,
+            );
+          } else if (!/^[0-9a-fA-F]{0,8}$/.test(shortId)) {
+            push(
+              diagnostics,
+              "warning",
+              "reality-short-id-invalid",
+              `/outbounds/${index}/tls/reality/short_id`,
+              `Outbound "${tag}" tls.reality.short_id "${shortId}" is not a 0–8 character hex string.`,
+            );
+          }
+        }
+      }
     }
   });
 
@@ -565,6 +616,35 @@ export function validateConfig(
         `Inbound "${inbound.tag ?? `inbound-${index}`}" (tuic)`,
         true,
       );
+    }
+    const tls = (inbound as Record<string, unknown>).tls;
+    if (tls && typeof tls === "object" && !Array.isArray(tls)) {
+      const reality = (tls as Record<string, unknown>).reality;
+      if (reality && typeof reality === "object" && !Array.isArray(reality)) {
+        const realityObj = reality as Record<string, unknown>;
+        if (realityObj.enabled === true) {
+          const privateKey = typeof realityObj.private_key === "string" ? realityObj.private_key.trim() : "";
+          if (!privateKey) {
+            push(
+              diagnostics,
+              "error",
+              "reality-private-key-missing",
+              `/inbounds/${index}/tls/reality/private_key`,
+              `Inbound "${inbound.tag ?? `inbound-${index}`}" enables tls.reality but private_key is empty; required for the server-side Reality handshake.`,
+            );
+          }
+          const handshake = realityObj.handshake;
+          if (!(handshake && typeof handshake === "object" && !Array.isArray(handshake) && (handshake as Record<string, unknown>).server)) {
+            push(
+              diagnostics,
+              "error",
+              "reality-handshake-server-missing",
+              `/inbounds/${index}/tls/reality/handshake/server`,
+              `Inbound "${inbound.tag ?? `inbound-${index}`}" enables tls.reality but handshake.server is empty; required to define the fallback origin.`,
+            );
+          }
+        }
+      }
     }
   });
 
