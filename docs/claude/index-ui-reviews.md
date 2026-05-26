@@ -153,18 +153,18 @@ Source-of-truth 仍是规范化 sing-box JSON / domain state。
 
 13. **canvas `+` 加号在 `compatible: []` 时仍渲染但不工作**：**FIXED 2026-05-27** — `SbcNode.tsx` 现在仅在 `data.compatible.length > 0` 时渲染 `+` 按钮，settings / hub / 无下游的 service 节点不再渲染失效的按钮。
 
-14. **tag 引用未用 select / multiselect**：
-   - `outbound:selector.outbounds[]` 仍是 CSV `<input>`；`default` 是 raw text。
-   - `outbound:urltest.outbounds[]` 同上。
-   - `service:ssm-api.servers`（map）是 `{ "/": tag }` 单值 select，多路径会被破坏。
-   - `service:derp.verify_client_endpoint[]` 是 raw text。
-   - `experimental.clash_api.external_ui_download_detour` 字段不存在于 Inspector。
-   - `rule-set:remote.download_detour` 是 select 但无 diagnostic（dangling tag 不报错）。
-   - `route.final` / `dns.final` 没有 Inspector 控件，只能拖边。
-   - `ntp.detour` 在 sharedFieldRegistry 是 select 但 canvas 不发对应 edge。
-   - 所有 tag rename / delete 路径需要扫描这些字段（commands.ts 的 rename / delete 当前漏掉 `default`、`servers` map、`verify_client_endpoint` 等）。
+14. **tag 引用未用 select / multiselect**：**FIXED 2026-05-27**
+   - `outbound:selector.outbounds[]` 已 multiselect checklist；`default` 已 select（candidates only），auto-clear stale。
+   - `outbound:urltest.outbounds[]` 同上 multiselect checklist。
+   - `service:ssm-api.servers` 已 managed shadowsocks checklist + canvas edge 同步 `managed: true`。
+   - `service:derp.verify_client_endpoint[]` 已 tailscale endpoint checklist + 多 endpoint splice。
+   - `experimental.clash_api.external_ui_download_detour` 已 outbound select。
+   - `rule-set:remote.download_detour` 已 outbound select + `rule-set-download-detour-missing` diagnostic。
+   - `route.final` / `dns.final` 都是 outbound / dns-server select。
+   - `ntp.detour` Inspector 也是 outbound select + `ntp-detour-missing` diagnostic + canvas edge。
+   - tag rename / delete cascade 已扫描 `default`、`servers` map、`verify_client_endpoint`、`download_detour`、`detour`、`ntp.detour`、`external_ui_download_detour` 等字段。
 
-15. **诊断盲区**：`diagnostics.ts` 没有覆盖：所有 proxy outbound 的 `server` / `server_port` 必填、Trojan / TUIC / Naive / Hysteria 系列的 TLS required、Selector `default` 必须是当前 candidate、`route-rule.action=route` 必须有 outbound、rule-set `download_detour` 引用有效性、resolved dns-server 的 `service` 引用、`domain_resolver` 在域名 server 上的必填、AnyTLS 1.12.0 版本门控、Tor build-tag、v2ray-api build-tag 等。
+15. **诊断盲区**：**部分 FIXED 2026-05-27** — `diagnostics.ts` 现已新增 40+ 条 semantic diagnostics 覆盖：proxy outbound 的 `server` / `server_port` 必填（`outbound-missing-server` / `outbound-invalid-server-port`）、TLS-required 系列（`outbound-missing-tls` / `inbound-missing-tls`）、Selector `default` 必须是 candidate（`selector-default-not-in-candidates`）、Selector / URLTest 空候选（`group-outbound-empty`）、vmess/vless/tuic UUID 必填和格式（`vmess-missing-uuid` 等）、vmess alterId 弃用（`vmess-alterid-deprecated`）、vless flow + multiplex 冲突（`vless-flow-multiplex-conflict`）、Reality 全套（`reality-public-key-missing` / `reality-short-id-missing` / `reality-short-id-invalid` / `reality-private-key-missing` / `reality-handshake-server-missing`）、TUIC udp 冲突（`tuic-udp-mode-conflict`）、Hysteria2 ports 冲突（`hysteria2-server-port-vs-server-ports`）、URLTest URL 缺失 / scheme（`urltest-url-missing` / `urltest-url-invalid-scheme`）、DERP `config_path` 必填、SSM API 各类、NTP server / detour、rule-set url / path / download_detour、clash_api download_detour、domain_resolver 必填、各种 deprecation 警告（`direct-override-deprecated` / `cache-file-store-rdrc-deprecated` / `legacy-fakeip-deprecated`）、stable channel 24 条 testing-only warning。**剩余**：AnyTLS 1.12.0 版本门控（节点本身现在 stable）、route-rule.action=route 必须有 outbound（已通过 UI 强制，可作为 backup diagnostic）、resolved dns-server.service 引用（已通过 sharedFieldRegistry）。
 
 ## Next Steps
 
