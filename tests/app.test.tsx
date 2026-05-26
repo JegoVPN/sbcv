@@ -1132,6 +1132,25 @@ describe("SBC editor shell", () => {
     expect(timestampToggle.disabled).toBe(true);
   });
 
+  it("renders naive outbound username + extra_headers map editor", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("naive-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const username = inspector.getByLabelText("Username") as HTMLInputElement;
+    fireEvent.change(username, { target: { value: "alice" } });
+    let naive = useProjectStore.getState().config.outbounds?.find((o) => o.type === "naive") as Record<string, unknown>;
+    expect(naive.username).toBe("alice");
+
+    const headers = within(inspector.getByTestId("naive-extra-headers"));
+    fireEvent.click(headers.getByRole("button", { name: "Add header" }));
+    naive = useProjectStore.getState().config.outbounds?.find((o) => o.type === "naive") as Record<string, unknown>;
+    expect(naive.extra_headers).toBeDefined();
+  });
+
   it("renders tor outbound torrc map editor + extra_args CSV", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
