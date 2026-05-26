@@ -413,6 +413,115 @@ const dnsRuleAdvancedFields = [
   "client_subnet",
 ];
 
+type InboundUserField = {
+  key: string;
+  label: string;
+  sensitive?: boolean;
+  type?: "text" | "number";
+};
+
+type InboundUserSchema = {
+  fields: InboundUserField[];
+  defaultUser: (index: number) => Record<string, unknown>;
+};
+
+const INBOUND_USER_SCHEMAS: Record<string, InboundUserSchema> = {
+  socks: {
+    fields: [
+      { key: "username", label: "Username" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ username: `user${n}`, password: "" }),
+  },
+  http: {
+    fields: [
+      { key: "username", label: "Username" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ username: `user${n}`, password: "" }),
+  },
+  mixed: {
+    fields: [
+      { key: "username", label: "Username" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ username: `user${n}`, password: "" }),
+  },
+  naive: {
+    fields: [
+      { key: "username", label: "Username" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ username: `user${n}`, password: "" }),
+  },
+  shadowsocks: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, password: "" }),
+  },
+  shadowtls: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "password", label: "Password (v3)", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, password: "" }),
+  },
+  trojan: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, password: "" }),
+  },
+  vmess: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "uuid", label: "UUID", sensitive: true },
+      { key: "alterId", label: "Alter ID", type: "number" },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, uuid: "", alterId: 0 }),
+  },
+  vless: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "uuid", label: "UUID", sensitive: true },
+      { key: "flow", label: "Flow" },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, uuid: "" }),
+  },
+  tuic: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "uuid", label: "UUID", sensitive: true },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, uuid: "", password: "" }),
+  },
+  hysteria: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "auth_str", label: "Auth String", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, auth_str: "" }),
+  },
+  hysteria2: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, password: "" }),
+  },
+  anytls: {
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "password", label: "Password", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, password: "" }),
+  },
+};
+
 const SENSITIVE_FIELD_PATTERNS = [
   "password",
   "passphrase",
@@ -2050,52 +2159,74 @@ export function Inspector() {
             />
             <span>Auto route</span>
           </label>
-          {entityType === "socks" || entityType === "http" || entityType === "naive" || entityType === "mixed" ? (
-            (() => {
-              const users = Array.isArray(entity.users) ? (entity.users as Record<string, unknown>[]) : [];
-              const writeUsers = (next: Record<string, unknown>[]) =>
-                updateField(ref, "users", next.length ? next : undefined);
-              const patchUser = (index: number, patch: Record<string, unknown>) =>
-                writeUsers(users.map((user, i) => (i === index ? { ...user, ...patch } : user)));
-              const removeUser = (index: number) => writeUsers(users.filter((_, i) => i !== index));
-              const addUser = () => writeUsers([...users, { username: `user${users.length + 1}`, password: "" }]);
-              return (
-                <fieldset className="field field--checklist" data-testid={`${entityType}-inbound-users-editor`}>
-                  <legend>Users</legend>
-                  {users.length === 0 ? (
-                    <p className="field__hint">No users yet. Click Add to require Basic auth on this inbound.</p>
-                  ) : null}
-                  {users.map((user, index) => (
-                    <div key={index} className="rule-row">
-                      <label className="field">
-                        <span>Username</span>
-                        <input
-                          value={String(user.username ?? "")}
-                          onChange={(event) => patchUser(index, { username: event.target.value })}
-                        />
-                      </label>
-                      <SensitiveTextField
-                        label="Password"
-                        value={String(user.password ?? "")}
-                        onChange={(next) => patchUser(index, { password: next })}
-                      />
-                      <button
-                        type="button"
-                        className="icon-danger"
-                        onClick={() => removeUser(index)}
-                        aria-label={`Remove user ${index + 1}`}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <button type="button" className="palette-action" onClick={addUser}>
-                    Add user
-                  </button>
-                </fieldset>
-              );
-            })()
-          ) : null}
+          {(() => {
+            const schema = INBOUND_USER_SCHEMAS[entityType ?? ""];
+            if (!schema) return null;
+            const users = Array.isArray(entity.users) ? (entity.users as Record<string, unknown>[]) : [];
+            const writeUsers = (next: Record<string, unknown>[]) =>
+              updateField(ref, "users", next.length ? next : undefined);
+            const patchUser = (index: number, patch: Record<string, unknown>) =>
+              writeUsers(users.map((user, i) => (i === index ? { ...user, ...patch } : user)));
+            const removeUser = (index: number) => writeUsers(users.filter((_, i) => i !== index));
+            const addUser = () => writeUsers([...users, { ...schema.defaultUser(users.length + 1) }]);
+            return (
+              <fieldset className="field field--checklist" data-testid={`${entityType}-inbound-users-editor`}>
+                <legend>Users</legend>
+                {users.length === 0 ? (
+                  <p className="field__hint">No users yet. Click Add to create one.</p>
+                ) : null}
+                {users.map((user, index) => (
+                  <div key={index} className="rule-row">
+                    {schema.fields.map((field) => {
+                      const value = user[field.key];
+                      if (field.sensitive) {
+                        return (
+                          <SensitiveTextField
+                            key={field.key}
+                            label={field.label}
+                            value={String(value ?? "")}
+                            onChange={(next) => patchUser(index, { [field.key]: next })}
+                          />
+                        );
+                      }
+                      if (field.type === "number") {
+                        return (
+                          <label className="field" key={field.key}>
+                            <span>{field.label}</span>
+                            <input
+                              type="number"
+                              value={Number(value ?? 0)}
+                              onChange={(event) => patchUser(index, { [field.key]: Number(event.target.value) })}
+                            />
+                          </label>
+                        );
+                      }
+                      return (
+                        <label className="field" key={field.key}>
+                          <span>{field.label}</span>
+                          <input
+                            value={String(value ?? "")}
+                            onChange={(event) => patchUser(index, { [field.key]: event.target.value })}
+                          />
+                        </label>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className="icon-danger"
+                      onClick={() => removeUser(index)}
+                      aria-label={`Remove user ${index + 1}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+                <button type="button" className="palette-action" onClick={addUser}>
+                  Add user
+                </button>
+              </fieldset>
+            );
+          })()}
           <AdvancedScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={ref} updateField={updateField} />
         </>

@@ -337,6 +337,41 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("renders structured users editors for all proxy inbound types via schema table", () => {
+    const cases: Array<{ paletteKind: string; expectedFields: string[] }> = [
+      { paletteKind: "inbound-trojan", expectedFields: ["Name", "Password"] },
+      { paletteKind: "inbound-vmess", expectedFields: ["Name", "UUID", "Alter ID"] },
+      { paletteKind: "inbound-vless", expectedFields: ["Name", "UUID", "Flow"] },
+      { paletteKind: "inbound-tuic", expectedFields: ["Name", "UUID", "Password"] },
+      { paletteKind: "inbound-shadowsocks", expectedFields: ["Name", "Password"] },
+      { paletteKind: "inbound-hysteria", expectedFields: ["Name", "Auth String"] },
+      { paletteKind: "inbound-hysteria2", expectedFields: ["Name", "Password"] },
+      { paletteKind: "inbound-anytls", expectedFields: ["Name", "Password"] },
+    ];
+
+    for (const { paletteKind, expectedFields } of cases) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(paletteKind);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      const created = useProjectStore.getState().config.inbounds?.at(-1);
+      const editor = inspector.getByTestId(`${created?.type}-inbound-users-editor`);
+      // Ensure at least one row exists (some scaffolds, like shadowsocks single-user, start empty).
+      if (within(editor).queryAllByLabelText(expectedFields[0]!).length === 0) {
+        fireEvent.click(within(editor).getByRole("button", { name: /Add user/ }));
+      }
+      const afterAdd = within(screen.getByLabelText("Node inspector")).getByTestId(
+        `${created?.type}-inbound-users-editor`,
+      );
+      for (const label of expectedFields) {
+        expect(within(afterAdd).getAllByLabelText(label).length).toBeGreaterThan(0);
+      }
+      unmount();
+    }
+  });
+
   it("renders socks/http inbound users as a structured row editor", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
@@ -410,7 +445,7 @@ describe("SBC editor shell", () => {
     expect(tokenInput.type).toBe("password");
     fireEvent.change(tokenInput, { target: { value: "shhh" } });
     ccm = useProjectStore.getState().config.services?.find((s) => s.type === "ccm");
-    expect(((ccm as Record<string, unknown>).users as Record<string, unknown>[])[0].token).toBe("shhh");
+    expect(((ccm as Record<string, unknown>).users as Record<string, unknown>[])[0]?.token).toBe("shhh");
 
     const headersEditor = inspector.getByTestId("ccm-headers-editor");
     fireEvent.click(within(headersEditor).getByRole("button", { name: /Add header/ }));
