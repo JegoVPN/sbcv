@@ -68,6 +68,23 @@ function fromList(value: string): string[] {
     .filter(Boolean);
 }
 
+const outboundHandledFields = new Set(["tag", "type", "server", "server_port", "outbounds", "default"]);
+
+function labelForField(field: string) {
+  return field
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function editableScalarFields(entity: InspectorEntity) {
+  return Object.entries(entity).filter(([field, value]) => {
+    if (outboundHandledFields.has(field)) return false;
+    const valueType = typeof value;
+    return valueType === "string" || valueType === "number" || valueType === "boolean";
+  });
+}
+
 function summaryFor(ref: EntityRef, entity: InspectorEntity) {
   const lines = [
     `kind: ${ref.kind}`,
@@ -261,6 +278,29 @@ export function Inspector() {
               />
             </label>
           ) : null}
+          {editableScalarFields(entity).map(([field, value]) =>
+            typeof value === "boolean" ? (
+              <label className="toggle-row" key={field}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(event) => updateField(ref, field, event.target.checked)}
+                />
+                <span>{labelForField(field)}</span>
+              </label>
+            ) : (
+              <label className="field" key={field}>
+                <span>{labelForField(field)}</span>
+                <input
+                  type={typeof value === "number" ? "number" : "text"}
+                  value={String(value)}
+                  onChange={(event) =>
+                    updateField(ref, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
+                  }
+                />
+              </label>
+            ),
+          )}
         </>
       ) : null}
 

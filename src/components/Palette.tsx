@@ -39,7 +39,7 @@ type PaletteGroup = {
   items: PaletteItem[];
 };
 
-type PaletteStatus = "add" | "table" | "inspector" | "docs" | "gated" | "pending";
+type PaletteStatus = "add" | "setup" | "table" | "inspector" | "docs" | "gated" | "pending";
 
 function docs(path = "") {
   return `https://sing-box.sagernet.org/configuration/${path}`;
@@ -141,20 +141,20 @@ const groups: PaletteGroup[] = [
       { label: "Direct", kind: "direct", icon: Cable, docsUrl: docs("outbound/direct/"), ready: true },
       { label: "Block", kind: "block", icon: Ban, docsUrl: docs("outbound/block/"), ready: true },
       { label: "SOCKS", kind: "socks", icon: Network, docsUrl: docs("outbound/socks/"), ready: true },
-      { label: "HTTP", kind: "http-out", icon: Globe2, docsUrl: docs("outbound/http/") },
-      { label: "Shadowsocks", kind: "ss-out", icon: Shield, docsUrl: docs("outbound/shadowsocks/") },
-      { label: "VMess", kind: "vmess-out", icon: Shield, docsUrl: docs("outbound/vmess/") },
-      { label: "Trojan", kind: "trojan-out", icon: Shield, docsUrl: docs("outbound/trojan/") },
-      { label: "Naive", kind: "naive-out", icon: Globe2, docsUrl: docs("outbound/naive/") },
+      { label: "HTTP", kind: "http-out", icon: Globe2, docsUrl: docs("outbound/http/"), status: "setup" },
+      { label: "Shadowsocks", kind: "ss-out", icon: Shield, docsUrl: docs("outbound/shadowsocks/"), status: "setup" },
+      { label: "VMess", kind: "vmess-out", icon: Shield, docsUrl: docs("outbound/vmess/"), status: "setup" },
+      { label: "Trojan", kind: "trojan-out", icon: Shield, docsUrl: docs("outbound/trojan/"), status: "setup" },
+      { label: "Naive", kind: "naive-out", icon: Globe2, docsUrl: docs("outbound/naive/"), status: "setup" },
       { label: "WireGuard", kind: "wireguard-out", icon: Waypoints, docsUrl: docs("outbound/wireguard/") },
-      { label: "Hysteria", kind: "hysteria-out", icon: Plug, docsUrl: docs("outbound/hysteria/") },
-      { label: "ShadowTLS", kind: "shadowtls-out", icon: Shield, docsUrl: docs("outbound/shadowtls/") },
-      { label: "VLESS", kind: "vless-out", icon: Shield, docsUrl: docs("outbound/vless/") },
-      { label: "TUIC", kind: "tuic-out", icon: Plug, docsUrl: docs("outbound/tuic/") },
-      { label: "Hysteria2", kind: "hysteria2-out", icon: Plug, docsUrl: docs("outbound/hysteria2/") },
-      { label: "AnyTLS", kind: "anytls-out", icon: Shield, docsUrl: docs("outbound/anytls/") },
-      { label: "Tor", kind: "tor-out", icon: Network, docsUrl: docs("outbound/tor/") },
-      { label: "SSH", kind: "ssh-out", icon: Server, docsUrl: docs("outbound/ssh/") },
+      { label: "Hysteria", kind: "hysteria-out", icon: Plug, docsUrl: docs("outbound/hysteria/"), status: "setup" },
+      { label: "ShadowTLS", kind: "shadowtls-out", icon: Shield, docsUrl: docs("outbound/shadowtls/"), status: "setup" },
+      { label: "VLESS", kind: "vless-out", icon: Shield, docsUrl: docs("outbound/vless/"), status: "setup" },
+      { label: "TUIC", kind: "tuic-out", icon: Plug, docsUrl: docs("outbound/tuic/"), status: "setup" },
+      { label: "Hysteria2", kind: "hysteria2-out", icon: Plug, docsUrl: docs("outbound/hysteria2/"), status: "setup" },
+      { label: "AnyTLS", kind: "anytls-out", icon: Shield, docsUrl: docs("outbound/anytls/"), status: "setup" },
+      { label: "Tor", kind: "tor-out", icon: Network, docsUrl: docs("outbound/tor/"), status: "setup" },
+      { label: "SSH", kind: "ssh-out", icon: Server, docsUrl: docs("outbound/ssh/"), status: "setup" },
       { label: "DNS", kind: "dns-out", icon: Globe2, docsUrl: docs("outbound/dns/") },
       { label: "Selector", kind: "selector", icon: Shuffle, docsUrl: docs("outbound/selector/"), ready: true },
       { label: "URLTest", kind: "urltest", icon: Shuffle, docsUrl: docs("outbound/urltest/"), ready: true },
@@ -222,6 +222,7 @@ const libraryGroups = groups.slice(1);
 
 const statusLabel: Record<PaletteStatus, string> = {
   add: "Add",
+  setup: "Setup",
   table: "Table",
   inspector: "Inspector",
   docs: "Docs",
@@ -237,6 +238,7 @@ function itemStatus(item: PaletteItem): PaletteStatus {
 
 function statusTitle(status: PaletteStatus, label: string) {
   if (status === "add") return `Add ${label} to canvas`;
+  if (status === "setup") return `Add ${label} setup draft to canvas`;
   if (status === "table") return `Add or edit ${label} through the ordered table`;
   if (status === "inspector") return `${label} is edited inside its parent Inspector`;
   if (status === "gated") return `${label} is target-gated and needs matching sing-box validation`;
@@ -245,7 +247,7 @@ function statusTitle(status: PaletteStatus, label: string) {
 }
 
 function canActivate(item: PaletteItem, status: PaletteStatus) {
-  return status === "add" || (status === "table" && (item.kind === "dns-rule" || item.kind === "route-rule"));
+  return status === "add" || status === "setup" || (status === "table" && (item.kind === "dns-rule" || item.kind === "route-rule"));
 }
 
 export function Palette() {

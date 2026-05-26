@@ -41,4 +41,20 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().config.log?.level).toBe("info");
     expect(screen.getByTestId("node-settings:log")).toBeInTheDocument();
   });
+
+  it("adds outbound setup drafts from the Library without falling back to SOCKS", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Outbounds/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+
+    const created = useProjectStore.getState().config.outbounds?.at(-1);
+
+    expect(created?.type).toBe("http");
+    expect(created?.tag).toBe("http-out");
+    expect(useProjectStore.getState().selectedId).toBe("outbound:http-out");
+    expect(screen.getByText("Password")).toBeInTheDocument();
+  });
 });

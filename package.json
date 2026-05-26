@@ -10,6 +10,7 @@
     "test": "vitest run --exclude tests/external-fixtures-render.test.ts",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "audit:config-docs": "node scripts/audit-config-doc-coverage.mjs",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
     "fixtures:update:external": "node scripts/update-external-fixtures.mjs && node scripts/update-external-official-gates.mjs",
     "validate:external": "node scripts/validate-external-fixtures.mjs && vitest run tests/external-fixtures.test.ts && node scripts/run-external-render-gate.mjs",
