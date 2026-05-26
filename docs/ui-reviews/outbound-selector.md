@@ -1,4 +1,4 @@
-<!-- Status: official-read. Source: stable docs/configuration/outbound/selector.md plus current Palette, SbcNode, and Inspector registries. UI verification and implementation fixes still required. -->
+<!-- Status: ui-verified + partially implemented (2026-05-27). Source: stable docs/configuration/outbound/selector.md. P0 Inspector candidate multiselect, default constrained select, and interrupt_exist_connections toggle landed. Outstanding: P0 commands.ts rename/delete cascade for `default`, P0 empty-outbounds[] diagnostic, P1 fixture/E2E coverage. -->
 # Outbound / selector UI Review
 
 ## Scope

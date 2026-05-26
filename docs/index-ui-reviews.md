@@ -41,7 +41,8 @@ Status vocabulary:
 Current status:
 
 - `implemented`: 1 / 66 (`settings:log`).
-- `official-read`: 65 / 66.
+- `ui-verified`: 2 / 66 (`outbound:selector`, `outbound:urltest` — P0 Inspector multiselect / default constrained / interrupt toggle landed; outstanding commands.ts cascade and diagnostics).
+- `official-read`: 63 / 66.
 - `baseline`: 0 / 66.
 
 Review priority:
