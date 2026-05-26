@@ -337,6 +337,31 @@ describe("SBC editor shell", () => {
     expect(tailscaleServer?.tag).toBe("tailscale-dns");
   });
 
+  it("gates the dns-rule server select by action and surfaces reject + predefined sub-fields", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+
+    fireEvent.click(screen.getByTestId("node-dns-rule:0"));
+    let inspector = within(screen.getByLabelText("DNS rule 1 inspector"));
+
+    expect(inspector.getByLabelText("Server")).toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "reject" } });
+    inspector = within(screen.getByLabelText("DNS rule 1 inspector"));
+    expect(inspector.queryByLabelText("Server")).not.toBeInTheDocument();
+    expect(inspector.getByLabelText("Reject Method")).toBeInTheDocument();
+    expect(inspector.getByLabelText("No drop (only return)")).toBeInTheDocument();
+    expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBeUndefined();
+
+    fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "predefined" } });
+    inspector = within(screen.getByLabelText("DNS rule 1 inspector"));
+    expect(inspector.getByLabelText("Predefined RCODE")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("Server")).not.toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("Predefined RCODE"), { target: { value: "NXDOMAIN" } });
+    expect(useProjectStore.getState().config.dns?.rules?.[0]?.rcode).toBe("NXDOMAIN");
+  });
+
   it("gates the route-rule outbound select by action and surfaces reject/sniff/resolve sub-fields", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
