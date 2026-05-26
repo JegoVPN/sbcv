@@ -165,6 +165,18 @@ export function validateConfig(
     }
 
     if (service.type === "derp") {
+      const configPath = typeof (service as Record<string, unknown>).config_path === "string"
+        ? ((service as Record<string, unknown>).config_path as string).trim()
+        : "";
+      if (!configPath) {
+        push(
+          diagnostics,
+          "error",
+          "derp-config-path-missing",
+          `/services/${index}/config_path`,
+          `DERP service "${service.tag}" requires config_path; sing-box refuses to start without the server key file.`,
+        );
+      }
       const refs = Array.isArray(service.verify_client_endpoint)
         ? service.verify_client_endpoint
         : service.verify_client_endpoint
@@ -780,6 +792,33 @@ export function validateConfig(
         "/http_clients",
         "http_clients is version-gated for stable targets; verify with sing-box-stable.",
       );
+    }
+  }
+
+  const ntp = (config as Record<string, unknown>).ntp;
+  if (ntp && typeof ntp === "object" && !Array.isArray(ntp)) {
+    const ntpObj = ntp as Record<string, unknown>;
+    if (ntpObj.enabled === true) {
+      const server = typeof ntpObj.server === "string" ? ntpObj.server.trim() : "";
+      if (!server) {
+        push(
+          diagnostics,
+          "error",
+          "ntp-server-missing",
+          "/ntp/server",
+          "NTP is enabled but server is empty; sing-box requires a server hostname or address when ntp.enabled is true.",
+        );
+      }
+      const detour = typeof ntpObj.detour === "string" ? ntpObj.detour : "";
+      if (detour && !outboundTags.has(detour)) {
+        push(
+          diagnostics,
+          "error",
+          "ntp-detour-missing",
+          "/ntp/detour",
+          `NTP detour references missing outbound "${detour}".`,
+        );
+      }
     }
   }
 
