@@ -868,6 +868,63 @@ export function validateConfig(
     }
   }
 
+  if (channel === "stable") {
+    const route = config.route as Record<string, unknown> | undefined;
+    if (route && typeof route === "object" && !Array.isArray(route)) {
+      if (route.find_neighbor !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "route-find-neighbor-testing-only",
+          "/route/find_neighbor",
+          "route.find_neighbor is testing-only (sing-box 1.14+).",
+        );
+      }
+      if (route.dhcp_lease_files !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "route-dhcp-lease-files-testing-only",
+          "/route/dhcp_lease_files",
+          "route.dhcp_lease_files is testing-only (sing-box 1.14+).",
+        );
+      }
+      if (route.default_http_client !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "route-default-http-client-testing-only",
+          "/route/default_http_client",
+          "route.default_http_client is testing-only (sing-box 1.14+).",
+        );
+      }
+    }
+    const dnsRules = config.dns?.rules;
+    if (Array.isArray(dnsRules)) {
+      const testingMatchers = [
+        "source_mac_address",
+        "source_hostname",
+        "preferred_by",
+        "match_response",
+        "package_name_regex",
+      ];
+      dnsRules.forEach((rule, ruleIndex) => {
+        if (!rule || typeof rule !== "object") return;
+        for (const field of testingMatchers) {
+          if ((rule as Record<string, unknown>)[field] !== undefined) {
+            push(
+              diagnostics,
+              "warning",
+              `dns-rule-${field.replace(/_/g, "-")}-testing-only`,
+              `/dns/rules/${ruleIndex}/${field}`,
+              `DNS rule ${ruleIndex + 1} uses ${field}; this matcher is testing-only (sing-box 1.14+).`,
+            );
+          }
+        }
+      });
+    }
+  }
+
   const ntp = (config as Record<string, unknown>).ntp;
   if (ntp && typeof ntp === "object" && !Array.isArray(ntp)) {
     const ntpObj = ntp as Record<string, unknown>;
