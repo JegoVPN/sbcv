@@ -36,14 +36,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Install sing-box validation binaries
-        run: |
-          mkdir -p .tools/sing-box-stable .tools/sing-box-testing .tools/bin
-          curl -L https://github.com/SagerNet/sing-box/releases/download/v1.13.12/sing-box-1.13.12-linux-amd64.tar.gz -o .tools/sing-box-stable.tar.gz
-          tar -xzf .tools/sing-box-stable.tar.gz -C .tools/sing-box-stable --strip-components=1
-          curl -L https://github.com/SagerNet/sing-box/releases/download/v1.14.0-alpha.25/sing-box-1.14.0-alpha.25-linux-amd64.tar.gz -o .tools/sing-box-testing.tar.gz
-          tar -xzf .tools/sing-box-testing.tar.gz -C .tools/sing-box-testing --strip-components=1
-          ln -s ../sing-box-stable/sing-box .tools/bin/sing-box-stable
-          ln -s ../sing-box-testing/sing-box .tools/bin/sing-box-testing
+        run: node scripts/install-sing-box-binaries.mjs
 
       - name: Release gate
         run: pnpm release:check
