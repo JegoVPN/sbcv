@@ -213,6 +213,8 @@ const dnsServerHandledFields = new Set([
   "tls",
   "neighbor_domain",
   "predefined",
+  "inet4_range",
+  "inet6_range",
   ...dialSharedFields,
 ]);
 const endpointHandledFields = new Set([
@@ -3376,6 +3378,32 @@ export function Inspector() {
                 </fieldset>
               );
             })()
+          ) : null}
+          {entityType === "fakeip" ? (
+            <>
+              <label className="field">
+                <span>IPv4 Range (CIDR)</span>
+                <input
+                  value={toList(entity.inet4_range)}
+                  placeholder="198.18.0.0/15"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "inet4_range", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>IPv6 Range (CIDR)</span>
+                <input
+                  value={toList(entity.inet6_range)}
+                  placeholder="fc00::/18"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "inet6_range", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+            </>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />
