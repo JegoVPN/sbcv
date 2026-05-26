@@ -208,6 +208,21 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         layout = pinLayout(layout, "settings:log", -300, 40);
         selectedId = "settings:log";
       }
+      if (kind === "settings-ntp") {
+        config = ensureSettings(config, "ntp");
+        layout = pinLayout(layout, "settings:ntp", -300, 370);
+        selectedId = "settings:ntp";
+      }
+      if (kind === "settings-certificate") {
+        config = ensureSettings(config, "certificate");
+        layout = pinLayout(layout, "settings:certificate", -300, 700);
+        selectedId = "settings:certificate";
+      }
+      if (kind === "settings-experimental") {
+        config = ensureSettings(config, "experimental");
+        layout = pinLayout(layout, "settings:experimental", -300, 1030);
+        selectedId = "settings:experimental";
+      }
       const inboundType = inboundTypeForPaletteKind(kind);
       if (inboundType && inboundType !== "cloudflared") {
         config = addInbound(config, inboundType, preferredInboundTag(inboundType));

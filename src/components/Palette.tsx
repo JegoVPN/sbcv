@@ -87,11 +87,11 @@ const groups: PaletteGroup[] = [
   },
   {
     title: "NTP",
-    items: [{ label: "NTP Settings", kind: "settings-ntp", icon: Clock3, docsUrl: docs("ntp/"), status: "pending" }],
+    items: [{ label: "NTP Settings", kind: "settings-ntp", icon: Clock3, docsUrl: docs("ntp/"), status: "setup" }],
   },
   {
     title: "Certificate",
-    items: [{ label: "Certificate", kind: "settings-certificate", icon: FileKey2, docsUrl: docs("certificate/"), status: "pending" }],
+    items: [{ label: "Certificate", kind: "settings-certificate", icon: FileKey2, docsUrl: docs("certificate/"), status: "setup" }],
   },
   {
     title: "Certificate Providers",
@@ -187,7 +187,7 @@ const groups: PaletteGroup[] = [
   {
     title: "Experimental",
     items: [
-      { label: "Experimental", kind: "settings-experimental", icon: FlaskConical, docsUrl: docs("experimental/"), status: "pending" },
+      { label: "Experimental", kind: "settings-experimental", icon: FlaskConical, docsUrl: docs("experimental/"), status: "setup" },
       { label: "Cache File", kind: "experimental-cache-file", icon: FileKey2, docsUrl: docs("experimental/cache-file/"), status: "inspector" },
       { label: "Clash API", kind: "experimental-clash-api", icon: Server, docsUrl: docs("experimental/clash-api/"), status: "inspector" },
       { label: "V2Ray API", kind: "experimental-v2ray-api", icon: Server, docsUrl: docs("experimental/v2ray-api/"), status: "inspector" },

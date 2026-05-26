@@ -224,4 +224,38 @@ describe("canonical sing-box domain model", () => {
       ),
     ).toBe(true);
   });
+
+  it("creates independent settings defaults from official top-level docs", () => {
+    const withNtp = ensureSettings(createStableTunSplitConfig(), "ntp");
+    const withCertificate = ensureSettings(withNtp, "certificate");
+    const withExperimental = ensureSettings(withCertificate, "experimental");
+
+    expect(withExperimental.ntp).toMatchObject({
+      enabled: false,
+      server: "time.apple.com",
+      server_port: 123,
+      interval: "30m",
+    });
+    expect(withExperimental.certificate).toMatchObject({
+      store: "system",
+      certificate: [],
+      certificate_path: [],
+      certificate_directory_path: [],
+    });
+    expect(withExperimental.experimental?.cache_file).toMatchObject({
+      enabled: false,
+      path: "",
+      cache_id: "",
+      store_fakeip: false,
+    });
+    expect(
+      deriveGraph(withExperimental, {
+        positions: {
+          "settings:ntp": { x: -300, y: 370 },
+          "settings:certificate": { x: -300, y: 700 },
+          "settings:experimental": { x: -300, y: 1030 },
+        },
+      }, []).nodes.filter((node) => node.data.kind === "settings"),
+    ).toHaveLength(3);
+  });
 });

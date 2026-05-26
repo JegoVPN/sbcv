@@ -42,6 +42,40 @@ describe("SBC editor shell", () => {
     expect(screen.getByTestId("node-settings:log")).toBeInTheDocument();
   });
 
+  it("adds NTP, Certificate, and Experimental settings as independent editable nodes", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^NTP/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup NTP Settings" }));
+
+    expect(useProjectStore.getState().selectedId).toBe("settings:ntp");
+    expect(useProjectStore.getState().config.ntp?.server).toBe("time.apple.com");
+    expect(screen.getByTestId("node-settings:ntp")).toBeInTheDocument();
+    expect(screen.getByText("Enable NTP")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    const certificateGroup = screen.getAllByRole("button", { name: /^Certificate/ })[0];
+    if (!certificateGroup) throw new Error("missing Certificate group");
+    fireEvent.click(certificateGroup);
+    fireEvent.click(screen.getByRole("button", { name: "Setup Certificate" }));
+
+    expect(useProjectStore.getState().selectedId).toBe("settings:certificate");
+    expect(useProjectStore.getState().config.certificate?.store).toBe("system");
+    expect(screen.getByTestId("node-settings:certificate")).toBeInTheDocument();
+    expect(screen.getByText("Certificate Paths")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Library/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Experimental/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Experimental" }));
+
+    expect(useProjectStore.getState().selectedId).toBe("settings:experimental");
+    expect(useProjectStore.getState().config.experimental?.cache_file).toMatchObject({ enabled: false });
+    expect(screen.getByTestId("node-settings:experimental")).toBeInTheDocument();
+    expect(screen.getByText("Cache File")).toBeInTheDocument();
+  });
+
   it("adds outbound setup drafts from the Library without falling back to SOCKS", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);

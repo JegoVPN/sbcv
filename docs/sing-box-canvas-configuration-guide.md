@@ -39,9 +39,9 @@ Current completeness checkpoint, from `pnpm audit:config-docs` on 2026-05-26:
 - Matrix rows: 105.
 - Palette entries: 104.
 - Remaining docs without a Palette surface: 8 base/resource-helper docs.
-- Remaining writable docs without a complete write path: 15.
+- Remaining writable docs without a complete write path: 12.
 
-The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, NTP, Certificate, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set, Service resources, and Experimental.
+The remaining write-path gaps are intentional blockers, not permission to improvise JSON from the canvas. They are: DNS Legacy Server, Endpoint WireGuard/Tailscale, Outbound WireGuard/DNS migration entries, Rule Set, and Service resources.
 
 ## Product Principle
 
@@ -383,7 +383,7 @@ Certificate providers:
 - Tailscale provider references a Tailscale endpoint.
 - Cloudflare Origin CA owns API/origin CA fields and optional HTTP Client fields.
 
-Current implementation rule: Log is writable. NTP, Certificate, and Experimental remain `PENDING` until they have settings-card domain commands, Inspector schemas, fixtures, and target binary checks.
+Current implementation rule: Log, NTP, Certificate, and Experimental are writable independent settings cards. Experimental defaults must stay stable-safe; testing-only fields such as cache-file `store_dns` require target-gated handling before emission.
 
 ## Shared Field Placement
 

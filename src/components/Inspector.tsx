@@ -87,6 +87,10 @@ function editableScalarFields(entity: InspectorEntity, handledFields: Set<string
   });
 }
 
+function objectField(value: unknown): InspectorEntity {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as InspectorEntity) : {};
+}
+
 function summaryFor(ref: EntityRef, entity: InspectorEntity) {
   const lines = [
     `kind: ${ref.kind}`,
@@ -219,6 +223,200 @@ export function Inspector() {
             <span>Disable log</span>
           </label>
         </>
+      ) : null}
+
+      {ref.kind === "settings" && ref.path === "ntp" ? (
+        <>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.enabled)}
+              onChange={(event) => updateField(ref, "enabled", event.target.checked)}
+            />
+            <span>Enable NTP</span>
+          </label>
+          <label className="field">
+            <span>Server</span>
+            <input
+              value={String(entity.server ?? "")}
+              onChange={(event) => updateField(ref, "server", event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Port</span>
+            <input
+              type="number"
+              value={Number(entity.server_port ?? 123)}
+              onChange={(event) => updateField(ref, "server_port", Number(event.target.value))}
+            />
+          </label>
+          <label className="field">
+            <span>Interval</span>
+            <input
+              value={String(entity.interval ?? "30m")}
+              onChange={(event) => updateField(ref, "interval", event.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Detour</span>
+            <input
+              value={String(entity.detour ?? "")}
+              onChange={(event) => updateField(ref, "detour", event.target.value || undefined)}
+            />
+          </label>
+        </>
+      ) : null}
+
+      {ref.kind === "settings" && ref.path === "certificate" ? (
+        <>
+          <label className="field">
+            <span>Store</span>
+            <select
+              value={String(entity.store ?? "system")}
+              onChange={(event) => updateField(ref, "store", event.target.value)}
+            >
+              <option value="system">system</option>
+              <option value="mozilla">mozilla</option>
+              <option value="chrome">chrome</option>
+              <option value="none">none</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Certificate PEM</span>
+            <textarea
+              value={toList(entity.certificate)}
+              onChange={(event) => updateField(ref, "certificate", fromList(event.target.value))}
+              placeholder="PEM entries, comma separated"
+            />
+          </label>
+          <label className="field">
+            <span>Certificate Paths</span>
+            <input
+              value={toList(entity.certificate_path)}
+              onChange={(event) => updateField(ref, "certificate_path", fromList(event.target.value))}
+            />
+          </label>
+          <label className="field">
+            <span>Certificate Directory Paths</span>
+            <input
+              value={toList(entity.certificate_directory_path)}
+              onChange={(event) => updateField(ref, "certificate_directory_path", fromList(event.target.value))}
+            />
+          </label>
+        </>
+      ) : null}
+
+      {ref.kind === "settings" && ref.path === "experimental" ? (
+        (() => {
+          const cacheFile = objectField(entity.cache_file);
+          const clashApi = objectField(entity.clash_api);
+          const v2rayApi = objectField(entity.v2ray_api);
+          const v2rayStats = objectField(v2rayApi.stats);
+          return (
+            <>
+              <div className="inspector-section-title">Cache File</div>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(cacheFile.enabled)}
+                  onChange={(event) => updateField(ref, "cache_file", { ...cacheFile, enabled: event.target.checked })}
+                />
+                <span>Enable cache file</span>
+              </label>
+              <label className="field">
+                <span>Cache Path</span>
+                <input
+                  value={String(cacheFile.path ?? "")}
+                  onChange={(event) => updateField(ref, "cache_file", { ...cacheFile, path: event.target.value })}
+                />
+              </label>
+              <label className="field">
+                <span>Cache ID</span>
+                <input
+                  value={String(cacheFile.cache_id ?? "")}
+                  onChange={(event) => updateField(ref, "cache_file", { ...cacheFile, cache_id: event.target.value })}
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(cacheFile.store_fakeip)}
+                  onChange={(event) => updateField(ref, "cache_file", { ...cacheFile, store_fakeip: event.target.checked })}
+                />
+                <span>Store FakeIP</span>
+              </label>
+
+              <div className="inspector-section-title">Clash API</div>
+              <label className="field">
+                <span>External Controller</span>
+                <input
+                  value={String(clashApi.external_controller ?? "")}
+                  onChange={(event) =>
+                    updateField(ref, "clash_api", { ...clashApi, external_controller: event.target.value })
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Secret</span>
+                <input
+                  value={String(clashApi.secret ?? "")}
+                  onChange={(event) => updateField(ref, "clash_api", { ...clashApi, secret: event.target.value })}
+                />
+              </label>
+              <label className="field">
+                <span>Default Mode</span>
+                <input
+                  value={String(clashApi.default_mode ?? "")}
+                  onChange={(event) => updateField(ref, "clash_api", { ...clashApi, default_mode: event.target.value })}
+                />
+              </label>
+              <label className="field">
+                <span>Allowed Origins</span>
+                <input
+                  value={toList(clashApi.access_control_allow_origin)}
+                  onChange={(event) =>
+                    updateField(ref, "clash_api", { ...clashApi, access_control_allow_origin: fromList(event.target.value) })
+                  }
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(clashApi.access_control_allow_private_network)}
+                  onChange={(event) =>
+                    updateField(ref, "clash_api", {
+                      ...clashApi,
+                      access_control_allow_private_network: event.target.checked,
+                    })
+                  }
+                />
+                <span>Allow private network</span>
+              </label>
+
+              <div className="inspector-section-title">V2Ray API</div>
+              <label className="field">
+                <span>Listen</span>
+                <input
+                  value={String(v2rayApi.listen ?? "")}
+                  onChange={(event) => updateField(ref, "v2ray_api", { ...v2rayApi, listen: event.target.value })}
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(v2rayStats.enabled)}
+                  onChange={(event) =>
+                    updateField(ref, "v2ray_api", {
+                      ...v2rayApi,
+                      stats: { ...v2rayStats, enabled: event.target.checked },
+                    })
+                  }
+                />
+                <span>Enable stats</span>
+              </label>
+            </>
+          );
+        })()
       ) : null}
 
       {ref.kind === "inbound" ? (

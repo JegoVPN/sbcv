@@ -1,0 +1,39 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "ntp": {
+    "enabled": false,
+    "server": "time.apple.com",
+    "server_port": 123,
+    "interval": "30m"
+  },
+  "certificate": {
+    "store": "system",
+    "certificate": [],
+    "certificate_path": [],
+    "certificate_directory_path": []
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "experimental": {
+    "cache_file": {
+      "enabled": false,
+      "path": "",
+      "cache_id": "",
+      "store_fakeip": false
+    },
+    "clash_api": {
+      "external_controller": "",
+      "secret": "",
+      "default_mode": "",
+      "access_control_allow_origin": [],
+      "access_control_allow_private_network": false
+    }
+  }
+}
