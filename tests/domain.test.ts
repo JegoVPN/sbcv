@@ -523,6 +523,27 @@ describe("canonical sing-box domain model", () => {
     ).toHaveLength(3);
   });
 
+  it("emits required-server / required-TLS / selector-default diagnostics", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        { type: "trojan", tag: "missing-server", server: "", server_port: 0, password: "x" },
+        { type: "vless", tag: "no-tls", server: "1.1.1.1", server_port: 443, uuid: "abc" },
+        { type: "selector", tag: "empty-group", outbounds: [], default: "" },
+        { type: "selector", tag: "stale-default", outbounds: ["proxy"], default: "ghost" },
+      ],
+    } as typeof base;
+    const stable = validateConfig(config, "stable");
+    const codes = stable.map((d) => d.code);
+    expect(codes).toContain("outbound-missing-server");
+    expect(codes).toContain("outbound-invalid-server-port");
+    expect(codes).toContain("outbound-missing-tls"); // vless requires TLS by default
+    expect(codes).toContain("group-outbound-empty");
+    expect(codes).toContain("selector-default-not-in-candidates");
+  });
+
   it("cascades selector default, dial detour, ntp/clash/rule-set detour on rename and delete", () => {
     const seeded = renameTag(
       {
