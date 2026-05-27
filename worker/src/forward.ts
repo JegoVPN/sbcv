@@ -5,17 +5,17 @@ export interface ForwardBody {
   config: unknown;
 }
 
+const SINGLETON_NAME = "validator";
+
 export async function forwardToContainer(body: ForwardBody, env: Env): Promise<Response> {
-  if (!env.VALIDATOR_URL) {
-    throw new Error("VALIDATOR_URL is not configured");
-  }
-  const url = `${env.VALIDATOR_URL.replace(/\/$/, "")}/check`;
+  const id = env.VALIDATOR.idFromName(SINGLETON_NAME);
+  const stub = env.VALIDATOR.get(id);
   const timeout = Number(env.CHECK_TIMEOUT_MS ?? 6000);
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    return await fetch(url, {
+    return await stub.fetch("http://container.internal/check", {
       method: "POST",
       headers: {
         "content-type": "application/json",
