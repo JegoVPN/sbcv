@@ -101,13 +101,14 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** No detection on `importJson`. The outbound would be parsed as an unknown type and dropped.
 - **Gap:** On import, detect `outbound.type === "dns"` and either auto-convert to a `hijack-dns` rule or hard-error with a migration prompt.
 
-### 1.11-C — Legacy inbound `sniff` / `sniff_timeout` / `domain_strategy` → route actions
+### 1.11-C — Legacy inbound `sniff` / `sniff_timeout` / `domain_strategy` → route actions — ✅ DIAGNOSTIC LANDED 2026-05-27
 
-- **Deprecated:** Setting `sniff: true`, `sniff_timeout`, `domain_strategy` directly on **any** inbound.
+- **Deprecated:** Setting `sniff: true`, `sniff_timeout`, `sniff_override_destination`, `domain_strategy` directly on **any** inbound.
 - **Replacement:** Add corresponding `route.rules` with `inbound: "<tag>"`, `action: "sniff"` or `action: "resolve"`.
 - **Affected nodes:** every inbound (17 nodes).
-- **Code state today:** No diagnostic. Inspector still renders these fields via `listenSharedFields` (which is correct for round-trip) but offers no migration suggestion.
-- **Gap:** Add `inbound-legacy-sniff-deprecated` and `inbound-legacy-domain-strategy-deprecated` warnings, with a "Convert to route rule" affordance.
+- **Code state today:** `inbound-legacy-sniff-deprecated` and `inbound-legacy-domain-strategy-deprecated` warnings emitted from `diagnostics.ts` whenever any inbound carries the deprecated fields. Fires regardless of channel (these were deprecated in 1.11 and we support 1.12+ everywhere).
+- **Regression test:** `tests/domain.test.ts` — "warns on legacy inbound sniff / domain_strategy (1.11-C)".
+- **Remaining:** "Convert to route rule" one-click affordance — UX nice-to-have.
 
 ### 1.11-D — Direct outbound `override_address` / `override_port` → route-options action
 

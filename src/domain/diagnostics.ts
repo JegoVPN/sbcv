@@ -1200,6 +1200,36 @@ export function validateConfig(
     });
   }
 
+  const legacyInboundSniffFields = ["sniff", "sniff_override_destination", "sniff_timeout"] as const;
+  const inboundLegacySniffMessage =
+    'Inbound-level sniff/sniff_timeout/sniff_override_destination are deprecated since sing-box 1.11.0. Move sniffing to a route rule with action="sniff" (and optional timeout/override_destination).';
+  const inboundLegacyDomainStrategyMessage =
+    'Inbound-level domain_strategy is deprecated since sing-box 1.11.0. Move domain resolution to a route rule with action="resolve" (and optional strategy).';
+  listItems(config.inbounds).forEach((inbound, index) => {
+    const obj = inbound as Record<string, unknown>;
+    const tag = inbound.tag ?? `inbound-${index}`;
+    for (const field of legacyInboundSniffFields) {
+      if (obj[field] === undefined) continue;
+      push(
+        diagnostics,
+        "warning",
+        "inbound-legacy-sniff-deprecated",
+        `/inbounds/${index}/${field}`,
+        `Inbound "${tag}" — ${inboundLegacySniffMessage}`,
+      );
+      break;
+    }
+    if (typeof obj.domain_strategy === "string" && obj.domain_strategy.length > 0) {
+      push(
+        diagnostics,
+        "warning",
+        "inbound-legacy-domain-strategy-deprecated",
+        `/inbounds/${index}/domain_strategy`,
+        `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}`,
+      );
+    }
+  });
+
   return diagnostics;
 }
 

@@ -249,6 +249,41 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on legacy inbound sniff / domain_strategy (1.11-C)", () => {
+    const config = createStableTunSplitConfig();
+    config.inbounds = [
+      {
+        type: "mixed",
+        tag: "mixed-in",
+        listen: "127.0.0.1",
+        listen_port: 2080,
+        sniff: true,
+        sniff_timeout: "1s",
+        domain_strategy: "prefer_ipv4",
+      } as never,
+    ];
+    const findings = validateConfig(config, "stable");
+    expect(findings.filter((f) => f.code === "inbound-legacy-sniff-deprecated")).toHaveLength(1);
+    expect(findings.filter((f) => f.code === "inbound-legacy-domain-strategy-deprecated")).toHaveLength(1);
+    expect(
+      findings.find((f) => f.code === "inbound-legacy-sniff-deprecated")?.path,
+    ).toBe("/inbounds/0/sniff");
+    expect(
+      findings.find((f) => f.code === "inbound-legacy-domain-strategy-deprecated")?.path,
+    ).toBe("/inbounds/0/domain_strategy");
+
+    config.inbounds = [
+      { type: "mixed", tag: "mixed-in", listen: "127.0.0.1", listen_port: 2080 } as never,
+    ];
+    expect(
+      validateConfig(config, "stable").filter(
+        (f) =>
+          f.code === "inbound-legacy-sniff-deprecated" ||
+          f.code === "inbound-legacy-domain-strategy-deprecated",
+      ),
+    ).toEqual([]);
+  });
+
   it("warns on inline tls.acme on testing channel only (1.14-A)", () => {
     const config = createStableTunSplitConfig();
     config.inbounds = [
