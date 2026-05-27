@@ -44,14 +44,16 @@ describe("SBC editor shell", () => {
     expect(invalid).toHaveClass("status-pill--error");
   });
 
-  it("lets side port buttons mutate canonical references", () => {
+  it("keeps side port clicks from mutating canonical references", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
+    const before = useProjectStore.getState().jsonDraft;
 
-    fireEvent.click(screen.getByLabelText("Remove Outbound from Route"));
+    fireEvent.click(screen.getByLabelText("Connected Outbound from Route"));
 
-    expect(useProjectStore.getState().config.route?.final).toBeUndefined();
-    expect(screen.getByLabelText("Add Outbound from Route")).toBeInTheDocument();
+    expect(useProjectStore.getState().jsonDraft).toBe(before);
+    expect(useProjectStore.getState().config.route?.final).toBeTruthy();
+    expect(screen.getByLabelText("Connected Outbound from Route")).toBeInTheDocument();
   });
 
   it("keeps Library groups collapsed until a category is chosen", () => {
@@ -201,7 +203,7 @@ describe("SBC editor shell", () => {
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 
-  it("lets an unconnected outbound define upstream references from its left-side port", () => {
+  it("keeps unconnected outbound side-port clicks as no-op connection starts", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
 
@@ -211,8 +213,10 @@ describe("SBC editor shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "Setup Naive" }));
 
     expect(useProjectStore.getState().selectedId).toBe("outbound:naive-out");
-    fireEvent.click(screen.getByLabelText("Add Upstream Route final for naive-out"));
-    expect(useProjectStore.getState().config.route?.final).toBe("naive-out");
+    const before = useProjectStore.getState().jsonDraft;
+    fireEvent.click(screen.getByLabelText("Start Upstream Route final for naive-out"));
+    expect(useProjectStore.getState().jsonDraft).toBe(before);
+    expect(useProjectStore.getState().config.route?.final).not.toBe("naive-out");
   });
 
   it("connects reversed React Flow port drags through canonical JSON commands", () => {
@@ -323,7 +327,7 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "auto")?.outbounds).toContain("jp");
   });
 
-  it("adds endpoint setup resources and links Tailscale DNS to an endpoint", () => {
+  it("adds endpoint setup resources without implicit Tailscale DNS port creation", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
 
@@ -337,12 +341,14 @@ describe("SBC editor shell", () => {
     expect(screen.getByTestId("node-endpoint:ts-ep")).toBeInTheDocument();
     expect(screen.getByText("State Directory")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByLabelText("Add Upstream Tailscale DNS server for ts-ep"));
+    const before = useProjectStore.getState().jsonDraft;
+    fireEvent.click(screen.getByLabelText("Start Upstream Tailscale DNS server for ts-ep"));
+    expect(useProjectStore.getState().jsonDraft).toBe(before);
 
     const tailscaleServer = useProjectStore
       .getState()
       .config.dns?.servers?.find((server) => server.type === "tailscale" && server.endpoint === "ts-ep");
-    expect(tailscaleServer?.tag).toBe("tailscale-dns");
+    expect(tailscaleServer).toBeUndefined();
   });
 
   it("renders structured users editors for all proxy inbound types via schema table", () => {

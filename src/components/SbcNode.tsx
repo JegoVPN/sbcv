@@ -381,7 +381,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const config = useProjectStore((state) => state.config);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const createCompatible = useProjectStore((state) => state.createCompatible);
-  const togglePortConnection = useProjectStore((state) => state.togglePortConnection);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const Icon = getNodeIcon(data.kind, data.type);
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
@@ -424,14 +423,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 key={port.key}
                 title={port.label}
                 type="button"
-                aria-label={`${connected ? "Remove" : "Add"} ${port.label} for ${data.title}`}
+                aria-label={`${connected ? "Connected" : "Start"} ${port.label} for ${data.title}`}
                 data-port-type={port.key}
                 data-port-node-kind={port.nodeKind}
                 data-port-node-type={port.nodeType}
                 data-connected={connected ? "true" : "false"}
                 onClick={(event) => {
                   event.stopPropagation();
-                  togglePortConnection(id, "input", port);
                 }}
               >
                 <Handle
@@ -463,14 +461,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 key={port.key}
                 title={port.label}
                 type="button"
-                aria-label={`${connected ? "Remove" : "Add"} ${port.label} from ${data.title}`}
+                aria-label={`${connected ? "Connected" : "Start"} ${port.label} from ${data.title}`}
                 data-port-type={port.key}
                 data-port-node-kind={port.nodeKind}
                 data-port-node-type={port.nodeType}
                 data-connected={connected ? "true" : "false"}
                 onClick={(event) => {
                   event.stopPropagation();
-                  togglePortConnection(id, "output", port);
                 }}
               >
                 <Handle
