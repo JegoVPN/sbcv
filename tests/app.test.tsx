@@ -511,6 +511,20 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("renders UUID + Password as first-class fields with Generate UUID button on tuic outbound", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tuic-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const uuidInputs = inspector.getAllByLabelText("UUID");
+    expect(uuidInputs.some((el) => (el as HTMLInputElement).type === "password")).toBe(true);
+    expect(inspector.getByRole("button", { name: "Generate UUID" })).toBeInTheDocument();
+    const password = inspector.getAllByLabelText("Password").find((el) => (el as HTMLInputElement).type === "password");
+    expect(password).toBeDefined();
+  });
+
   it("renders Version enum select as first-class for shadowtls inbound and outbound", () => {
     for (const palette of ["inbound-shadowtls", "shadowtls-out"]) {
       useProjectStore.getState().loadMinimal();
