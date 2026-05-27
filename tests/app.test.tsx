@@ -688,6 +688,19 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("seeds tolerance/idle_timeout/interrupt_exist_connections defaults on urltest scaffold", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("urltest");
+    });
+    const urltest = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "urltest");
+    expect(urltest?.tolerance).toBe(50);
+    expect(urltest?.idle_timeout).toBe("30m");
+    expect(urltest?.interrupt_exist_connections).toBe(false);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
