@@ -178,7 +178,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const endpointY = new Map<string, number>();
 
   SETTINGS_NODE_IDS.forEach((id, index) => {
-    if (!layout.positions[id]) return;
     const path = id.slice("settings:".length) as SettingsPath;
     const entity = config[path];
     if (!entity || typeof entity !== "object" || Array.isArray(entity)) return;
