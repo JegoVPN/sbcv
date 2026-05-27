@@ -228,6 +228,17 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("lock-tests dial-domain-strategy-deprecated covers outbound:direct (1.12-C)", () => {
+    const config = createStableTunSplitConfig();
+    const direct = config.outbounds?.find((o) => o.type === "direct") as Record<string, unknown>;
+    expect(direct).toBeDefined();
+    direct.domain_strategy = "prefer_ipv4";
+    const findings = validateConfig(config, "stable").filter(
+      (f) => f.code === "dial-domain-strategy-deprecated",
+    );
+    expect(findings.some((f) => f.path.endsWith("/domain_strategy") && f.message.toLowerCase().includes("direct"))).toBe(true);
+  });
+
   it("warns on Hysteria v1 in both inbound and outbound", () => {
     const config = createStableTunSplitConfig();
     config.outbounds = [
