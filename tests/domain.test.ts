@@ -427,6 +427,35 @@ describe("canonical sing-box domain model", () => {
     expect(dnsServerEdges.some((edge) => edge.id === "edge:dns-rule:1:local-dns")).toBe(false);
   });
 
+  it("locks derp-config-path-missing diagnostic", () => {
+    const config = createStableTunSplitConfig();
+    config.services = [
+      ...(config.services ?? []),
+      {
+        type: "derp",
+        tag: "derp-no-key",
+        listen: "::",
+        listen_port: 8443,
+        tls: { enabled: true },
+      } as never,
+    ];
+    expect(
+      validateConfig(config, "stable").some(
+        (finding) => finding.code === "derp-config-path-missing",
+      ),
+    ).toBe(true);
+
+    const last = (config.services as Array<Record<string, unknown>>)[
+      (config.services as Array<Record<string, unknown>>).length - 1
+    ]!;
+    last.config_path = "derper.key";
+    expect(
+      validateConfig(config, "stable").some(
+        (finding) => finding.code === "derp-config-path-missing",
+      ),
+    ).toBe(false);
+  });
+
   it("seeds tls.enabled=true on derp service scaffold", () => {
     const config = createStableTunSplitConfig();
     config.services = [
