@@ -666,6 +666,23 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   });
 
+  const ntp = config.ntp as Record<string, unknown> | undefined;
+  if (ntp && typeof ntp.detour === "string" && ntp.detour) {
+    const ntpNodeId = "settings:ntp";
+    const ntpNodeExists = nodes.some((node) => node.id === ntpNodeId);
+    if (ntpNodeExists) {
+      edges.push(
+        makeEdge(
+          `edge:settings-ntp-detour:${ntp.detour}`,
+          ntpNodeId,
+          `outbound:${ntp.detour}`,
+          "dial-detour",
+          "detour-target",
+        ),
+      );
+    }
+  }
+
   centerColumnsVertically(nodes, layout);
 
   return { nodes, edges };

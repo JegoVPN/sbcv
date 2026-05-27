@@ -195,6 +195,9 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
     }
     return ports;
   }
+  if (kind === "settings" && type === "ntp") {
+    return [{ key: "dial-detour", label: "NTP detour outbound", nodeKind: "outbound", icon: Network }];
+  }
   return [];
 }
 
