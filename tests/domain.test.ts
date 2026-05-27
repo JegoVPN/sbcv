@@ -17,8 +17,278 @@ import {
 } from "../src/domain/commands";
 import { deriveGraph } from "../src/canvas/graph";
 import { validateConfig } from "../src/domain/diagnostics";
+import { referenceRegistry, type ReferenceKind } from "../src/domain/referenceRegistry";
 import { parseConfigJson, stringifyConfig } from "../src/domain/serialization";
 import { createTemplatePreset, TEMPLATE_PRESETS, TEMPLATE_PRESET_IDS } from "../src/domain/templates";
+import type { SingBoxConfig } from "../src/domain/types";
+
+type ReferenceCoverageCase = {
+  kind: ReferenceKind;
+  tag: string;
+  nextTag: string;
+  paths: string[];
+  staleDiagnosticCodes: string[];
+  assertRenamed: (config: SingBoxConfig) => void;
+  assertDeleted: (config: SingBoxConfig) => void;
+};
+
+function createReferenceCoverageConfig(): SingBoxConfig {
+  return {
+    inbounds: [
+      { type: "tun", tag: "tun-in", tls: { certificate_provider: "cert" } },
+      { type: "shadowsocks", tag: "managed-ss", managed: true },
+    ],
+    outbounds: [
+      { type: "direct", tag: "proxy", tls: { certificate_provider: "cert" } },
+      { type: "direct", tag: "backup" },
+      { type: "selector", tag: "auto", outbounds: ["proxy", "backup"], default: "proxy" },
+      { type: "trojan", tag: "dialer", server: "example.com", server_port: 443, password: "x", detour: "proxy", domain_resolver: "local-dns" },
+    ],
+    dns: {
+      final: "local-dns",
+      servers: [
+        { type: "local", tag: "local-dns", detour: "proxy", domain_resolver: { server: "bootstrap-dns" }, tls: { certificate_provider: "cert" } },
+        { type: "local", tag: "bootstrap-dns" },
+        { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", domain_resolver: { server: "local-dns" } },
+        { type: "resolved", tag: "resolved-dns", service: "resolved-svc" },
+      ],
+      rules: [{ inbound: ["tun-in"], server: "local-dns", rule_set: ["rs"] }],
+    },
+    endpoints: [
+      { type: "wireguard", tag: "wg-ep", detour: "proxy", domain_resolver: { server: "local-dns" } },
+      { type: "tailscale", tag: "ts-ep" },
+    ],
+    services: [
+      { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in", "/managed": "managed-ss" }, detour: "proxy", http_client: "client" },
+      { type: "derp", tag: "derp", detour: "proxy", verify_client_endpoint: ["ts-ep"], tls: { certificate_provider: "cert" } },
+      { type: "resolved", tag: "resolved-svc" },
+    ],
+    route: {
+      final: "proxy",
+      default_domain_resolver: { server: "local-dns" },
+      default_http_client: "client",
+      rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"] }],
+      rule_set: [
+        {
+          type: "remote",
+          tag: "rs",
+          format: "binary",
+          url: "https://example.com/rules.srs",
+          download_detour: "proxy",
+          http_client: "client",
+          domain_resolver: { server: "local-dns" },
+        },
+      ],
+    },
+    http_clients: [{ tag: "client", detour: "proxy", domain_resolver: "local-dns", tls: { certificate_provider: "cert" } }],
+    certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep", http_client: "client" }],
+    ntp: { enabled: true, server: "time.example.com", server_port: 123, detour: "proxy", domain_resolver: { server: "local-dns" } },
+    experimental: {
+      clash_api: { external_ui_download_detour: "proxy" },
+      v2ray_api: { stats: { enabled: true, inbounds: ["tun-in"], outbounds: ["proxy"] } },
+    },
+  };
+}
+
+const referenceCoverageCases: ReferenceCoverageCase[] = [
+  {
+    kind: "inbound",
+    tag: "tun-in",
+    nextTag: "tun-renamed",
+    paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
+    staleDiagnosticCodes: [
+      "missing-route-rule-inbound",
+      "missing-dns-rule-inbound",
+      "missing-ssm-api-inbound",
+      "v2ray-stats-inbound-missing",
+    ],
+    assertRenamed: (config) => {
+      expect(config.route?.rules?.[0]?.inbound).toEqual(["tun-renamed"]);
+      expect(config.dns?.rules?.[0]?.inbound).toEqual(["tun-renamed"]);
+      expect(config.services?.find((item) => item.tag === "ssm")?.servers).toMatchObject({ "/": "tun-renamed" });
+      expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ inbounds: ["tun-renamed"] });
+    },
+    assertDeleted: (config) => {
+      expect(config.route?.rules?.[0]?.inbound).toBeUndefined();
+      expect(config.dns?.rules?.[0]?.inbound).toBeUndefined();
+      expect(config.services?.find((item) => item.tag === "ssm")?.servers).toEqual({ "/managed": "managed-ss" });
+      expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ inbounds: [] });
+    },
+  },
+  {
+    kind: "outbound",
+    tag: "proxy",
+    nextTag: "proxy-renamed",
+    paths: [
+      "/route/final",
+      "/route/rules/*/outbound",
+      "/outbounds/*/outbounds",
+      "/outbounds/*/default",
+      "/outbounds/*/detour",
+      "/dns/servers/*/detour",
+      "/endpoints/*/detour",
+      "/services/*/detour",
+      "/route/rule_set/*/download_detour",
+      "/ntp/detour",
+      "/experimental/clash_api/external_ui_download_detour",
+      "/experimental/v2ray_api/stats/outbounds",
+    ],
+    staleDiagnosticCodes: [
+      "missing-route-final",
+      "missing-rule-outbound",
+      "missing-outbound-candidate",
+      "missing-dns-server-detour",
+      "missing-endpoint-detour",
+      "missing-service-detour",
+      "ntp-detour-missing",
+      "clash-api-download-detour-missing",
+      "rule-set-download-detour-missing",
+      "v2ray-stats-outbound-missing",
+    ],
+    assertRenamed: (config) => {
+      expect(config.route?.final).toBe("proxy-renamed");
+      expect(config.route?.rules?.[0]?.outbound).toBe("proxy-renamed");
+      expect(config.outbounds?.find((item) => item.tag === "auto")?.outbounds).toEqual(["proxy-renamed", "backup"]);
+      expect(config.outbounds?.find((item) => item.tag === "auto")?.default).toBe("proxy-renamed");
+      expect(config.outbounds?.find((item) => item.tag === "dialer")?.detour).toBe("proxy-renamed");
+      expect(config.dns?.servers?.[0]?.detour).toBe("proxy-renamed");
+      expect(config.endpoints?.[0]?.detour).toBe("proxy-renamed");
+      expect(config.services?.find((item) => item.tag === "derp")?.detour).toBe("proxy-renamed");
+      expect(config.route?.rule_set?.[0]?.download_detour).toBe("proxy-renamed");
+      expect(config.ntp?.detour).toBe("proxy-renamed");
+      expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: "proxy-renamed" });
+      expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ outbounds: ["proxy-renamed"] });
+    },
+    assertDeleted: (config) => {
+      expect(config.route?.final).toBeUndefined();
+      expect(config.route?.rules?.[0]?.outbound).toBeUndefined();
+      expect(config.outbounds?.find((item) => item.tag === "auto")?.outbounds).toEqual(["backup"]);
+      expect(config.outbounds?.find((item) => item.tag === "auto")?.default).toBeUndefined();
+      expect(config.outbounds?.find((item) => item.tag === "dialer")?.detour).toBeUndefined();
+      expect(config.dns?.servers?.[0]?.detour).toBeUndefined();
+      expect(config.endpoints?.[0]?.detour).toBeUndefined();
+      expect(config.services?.find((item) => item.tag === "derp")?.detour).toBeUndefined();
+      expect(config.route?.rule_set?.[0]?.download_detour).toBeUndefined();
+      expect(config.ntp?.detour).toBeUndefined();
+      expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: undefined });
+      expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ outbounds: [] });
+    },
+  },
+  {
+    kind: "dns-server",
+    tag: "local-dns",
+    nextTag: "dns-renamed",
+    paths: ["/dns/final", "/dns/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
+    staleDiagnosticCodes: ["missing-dns-final", "missing-dns-rule-server"],
+    assertRenamed: (config) => {
+      expect(config.dns?.final).toBe("dns-renamed");
+      expect(config.dns?.rules?.[0]?.server).toBe("dns-renamed");
+      expect(config.route?.default_domain_resolver).toMatchObject({ server: "dns-renamed" });
+      expect(config.outbounds?.find((item) => item.tag === "dialer")?.domain_resolver).toBe("dns-renamed");
+      expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.domain_resolver).toMatchObject({ server: "dns-renamed" });
+      expect(config.endpoints?.find((item) => item.tag === "wg-ep")?.domain_resolver).toMatchObject({ server: "dns-renamed" });
+      expect(config.route?.rule_set?.[0]?.domain_resolver).toMatchObject({ server: "dns-renamed" });
+      expect(config.http_clients?.[0]?.domain_resolver).toBe("dns-renamed");
+      expect(config.ntp?.domain_resolver).toMatchObject({ server: "dns-renamed" });
+    },
+    assertDeleted: (config) => {
+      expect(config.dns?.final).toBeUndefined();
+      expect(config.dns?.rules?.[0]?.server).toBeUndefined();
+      expect(config.route?.default_domain_resolver).toBeUndefined();
+      expect(config.outbounds?.find((item) => item.tag === "dialer")?.domain_resolver).toBeUndefined();
+      expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.domain_resolver).toBeUndefined();
+      expect(config.endpoints?.find((item) => item.tag === "wg-ep")?.domain_resolver).toBeUndefined();
+      expect(config.route?.rule_set?.[0]?.domain_resolver).toBeUndefined();
+      expect(config.http_clients?.[0]?.domain_resolver).toBeUndefined();
+      expect(config.ntp?.domain_resolver).toBeUndefined();
+    },
+  },
+  {
+    kind: "endpoint",
+    tag: "ts-ep",
+    nextTag: "tailnet",
+    paths: ["/dns/servers/*/endpoint", "/services/*/verify_client_endpoint", "/certificate_providers/*/endpoint"],
+    staleDiagnosticCodes: ["missing-dns-server-endpoint", "missing-derp-verify-endpoint"],
+    assertRenamed: (config) => {
+      expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.endpoint).toBe("tailnet");
+      expect(config.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toEqual(["tailnet"]);
+      expect(config.certificate_providers?.[0]?.endpoint).toBe("tailnet");
+    },
+    assertDeleted: (config) => {
+      expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.endpoint).toBeUndefined();
+      expect(config.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toBeUndefined();
+      expect(config.certificate_providers?.[0]?.endpoint).toBeUndefined();
+    },
+  },
+  {
+    kind: "service",
+    tag: "resolved-svc",
+    nextTag: "resolved-renamed",
+    paths: ["/dns/servers/*/service"],
+    staleDiagnosticCodes: ["dns-server-resolved-service-not-found"],
+    assertRenamed: (config) => {
+      expect(config.dns?.servers?.find((item) => item.tag === "resolved-dns")?.service).toBe("resolved-renamed");
+    },
+    assertDeleted: (config) => {
+      expect(config.dns?.servers?.find((item) => item.tag === "resolved-dns")?.service).toBeUndefined();
+    },
+  },
+  {
+    kind: "rule-set",
+    tag: "rs",
+    nextTag: "rs-renamed",
+    paths: ["/route/rules/*/rule_set", "/dns/rules/*/rule_set"],
+    staleDiagnosticCodes: ["missing-route-rule-set", "missing-dns-rule-set"],
+    assertRenamed: (config) => {
+      expect(config.route?.rules?.[0]?.rule_set).toEqual(["rs-renamed"]);
+      expect(config.dns?.rules?.[0]?.rule_set).toEqual(["rs-renamed"]);
+    },
+    assertDeleted: (config) => {
+      expect(config.route?.rules?.[0]?.rule_set).toBeUndefined();
+      expect(config.dns?.rules?.[0]?.rule_set).toBeUndefined();
+    },
+  },
+  {
+    kind: "http-client",
+    tag: "client",
+    nextTag: "client-renamed",
+    paths: ["/route/default_http_client", "/route/rule_set/*/http_client", "/certificate_providers/*/http_client", "/services/*/http_client"],
+    staleDiagnosticCodes: [],
+    assertRenamed: (config) => {
+      expect(config.route?.default_http_client).toBe("client-renamed");
+      expect(config.route?.rule_set?.[0]?.http_client).toBe("client-renamed");
+      expect(config.certificate_providers?.[0]?.http_client).toBe("client-renamed");
+      expect(config.services?.find((item) => item.tag === "ssm")?.http_client).toBe("client-renamed");
+    },
+    assertDeleted: (config) => {
+      expect(config.route?.default_http_client).toBeUndefined();
+      expect(config.route?.rule_set?.[0]?.http_client).toBeUndefined();
+      expect(config.certificate_providers?.[0]?.http_client).toBeUndefined();
+      expect(config.services?.find((item) => item.tag === "ssm")?.http_client).toBeUndefined();
+    },
+  },
+  {
+    kind: "certificate-provider",
+    tag: "cert",
+    nextTag: "cert-renamed",
+    paths: ["*/tls/certificate_provider"],
+    staleDiagnosticCodes: [],
+    assertRenamed: (config) => {
+      expect(config.inbounds?.[0]?.tls).toMatchObject({ certificate_provider: "cert-renamed" });
+      expect(config.outbounds?.[0]?.tls).toMatchObject({ certificate_provider: "cert-renamed" });
+      expect(config.dns?.servers?.[0]?.tls).toMatchObject({ certificate_provider: "cert-renamed" });
+      expect(config.services?.find((item) => item.tag === "derp")?.tls).toMatchObject({ certificate_provider: "cert-renamed" });
+      expect(config.http_clients?.[0]?.tls).toMatchObject({ certificate_provider: "cert-renamed" });
+    },
+    assertDeleted: (config) => {
+      expect(config.inbounds?.[0]?.tls).toMatchObject({ certificate_provider: undefined });
+      expect(config.outbounds?.[0]?.tls).toMatchObject({ certificate_provider: undefined });
+      expect(config.dns?.servers?.[0]?.tls).toMatchObject({ certificate_provider: undefined });
+      expect(config.services?.find((item) => item.tag === "derp")?.tls).toMatchObject({ certificate_provider: undefined });
+      expect(config.http_clients?.[0]?.tls).toMatchObject({ certificate_provider: undefined });
+    },
+  },
+];
 
 describe("canonical sing-box domain model", () => {
   it("round-trips stable TUN split config without layout metadata", () => {
@@ -42,6 +312,31 @@ describe("canonical sing-box domain model", () => {
     expect(renamed).toBe(config);
     expect(renamed.outbounds?.filter((item) => item.tag === "direct")).toHaveLength(1);
     expect(renamed.outbounds?.find((item) => item.tag === "proxy")).toBeTruthy();
+  });
+
+  it("keeps reference registry path coverage explicit in domain tests", () => {
+    const registryPaths = new Map(referenceRegistry.map((entry) => [entry.kind, entry.paths]));
+    const casePaths = new Map(referenceCoverageCases.map((entry) => [entry.kind, entry.paths]));
+
+    expect([...casePaths.keys()].sort()).toEqual([...registryPaths.keys()].sort());
+    for (const [kind, paths] of registryPaths) {
+      expect(casePaths.get(kind)).toEqual(paths);
+    }
+  });
+
+  it.each(referenceCoverageCases)("renames $kind references through the canonical registry", (testCase) => {
+    const renamed = renameTag(createReferenceCoverageConfig(), testCase.tag, testCase.nextTag);
+    testCase.assertRenamed(renamed);
+  });
+
+  it.each(referenceCoverageCases)("deletes $kind references without leaving diagnosable stale refs", (testCase) => {
+    const deleted = deleteEntity(createReferenceCoverageConfig(), { kind: testCase.kind, tag: testCase.tag });
+    testCase.assertDeleted(deleted);
+
+    const codes = validateConfig(deleted, "testing").map((diagnostic) => diagnostic.code);
+    for (const code of testCase.staleDiagnosticCodes) {
+      expect(codes).not.toContain(code);
+    }
   });
 
   it("renames extended tag references through the canonical reference registry", () => {
