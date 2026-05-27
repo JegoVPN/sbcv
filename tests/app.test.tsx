@@ -380,6 +380,22 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("preserves multi-line PEM certificates through a round-trip on settings:certificate", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("settings-certificate");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const textarea = inspector.getByLabelText("Certificate PEM") as HTMLTextAreaElement;
+    const pemA = "-----BEGIN CERTIFICATE-----\nMIICExampleA\nLineTwo\n-----END CERTIFICATE-----";
+    const pemB = "-----BEGIN CERTIFICATE-----\nMIICExampleB\nLineTwo\n-----END CERTIFICATE-----";
+    fireEvent.change(textarea, { target: { value: `${pemA}\n\n${pemB}` } });
+    const certificateField = useProjectStore.getState().config.certificate as Record<string, unknown>;
+    expect(Array.isArray(certificateField.certificate)).toBe(true);
+    expect(certificateField.certificate).toEqual([pemA, pemB]);
+  });
+
   it("renders a Method enum select as first-class for inbound:shadowsocks", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

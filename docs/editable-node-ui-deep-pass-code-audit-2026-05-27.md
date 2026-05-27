@@ -69,7 +69,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | --- | --- |
 | settings-log | All claims verified; only a P1 idea ("log.level enum value validation") absent — not blocking. |
 | settings-ntp | NTP detour canvas edge **never generated** — `graph.ts` detour loop walks outbound/dns-server/endpoint/service but not `config.ntp?.detour`. `SbcNode.tsx:197` returns `[]` for `kind === "settings"` so the ntp node has no output port either. Canvas title shows "Ntp" (uses `path[0].toUpperCase()`). |
-| settings-certificate | `Inspector.tsx:1998` uses `toList`/`fromList` (comma split) for `certificate[]` and `certificate_path[]`. **PEM bodies contain commas and newlines — any multi-line cert round-trip is corrupted.** Also missing diagnostics for `store: "chrome"` 1.13+ gate and the 1.12+ `certificate` block channel gate. |
+| settings-certificate | ✅ ~~`Inspector.tsx:1998` uses `toList`/`fromList` (comma split) for `certificate[]`~~ — fixed 2026-05-27; the PEM textarea now splits on `\n{2,}` (blank line between PEM blocks per the standard) and trims whitespace per block, preserving multi-line bodies and trailing newlines. `certificate_path[]` / `certificate_directory_path[]` still use comma-separated input (file paths normally don't contain commas; OK). Missing diagnostics for `store: "chrome"` 1.13+ gate and the 1.12+ `certificate` block channel gate. |
 | settings-experimental | `experimental.v2ray_api.stats.inbounds` / `outbounds` / `users` not rendered (only `listen` + `stats.enabled`). No v2ray stats tag-existence diagnostics. Palette sub-entries `experimental-cache-file` etc. have no `createFromPalette` handler (clicking is a no-op). `SbcNode.tsx` `iconMap["settings"]` ignores the experimental icon override. |
 
 ### Hub

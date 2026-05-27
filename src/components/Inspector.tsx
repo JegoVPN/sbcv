@@ -1996,9 +1996,21 @@ export function Inspector() {
           <label className="field">
             <span>Certificate PEM</span>
             <textarea
-              value={toList(entity.certificate)}
-              onChange={(event) => updateField(ref, "certificate", fromList(event.target.value))}
-              placeholder="PEM entries, comma separated"
+              rows={8}
+              value={Array.isArray(entity.certificate) ? (entity.certificate as string[]).join("\n\n") : ""}
+              onChange={(event) => {
+                const raw = event.target.value;
+                if (!raw.trim()) {
+                  updateField(ref, "certificate", undefined);
+                  return;
+                }
+                const blocks = raw
+                  .split(/\n{2,}/)
+                  .map((block) => block.replace(/^\s+|\s+$/g, ""))
+                  .filter(Boolean);
+                updateField(ref, "certificate", blocks.length ? blocks : undefined);
+              }}
+              placeholder={"Paste one or more PEM blocks.\nSeparate multiple certificates with a blank line."}
             />
           </label>
           <label className="field">
