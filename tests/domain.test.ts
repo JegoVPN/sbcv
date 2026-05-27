@@ -1332,6 +1332,50 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits hysteria-realm-users-required when users[] is empty", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        { type: "hysteria-realm", tag: "realm", users: [] },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "testing").map((d) => d.code);
+    expect(codes).toContain("hysteria-realm-users-required");
+  });
+
+  it("emits hysteria-realm-user-token-placeholder when token is 'change-me'", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        {
+          type: "hysteria-realm",
+          tag: "realm",
+          users: [{ name: "alice", token: "change-me" }],
+        },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "testing").map((d) => d.code);
+    expect(codes).toContain("hysteria-realm-user-token-placeholder");
+    expect(codes).not.toContain("hysteria-realm-user-token-required");
+  });
+
+  it("emits hysteria-realm-user-token-required when token is empty", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        { type: "hysteria-realm", tag: "realm", users: [{ name: "alice", token: "" }] },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "testing").map((d) => d.code);
+    expect(codes).toContain("hysteria-realm-user-token-required");
+  });
+
   it("emits ccm-users-empty + ccm-public-listen for a wide-open empty ccm service", () => {
     const base = createStableTunSplitConfig();
     const config = {

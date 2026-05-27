@@ -234,6 +234,47 @@ export function validateConfig(
         "Hysteria Realm service is available only for the 1.14 testing target.",
       );
     }
+    if (service.type === "hysteria-realm") {
+      const obj = service as Record<string, unknown>;
+      const users = Array.isArray(obj.users) ? (obj.users as Record<string, unknown>[]) : [];
+      if (users.length === 0) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria-realm-users-required",
+          `/services/${index}/users`,
+          `Hysteria Realm service "${service.tag}" requires at least one user; sing-box refuses to start without authorized tokens.`,
+        );
+      }
+      users.forEach((user, userIndex) => {
+        if (typeof user.name !== "string" || user.name.trim() === "") {
+          push(
+            diagnostics,
+            "error",
+            "hysteria-realm-user-name-required",
+            `/services/${index}/users/${userIndex}/name`,
+            `Hysteria Realm user #${userIndex + 1} of service "${service.tag}" is missing name.`,
+          );
+        }
+        if (typeof user.token !== "string" || user.token.trim() === "") {
+          push(
+            diagnostics,
+            "error",
+            "hysteria-realm-user-token-required",
+            `/services/${index}/users/${userIndex}/token`,
+            `Hysteria Realm user "${user.name ?? userIndex + 1}" of service "${service.tag}" is missing token.`,
+          );
+        } else if (user.token === "change-me") {
+          push(
+            diagnostics,
+            "warning",
+            "hysteria-realm-user-token-placeholder",
+            `/services/${index}/users/${userIndex}/token`,
+            `Hysteria Realm user "${user.name ?? userIndex + 1}" of service "${service.tag}" still uses the scaffold placeholder token "change-me"; replace before exposing the service.`,
+          );
+        }
+      });
+    }
 
     if (service.type === "ccm") {
       const obj = service as Record<string, unknown>;
