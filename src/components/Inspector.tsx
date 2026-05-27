@@ -2718,6 +2718,31 @@ export function Inspector() {
                     {schema.fields.map((field) => {
                       const value = user[field.key];
                       if (field.sensitive) {
+                        if (field.key === "uuid") {
+                          return (
+                            <div key={field.key} className="field-group">
+                              <SensitiveTextField
+                                label={field.label}
+                                value={String(value ?? "")}
+                                onChange={(next) => patchUser(index, { [field.key]: next })}
+                              />
+                              <button
+                                type="button"
+                                className="palette-action"
+                                aria-label={`Generate UUID for user ${index + 1}`}
+                                onClick={() => {
+                                  const generated =
+                                    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+                                      ? crypto.randomUUID()
+                                      : "00000000-0000-4000-8000-000000000000";
+                                  patchUser(index, { [field.key]: generated });
+                                }}
+                              >
+                                Generate UUID
+                              </button>
+                            </div>
+                          );
+                        }
                         return (
                           <SensitiveTextField
                             key={field.key}
