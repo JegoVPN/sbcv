@@ -511,6 +511,23 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("renders Version enum select as first-class for shadowtls inbound and outbound", () => {
+    for (const palette of ["inbound-shadowtls", "shadowtls-out"]) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(palette);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      const version = inspector.getByLabelText("Version") as HTMLSelectElement;
+      expect(version.tagName, `${palette} Version`).toBe("SELECT");
+      expect(within(version).getByRole("option", { name: /^1 / })).toBeInTheDocument();
+      expect(within(version).getByRole("option", { name: /^2 / })).toBeInTheDocument();
+      expect(within(version).getByRole("option", { name: /^3 / })).toBeInTheDocument();
+      unmount();
+    }
+  });
+
   it("renders a Method enum select as first-class for inbound:shadowsocks", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
