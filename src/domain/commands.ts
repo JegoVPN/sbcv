@@ -1,5 +1,10 @@
-import { getUniqueTag } from "./indexes";
+import { buildTagIndex, getUniqueTag } from "./indexes";
 import { preferredDnsServerTag, preferredEndpointTag, preferredInboundTag, preferredServiceTag } from "./protocols";
+import {
+  removeRegisteredTagReferences,
+  replaceRegisteredTagReferences,
+  type ReferenceKind,
+} from "./referenceRegistry";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -868,6 +873,16 @@ export function updateEntityField(
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "certificate-provider") {
+    next.certificate_providers = (next.certificate_providers ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
+  if (ref.kind === "http-client") {
+    next.http_clients = (next.http_clients ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
   if (ref.kind === "route") {
     next.route = { ...(next.route ?? {}), [field]: value };
   }
@@ -923,15 +938,7 @@ export function changeEntityType(
       const detour = item.detour;
       return detour ? { ...replacement, detour } : replacement;
     });
-    if (nextType !== "tailscale") {
-      next.dns?.servers?.forEach((server) => {
-        if (server.endpoint === ref.tag) server.endpoint = undefined;
-      });
-      next.certificate_providers = next.certificate_providers?.map((provider) => ({
-        ...provider,
-        endpoint: provider.endpoint === ref.tag ? undefined : provider.endpoint,
-      }));
-    }
+    if (nextType !== "tailscale") removeRegisteredTagReferences(next, "endpoint", ref.tag);
   }
   if (ref.kind === "service") {
     next.services = (next.services ?? []).map((item) => {
@@ -945,6 +952,7 @@ export function changeEntityType(
         ...(typeof listenPort === "number" ? { listen_port: listenPort } : {}),
       };
     });
+    if (nextType !== "resolved") removeRegisteredTagReferences(next, "service", ref.tag);
   }
   if (ref.kind === "rule-set") {
     next.route = next.route ?? {};
@@ -958,21 +966,6 @@ export function changeEntityType(
   return next;
 }
 
-function replaceRuleSetRef(value: string | string[] | undefined, oldTag: string, newTag: string) {
-  if (Array.isArray(value)) return value.map((tag) => (tag === oldTag ? newTag : tag));
-  return value === oldTag ? newTag : value;
-}
-
-function removeRuleSetRef(value: string | string[] | undefined, tag: string) {
-  if (Array.isArray(value)) return value.filter((item) => item !== tag);
-  return value === tag ? undefined : value;
-}
-
-function replaceTagRef(value: string | string[] | undefined, oldTag: string, newTag: string) {
-  if (Array.isArray(value)) return value.map((tag) => (tag === oldTag ? newTag : tag));
-  return value === oldTag ? newTag : value;
-}
-
 function removeTagRef(value: string | string[] | undefined, tag: string) {
   if (Array.isArray(value)) return value.filter((item) => item !== tag);
   return value === tag ? undefined : value;
@@ -980,189 +973,65 @@ function removeTagRef(value: string | string[] | undefined, tag: string) {
 
 export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string): SingBoxConfig {
   if (!newTag.trim() || oldTag === newTag) return config;
+  const existing = buildTagIndex(config).get(newTag);
+  if (existing?.length) return config;
   const next = cloneConfig(config);
 
   next.inbounds = next.inbounds?.map((item) =>
     item.tag === oldTag ? { ...item, tag: newTag } : item,
   );
-  const remapOutbound = <T extends OutboundConfig>(item: T): T => ({
-    ...item,
-    tag: item.tag === oldTag ? newTag : item.tag,
-    outbounds: item.outbounds?.map((tag) => (tag === oldTag ? newTag : tag)),
-    default: item.default === oldTag ? newTag : item.default,
-    detour: typeof item.detour === "string" && item.detour === oldTag ? newTag : item.detour,
-  });
-  next.outbounds = next.outbounds?.map(remapOutbound);
+  next.outbounds = next.outbounds?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
   next.dns = next.dns
     ? {
         ...next.dns,
-        final: next.dns.final === oldTag ? newTag : next.dns.final,
-        servers: next.dns.servers?.map((item) =>
-          item.tag === oldTag
-            ? { ...item, tag: newTag, endpoint: item.endpoint === oldTag ? newTag : item.endpoint }
-            : { ...item, endpoint: item.endpoint === oldTag ? newTag : item.endpoint },
-        ),
-        rules: next.dns.rules?.map((rule) => ({
-          ...rule,
-          inbound: replaceTagRef(rule.inbound, oldTag, newTag),
-          server: rule.server === oldTag ? newTag : rule.server,
-        })),
+        servers: next.dns.servers?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item)),
       }
     : next.dns;
+  next.endpoints = next.endpoints?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
+  next.services = next.services?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
   next.route = next.route
     ? {
         ...next.route,
-        final: next.route.final === oldTag ? newTag : next.route.final,
-        rule_set: next.route.rule_set?.map((item) =>
-          item.tag === oldTag ? { ...item, tag: newTag } : item,
-        ),
-        rules: next.route.rules?.map((rule) => ({
-          ...rule,
-          inbound: replaceTagRef(rule.inbound, oldTag, newTag),
-          outbound: rule.outbound === oldTag ? newTag : rule.outbound,
-          rule_set: replaceRuleSetRef(rule.rule_set, oldTag, newTag),
-        })),
+        rule_set: next.route.rule_set?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item)),
       }
     : next.route;
-  next.endpoints = next.endpoints?.map((item) =>
-    item.tag === oldTag ? { ...item, tag: newTag, detour: item.detour === oldTag ? newTag : item.detour } : item,
-  );
-  next.services = next.services?.map((item) => ({
-    ...item,
-    verify_client_endpoint: replaceTagRef(item.verify_client_endpoint as string | string[] | undefined, oldTag, newTag),
-    detour: item.detour === oldTag ? newTag : item.detour,
-    servers:
-      item.servers && typeof item.servers === "object" && !Array.isArray(item.servers)
-        ? Object.fromEntries(Object.entries(item.servers).map(([path, tag]) => [path, tag === oldTag ? newTag : tag]))
-        : item.servers,
-  }));
-  next.certificate_providers = next.certificate_providers?.map((item) => ({
-    ...item,
-    endpoint: item.endpoint === oldTag ? newTag : item.endpoint,
-  }));
-  if (next.dns?.rules) {
-    next.dns.rules = next.dns.rules.map((rule) => ({
-      ...rule,
-      rule_set: replaceRuleSetRef(rule.rule_set, oldTag, newTag),
-    }));
-  }
-  if (next.route?.rule_set) {
-    next.route.rule_set = next.route.rule_set.map((item) => {
-      const value = (item as Record<string, unknown>).download_detour;
-      if (value === oldTag) return { ...item, download_detour: newTag } as TaggedConfig;
-      return item;
-    });
-  }
-  if (next.experimental && typeof next.experimental === "object" && !Array.isArray(next.experimental)) {
-    const clashApi = (next.experimental as Record<string, unknown>).clash_api;
-    if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
-      const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
-      if (detour === oldTag) {
-        next.experimental = {
-          ...next.experimental,
-          clash_api: { ...(clashApi as Record<string, unknown>), external_ui_download_detour: newTag },
-        };
-      }
-    }
-  }
-  if (next.ntp && typeof next.ntp === "object" && !Array.isArray(next.ntp)) {
-    const ntpDetour = (next.ntp as Record<string, unknown>).detour;
-    if (ntpDetour === oldTag) {
-      next.ntp = { ...next.ntp, detour: newTag };
-    }
-  }
+  next.certificate_providers = next.certificate_providers?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
+  next.http_clients = next.http_clients?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
+  replaceRegisteredTagReferences(next, oldTag, newTag);
   return next;
+}
+
+function referenceKindForEntity(ref: EntityRef): ReferenceKind | null {
+  if (
+    ref.kind === "inbound" ||
+    ref.kind === "outbound" ||
+    ref.kind === "dns-server" ||
+    ref.kind === "endpoint" ||
+    ref.kind === "service" ||
+    ref.kind === "rule-set" ||
+    ref.kind === "http-client" ||
+    ref.kind === "certificate-provider"
+  ) {
+    return ref.kind;
+  }
+  return null;
 }
 
 export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConfig {
   const next = cloneConfig(config);
   if (ref.kind === "inbound") {
     next.inbounds = (next.inbounds ?? []).filter((item) => item.tag !== ref.tag);
-    next.route?.rules?.forEach((rule) => {
-      rule.inbound = removeTagRef(rule.inbound, ref.tag);
-    });
-    next.dns?.rules?.forEach((rule) => {
-      rule.inbound = removeTagRef(rule.inbound, ref.tag);
-    });
-    next.services = next.services?.map((service) => {
-      if (!service.servers || typeof service.servers !== "object" || Array.isArray(service.servers)) return service;
-      return {
-        ...service,
-        servers: Object.fromEntries(Object.entries(service.servers).filter(([, tag]) => tag !== ref.tag)),
-      };
-    });
   }
   if (ref.kind === "outbound") {
     next.outbounds = (next.outbounds ?? []).filter((item) => item.tag !== ref.tag);
-    if (next.route?.final === ref.tag) next.route.final = undefined;
-    next.route?.rules?.forEach((rule) => {
-      if (rule.outbound === ref.tag) rule.outbound = undefined;
-    });
-    next.outbounds = next.outbounds?.map((item) => ({
-      ...item,
-      outbounds: item.outbounds?.filter((tag) => tag !== ref.tag),
-      default: item.default === ref.tag ? undefined : item.default,
-      detour: typeof item.detour === "string" && item.detour === ref.tag ? undefined : item.detour,
-    }));
-    next.services = next.services?.map((item) => ({
-      ...item,
-      detour: item.detour === ref.tag ? undefined : item.detour,
-    }));
-    next.dns?.servers?.forEach((server) => {
-      if (server.detour === ref.tag) server.detour = undefined;
-    });
-    if (next.route?.rule_set) {
-      next.route.rule_set = next.route.rule_set.map((item) => {
-        const value = (item as Record<string, unknown>).download_detour;
-        if (value === ref.tag) return { ...item, download_detour: undefined } as TaggedConfig;
-        return item;
-      });
-    }
-    if (next.experimental && typeof next.experimental === "object" && !Array.isArray(next.experimental)) {
-      const clashApi = (next.experimental as Record<string, unknown>).clash_api;
-      if (
-        clashApi &&
-        typeof clashApi === "object" &&
-        !Array.isArray(clashApi) &&
-        (clashApi as Record<string, unknown>).external_ui_download_detour === ref.tag
-      ) {
-        next.experimental = {
-          ...next.experimental,
-          clash_api: { ...(clashApi as Record<string, unknown>), external_ui_download_detour: undefined },
-        };
-      }
-    }
-    if (
-      next.ntp &&
-      typeof next.ntp === "object" &&
-      !Array.isArray(next.ntp) &&
-      (next.ntp as Record<string, unknown>).detour === ref.tag
-    ) {
-      next.ntp = { ...next.ntp, detour: undefined };
-    }
   }
   if (ref.kind === "dns-server") {
     if (next.dns?.servers) {
       next.dns.servers = next.dns.servers.filter((item) => item.tag !== ref.tag);
     }
-    if (next.dns?.final === ref.tag) next.dns.final = undefined;
-    next.dns?.rules?.forEach((rule) => {
-      if (rule.server === ref.tag) rule.server = undefined;
-    });
   }
   if (ref.kind === "endpoint") {
     next.endpoints = (next.endpoints ?? []).filter((item) => item.tag !== ref.tag);
-    next.dns?.servers?.forEach((server) => {
-      if (server.endpoint === ref.tag) server.endpoint = undefined;
-    });
-    next.services = next.services?.map((item) => ({
-      ...item,
-      verify_client_endpoint: removeTagRef(item.verify_client_endpoint as string | string[] | undefined, ref.tag),
-    }));
-    next.certificate_providers = next.certificate_providers?.map((item) => ({
-      ...item,
-      endpoint: item.endpoint === ref.tag ? undefined : item.endpoint,
-    }));
   }
   if (ref.kind === "service") {
     next.services = (next.services ?? []).filter((item) => item.tag !== ref.tag);
@@ -1171,18 +1040,20 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
     if (next.route?.rule_set) {
       next.route.rule_set = next.route.rule_set.filter((item) => item.tag !== ref.tag);
     }
-    next.route?.rules?.forEach((rule) => {
-      rule.rule_set = removeRuleSetRef(rule.rule_set, ref.tag);
-    });
-    next.dns?.rules?.forEach((rule) => {
-      rule.rule_set = removeRuleSetRef(rule.rule_set, ref.tag);
-    });
+  }
+  if (ref.kind === "certificate-provider") {
+    next.certificate_providers = (next.certificate_providers ?? []).filter((item) => item.tag !== ref.tag);
+  }
+  if (ref.kind === "http-client") {
+    next.http_clients = (next.http_clients ?? []).filter((item) => item.tag !== ref.tag);
   }
   if (ref.kind === "route-rule") return deleteRouteRule(config, ref.index);
   if (ref.kind === "dns-rule") return deleteDnsRule(config, ref.index);
   if (ref.kind === "settings") {
     delete next[ref.path];
   }
+  const referenceKind = referenceKindForEntity(ref);
+  if (referenceKind && "tag" in ref) removeRegisteredTagReferences(next, referenceKind, ref.tag);
   return next;
 }
 
@@ -1235,14 +1106,14 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     const index = Number(parts[2]);
     const tag = parts[3];
     if (Number.isInteger(index) && tag && next.route?.rules?.[index]) {
-      next.route.rules[index].rule_set = removeRuleSetRef(next.route.rules[index].rule_set, tag);
+      next.route.rules[index].rule_set = removeTagRef(next.route.rules[index].rule_set, tag);
     }
   }
   if (relation === "dns-rule-set") {
     const index = Number(parts[2]);
     const tag = parts[3];
     if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
-      next.dns.rules[index].rule_set = removeRuleSetRef(next.dns.rules[index].rule_set, tag);
+      next.dns.rules[index].rule_set = removeTagRef(next.dns.rules[index].rule_set, tag);
     }
   }
   if (relation === "dns-server-endpoint") {

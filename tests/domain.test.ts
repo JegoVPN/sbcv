@@ -35,6 +35,186 @@ describe("canonical sing-box domain model", () => {
     expect(renamed.outbounds?.find((item) => item.tag === "main-proxy")).toBeTruthy();
   });
 
+  it("rejects duplicate tag renames before mutating config", () => {
+    const config = createStableTunSplitConfig();
+    const renamed = renameTag(config, "proxy", "direct");
+
+    expect(renamed).toBe(config);
+    expect(renamed.outbounds?.filter((item) => item.tag === "direct")).toHaveLength(1);
+    expect(renamed.outbounds?.find((item) => item.tag === "proxy")).toBeTruthy();
+  });
+
+  it("renames extended tag references through the canonical reference registry", () => {
+    const config = {
+      ...createStableTunSplitConfig(),
+      inbounds: [{ type: "tun", tag: "tun-in" }],
+      outbounds: [
+        { type: "direct", tag: "proxy" },
+        { type: "selector", tag: "auto", outbounds: ["proxy"], default: "proxy" },
+        { type: "trojan", tag: "dialer", server: "example.com", server_port: 443, password: "x", detour: "proxy", domain_resolver: "local-dns" },
+      ],
+      dns: {
+        final: "local-dns",
+        servers: [
+          { type: "local", tag: "local-dns", detour: "proxy" },
+          { type: "resolved", tag: "resolved-dns", service: "resolved-svc" } as never,
+        ],
+        rules: [{ inbound: ["tun-in"], server: "local-dns", rule_set: "rs" }],
+      },
+      endpoints: [
+        { type: "wireguard", tag: "ep", detour: "proxy" },
+        { type: "tailscale", tag: "ts-ep" },
+      ],
+      services: [
+        { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in" } },
+        { type: "derp", tag: "derp", detour: "proxy", verify_client_endpoint: "ts-ep" },
+        { type: "resolved", tag: "resolved-svc" },
+      ],
+      route: {
+        final: "proxy",
+        default_domain_resolver: "local-dns",
+        default_http_client: "client",
+        rules: [{ inbound: "tun-in", outbound: "proxy", rule_set: "rs" }],
+        rule_set: [{ type: "remote", tag: "rs", format: "binary", url: "https://example.com/rules.srs", download_detour: "proxy", http_client: "client", domain_resolver: "local-dns" }],
+      },
+      http_clients: [{ tag: "client", detour: "proxy", domain_resolver: "local-dns", tls: { certificate_provider: "cert" } }],
+      certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep", http_client: "client" }],
+      ntp: { enabled: true, server: "time.example.com", server_port: 123, detour: "proxy", domain_resolver: "local-dns" },
+      experimental: {
+        clash_api: { external_ui_download_detour: "proxy" },
+        v2ray_api: { stats: { inbounds: ["tun-in"], outbounds: ["proxy"] } },
+      },
+    } as ReturnType<typeof createStableTunSplitConfig>;
+
+    const outboundRenamed = renameTag(config, "proxy", "proxy-2");
+    expect(outboundRenamed.route?.final).toBe("proxy-2");
+    expect(outboundRenamed.route?.rules?.[0]?.outbound).toBe("proxy-2");
+    expect(outboundRenamed.outbounds?.find((item) => item.tag === "auto")?.outbounds).toEqual(["proxy-2"]);
+    expect(outboundRenamed.outbounds?.find((item) => item.tag === "auto")?.default).toBe("proxy-2");
+    expect(outboundRenamed.dns?.servers?.[0]?.detour).toBe("proxy-2");
+    expect(outboundRenamed.endpoints?.[0]?.detour).toBe("proxy-2");
+    expect(outboundRenamed.services?.find((item) => item.tag === "derp")?.detour).toBe("proxy-2");
+    expect(outboundRenamed.route?.rule_set?.[0]?.download_detour).toBe("proxy-2");
+    expect((outboundRenamed.ntp as Record<string, unknown>).detour).toBe("proxy-2");
+    expect((outboundRenamed.experimental as Record<string, unknown>).clash_api).toMatchObject({ external_ui_download_detour: "proxy-2" });
+    expect(((outboundRenamed.experimental as Record<string, unknown>).v2ray_api as Record<string, unknown>).stats).toMatchObject({ outbounds: ["proxy-2"] });
+
+    const dnsRenamed = renameTag(outboundRenamed, "local-dns", "bootstrap-dns");
+    expect(dnsRenamed.dns?.final).toBe("bootstrap-dns");
+    expect(dnsRenamed.dns?.rules?.[0]?.server).toBe("bootstrap-dns");
+    expect(dnsRenamed.route?.default_domain_resolver).toBe("bootstrap-dns");
+    expect(dnsRenamed.outbounds?.find((item) => item.tag === "dialer")?.domain_resolver).toBe("bootstrap-dns");
+    expect(dnsRenamed.route?.rule_set?.[0]?.domain_resolver).toBe("bootstrap-dns");
+    expect((dnsRenamed.ntp as Record<string, unknown>).domain_resolver).toBe("bootstrap-dns");
+
+    const httpRenamed = renameTag(dnsRenamed, "client", "client-2");
+    expect(httpRenamed.route?.default_http_client).toBe("client-2");
+    expect(httpRenamed.route?.rule_set?.[0]?.http_client).toBe("client-2");
+    expect(httpRenamed.certificate_providers?.[0]?.http_client).toBe("client-2");
+
+    const certRenamed = renameTag(httpRenamed, "cert", "cert-2");
+    expect(((certRenamed.http_clients?.[0] as Record<string, unknown>).tls as Record<string, unknown>).certificate_provider).toBe("cert-2");
+
+    const endpointRenamed = renameTag(certRenamed, "ts-ep", "tailnet");
+    expect(endpointRenamed.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toBe("tailnet");
+    expect(endpointRenamed.certificate_providers?.[0]?.endpoint).toBe("tailnet");
+
+    const serviceRenamed = renameTag(endpointRenamed, "resolved-svc", "systemd-resolved");
+    expect(serviceRenamed.dns?.servers?.find((server) => server.tag === "resolved-dns")?.service).toBe("systemd-resolved");
+  });
+
+  it("deletes extended tag references through the canonical reference registry", () => {
+    const config = {
+      ...createStableTunSplitConfig(),
+      inbounds: [{ type: "tun", tag: "tun-in" }],
+      outbounds: [
+        { type: "direct", tag: "proxy" },
+        { type: "selector", tag: "auto", outbounds: ["proxy"], default: "proxy" },
+      ],
+      dns: {
+        final: "local-dns",
+        servers: [{ type: "local", tag: "local-dns", detour: "proxy" }],
+        rules: [{ inbound: "tun-in", server: "local-dns", rule_set: "rs" }],
+      },
+      endpoints: [{ type: "tailscale", tag: "ts-ep", detour: "proxy" }],
+      services: [
+        { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in" } },
+        { type: "derp", tag: "derp", detour: "proxy", verify_client_endpoint: "ts-ep" },
+      ],
+      route: {
+        final: "proxy",
+        default_domain_resolver: "local-dns",
+        default_http_client: "client",
+        rules: [{ inbound: "tun-in", outbound: "proxy", rule_set: "rs" }],
+        rule_set: [{ type: "remote", tag: "rs", format: "binary", url: "https://example.com/rules.srs", download_detour: "proxy", http_client: "client", domain_resolver: "local-dns" }],
+      },
+      http_clients: [{ tag: "client", detour: "proxy", domain_resolver: "local-dns", tls: { certificate_provider: "cert" } }],
+      certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep", http_client: "client" }],
+      experimental: { v2ray_api: { stats: { inbounds: ["tun-in"], outbounds: ["proxy"] } } },
+    } as ReturnType<typeof createStableTunSplitConfig>;
+
+    const noInbound = deleteEntity(config, { kind: "inbound", tag: "tun-in" });
+    expect(noInbound.route?.rules?.[0]?.inbound).toBeUndefined();
+    expect(noInbound.dns?.rules?.[0]?.inbound).toBeUndefined();
+    expect(noInbound.services?.find((item) => item.tag === "ssm")?.servers).toEqual({});
+    expect(((noInbound.experimental as Record<string, unknown>).v2ray_api as Record<string, unknown>).stats).toMatchObject({ inbounds: [] });
+
+    const noOutbound = deleteEntity(config, { kind: "outbound", tag: "proxy" });
+    expect(noOutbound.route?.final).toBeUndefined();
+    expect(noOutbound.route?.rules?.[0]?.outbound).toBeUndefined();
+    expect(noOutbound.outbounds?.find((item) => item.tag === "auto")?.outbounds).toEqual([]);
+    expect(noOutbound.outbounds?.find((item) => item.tag === "auto")?.default).toBeUndefined();
+    expect(noOutbound.dns?.servers?.[0]?.detour).toBeUndefined();
+    expect(noOutbound.endpoints?.[0]?.detour).toBeUndefined();
+    expect(noOutbound.services?.find((item) => item.tag === "derp")?.detour).toBeUndefined();
+    expect(noOutbound.route?.rule_set?.[0]?.download_detour).toBeUndefined();
+    expect(((noOutbound.experimental as Record<string, unknown>).v2ray_api as Record<string, unknown>).stats).toMatchObject({ outbounds: [] });
+
+    const noDnsServer = deleteEntity(config, { kind: "dns-server", tag: "local-dns" });
+    expect(noDnsServer.dns?.final).toBeUndefined();
+    expect(noDnsServer.dns?.rules?.[0]?.server).toBeUndefined();
+    expect(noDnsServer.route?.default_domain_resolver).toBeUndefined();
+    expect(noDnsServer.route?.rule_set?.[0]?.domain_resolver).toBeUndefined();
+
+    const noEndpoint = deleteEntity(config, { kind: "endpoint", tag: "ts-ep" });
+    expect(noEndpoint.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toBeUndefined();
+    expect(noEndpoint.certificate_providers?.[0]?.endpoint).toBeUndefined();
+
+    const noHttpClient = deleteEntity(config, { kind: "http-client", tag: "client" });
+    expect(noHttpClient.route?.default_http_client).toBeUndefined();
+    expect(noHttpClient.route?.rule_set?.[0]?.http_client).toBeUndefined();
+    expect(noHttpClient.certificate_providers?.[0]?.http_client).toBeUndefined();
+
+    const noCert = deleteEntity(config, { kind: "certificate-provider", tag: "cert" });
+    expect(((noCert.http_clients?.[0] as Record<string, unknown>).tls as Record<string, unknown>).certificate_provider).toBeUndefined();
+  });
+
+  it("scrubs dependent endpoint and service references on type change", () => {
+    const config = {
+      ...createStableTunSplitConfig(),
+      endpoints: [{ type: "tailscale", tag: "ts-ep" }],
+      dns: {
+        servers: [
+          { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", accept_default_resolvers: false },
+          { type: "resolved", tag: "resolved-dns", service: "resolved-svc" } as never,
+        ],
+      },
+      services: [
+        { type: "derp", tag: "derp", verify_client_endpoint: "ts-ep" },
+        { type: "resolved", tag: "resolved-svc" },
+      ],
+      certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep" }],
+    } as ReturnType<typeof createStableTunSplitConfig>;
+
+    const endpointChanged = changeEntityType(config, { kind: "endpoint", tag: "ts-ep" }, "wireguard");
+    expect(endpointChanged.dns?.servers?.find((server) => server.tag === "ts-dns")?.endpoint).toBeUndefined();
+    expect(endpointChanged.services?.find((service) => service.tag === "derp")?.verify_client_endpoint).toBeUndefined();
+    expect(endpointChanged.certificate_providers?.[0]?.endpoint).toBeUndefined();
+
+    const serviceChanged = changeEntityType(config, { kind: "service", tag: "resolved-svc" }, "derp");
+    expect(serviceChanged.dns?.servers?.find((server) => server.tag === "resolved-dns")?.service).toBeUndefined();
+  });
+
   it("updates ordered route rules without using canvas edge order", () => {
     const config = createStableTunSplitConfig();
     const updated = updateRouteRule(config, 0, { domain_suffix: ["sg"], outbound: "proxy" });

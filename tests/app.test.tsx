@@ -930,6 +930,84 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().freshLoadToken).toBe(beforeToken + 1);
   });
 
+  it("remaps selected and focused node ids plus pinned layout on tag rename", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().setSelectedId("outbound:proxy");
+      useProjectStore.getState().focusNode("outbound:proxy");
+      useProjectStore.getState().setNodePosition("outbound:proxy", { x: 123, y: 456 });
+      useProjectStore.getState().renameTag("proxy", "main-proxy");
+    });
+
+    expect(useProjectStore.getState().selectedId).toBe("outbound:main-proxy");
+    expect(useProjectStore.getState().focusedNodeId).toBe("outbound:main-proxy");
+    expect(useProjectStore.getState().layout.positions["outbound:main-proxy"]).toEqual({ x: 123, y: 456 });
+    expect(useProjectStore.getState().layout.positions["outbound:proxy"]).toBeUndefined();
+
+    act(() => {
+      useProjectStore.getState().renameTag("main-proxy", "direct");
+    });
+
+    expect(useProjectStore.getState().selectedId).toBe("outbound:main-proxy");
+    expect(useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "main-proxy")).toBeTruthy();
+  });
+
+  it("clears deleted node identity and remaps rule identity after rule moves and deletes", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().setSelectedId("outbound:proxy");
+      useProjectStore.getState().focusNode("outbound:proxy");
+      useProjectStore.getState().setNodePosition("outbound:proxy", { x: 10, y: 20 });
+      useProjectStore.getState().deleteEntity({ kind: "outbound", tag: "proxy" });
+    });
+
+    expect(useProjectStore.getState().selectedId).toBeNull();
+    expect(useProjectStore.getState().focusedNodeId).toBeNull();
+    expect(useProjectStore.getState().layout.positions["outbound:proxy"]).toBeUndefined();
+
+    act(() => {
+      useProjectStore.getState().addRouteRule();
+      useProjectStore.getState().setSelectedId("route-rule:0");
+      useProjectStore.getState().focusNode("route-rule:0");
+      useProjectStore.getState().setNodePosition("route-rule:0", { x: 1, y: 2 });
+      useProjectStore.getState().setNodePosition("route-rule:1", { x: 3, y: 4 });
+      useProjectStore.getState().moveRouteRule(0, 1);
+    });
+
+    expect(useProjectStore.getState().selectedId).toBe("route-rule:1");
+    expect(useProjectStore.getState().focusedNodeId).toBe("route-rule:1");
+    expect(useProjectStore.getState().layout.positions["route-rule:1"]).toEqual({ x: 1, y: 2 });
+    expect(useProjectStore.getState().layout.positions["route-rule:0"]).toEqual({ x: 3, y: 4 });
+
+    act(() => {
+      useProjectStore.getState().deleteRouteRule(1);
+    });
+
+    expect(useProjectStore.getState().selectedId).toBeNull();
+    expect(useProjectStore.getState().focusedNodeId).toBeNull();
+    expect(useProjectStore.getState().layout.positions["route-rule:1"]).toBeUndefined();
+  });
+
+  it("does not overwrite a focused tag draft while unrelated entity fields update", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().setSelectedId("outbound:proxy");
+    });
+    render(<App />);
+
+    const tagInput = screen.getByLabelText("Tag") as HTMLInputElement;
+    fireEvent.focus(tagInput);
+    fireEvent.change(tagInput, { target: { value: "draft-proxy" } });
+    act(() => {
+      useProjectStore.getState().updateField({ kind: "outbound", tag: "proxy" }, "server", "proxy.example");
+    });
+
+    expect(tagInput.value).toBe("draft-proxy");
+    fireEvent.blur(tagInput);
+    expect(useProjectStore.getState().selectedId).toBe("outbound:draft-proxy");
+    expect(useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "draft-proxy")).toBeTruthy();
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

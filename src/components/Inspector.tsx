@@ -38,6 +38,8 @@ const inspectorIcons = {
   endpoint: Waypoints,
   service: Server,
   "rule-set": Layers3,
+  "certificate-provider": Braces,
+  "http-client": Network,
   route: Route,
   "route-rule": GitBranch,
   dns: Globe2,
@@ -55,6 +57,8 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   if (kind === "endpoint" && value) return { kind: "endpoint", tag: value };
   if (kind === "service" && value) return { kind: "service", tag: value };
   if (kind === "rule-set" && value) return { kind: "rule-set", tag: value };
+  if (kind === "certificate-provider" && value) return { kind: "certificate-provider", tag: value };
+  if (kind === "http-client" && value) return { kind: "http-client", tag: value };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };
   if (kind === "route-rule" && value) return { kind: "route-rule", index: Number(value) };
@@ -63,7 +67,7 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   return null;
 }
 
-function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set") {
+function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client") {
   const prefix = `untagged-${kind}-`;
   if (!value.startsWith(prefix)) return -1;
   const index = Number(value.slice(prefix.length)) - 1;
@@ -73,7 +77,7 @@ function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-serve
 function findTaggedOrGenerated<T extends { tag?: string }>(
   items: T[] | undefined,
   tag: string,
-  kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set",
+  kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client",
 ) {
   const byTag = items?.find((item) => item.tag === tag);
   if (byTag) return byTag;
@@ -1761,6 +1765,8 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
     if (ref.kind === "endpoint") return (findTaggedOrGenerated(config.endpoints, ref.tag, "endpoint") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "service") return (findTaggedOrGenerated(config.services, ref.tag, "service") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "rule-set") return (findTaggedOrGenerated(config.route?.rule_set, ref.tag, "rule-set") as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "certificate-provider") return (findTaggedOrGenerated(config.certificate_providers, ref.tag, "certificate-provider") as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "http-client") return (findTaggedOrGenerated(config.http_clients, ref.tag, "http-client") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route") return (config.route as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns") return (config.dns as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route-rule") return (config.route?.rules?.[ref.index] as InspectorEntity | undefined) ?? null;
@@ -1774,15 +1780,16 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
     return null;
   }, [config, ref]);
   const [tagDraft, setTagDraft] = useState("");
+  const [tagDraftFocused, setTagDraftFocused] = useState(false);
+  const tagValue = typeof entity?.tag === "string" ? entity.tag : null;
 
   useEffect(() => {
-    if (entity && "tag" in entity && typeof entity.tag === "string") setTagDraft(entity.tag);
-    else setTagDraft("");
-  }, [entity]);
+    if (tagDraftFocused) return;
+    setTagDraft(tagValue ?? "");
+  }, [tagDraftFocused, tagValue]);
 
   if (!ref || !entity) return null;
 
-  const tagValue = typeof entity.tag === "string" ? entity.tag : null;
   const entityType = typeof entity.type === "string" ? entity.type : null;
   const InspectorIcon = inspectorIcons[ref.kind];
   const selectedEndpointReferences =
@@ -2088,8 +2095,12 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           <span>Tag</span>
           <input
             value={tagDraft}
+            onFocus={() => setTagDraftFocused(true)}
             onChange={(event) => setTagDraft(event.target.value)}
-            onBlur={() => renameTag(tagValue, tagDraft)}
+            onBlur={() => {
+              setTagDraftFocused(false);
+              renameTag(tagValue, tagDraft);
+            }}
           />
         </label>
       ) : null}
