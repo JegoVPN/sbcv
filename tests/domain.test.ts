@@ -228,6 +228,16 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("draws a settings:ntp -> outbound edge when ntp.detour is set", () => {
+    const config = createStableTunSplitConfig();
+    config.ntp = { enabled: true, server: "time.apple.com", detour: "direct" } as never;
+    const { edges } = deriveGraph(config, { positions: { "settings:ntp": { x: -300, y: 0 } } }, []);
+    const ntpDetourEdge = edges.find((edge) => edge.id === "edge:settings-ntp-detour:direct");
+    expect(ntpDetourEdge).toBeDefined();
+    expect(ntpDetourEdge?.source).toBe("settings:ntp");
+    expect(ntpDetourEdge?.target).toBe("outbound:direct");
+  });
+
   it("hides route-rule outbound canvas edge when action is not route/bypass (CC-6)", () => {
     const config = createStableTunSplitConfig();
     config.route = {
