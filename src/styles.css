@@ -1342,15 +1342,25 @@ textarea {
 
 .sbc-node__actions {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: -48px;
-  z-index: 6;
+  left: 100%;
+  top: 0;
+  bottom: 0;
+  margin-left: 56px;
+  width: 200px;
+  z-index: 20;
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: 6px;
+  padding: 8px;
+  max-height: 100%;
+  overflow-y: auto;
+  background: #1a1e21;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   opacity: 0;
-  transform: translateY(-4px);
+  transform: translateX(-4px);
   pointer-events: none;
   transition:
     opacity 120ms ease,
@@ -1360,16 +1370,20 @@ textarea {
 .sbc-node:hover .sbc-node__actions,
 .sbc-node.is-selected .sbc-node__actions {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
   pointer-events: auto;
 }
 
 .node-chip {
   min-height: 28px;
+  flex: 0 1 calc(50% - 3px);
   padding: 0 8px;
   border-color: #44515e;
-  background: rgba(22, 27, 33, 0.96);
+  background: #161b21;
   font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .node-icon-button,
