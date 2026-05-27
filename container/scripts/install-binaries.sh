@@ -31,10 +31,30 @@ download_binary() {
   echo "==> SHA256 (build provenance):"
   sha256sum "${tmp_dir}/archive.tar.gz"
 
-  tar -xzf "${tmp_dir}/archive.tar.gz" -C "$tmp_dir" --strip-components=1
-  mv "${tmp_dir}/sing-box" "${BIN_DIR}/${outname}"
+  echo "==> Extracting..."
+  tar -xzf "${tmp_dir}/archive.tar.gz" -C "$tmp_dir"
+
+  # Release tarball layouts vary slightly between sing-box minor versions; locate
+  # the executable instead of relying on --strip-components.
+  binary_path="$(find "$tmp_dir" -type f -name 'sing-box' 2>/dev/null | head -n 1)"
+  if [ -z "$binary_path" ]; then
+    echo "FATAL: sing-box binary not found in archive for version ${version}" >&2
+    echo "Archive contents:" >&2
+    find "$tmp_dir" -type f >&2
+    rm -rf "$tmp_dir"
+    exit 1
+  fi
+  echo "==> Found binary at: ${binary_path}"
+
+  mv "$binary_path" "${BIN_DIR}/${outname}"
   chmod 0755 "${BIN_DIR}/${outname}"
   rm -rf "$tmp_dir"
+
+  # Sanity-check immediately so a silent mv failure cannot mask a missing binary.
+  if [ ! -x "${BIN_DIR}/${outname}" ]; then
+    echo "FATAL: ${BIN_DIR}/${outname} is not executable after install" >&2
+    exit 1
+  fi
   echo "==> Installed ${BIN_DIR}/${outname}"
 }
 
