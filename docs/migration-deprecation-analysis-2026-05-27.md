@@ -50,22 +50,24 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** ✅ Already covered — `diagnostics.ts:987` `"cache-file-store-rdrc-deprecated"` warning, plus `Inspector.tsx:2064` Banner `"store_rdrc is deprecated in sing-box 1.14 testing. Migrate to store_dns…"`.
 - **Remaining (UX nice-to-have):** No auto-migrate button — banner only educates.
 
-### 1.14-E — `ip_version` / `query_type` behaviour change
+### 1.14-E — `ip_version` / `query_type` behaviour change — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Not a removal**, but a semantic shift: these fields now take effect on **every** DNS evaluation (formerly only client-facing ones). Mixing with legacy address-filter fields or `rule_set_ip_cidr_accept_empty` will be **rejected at startup**.
 - **Affected nodes:** rule-dns-rule, rule-set-inline, hub-route (`resolve` route rule action), endpoint-wireguard, endpoint-tailscale, outbound-socks (SOCKS4 only), service-derp, service-resolved.
-- **Code state today:** No diagnostic. No mention in Inspector.
-- **Gap:** Add `dns-rule-mixed-legacy-and-modern-conflict` startup-fatal diagnostic when a config combines `ip_version` / `query_type` (or a `query_type`-containing rule-set) **and** legacy address filter / strategy fields.
+- **Code state today:** ✅ `dns-rule-mixed-legacy-and-modern-conflict` error now fires when a DNS rule combines `ip_version` / `query_type` AND any of `ip_cidr` / `ip_is_private` / `rule_set_ip_cidr_accept_empty`. Hard error since sing-box rejects at startup.
+- **Regression test:** `tests/domain.test.ts` — "emits dns-rule-mixed-legacy-and-modern-conflict for mixed ip_cidr + ip_version rule".
+- **Remaining (UX nice-to-have):** Surface the conflict inline in the rule editor.
 
 ## 1.12.0 Deprecations
 
-### 1.12-A — New DNS server format (string `address` → typed `server`)
+### 1.12-A — New DNS server format (string `address` → typed `server`) — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** `dns.servers[].address: "<schema>://..."` (e.g. `"tcp://1.1.1.1"`, `"https://1.1.1.1/dns-query"`, `"dhcp://auto"`, `"fakeip"`, `"rcode://refused"`).
 - **Replacement:** `dns.servers[]` with explicit `type` discriminator + `server` / `interface` / etc. plus a top-level `dns.rules[]` with `action: "predefined"` for the old `rcode://` case.
 - **Affected nodes:** every dns-server node (local, hosts, udp, tcp, tls, https, quic, h3, dhcp, fakeip, resolved, tailscale). Also any historical config that uses `address_resolver` or top-level `strategy` per server.
-- **Code state today:** Our editor already uses the new `type`-based format throughout (`commands.ts createDnsServer` emits the new shape). The only legacy form we still warn on is **top-level `dns.fakeip`** — `diagnostics.ts:814` `"legacy-fakeip-deprecated"`. **dns-server-https scaffold also wrongly emits an `address` field** — see audit row [dns-server-https].
-- **Gap:** (1) On `importJson`, detect any `servers[].address` string and either auto-migrate or hard-error; today the editor will accept it and silently drop unknown fields. (2) Fix `commands.ts:636` to stop emitting `address: "https://1.1.1.1/dns-query"`. (3) Detect legacy `rcode://` form and convert to a `predefined` DNS rule.
+- **Code state today:** ✅ The editor already uses the new `type`-based format (`commands.ts createDnsServer` emits the new shape). New diagnostic `dns-server-legacy-address-deprecated` warns whenever any `dns.servers[]` entry carries a schema-prefixed `address` (regex `^[a-z0-9+]+://`). The top-level `dns.fakeip` legacy form was already covered by `legacy-fakeip-deprecated`. Together those cover the imported-legacy-config case the audit called out.
+- **Regression test:** `tests/domain.test.ts` — "emits dns-server-legacy-address-deprecated when address uses tcp://...".
+- **Remaining (UX nice-to-haves):** (1) Auto-migrate `rcode://` form into a `predefined` DNS rule on import. (2) `commands.ts:636` dns-server-https scaffold cleanup — see audit row [dns-server-https].
 
 ### 1.12-B — Outbound DNS rule items → `domain_resolver` — ✅ DIAGNOSTIC LANDED 2026-05-27
 
@@ -95,13 +97,14 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** Palette already marks `block` as `deprecated`. Inspector shows a deprecation banner. **Now also**: `outbound-block-deprecated` warning emitted from `diagnostics.ts` for any outbound with `type === "block"`. The project default config (`STABLE_TUN_SPLIT_CONFIG`) modernized — `block` outbound removed and its route rule migrated to `{ action: "reject" }`, so first-load is warning-free.
 - **Regression test:** `tests/domain.test.ts` — "warns on deprecated outbound type=block (1.11-A)".
 
-### 1.11-B — Legacy `dns` outbound → `action: "hijack-dns"` rule
+### 1.11-B — Legacy `dns` outbound → `action: "hijack-dns"` rule — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** `{ type: "dns", tag: "dns" }` outbound + `protocol: "dns"` rule with `outbound: "dns"`.
 - **Replacement:** A route rule with `action: "hijack-dns"`.
 - **Affected nodes:** Not a first-class node in our 66-set (we don't have an editable `outbound-dns` kind), but **the import path may still receive it**.
-- **Code state today:** No detection on `importJson`. The outbound would be parsed as an unknown type and dropped.
-- **Gap:** On import, detect `outbound.type === "dns"` and either auto-convert to a `hijack-dns` rule or hard-error with a migration prompt.
+- **Code state today:** ✅ `outbound-dns-legacy-deprecated` warning now fires for any outbound with `type === "dns"`, with migration text pointing at the `hijack-dns` route action.
+- **Regression test:** `tests/domain.test.ts` — "emits outbound-dns-legacy-deprecated + outbound-wireguard-legacy-deprecated".
+- **Remaining (UX nice-to-have):** Auto-convert legacy `outbound.type === "dns"` to a `hijack-dns` rule on import.
 
 ### 1.11-C — Legacy inbound `sniff` / `sniff_timeout` / `domain_strategy` → route actions — ✅ DIAGNOSTIC LANDED 2026-05-27
 
@@ -120,23 +123,25 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** ✅ Already covered — `diagnostics.ts:595` `"direct-override-deprecated"` warning, plus `route-options` action sub-form now exists in the rule-route-rule Inspector (fixed 2026-05-27), giving the deprecation a concrete migration target.
 - **Gap:** None blocking. UX nicety: one-click "Move override to route rule" affordance.
 
-### 1.11-E — WireGuard outbound → endpoint
+### 1.11-E — WireGuard outbound → endpoint — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** `outbound: { type: "wireguard", ... }` (top-level WireGuard).
 - **Replacement:** `endpoints: [{ type: "wireguard", peers: [...], address: [...], ... }]`.
 - **Affected nodes:** endpoint-wireguard (the replacement node — we already only edit the new form; no `outbound-wireguard` kind in our 66 set).
-- **Code state today:** No import-time detection of legacy `outbound.type === "wireguard"`. Would be silently parsed as unknown outbound type and lost.
-- **Gap:** On import, detect `outbound.type === "wireguard"` and either auto-migrate to an endpoint or hard-error with a migration suggestion.
+- **Code state today:** ✅ `outbound-wireguard-legacy-deprecated` warning now fires for any outbound with `type === "wireguard"`, pointing the user at the new `endpoints[]` form.
+- **Regression test:** `tests/domain.test.ts` — "emits outbound-dns-legacy-deprecated + outbound-wireguard-legacy-deprecated".
+- **Remaining (UX nice-to-have):** Auto-migrate legacy `outbound.type === "wireguard"` to an endpoint on import.
 
 ## 1.10.0 Deprecations (TUN address fields)
 
-### 1.10-A — TUN `inet4_address` / `inet6_address` → `address[]`
+### 1.10-A — TUN `inet4_address` / `inet6_address` → `address[]` — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** `tun.inet4_address`, `tun.inet6_address`, `tun.inet4_route_address`, `tun.inet6_route_address`, `tun.inet4_route_exclude_address`, `tun.inet6_route_exclude_address`.
 - **Replacement:** Single arrays: `address[]`, `route_address[]`, `route_exclude_address[]`.
 - **Affected nodes:** inbound-tun.
-- **Code state today:** Inspector renders only the new `address[]` / `route_address[]` / `route_exclude_address[]` arrays. Audit row [inbound-tun] flagged that the scaffold is **IPv4-only** (no IPv6 row by default), but no detection of the deprecated split form on import.
-- **Gap:** (1) On import, detect any of the 6 legacy keys and auto-migrate. (2) Scaffold should default to dual-stack `["172.19.0.1/30", "fdfe:dcba:9876::1/126"]`.
+- **Code state today:** ✅ Inspector renders only the new `address[]` / `route_address[]` / `route_exclude_address[]` arrays, and `createInbound("tun")` scaffold now seeds dual-stack `["172.19.0.1/30", "fdfe:dcba:9876::1/126"]` (audit row [inbound-tun] fix). New diagnostic `tun-legacy-address-fields-deprecated` warns when any of the six legacy split keys appear on a tun inbound (so imports of pre-1.10 configs flag the legacy shape instead of silently dropping fields).
+- **Regression test:** `tests/domain.test.ts` — "emits tun-legacy-address-fields-deprecated when tun uses inet4_address".
+- **Remaining (UX nice-to-have):** Auto-migrate on import (split keys → unified array).
 
 ## Conflict Heat Map — Which Nodes Need Work
 

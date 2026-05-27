@@ -1332,6 +1332,66 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits dns-rule-mixed-legacy-and-modern-conflict for mixed ip_cidr + ip_version rule", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        rules: [
+          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
+          { ip_cidr: ["198.18.0.0/15"], ip_version: 4, server: "fakeip" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("dns-rule-mixed-legacy-and-modern-conflict");
+  });
+
+  it("emits dns-server-legacy-address-deprecated when address uses tcp://...", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "udp", tag: "legacy", address: "tcp://1.1.1.1" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("dns-server-legacy-address-deprecated");
+  });
+
+  it("emits outbound-dns-legacy-deprecated + outbound-wireguard-legacy-deprecated", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      outbounds: [
+        ...(base.outbounds ?? []),
+        { type: "dns", tag: "dns-out" },
+        { type: "wireguard", tag: "wg-out" },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("outbound-dns-legacy-deprecated");
+    expect(codes).toContain("outbound-wireguard-legacy-deprecated");
+  });
+
+  it("emits tun-legacy-address-fields-deprecated when tun uses inet4_address", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      inbounds: [
+        ...(base.inbounds ?? []),
+        { type: "tun", tag: "legacy-tun", inet4_address: "172.19.0.1/30" },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("tun-legacy-address-fields-deprecated");
+  });
+
   it("emits dns-rule-outbound-matcher-deprecated when a DNS rule uses outbound: matcher", () => {
     const base = createStableTunSplitConfig();
     const config = {

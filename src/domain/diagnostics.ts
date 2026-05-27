@@ -380,9 +380,34 @@ export function validateConfig(
         `DNS rule ${index + 1} uses address-filter fields (ip_cidr / ip_is_private) without match_response (sing-box 1.14). Migrate to an \`evaluate\` action + a follow-up rule with \`match_response: true\`.`,
       );
     }
+    const hasModernIpField = ruleObj.ip_version !== undefined || ruleObj.query_type !== undefined;
+    const hasLegacyIpField =
+      (Array.isArray(ruleObj.ip_cidr) && ruleObj.ip_cidr.length > 0) ||
+      ruleObj.ip_is_private !== undefined ||
+      ruleObj.rule_set_ip_cidr_accept_empty !== undefined;
+    if (hasModernIpField && hasLegacyIpField) {
+      push(
+        diagnostics,
+        "error",
+        "dns-rule-mixed-legacy-and-modern-conflict",
+        `/dns/rules/${index}`,
+        `DNS rule ${index + 1} mixes modern (ip_version / query_type) and legacy (ip_cidr / ip_is_private / rule_set_ip_cidr_accept_empty) address fields. sing-box 1.14+ will reject this at startup.`,
+      );
+    }
   });
 
   listItems(config.dns?.servers).forEach((server, index) => {
+    const obj = server as Record<string, unknown>;
+    if (typeof obj.address === "string" && /^[a-z0-9+]+:\/\//i.test(obj.address)) {
+      const tag = (obj.tag as string | undefined) ?? `dns-server-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "dns-server-legacy-address-deprecated",
+        `/dns/servers/${index}/address`,
+        `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
+      );
+    }
     if (server.detour && !outboundTags.has(server.detour)) {
       push(
         diagnostics,
@@ -423,6 +448,51 @@ export function validateConfig(
       "outbound-domain-without-resolver",
       `/outbounds/${index}/domain_resolver`,
       `Outbound "${tag}" uses a domain server but has no domain_resolver. sing-box 1.14+ requires this; rely on route.default_domain_resolver only if a single DNS server is configured.`,
+    );
+  });
+
+  outbounds.forEach((outbound, index) => {
+    const tag = outbound.tag ?? `outbound-${index}`;
+    if (outbound.type === "dns") {
+      push(
+        diagnostics,
+        "warning",
+        "outbound-dns-legacy-deprecated",
+        `/outbounds/${index}/type`,
+        `Outbound "${tag}" uses the legacy \`type: "dns"\` outbound (sing-box ≤1.10). Migrate to a route rule with \`action: "hijack-dns"\`.`,
+      );
+    }
+    if (outbound.type === "wireguard") {
+      push(
+        diagnostics,
+        "warning",
+        "outbound-wireguard-legacy-deprecated",
+        `/outbounds/${index}/type`,
+        `Outbound "${tag}" uses the legacy \`type: "wireguard"\` outbound (sing-box 1.11). Migrate to \`endpoints[]\` with \`type: "wireguard"\`.`,
+      );
+    }
+  });
+
+  listItems(config.inbounds).forEach((inbound, index) => {
+    if (inbound.type !== "tun") return;
+    const obj = inbound as Record<string, unknown>;
+    const legacyKeys = [
+      "inet4_address",
+      "inet6_address",
+      "inet4_route_address",
+      "inet6_route_address",
+      "inet4_route_exclude_address",
+      "inet6_route_exclude_address",
+    ];
+    const present = legacyKeys.filter((key) => obj[key] !== undefined);
+    if (present.length === 0) return;
+    const tag = (obj.tag as string | undefined) ?? `inbound-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "tun-legacy-address-fields-deprecated",
+      `/inbounds/${index}`,
+      `Inbound "${tag}" (tun) uses legacy address fields (${present.join(", ")}). Sing-box 1.10+ replaced them with unified arrays (address[] / route_address[] / route_exclude_address[]).`,
     );
   });
 
