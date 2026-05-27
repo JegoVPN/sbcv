@@ -372,6 +372,28 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("hides address/auto_route fields for non-tun inbounds", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-socks");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.queryByLabelText("Address")).not.toBeInTheDocument();
+    expect(inspector.queryByLabelText("Auto route")).not.toBeInTheDocument();
+  });
+
+  it("renders address/auto_route fields for inbound:tun", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tun");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Address")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Auto route")).toBeInTheDocument();
+  });
+
   it("renders socks/http inbound users as a structured row editor", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
