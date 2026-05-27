@@ -511,6 +511,24 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("renders tuic inbound users[] with structured Name/UUID/Password fields", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-tuic");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const editor = within(inspector.getByTestId("tuic-inbound-users-editor"));
+    if (editor.queryAllByLabelText("Name").length === 0) {
+      fireEvent.click(editor.getByRole("button", { name: /Add user/ }));
+    }
+    expect(editor.getAllByLabelText("Name").length).toBeGreaterThan(0);
+    expect(editor.getAllByLabelText("UUID").length).toBeGreaterThan(0);
+    expect(editor.getAllByLabelText("Password").length).toBeGreaterThan(0);
+    const password = editor.getAllByLabelText("Password").find((el) => (el as HTMLInputElement).type === "password");
+    expect(password).toBeDefined();
+  });
+
   it("renders up_mbps/down_mbps for outbound:hysteria2 and idle_session fields for outbound:anytls", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
