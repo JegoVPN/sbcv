@@ -12,7 +12,7 @@ export function preflight(req: Request, env: Env): Response {
 }
 
 export function applyCors(res: Response, env: Env, origin?: string | null): Response {
-  const resolvedOrigin = origin && isAllowedOrigin(origin, env) ? origin : env.ALLOWED_ORIGIN;
+  const resolvedOrigin = origin && isAllowedOrigin(origin, env) ? origin : primaryOrigin(env);
   const headers = new Headers(res.headers);
   for (const [key, value] of Object.entries(corsHeaders(resolvedOrigin))) {
     headers.set(key, value);
@@ -22,7 +22,18 @@ export function applyCors(res: Response, env: Env, origin?: string | null): Resp
 
 export function isAllowedOrigin(origin: string | null | undefined, env: Env): boolean {
   if (!origin) return false;
-  return origin === env.ALLOWED_ORIGIN;
+  return allowedOrigins(env).includes(origin);
+}
+
+function allowedOrigins(env: Env): string[] {
+  return env.ALLOWED_ORIGIN.split(",")
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
+}
+
+function primaryOrigin(env: Env): string {
+  const [first] = allowedOrigins(env);
+  return first ?? env.ALLOWED_ORIGIN;
 }
 
 function corsHeaders(origin: string): Record<string, string> {
