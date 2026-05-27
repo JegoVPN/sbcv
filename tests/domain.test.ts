@@ -1332,6 +1332,39 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits ccm-users-empty + ccm-public-listen for a wide-open empty ccm service", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        { type: "ccm", tag: "ccm", listen: "0.0.0.0", users: [] },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("ccm-users-empty");
+    expect(codes).toContain("ccm-public-listen");
+  });
+
+  it("does NOT emit ccm-users-empty/public-listen when service is properly configured", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      services: [
+        ...(((base as Record<string, unknown>).services as Record<string, unknown>[]) ?? []),
+        {
+          type: "ccm",
+          tag: "ccm",
+          listen: "127.0.0.1",
+          users: [{ name: "alice", token: "secret-token" }],
+        },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).not.toContain("ccm-users-empty");
+    expect(codes).not.toContain("ccm-public-listen");
+  });
+
   it("emits dns-server-dhcp-interface-empty when interface is set to an empty string", () => {
     const base = createStableTunSplitConfig();
     const config = {

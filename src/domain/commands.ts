@@ -522,10 +522,7 @@ export function createService(type: string, tag: string): ServiceConfig {
       tag,
       listen: "127.0.0.1",
       listen_port: 8080,
-      credential_path: "",
-      usages_path: "",
       users: [],
-      headers: {},
     };
   }
   if (type === "ocm") {

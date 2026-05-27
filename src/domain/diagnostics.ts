@@ -234,6 +234,32 @@ export function validateConfig(
         "Hysteria Realm service is available only for the 1.14 testing target.",
       );
     }
+
+    if (service.type === "ccm") {
+      const obj = service as Record<string, unknown>;
+      const users = Array.isArray(obj.users) ? obj.users : [];
+      if (users.length === 0) {
+        push(
+          diagnostics,
+          "warning",
+          "ccm-users-empty",
+          `/services/${index}/users`,
+          `CCM service "${service.tag}" has no users; remote Claude Code clients will be rejected.`,
+        );
+      }
+      if (
+        typeof obj.listen === "string" &&
+        (obj.listen === "0.0.0.0" || obj.listen === "::" || obj.listen === "")
+      ) {
+        push(
+          diagnostics,
+          "warning",
+          "ccm-public-listen",
+          `/services/${index}/listen`,
+          `CCM service "${service.tag}" listens on a public address (${obj.listen || "empty"}); bind to 127.0.0.1 or require TLS + auth tokens for exposure.`,
+        );
+      }
+    }
   });
 
   const dnsFinal = config.dns?.final;
