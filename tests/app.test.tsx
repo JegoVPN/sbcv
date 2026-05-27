@@ -726,6 +726,34 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders Up/Down Mbps + obfs controls on outbound:hysteria (v1)", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const upInput = within(inspector.getByTestId("outbound-hysteria-up-mbps")).getByLabelText(
+      "Up Mbps",
+    ) as HTMLInputElement;
+    fireEvent.change(upInput, { target: { value: "100" } });
+    const downInput = within(inspector.getByTestId("outbound-hysteria-down-mbps")).getByLabelText(
+      "Down Mbps",
+    ) as HTMLInputElement;
+    fireEvent.change(downInput, { target: { value: "500" } });
+    const obfsInput = within(inspector.getByTestId("outbound-hysteria-obfs")).getByLabelText(
+      "Obfs (string, optional)",
+    ) as HTMLInputElement;
+    fireEvent.change(obfsInput, { target: { value: "shhh" } });
+
+    const hysteria = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "hysteria");
+    expect(hysteria?.up_mbps).toBe(100);
+    expect(hysteria?.down_mbps).toBe(500);
+    expect(hysteria?.obfs).toBe("shhh");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
