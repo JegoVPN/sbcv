@@ -2,6 +2,19 @@
 
 Local Claude Code review wired into `.githooks/pre-push` stage 2.
 
+## One-time setup (per clone)
+
+This repo ships hooks in `.githooks/` instead of the default `.git/hooks/`.
+After cloning, run **once** on each machine / each clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Verify: `git config --get core.hooksPath` should print `.githooks`. Without
+this, `git push` skips the review gate entirely (the hook file exists in
+the repo but git doesn't see it).
+
 ## How it works
 
 On `git push`:
