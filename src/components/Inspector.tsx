@@ -156,6 +156,7 @@ const inboundHandledFields = new Set([
   "quic_congestion_control",
   "masquerade",
   "brutal_debug",
+  "fallback",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2715,6 +2716,59 @@ export function Inspector() {
                 </optgroup>
               </select>
             </label>
+          ) : null}
+          {entityType === "trojan" ? (
+            (() => {
+              const fallback = objectField(entity.fallback);
+              const fallbackServer = typeof fallback.server === "string" ? fallback.server : "";
+              const fallbackPort = typeof fallback.server_port === "number" ? fallback.server_port : "";
+              const writeFallback = (next: InspectorEntity) =>
+                updateField(ref, "fallback", Object.keys(next).length ? next : undefined);
+              return (
+                <fieldset className="field field--checklist" data-testid="inbound-trojan-fallback">
+                  <legend>Fallback Server (optional)</legend>
+                  <label className="field">
+                    <span>Server</span>
+                    <input
+                      value={fallbackServer}
+                      placeholder="127.0.0.1"
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        if (!value) {
+                          const { server: _server, ...rest } = fallback as Record<string, unknown>;
+                          writeFallback(rest);
+                          return;
+                        }
+                        writeFallback({ ...fallback, server: value });
+                      }}
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Server Port</span>
+                    <input
+                      type="number"
+                      value={fallbackPort}
+                      placeholder="80"
+                      onChange={(event) => {
+                        const raw = event.target.value;
+                        if (!raw) {
+                          const { server_port: _port, ...rest } = fallback as Record<string, unknown>;
+                          writeFallback(rest);
+                          return;
+                        }
+                        const parsed = Number(raw);
+                        if (Number.isFinite(parsed)) {
+                          writeFallback({ ...fallback, server_port: parsed });
+                        }
+                      }}
+                    />
+                  </label>
+                  <p className="field__hint">
+                    Disabled when both Server and Port are empty. Use Advanced JSON for fallback_for_alpn.
+                  </p>
+                </fieldset>
+              );
+            })()
           ) : null}
           {entityType === "hysteria2" ? (
             <>
