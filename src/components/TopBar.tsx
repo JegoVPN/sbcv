@@ -66,12 +66,9 @@ export function TopBar() {
     return "Valid";
   })();
   const statusTitle = (() => {
-    if (checkingPhase === "both")
-      return "Checking — running semantic validator locally and calling api.sbcv.app for sing-box.";
-    if (checkingPhase === "local")
-      return "Parsing JSON and running semantic validator in your browser.";
-    if (checkingPhase === "binary")
-      return `Forwarding the config to api.sbcv.app, which spawns sing-box ${target.binaryName} in a Cloudflare Container.`;
+    if (checkingPhase === "both") return "Running checks...";
+    if (checkingPhase === "local") return "Parsing JSON and running the semantic validator.";
+    if (checkingPhase === "binary") return `Running sing-box ${target.version} validation...`;
     return checkNotice || statusLabel;
   })();
 
