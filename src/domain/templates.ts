@@ -105,7 +105,7 @@ const PRESET_OUTBOUND_SG_SS = {
   server: "127.0.0.1",
   server_port: 8388,
   method: "2022-blake3-aes-128-gcm",
-  password: "REPLACE_ME_PSK",
+  password: "AAAAAAAAAAAAAAAAAAAAAA==",
 };
 
 const PRESET_OUTBOUND_JP_ANYTLS = {
