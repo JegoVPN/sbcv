@@ -27,8 +27,8 @@ Open [**sbcv.app**](https://sbcv.app), pick a sing-box version in the top bar, d
 ## Run it yourself
 
 ```bash
-git clone https://github.com/JegoVPN/SBC
-cd SBC
+git clone https://github.com/JegoVPN/sbcv
+cd sbcv
 pnpm install
 pnpm dev          # http://localhost:5173
 pnpm build        # tsc -b && vite build → dist/
