@@ -25,7 +25,14 @@ RUN chmod +x install-binaries.sh \
     SB_TESTING_VERSION="${SB_TESTING_VERSION}" \
     TARGETOS="${TARGETOS}" \
     TARGETARCH="${TARGETARCH}" \
-    ./install-binaries.sh
+    ./install-binaries.sh \
+ && echo "==== POST-INSTALL DIRECTORY DUMP ====" \
+ && ls -la /stage/bin \
+ && file /stage/bin/sing-box-1.12     /stage/bin/sing-box-stable     /stage/bin/sing-box-testing 2>/dev/null || true \
+ && for f in /stage/bin/sing-box-1.12 /stage/bin/sing-box-stable /stage/bin/sing-box-testing; do \
+       echo "----- $f -----"; \
+       [ -x "$f" ] && "$f" version | head -n 1 || echo "MISSING OR NOT EXECUTABLE: $f"; \
+    done
 
 # ---- Stage 2: install Node.js production deps
 FROM node:22-alpine AS deps
