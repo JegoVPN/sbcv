@@ -869,7 +869,9 @@ textarea {
   box-shadow: none;
 }
 
-.react-flow__controls-button:hover {
+/* :not(:disabled) 提升 specificity 以覆盖通用 `button:hover:not(:disabled)`，
+   否则 React Flow 控件的 hover 色会被深蓝黑 #171d24 覆盖。 */
+.react-flow__controls-button:hover:not(:disabled) {
   background: #494B4D;
   color: #fff;
 }
