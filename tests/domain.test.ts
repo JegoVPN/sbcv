@@ -249,6 +249,34 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on inline tls.acme on testing channel only (1.14-A)", () => {
+    const config = createStableTunSplitConfig();
+    config.inbounds = [
+      ...(config.inbounds ?? []),
+      {
+        type: "trojan",
+        tag: "trojan-in",
+        listen: "127.0.0.1",
+        listen_port: 4443,
+        users: [{ name: "u", password: "p" }],
+        tls: {
+          enabled: true,
+          acme: { domain: ["example.com"], email: "admin@example.com" },
+        },
+      } as never,
+    ];
+
+    expect(
+      validateConfig(config, "stable").filter((finding) => finding.code === "tls-acme-deprecated"),
+    ).toEqual([]);
+
+    const testingFindings = validateConfig(config, "testing").filter(
+      (finding) => finding.code === "tls-acme-deprecated",
+    );
+    expect(testingFindings).toHaveLength(1);
+    expect(testingFindings[0]?.path).toMatch(/\/inbounds\/\d+\/tls\/acme/);
+  });
+
   it("warns on deprecated dial.domain_strategy across outbound / dns-server / endpoint / ntp", () => {
     const config = createStableTunSplitConfig();
     const findings = (cfg: typeof config) =>

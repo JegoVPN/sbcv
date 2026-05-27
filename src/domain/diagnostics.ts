@@ -1144,6 +1144,62 @@ export function validateConfig(
     );
   }
 
+  if (channel === "testing") {
+    const tlsAcmeMessage =
+      'Inline tls.acme is deprecated since sing-box 1.14.0. Move the ACME options into a tls.certificate_provider (type=acme) inline or a top-level certificate_providers[] entry.';
+    const hasInlineAcme = (entity: unknown): boolean => {
+      if (!entity || typeof entity !== "object") return false;
+      const tls = (entity as Record<string, unknown>).tls;
+      if (!tls || typeof tls !== "object" || Array.isArray(tls)) return false;
+      const acme = (tls as Record<string, unknown>).acme;
+      return Boolean(acme && typeof acme === "object" && !Array.isArray(acme));
+    };
+    listItems(config.inbounds).forEach((inbound, index) => {
+      if (!hasInlineAcme(inbound)) return;
+      const tag = inbound.tag ?? `inbound-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "tls-acme-deprecated",
+        `/inbounds/${index}/tls/acme`,
+        `Inbound "${tag}" — ${tlsAcmeMessage}`,
+      );
+    });
+    outbounds.forEach((outbound, index) => {
+      if (!hasInlineAcme(outbound)) return;
+      const tag = outbound.tag ?? `outbound-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "tls-acme-deprecated",
+        `/outbounds/${index}/tls/acme`,
+        `Outbound "${tag}" — ${tlsAcmeMessage}`,
+      );
+    });
+    listItems(config.dns?.servers).forEach((server, index) => {
+      if (!hasInlineAcme(server)) return;
+      const tag = server.tag ?? `dns-server-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "tls-acme-deprecated",
+        `/dns/servers/${index}/tls/acme`,
+        `DNS server "${tag}" — ${tlsAcmeMessage}`,
+      );
+    });
+    services.forEach((service, index) => {
+      if (!hasInlineAcme(service)) return;
+      const tag = service.tag ?? `service-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "tls-acme-deprecated",
+        `/services/${index}/tls/acme`,
+        `Service "${tag}" — ${tlsAcmeMessage}`,
+      );
+    });
+  }
+
   return diagnostics;
 }
 
