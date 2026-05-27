@@ -701,6 +701,31 @@ describe("SBC editor shell", () => {
     expect(urltest?.interrupt_exist_connections).toBe(false);
   });
 
+  it("renders Linux-only banner on tproxy + redirect inbounds and a network enum on tproxy", () => {
+    for (const paletteKind of ["inbound-tproxy", "inbound-redirect"]) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(paletteKind);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      expect(inspector.getByText(/Linux-only inbound/)).toBeInTheDocument();
+      if (paletteKind === "inbound-tproxy") {
+        const networkSelect = within(inspector.getByTestId("inbound-tproxy-network")).getByLabelText(
+          "Network",
+        ) as HTMLSelectElement;
+        expect(networkSelect.tagName).toBe("SELECT");
+        expect(Array.from(networkSelect.querySelectorAll("option")).map((o) => o.value)).toEqual(["", "tcp", "udp"]);
+        fireEvent.change(networkSelect, { target: { value: "udp" } });
+        const tproxy = useProjectStore
+          .getState()
+          .config.inbounds?.find((inbound) => inbound.type === "tproxy");
+        expect(tproxy?.network).toBe("udp");
+      }
+      unmount();
+    }
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

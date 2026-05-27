@@ -2732,6 +2732,25 @@ export function Inspector() {
               <span>Set System Proxy (Linux / Android / Windows / macOS)</span>
             </label>
           ) : null}
+          {entityType === "tproxy" || entityType === "redirect" ? (
+            <PlatformBanner
+              kind="platform"
+              text={`Linux-only inbound: \`${entityType}\` uses Linux netfilter primitives and will not bind on macOS/Windows/iOS.`}
+            />
+          ) : null}
+          {entityType === "tproxy" ? (
+            <label className="field" data-testid="inbound-tproxy-network">
+              <span>Network</span>
+              <select
+                value={typeof entity.network === "string" ? entity.network : ""}
+                onChange={(event) => updateField(ref, "network", event.target.value || undefined)}
+              >
+                <option value="">(both)</option>
+                <option value="tcp">tcp</option>
+                <option value="udp">udp</option>
+              </select>
+            </label>
+          ) : null}
           {entityType === "direct" ? (
             <>
               <label className="field" data-testid="inbound-direct-network">
