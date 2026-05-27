@@ -76,6 +76,7 @@ After committing:
 
 - Push to `origin main` unless the user asks for a branch/PR.
 - Verify the pushed commit is GitHub Verified when GitHub access is available.
+- Do not treat GitHub Actions as a reliable merge or deployment gate. Prefer local required checks, local E2E/smoke verification, signed commit verification, and any provider deployment status that is directly relevant. If a GitHub Actions check is pending, flaky, or unavailable, report it but do not block progress solely on that status.
 
 ## Autonomous `/goal` Execution
 
