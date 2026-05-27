@@ -713,6 +713,19 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr2-reference-registry`.
 - Verification passed locally: `git diff --check`, `pnpm exec vitest run tests/domain.test.ts tests/app.test.tsx`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
 - Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
 
+### PR-3 Port Relation Registry And Structured Ids
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr3-port-relation-registry`.
+
+- Added `portRelationRegistry` as the shared registry for port endpoints, relation mode (`writable`, `readonly`, `decorative`, `order-only`), structured node id parsing, and encoded edge id formatting/parsing.
+- `deriveGraph` now emits edge ids through `formatEdgeId`, so tags containing `:` round-trip through graph edges and disconnect parsing without truncation.
+- `SbcNode` port specs are derived from registry endpoints instead of local branching, and `CanvasWorkspace.isValidConnection` now accepts only registry-backed writable relations.
+- Removed the dead `getSelectedRef` helper and replaced remaining local node id parsing in touched paths with structured helpers or first-colon parsing.
+- Added `tests/port-relation-registry.test.ts` coverage for colon-tag node/edge ids, graph edge registry mapping, visual-only relation exclusion from writable validation, and disconnect parsing for encoded ids.
+- Frontend performance review: no hover/drag state was introduced; Canvas connection validation now performs a small registry lookup instead of recomputing port specs for both nodes; no new dependency or async/data waterfall was added. The existing single-bundle Vite warning remains a broader PR-11/code-splitting concern.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/port-relation-registry.test.ts tests/port-interaction-destructive.test.tsx tests/app.test.tsx tests/sbc-node-ports.test.ts tests/config-doc-capability.test.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
+
 ## Open Decisions
 
 - Disconnect affordance: default to connected-handle small `x`; edge context menu and keyboard delete are optional additions.

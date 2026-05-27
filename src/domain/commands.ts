@@ -5,6 +5,7 @@ import {
   replaceRegisteredTagReferences,
   type ReferenceKind,
 } from "./referenceRegistry";
+import { parseEdgeId } from "./portRelationRegistry";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -1059,27 +1060,29 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
 
 export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxConfig {
   const next = cloneConfig(config);
-  const parts = edgeId.split(":");
-  const relation = parts[1];
+  const parsed = parseEdgeId(edgeId);
+  if (!parsed) return next;
+  const relation = parsed.relationId;
+  const parts = parsed.parts;
   if (relation === "route-final") {
     if (next.route) next.route.final = undefined;
   }
   if (relation === "route-rule") {
-    const index = Number(parts[2]);
+    const index = Number(parts[0]);
     if (Number.isInteger(index) && next.route?.rules?.[index]) {
       next.route.rules[index].outbound = undefined;
     }
   }
   if (relation === "route-rule-inbound") {
-    const index = Number(parts[2]);
-    const tag = parts[3];
+    const index = Number(parts[0]);
+    const tag = parts[1];
     if (Number.isInteger(index) && tag && next.route?.rules?.[index]) {
       next.route.rules[index].inbound = removeTagRef(next.route.rules[index].inbound, tag);
     }
   }
   if (relation === "selector" || relation === "urltest") {
-    const parent = parts[2];
-    const child = parts[4] ?? parts[3];
+    const parent = parts[0];
+    const child = parts[2] ?? parts[1];
     next.outbounds = next.outbounds?.map((outbound) =>
       outbound.tag === parent
         ? { ...outbound, outbounds: outbound.outbounds?.filter((tag) => tag !== child) }
@@ -1090,35 +1093,35 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     if (next.dns) next.dns.final = undefined;
   }
   if (relation === "dns-rule") {
-    const index = Number(parts[2]);
+    const index = Number(parts[0]);
     if (Number.isInteger(index) && next.dns?.rules?.[index]) {
       next.dns.rules[index].server = undefined;
     }
   }
   if (relation === "dns-rule-inbound") {
-    const index = Number(parts[2]);
-    const tag = parts[3];
+    const index = Number(parts[0]);
+    const tag = parts[1];
     if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
       next.dns.rules[index].inbound = removeTagRef(next.dns.rules[index].inbound, tag);
     }
   }
   if (relation === "route-rule-set") {
-    const index = Number(parts[2]);
-    const tag = parts[3];
+    const index = Number(parts[0]);
+    const tag = parts[1];
     if (Number.isInteger(index) && tag && next.route?.rules?.[index]) {
       next.route.rules[index].rule_set = removeTagRef(next.route.rules[index].rule_set, tag);
     }
   }
   if (relation === "dns-rule-set") {
-    const index = Number(parts[2]);
-    const tag = parts[3];
+    const index = Number(parts[0]);
+    const tag = parts[1];
     if (Number.isInteger(index) && tag && next.dns?.rules?.[index]) {
       next.dns.rules[index].rule_set = removeTagRef(next.dns.rules[index].rule_set, tag);
     }
   }
   if (relation === "dns-server-endpoint") {
-    const serverTag = parts[2];
-    const endpointTag = parts[3];
+    const serverTag = parts[0];
+    const endpointTag = parts[1];
     if (serverTag && endpointTag) {
       next.dns?.servers?.forEach((server) => {
         if (server.tag === serverTag && server.endpoint === endpointTag) server.endpoint = undefined;
@@ -1126,7 +1129,7 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     }
   }
   if (relation === "endpoint-detour") {
-    const endpointTag = parts[2];
+    const endpointTag = parts[0];
     if (endpointTag) {
       next.endpoints = next.endpoints?.map((endpoint) =>
         endpoint.tag === endpointTag ? { ...endpoint, detour: undefined } : endpoint,

@@ -22,6 +22,14 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
+import {
+  parseNodeId,
+  portEndpointsForNode,
+  portRelations,
+  type PortDirection,
+  type PortEndpoint,
+  type PortIconId,
+} from "../domain/portRelationRegistry";
 import type { SingBoxConfig } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 
@@ -55,169 +63,50 @@ export type PortSpec = {
   icon: LucideIcon;
 };
 
+const portIconMap: Record<PortIconId, LucideIcon> = {
+  ban: Ban,
+  database: Database,
+  "git-branch": GitBranch,
+  globe: Globe2,
+  layers: Layers3,
+  network: Network,
+  radio: RadioTower,
+  route: Route,
+  server: Server,
+  settings: Settings2,
+  shield: Shield,
+  shuffle: Shuffle,
+  waypoints: Waypoints,
+};
+
 export function getNodeIcon(kind: SbcNodeKind, type: string): LucideIcon {
   return kind === "outbound" ? outboundIcon(type) : iconMap[kind];
 }
 
-function supportsDialDetour(type: string) {
-  return !["block", "selector", "urltest", "dns"].includes(type);
+function otherEndpoint(endpoint: PortEndpoint) {
+  const relation = portRelations.find((entry) => entry.source === endpoint || entry.target === endpoint);
+  if (!relation) return null;
+  return relation.source === endpoint ? relation.target : relation.source;
 }
 
-export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input" | "output"): PortSpec[] {
-  if (direction === "input") {
-    if (kind === "route") return [{ key: "inbound", label: "Inbound traffic", nodeKind: "inbound", icon: RadioTower }];
-    if (kind === "route-rule") {
-      return [
-        { key: "route", label: "Route order", nodeKind: "route", icon: Route },
-        { key: "inbound", label: "Inbound matcher", nodeKind: "inbound", icon: RadioTower },
-      ];
-    }
-    if (kind === "dns") return [{ key: "inbound-query", label: "DNS query source", nodeKind: "inbound", icon: RadioTower }];
-    if (kind === "dns-rule") {
-      return [
-        { key: "dns", label: "DNS order", nodeKind: "dns", icon: Globe2 },
-        { key: "inbound", label: "Inbound matcher", nodeKind: "inbound", icon: RadioTower },
-      ];
-    }
-    if (kind === "rule-set") {
-      return [
-        { key: "route-rule", label: "Upstream Route rule set", nodeKind: "route-rule", icon: GitBranch },
-        { key: "dns-rule", label: "Upstream DNS rule set", nodeKind: "dns-rule", icon: GitBranch },
-      ];
-    }
-    if (kind === "dns-server") {
-      const ports: PortSpec[] = [
-        { key: "dns", label: "DNS final server", nodeKind: "dns", icon: Globe2 },
-        { key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch },
-      ];
-      return ports;
-    }
-    if (kind === "endpoint") {
-      if (type === "tailscale") {
-        return [
-          { key: "dns-server", label: "Upstream Tailscale DNS server", nodeKind: "dns-server", nodeType: "tailscale", icon: Server },
-          { key: "derp-service", label: "Upstream DERP service", nodeKind: "service", nodeType: "derp", icon: Server },
-        ];
-      }
-      return [];
-    }
-    if (kind === "outbound") {
-      const routingInputs: PortSpec[] = [
-        { key: "route", label: "Upstream Route final", nodeKind: "route", icon: Route },
-        { key: "route-rule", label: "Upstream Rule outbound", nodeKind: "route-rule", icon: GitBranch },
-      ];
-      return [
-        ...routingInputs,
-        { key: "selector-group", label: "Upstream Selector candidate", nodeKind: "outbound", nodeType: "selector", icon: Shuffle },
-        { key: "urltest-group", label: "Upstream URLTest candidate", nodeKind: "outbound", nodeType: "urltest", icon: Database },
-        { key: "dns-detour", label: "Upstream DNS detour target", nodeKind: "dns-server", icon: Server },
-        { key: "detour-target", label: "Upstream Dial detour target", nodeKind: "outbound", icon: Network },
-        { key: "service-detour", label: "Upstream service detour target", nodeKind: "service", icon: Server },
-        { key: "rule-set-download", label: "Upstream Rule Set download detour", nodeKind: "rule-set", icon: Layers3 },
-      ];
-    }
-    if (kind === "service") {
-      if (type === "ssm-api") {
-        return [
-          {
-            key: "managed-inbound",
-            label: "Managed Shadowsocks inbound",
-            nodeKind: "inbound",
-            nodeType: "shadowsocks",
-            icon: RadioTower,
-          },
-        ];
-      }
-      if (type === "resolved") {
-        return [
-          {
-            key: "dns-server",
-            label: "Upstream resolved DNS server",
-            nodeKind: "dns-server",
-            nodeType: "resolved",
-            icon: Globe2,
-          },
-        ];
-      }
-      return [];
-    }
-    return [];
-  }
-
-  if (kind === "inbound") {
-    const ports: PortSpec[] = [
-      { key: "route", label: "Route hub", nodeKind: "route", icon: Route },
-      { key: "route-rule-match", label: "Route rule matcher", nodeKind: "route-rule", icon: GitBranch },
-      { key: "dns-rule-match", label: "DNS rule matcher", nodeKind: "dns-rule", icon: GitBranch },
-    ];
-    if (type === "shadowsocks") ports.push({ key: "service", label: "SSM API service", nodeKind: "service", nodeType: "ssm-api", icon: Server });
-    return ports;
-  }
-  if (kind === "route") {
+export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDirection): PortSpec[] {
+  return portEndpointsForNode(kind, type, direction).flatMap((endpoint) => {
+    const compatible = otherEndpoint(endpoint);
+    if (!compatible) return [];
     return [
-      { key: "route-rule", label: "Route rule", nodeKind: "route-rule", icon: GitBranch },
-      { key: "outbound", label: "Outbound", nodeKind: "outbound", icon: Network },
+      {
+        key: endpoint.portKey,
+        label: endpoint.label,
+        nodeKind: compatible.nodeKind,
+        nodeType: compatible.nodeType,
+        icon: portIconMap[endpoint.icon],
+      },
     ];
-  }
-  if (kind === "route-rule") {
-    return [
-      { key: "outbound", label: "Outbound", nodeKind: "outbound", icon: Network },
-      { key: "rule-set", label: "Rule Set", nodeKind: "rule-set", icon: Layers3 },
-    ];
-  }
-  if (kind === "dns") {
-    return [
-      { key: "dns-rule", label: "DNS rule", nodeKind: "dns-rule", icon: GitBranch },
-      { key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server },
-    ];
-  }
-  if (kind === "dns-rule") {
-    return [
-      { key: "dns-server", label: "DNS server", nodeKind: "dns-server", icon: Server },
-      { key: "rule-set", label: "Rule Set", nodeKind: "rule-set", icon: Layers3 },
-    ];
-  }
-  if (kind === "rule-set") {
-    if (type !== "remote") return [];
-    return [{ key: "download-detour", label: "Download detour", nodeKind: "outbound", icon: Network }];
-  }
-  if (kind === "dns-server") {
-    const ports: PortSpec[] = [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
-    if (type === "tailscale") ports.push({ key: "endpoint", label: "Tailscale endpoint", nodeKind: "endpoint", nodeType: "tailscale", icon: Waypoints });
-    if (type === "resolved") ports.push({ key: "service", label: "systemd-resolved service", nodeKind: "service", nodeType: "resolved", icon: Server });
-    return ports;
-  }
-  if (kind === "endpoint") return [{ key: "dial-detour", label: "Dial detour outbound", nodeKind: "outbound", icon: Network }];
-  if (kind === "outbound" && (type === "selector" || type === "urltest")) {
-    return [{ key: "outbound-member", label: "Downstream candidate", nodeKind: "outbound", icon: Network }];
-  }
-  if (kind === "outbound" && supportsDialDetour(type)) {
-    return [{ key: "dial-detour", label: "Downstream dial detour", nodeKind: "outbound", icon: Network }];
-  }
-  if (kind === "service") {
-    const ports: PortSpec[] = [];
-    if (type === "derp") {
-      ports.push({
-        key: "verify-client-endpoint",
-        label: "Verify client endpoint",
-        nodeKind: "endpoint",
-        nodeType: "tailscale",
-        icon: Waypoints,
-      });
-    }
-    if (type === "ccm" || type === "ocm") {
-      ports.push({ key: "detour", label: "API detour outbound", nodeKind: "outbound", icon: Network });
-    }
-    return ports;
-  }
-  if (kind === "settings" && type === "ntp") {
-    return [{ key: "dial-detour", label: "NTP detour outbound", nodeKind: "outbound", icon: Network }];
-  }
-  return [];
+  });
 }
 
 function nodeValueFromId(id: string) {
-  return id.split(":").slice(1).join(":");
+  return parseNodeId(id)?.value ?? "";
 }
 
 function stringRefs(value: string | string[] | undefined): string[] {

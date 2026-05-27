@@ -1,19 +1,9 @@
 import type { Edge, Node } from "@xyflow/react";
+import { formatEdgeId, type PortNodeKind } from "../domain/portRelationRegistry";
 import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
-export type SbcNodeKind =
-  | "inbound"
-  | "route"
-  | "route-rule"
-  | "dns"
-  | "dns-server"
-  | "dns-rule"
-  | "endpoint"
-  | "service"
-  | "outbound"
-  | "rule-set"
-  | "settings";
+export type SbcNodeKind = PortNodeKind;
 
 export type SbcNodeData = {
   ref: EntityRef;
@@ -246,7 +236,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
     if (config.route) {
-      edges.push(makeEdge(`edge:inbound:${tag}:route`, id, "route:main", "route", "inbound", true));
+      edges.push(makeEdge(formatEdgeId("inbound", tag, "route"), id, "route:main", "route", "inbound", true));
     }
   });
 
@@ -305,18 +295,18 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             { x: COLUMNS.rule, y },
           ),
         );
-        edges.push(makeEdge(`edge:route-rule-order:${index}`, "route:main", id, "route-rule", "route"));
+        edges.push(makeEdge(formatEdgeId("route-rule-order", index), "route:main", id, "route-rule", "route"));
         inboundRefs.forEach((tag) => {
-          edges.push(makeEdge(`edge:route-rule-inbound:${index}:${tag}`, `inbound:${tag}`, id, "route-rule-match", "inbound"));
+          edges.push(makeEdge(formatEdgeId("route-rule-inbound", index, tag), `inbound:${tag}`, id, "route-rule-match", "inbound"));
         });
         const ruleAction = typeof rule.action === "string" ? rule.action : "";
         const routeRuleOutboundAllowed = ruleAction === "" || ruleAction === "route" || ruleAction === "bypass";
         if (rule.outbound && routeRuleOutboundAllowed) {
-          edges.push(makeEdge(`edge:route-rule:${index}:${rule.outbound}`, id, `outbound:${rule.outbound}`, "outbound", "route-rule"));
+          edges.push(makeEdge(formatEdgeId("route-rule", index, rule.outbound), id, `outbound:${rule.outbound}`, "outbound", "route-rule"));
         }
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
-            edges.push(makeEdge(`edge:route-rule-set:${index}:${tag}`, id, `rule-set:${tag}`, "rule-set", "route-rule"));
+            edges.push(makeEdge(formatEdgeId("route-rule-set", index, tag), id, `rule-set:${tag}`, "rule-set", "route-rule"));
           });
         }
       });
@@ -330,7 +320,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             Math.max(1, Math.min(routeRules.length, MAX_VISUAL_RULE_NODES)) * NODE_SLOT_Y,
         );
       }
-      edges.push(makeEdge(`edge:route-final:${config.route.final}`, "route:main", `outbound:${config.route.final}`, "outbound", "route", true));
+      edges.push(makeEdge(formatEdgeId("route-final", config.route.final), "route:main", `outbound:${config.route.final}`, "outbound", "route", true));
     }
   }
 
@@ -447,7 +437,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         visualCandidateEdges += 1;
         edges.push(
           makeEdge(
-            `edge:${outbound.type}:${tag}:${candidateIndex}:${candidateTag}`,
+            formatEdgeId(outbound.type, tag, candidateIndex, candidateTag),
             id,
             `outbound:${candidateTag}`,
             "outbound-member",
@@ -458,7 +448,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
     const detour = outboundDetourTag(outbound);
     if (detour) {
-      edges.push(makeEdge(`edge:outbound-detour:${tag}:${detour}`, id, `outbound:${detour}`, "dial-detour", "detour-target"));
+      edges.push(makeEdge(formatEdgeId("outbound-detour", tag, detour), id, `outbound:${detour}`, "dial-detour", "detour-target"));
     }
   });
 
@@ -502,7 +492,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       if (ruleSet.type === "remote" && typeof ruleSet.download_detour === "string" && ruleSet.download_detour) {
         edges.push(
           makeEdge(
-            `edge:rule-set-download:${tag}:${ruleSet.download_detour}`,
+            formatEdgeId("rule-set-download", tag, ruleSet.download_detour),
             `rule-set:${tag}`,
             `outbound:${ruleSet.download_detour}`,
             "download-detour",
@@ -558,18 +548,18 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         ),
       );
       if (server.detour) {
-        edges.push(makeEdge(`edge:dns-server-detour:${tag}:${server.detour}`, id, `outbound:${server.detour}`, "outbound", "dns-detour"));
+        edges.push(makeEdge(formatEdgeId("dns-server-detour", tag, server.detour), id, `outbound:${server.detour}`, "outbound", "dns-detour"));
       }
       if (server.type === "tailscale" && server.endpoint) {
         endpointTargetY.set(server.endpoint, y);
-        edges.push(makeEdge(`edge:dns-server-endpoint:${tag}:${server.endpoint}`, id, `endpoint:${server.endpoint}`, "endpoint", "dns-server"));
+        edges.push(makeEdge(formatEdgeId("dns-server-endpoint", tag, server.endpoint), id, `endpoint:${server.endpoint}`, "endpoint", "dns-server"));
       }
       if (server.type === "resolved" && typeof (server as Record<string, unknown>).service === "string") {
         const serviceTag = (server as Record<string, unknown>).service as string;
         if (serviceTag) {
           edges.push(
             makeEdge(
-              `edge:dns-server-service:${tag}:${serviceTag}`,
+              formatEdgeId("dns-server-service", tag, serviceTag),
               id,
               `service:${serviceTag}`,
               "service",
@@ -606,26 +596,26 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             { x: COLUMNS.rule, y },
           ),
         );
-        edges.push(makeEdge(`edge:dns-rule-order:${index}`, "dns:main", id, "dns-rule", "dns"));
+        edges.push(makeEdge(formatEdgeId("dns-rule-order", index), "dns:main", id, "dns-rule", "dns"));
         stringRefs(rule.inbound).forEach((tag) => {
-          edges.push(makeEdge(`edge:dns-rule-inbound:${index}:${tag}`, `inbound:${tag}`, id, "dns-rule-match", "inbound"));
+          edges.push(makeEdge(formatEdgeId("dns-rule-inbound", index, tag), `inbound:${tag}`, id, "dns-rule-match", "inbound"));
         });
         const dnsAction = typeof rule.action === "string" ? rule.action : "";
         const dnsRuleServerAllowed = dnsAction === "" || dnsAction === "route" || dnsAction === "evaluate";
         if (rule.server && dnsRuleServerAllowed) {
-          edges.push(makeEdge(`edge:dns-rule:${index}:${rule.server}`, id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
+          edges.push(makeEdge(formatEdgeId("dns-rule", index, rule.server), id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
         const ruleSetRefs = stringRefs(rule.rule_set);
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
-            edges.push(makeEdge(`edge:dns-rule-set:${index}:${tag}`, id, `rule-set:${tag}`, "rule-set", "dns-rule"));
+            edges.push(makeEdge(formatEdgeId("dns-rule-set", index, tag), id, `rule-set:${tag}`, "rule-set", "dns-rule"));
           });
         }
       });
     }
 
     if (config.dns.final) {
-      edges.push(makeEdge(`edge:dns-final:${config.dns.final}`, "dns:main", `dns-server:${config.dns.final}`, "dns-server", "dns"));
+      edges.push(makeEdge(formatEdgeId("dns-final", config.dns.final), "dns:main", `dns-server:${config.dns.final}`, "dns-server", "dns"));
     }
   }
 
@@ -654,7 +644,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
     if (typeof endpoint.detour === "string" && endpoint.detour) {
-      edges.push(makeEdge(`edge:endpoint-detour:${tag}:${endpoint.detour}`, `endpoint:${tag}`, `outbound:${endpoint.detour}`, "dial-detour", "detour-target"));
+      edges.push(makeEdge(formatEdgeId("endpoint-detour", tag, endpoint.detour), `endpoint:${tag}`, `outbound:${endpoint.detour}`, "dial-detour", "detour-target"));
     }
   });
 
@@ -683,18 +673,18 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
 
     if (service.detour) {
-      edges.push(makeEdge(`edge:service-detour:${tag}:${service.detour}`, id, `outbound:${service.detour}`, "detour", "service-detour"));
+      edges.push(makeEdge(formatEdgeId("service-detour", tag, service.detour), id, `outbound:${service.detour}`, "detour", "service-detour"));
     }
 
     const verifyEndpoints = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
     verifyEndpoints.forEach((endpointTag) => {
       endpointTargetY.set(endpointTag, y);
-      edges.push(makeEdge(`edge:service-verify-endpoint:${tag}:${endpointTag}`, id, `endpoint:${endpointTag}`, "verify-client-endpoint", "derp-service"));
+      edges.push(makeEdge(formatEdgeId("service-verify-endpoint", tag, endpointTag), id, `endpoint:${endpointTag}`, "verify-client-endpoint", "derp-service"));
     });
 
     if (service.servers && typeof service.servers === "object" && !Array.isArray(service.servers)) {
       Object.entries(service.servers).forEach(([path, inboundTag]) => {
-        edges.push(makeEdge(`edge:service-ssm-inbound:${tag}:${path}:${inboundTag}`, `inbound:${inboundTag}`, id, "service", "managed-inbound"));
+        edges.push(makeEdge(formatEdgeId("service-ssm-inbound", tag, path, inboundTag), `inbound:${inboundTag}`, id, "service", "managed-inbound"));
       });
     }
   });
@@ -706,7 +696,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     if (ntpNodeExists) {
       edges.push(
         makeEdge(
-          `edge:settings-ntp-detour:${ntp.detour}`,
+          formatEdgeId("settings-ntp-detour", ntp.detour),
           ntpNodeId,
           `outbound:${ntp.detour}`,
           "dial-detour",

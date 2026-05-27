@@ -5,8 +5,9 @@ import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
 import type { SbcFlowNode } from "../canvas/graph";
+import { relationForHandles } from "../domain/portRelationRegistry";
 import { useProjectStore } from "../state/useProjectStore";
-import { getPortSpecs, SbcNode } from "./SbcNode";
+import { SbcNode } from "./SbcNode";
 import { useViewport } from "./useViewport";
 
 const nodeTypes: NodeTypes = {
@@ -18,15 +19,6 @@ const connectionLineStyle = {
   strokeWidth: 2.4,
 };
 
-function specMatchesNode(
-  spec: ReturnType<typeof getPortSpecs>[number],
-  node: SbcFlowNode | undefined,
-) {
-  if (!node) return false;
-  if (spec.nodeKind !== node.data.kind) return false;
-  return !spec.nodeType || spec.nodeType === node.data.type;
-}
-
 function matchesDirectedConnection(
   outputNode: SbcFlowNode | undefined,
   outputHandle: string | null | undefined,
@@ -35,13 +27,17 @@ function matchesDirectedConnection(
 ) {
   if (!outputNode || !inputNode || !outputHandle || !inputHandle) return false;
   if (outputNode.id === inputNode.id) return false;
-  const outputSpec = getPortSpecs(outputNode.data.kind, outputNode.data.type, "output").find(
-    (spec) => spec.key === outputHandle,
+  return Boolean(
+    relationForHandles(
+      outputNode.data.kind,
+      outputNode.data.type,
+      outputHandle,
+      inputNode.data.kind,
+      inputNode.data.type,
+      inputHandle,
+      ["writable"],
+    ),
   );
-  const inputSpec = getPortSpecs(inputNode.data.kind, inputNode.data.type, "input").find(
-    (spec) => spec.key === inputHandle,
-  );
-  return Boolean(outputSpec && inputSpec && specMatchesNode(outputSpec, inputNode) && specMatchesNode(inputSpec, outputNode));
 }
 
 export function CanvasWorkspace() {
