@@ -659,6 +659,22 @@ textarea {
   color: #8b939d;
 }
 
+.sbc-node-titlebar__badge {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #3a2a0a;
+  color: #f2bc4b;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sbc-node-shell--deprecated .sbc-node {
+  border-color: #6a5418;
+  opacity: 0.78;
+}
+
 .sbc-node {
   min-height: 290px;
   border: 1px solid #30363d;

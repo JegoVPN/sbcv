@@ -380,6 +380,18 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders a deprecated badge on the canvas card for outbound:block", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("block");
+    });
+    render(<App />);
+    const block = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.type === "block");
+    expect(block).toBeDefined();
+    const node = screen.getByTestId(`node-outbound:${block?.tag}`);
+    expect(within(node).getByTestId("node-deprecated-badge")).toBeInTheDocument();
+  });
+
   it("shows an inline deprecation banner when tls.acme is set on an inbound", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

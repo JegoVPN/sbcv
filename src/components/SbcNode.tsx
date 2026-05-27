@@ -383,10 +383,11 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const Icon = getNodeIcon(data.kind, data.type);
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
   const outputPorts = getPortSpecs(data.kind, data.type, "output");
+  const isDeprecated = data.kind === "outbound" && data.type === "block";
 
   return (
     <div
-      className={`sbc-node-shell ${selected ? "is-selected" : ""}`}
+      className={`sbc-node-shell ${selected ? "is-selected" : ""}${isDeprecated ? " sbc-node-shell--deprecated" : ""}`}
       onClick={() => setSelectedId(id)}
       data-testid={`node-${id}`}
     >
@@ -395,6 +396,11 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
           <Icon size={18} strokeWidth={2.2} />
         </span>
         <span>{`${data.kind} / ${data.type}`}</span>
+        {isDeprecated ? (
+          <span className="sbc-node-titlebar__badge" data-testid="node-deprecated-badge" title="Deprecated since sing-box 1.11 — use route action=reject">
+            deprecated
+          </span>
+        ) : null}
       </div>
       <div className={`sbc-node sbc-node--${data.status} ${selected ? "is-selected" : ""}`} data-testid="node-card">
         {selected ? (
