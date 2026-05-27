@@ -289,7 +289,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Route/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Rule Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Remote Rule Set" }));
 
     const created = useProjectStore.getState().config.route?.rule_set?.at(-1);
 
@@ -301,6 +301,14 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().selectedId).toBe("rule-set:remote-rules");
     expect(screen.getByTestId("node-rule-set:remote-rules")).toBeInTheDocument();
     expect(screen.getByText("Download Detour")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Setup Local Rule Set" }));
+    const localCreated = useProjectStore.getState().config.route?.rule_set?.at(-1);
+    expect(localCreated).toMatchObject({ type: "local" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Setup Inline Rule Set" }));
+    const inlineCreated = useProjectStore.getState().config.route?.rule_set?.at(-1);
+    expect(inlineCreated).toMatchObject({ type: "inline" });
   });
 
   it("changes an outbound protocol type from the node Inspector", () => {
