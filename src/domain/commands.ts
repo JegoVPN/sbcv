@@ -623,7 +623,6 @@ export function createDnsServer(type: string, tag: string): DnsServerConfig {
     return {
       type,
       tag,
-      address: "https://1.1.1.1/dns-query",
       server: "1.1.1.1",
       server_port: 443,
       path: "/dns-query",

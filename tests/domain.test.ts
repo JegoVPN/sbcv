@@ -228,6 +228,12 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("does not seed legacy DNS server address strings (1.12-A)", () => {
+    const httpsServer = createDnsServer("https", "doh-test") as Record<string, unknown>;
+    expect(httpsServer).not.toHaveProperty("address");
+    expect(httpsServer).toMatchObject({ type: "https", server: "1.1.1.1", server_port: 443, path: "/dns-query" });
+  });
+
   it("omits the network field from scaffolds so sing-box defaults to both TCP and UDP", () => {
     const inboundTypes = ["direct", "naive", "tproxy"];
     for (const type of inboundTypes) {
