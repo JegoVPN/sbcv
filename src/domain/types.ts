@@ -85,6 +85,12 @@ export type RouteConfig = {
   rule_set?: TaggedConfig[];
   final?: string;
   auto_detect_interface?: boolean;
+  override_android_vpn?: boolean;
+  default_interface?: string;
+  default_mark?: number;
+  find_process?: boolean;
+  default_network_strategy?: string;
+  default_network_type?: string;
   default_domain_resolver?: string | Record<string, unknown>;
   [key: string]: unknown;
 };

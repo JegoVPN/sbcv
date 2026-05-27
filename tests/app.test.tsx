@@ -380,6 +380,24 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders the route hub platform fields (default_interface / mark / find_process / network_strategy / network_type)", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-route:main"));
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Default Interface")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Default Routing Mark (Linux)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Find process (process matchers in rules)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Default Network Strategy (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Default Network Type (1.13+)")).toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("Default Interface"), { target: { value: "eth0" } });
+    fireEvent.change(inspector.getByLabelText("Default Routing Mark (Linux)"), { target: { value: "100" } });
+    const route = useProjectStore.getState().config.route as Record<string, unknown>;
+    expect(route.default_interface).toBe("eth0");
+    expect(route.default_mark).toBe(100);
+  });
+
   it("preserves multi-line PEM certificates through a round-trip on settings:certificate", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
