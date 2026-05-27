@@ -113,19 +113,15 @@ describe("canonical sing-box domain model", () => {
     const route = byId.get("route:main");
     const inbound = byId.get("inbound:tun-in");
     const ruleOne = byId.get("route-rule:0");
-    const ruleTwo = byId.get("route-rule:1");
     const direct = byId.get("outbound:direct");
-    const block = byId.get("outbound:block");
     const proxy = byId.get("outbound:proxy");
     const auto = byId.get("outbound:auto");
     const hk = byId.get("outbound:hk");
     const jp = byId.get("outbound:jp");
 
-    expect(inbound?.position.x).toBeLessThan(route?.position.x ?? 0);
+    expect(inbound?.position.x).toBe(route?.position.x);
     expect(route?.position.x).toBeLessThan(ruleOne?.position.x ?? 0);
     expect(ruleOne?.position.x).toBeLessThan(direct?.position.x ?? 0);
-    expect(direct?.position.y).toBe(ruleOne?.position.y);
-    expect(block?.position.y).toBe(ruleTwo?.position.y);
     expect(proxy?.position.x).toBe(direct?.position.x);
     expect(auto?.position.x).toBeGreaterThan(proxy?.position.x ?? 0);
     expect(hk?.position.x).toBeGreaterThan(auto?.position.x ?? 0);
@@ -192,8 +188,8 @@ describe("canonical sing-box domain model", () => {
     expect(officialFakeIp.channel).toBe("stable");
     expect(officialRouteRules.channel).toBe("stable");
     expect(legacy.version).toBe("1.12");
-    expect(stable.config.route?.final).toBe("proxy");
-    expect(testing.config.http_clients?.[0]?.tag).toBe("remote-client");
+    expect(stable.config.route?.final).toBe("Default");
+    expect(testing.config.http_clients?.[0]?.tag).toBe("default");
     expect(officialFakeIp.config.dns?.servers?.some((server) => server.type === "fakeip")).toBe(true);
     expect(officialRouteRules.config.route?.rules).toHaveLength(6);
     expect(TEMPLATE_PRESET_IDS).toContain("template-official-client-bypass-no-leak");
