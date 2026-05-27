@@ -33,7 +33,12 @@ pnpm typecheck
 
 ## Deploy
 
-One-time setup:
+In production, deploys are driven by Cloudflare Workers Builds on every push
+to `main` that touches `worker/**`, `container/**`, or
+`scripts/cf-deploy-validator-gw.sh`. The smart deploy script verifies the
+container image tag and runs an end-to-end probe before exiting.
+
+One-time setup (locally, when you first stand up a fresh environment):
 
 ```bash
 wrangler login
@@ -47,7 +52,7 @@ wrangler secret put VALIDATOR_URL           # internal container URL
 
 For staging only, repeat with `--env staging`.
 
-Deploy:
+Manual deploy (only if Workers Builds is offline):
 
 ```bash
 pnpm deploy                  # production -> api.sbcv.app
