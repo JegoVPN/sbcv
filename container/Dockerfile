@@ -31,13 +31,13 @@ RUN chmod +x install-binaries.sh \
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json ./
-RUN corepack enable && pnpm install --prod --no-frozen-lockfile
+RUN corepack enable && pnpm install --prod --no-frozen-lockfile --ignore-scripts
 
 # ---- Stage 3: compile TypeScript
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json tsconfig.json ./
-RUN corepack enable && pnpm install --no-frozen-lockfile
+RUN corepack enable && pnpm install --no-frozen-lockfile --ignore-scripts
 COPY src ./src
 RUN pnpm exec tsc
 
