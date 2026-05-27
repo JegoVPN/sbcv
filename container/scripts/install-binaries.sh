@@ -63,7 +63,14 @@ download_binary "$SB_STABLE_VERSION"  sing-box-stable
 download_binary "$SB_TESTING_VERSION" sing-box-testing
 
 echo
-echo "==> Binary versions:"
-"${BIN_DIR}/sing-box-1.12"    version | head -n 1
-"${BIN_DIR}/sing-box-stable"  version | head -n 1
-"${BIN_DIR}/sing-box-testing" version | head -n 1
+echo "==> File sanity (binaries are not executed here: sing-box 1.13+ links"
+echo "    glibc + cronet, which the alpine build stage cannot run; the final"
+echo "    Debian-based runtime stage validates execution.)"
+for f in "${BIN_DIR}/sing-box-1.12" "${BIN_DIR}/sing-box-stable" "${BIN_DIR}/sing-box-testing"; do
+  if [ ! -s "$f" ] || [ ! -x "$f" ]; then
+    echo "FATAL: $f missing or not executable" >&2
+    exit 1
+  fi
+  size="$(wc -c < "$f")"
+  echo "  $f: ${size} bytes, executable bit ok"
+done
