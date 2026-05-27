@@ -7,7 +7,6 @@ import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import type { SingBoxTargetId } from "../domain/types";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
-import { OfficialCheckButton } from "./OfficialCheckButton";
 
 function padTimestampPart(value: number) {
   return String(value).padStart(2, "0");
@@ -114,7 +113,6 @@ export function TopBar() {
             />
           ) : null}
         </div>
-        <OfficialCheckButton />
         <button type="button" onClick={exportConfig}>
           <Download size={15} />
           Export
