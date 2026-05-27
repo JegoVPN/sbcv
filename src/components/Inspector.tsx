@@ -2408,6 +2408,12 @@ export function Inspector() {
 
       {ref.kind === "inbound" ? (
         <>
+          {entityType === "hysteria" ? (
+            <PlatformBanner
+              kind="deprecated"
+              text="Hysteria v1 is deprecated upstream. New deployments should use type=hysteria2; v1 is kept for import compatibility only."
+            />
+          ) : null}
           {entityType === "redirect" ? (
             <PlatformBanner
               kind="platform"
