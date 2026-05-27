@@ -475,7 +475,7 @@ function connectDirectedPortReference(
 
 const initialConfig = createStableTunSplitConfig();
 
-export const useProjectStore = create<ProjectStore>((set) => ({
+export const useProjectStore = create<ProjectStore>((set, get) => ({
   channel: "stable",
   version: "1.13",
   config: initialConfig,
