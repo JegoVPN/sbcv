@@ -115,7 +115,6 @@ export function createInbound(type: string, tag: string): InboundConfig {
       tag,
       listen: "127.0.0.1",
       listen_port: 2081,
-      network: "tcp",
     };
   }
   if (type === "socks") {
@@ -172,7 +171,6 @@ export function createInbound(type: string, tag: string): InboundConfig {
       tag,
       listen: "127.0.0.1",
       listen_port: 2080,
-      network: "tcp",
       users: [{ username: "user", password: "change-me" }],
       tls: { enabled: true, server_name: "" },
     };
@@ -261,7 +259,6 @@ export function createInbound(type: string, tag: string): InboundConfig {
       tag,
       listen: "127.0.0.1",
       listen_port: 2080,
-      network: "tcp",
     };
   }
   return { type, tag };
@@ -304,7 +301,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server_port: 1080,
       method: "aes-128-gcm",
       password: "change-me",
-      network: "tcp",
     };
   }
   if (type === "vmess") {
@@ -316,7 +312,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
       security: "auto",
       alter_id: 0,
-      network: "tcp",
     };
   }
   if (type === "trojan") {
@@ -326,7 +321,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server: "127.0.0.1",
       server_port: 1080,
       password: "change-me",
-      network: "tcp",
       tls: { enabled: true, server_name: "" },
     };
   }
@@ -350,7 +344,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       up_mbps: 100,
       down_mbps: 100,
       auth_str: "change-me",
-      network: "udp",
       tls: { enabled: true, server_name: "" },
     };
   }
@@ -372,7 +365,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       server: "127.0.0.1",
       server_port: 1080,
       uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
-      network: "tcp",
       tls: { enabled: true, server_name: "" },
     };
   }
@@ -386,7 +378,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       password: "change-me",
       congestion_control: "cubic",
       udp_relay_mode: "native",
-      network: "udp",
       tls: { enabled: true, server_name: "" },
     };
   }
@@ -399,7 +390,6 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       password: "change-me",
       up_mbps: 100,
       down_mbps: 100,
-      network: "udp",
       tls: { enabled: true, server_name: "" },
     };
   }
