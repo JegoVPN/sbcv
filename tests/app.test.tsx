@@ -428,6 +428,23 @@ describe("SBC editor shell", () => {
     expect(hostsServerAfter.path).toBe("/etc/hosts");
   });
 
+  it("renders the route-options sub-form when a route rule action is route or route-options", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-route-rule:0"));
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const actionSelect = inspector.getByLabelText("Action") as HTMLSelectElement;
+    fireEvent.change(actionSelect, { target: { value: "route-options" } });
+    const subForm = inspector.getByTestId("route-rule-route-options");
+    expect(subForm).toBeInTheDocument();
+    fireEvent.change(within(subForm).getByLabelText("Override Address"), { target: { value: "1.1.1.1" } });
+    fireEvent.change(within(subForm).getByLabelText("Override Port"), { target: { value: "443" } });
+    const rule0 = useProjectStore.getState().config.route?.rules?.[0] as Record<string, unknown>;
+    expect(rule0.action).toBe("route-options");
+    expect(rule0.override_address).toBe("1.1.1.1");
+    expect(rule0.override_port).toBe(443);
+  });
+
   it("renders the route hub platform fields (default_interface / mark / find_process / network_strategy / network_type)", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

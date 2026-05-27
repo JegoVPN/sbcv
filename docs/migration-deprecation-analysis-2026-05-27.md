@@ -115,8 +115,8 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Deprecated:** `outbound: { type: "direct", override_address, override_port }`.
 - **Replacement:** A route rule with `action: "route-options"` or `action: "route"` carrying the same fields.
 - **Affected nodes:** outbound-direct (also conceptually inbound-direct since `override_address`/`override_port` exist there too — see audit row [inbound-direct] which flags missing UI).
-- **Code state today:** ✅ Already covered — `diagnostics.ts:595` `"direct-override-deprecated"` warning.
-- **Gap:** The `route-options` action sub-form is **not** implemented in `rule-route-rule` (audit row [rule-route-rule]). So the warning steers users toward a destination that doesn't yet exist in our editor.
+- **Code state today:** ✅ Already covered — `diagnostics.ts:595` `"direct-override-deprecated"` warning, plus `route-options` action sub-form now exists in the rule-route-rule Inspector (fixed 2026-05-27), giving the deprecation a concrete migration target.
+- **Gap:** None blocking. UX nicety: one-click "Move override to route rule" affordance.
 
 ### 1.11-E — WireGuard outbound → endpoint
 
