@@ -14,7 +14,8 @@ test("stable-first visual editor primary path", async ({ page }) => {
 
   await page.getByLabel("Route rule 1 domain suffix").fill("sg");
   await page.getByRole("button", { name: "Check", exact: true }).click();
-  await expect(page.locator(".status-pill")).toHaveText(/^checking$/i);
+  // Pill cycles through phase labels while both legs run; accept any of them.
+  await expect(page.locator(".status-pill")).toHaveText(/^(checking|parsing json|running sing-box)/i);
   await expect(page.locator(".status-pill")).toHaveText(/^valid$/i);
   await expect(page.locator(".topbar")).not.toContainText(/Checked \d/);
 

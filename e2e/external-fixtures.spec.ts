@@ -96,8 +96,16 @@ async function importFixture(page: Page, entry: ManifestEntry) {
       : entry.detected_version === "1.12" || entry.detected_version === "1.11"
         ? "1.12-stable"
         : "1.13-stable";
-  await page.getByLabel("Sing-box target").selectOption(target);
-  await page.getByLabel("Import JSON file").setInputFiles(path.join(process.cwd(), entry.fixture_path));
+  const isMobile = (page.viewportSize()?.width ?? 1280) <= 768;
+  if (isMobile) {
+    // Mobile shell collapses Target / Import into the "···" menu sheet.
+    await page.getByTestId("mobile-menu-toggle").click();
+    await page.getByLabel("Sing-box target").selectOption(target);
+    await page.getByLabel("Import JSON file").setInputFiles(path.join(process.cwd(), entry.fixture_path));
+  } else {
+    await page.getByLabel("Sing-box target").selectOption(target);
+    await page.getByLabel("Import JSON file").setInputFiles(path.join(process.cwd(), entry.fixture_path));
+  }
   await page.locator(".sbc-node-shell").first().waitFor({ state: "visible" });
 }
 

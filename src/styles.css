@@ -1918,3 +1918,312 @@ textarea {
   background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
+
+/* =================================================================
+   Mobile responsive layout (≤768px)
+   Spec: docs/superpowers/specs/2026-05-27-mobile-responsive-design.md
+   ================================================================= */
+
+/* --- Inspector compact mode ---------------------------------- */
+/* In compact mode (mobile bottom sheet), hide destructive actions
+   and JSON advanced editors. Keeps all the flat field renderers. */
+.inspector--compact .icon-danger,
+.inspector--compact .palette-action,
+.inspector--compact .inspector-json-field,
+.inspector--compact button:has(svg.lucide-trash-2) {
+  display: none !important;
+}
+
+/* --- App shell on mobile ------------------------------------- */
+.app-shell--mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace--mobile {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: block;
+}
+
+/* --- Mobile top bar ------------------------------------------ */
+.mobile-topbar {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid #252d35;
+  border-radius: 999px;
+  background: #1c1e20;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.mobile-brand {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.mobile-brand:hover {
+  background: #232629;
+}
+
+.mobile-topbar__center {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.mobile-topbar__center .status-pill {
+  font-size: 11px;
+  padding: 0 10px;
+  min-height: 30px;
+}
+
+.mobile-topbar__icon-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #333537;
+  color: #e6edf3;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.mobile-topbar__icon-btn:hover:not(:disabled) {
+  background: #494b4d;
+  color: #fff;
+}
+
+.mobile-topbar__icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Bottom sheet --------------------------------------------- */
+.bottom-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.bottom-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+  pointer-events: auto;
+}
+
+.bottom-sheet {
+  position: relative;
+  background: #14181d;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  border-top: 1px solid #2a3340;
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  transition: height 220ms cubic-bezier(0.3, 0, 0, 1);
+  overflow: hidden;
+}
+
+.bottom-sheet__handle {
+  flex-shrink: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.bottom-sheet__handle:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet__handle-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 4px;
+  background: #4d5663;
+}
+
+.bottom-sheet__body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 16px 24px;
+  overflow: hidden;
+}
+
+.bottom-sheet__body--scroll {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* --- Mobile menu / templates sheet content ------------------- */
+.mobile-sheet-header {
+  padding: 0 4px 12px;
+}
+
+.mobile-sheet-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #eef2f4;
+  margin: 0 0 4px;
+}
+
+.mobile-sheet-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #8a96a3;
+}
+
+.mobile-menu-section {
+  padding: 8px 0 12px;
+}
+
+.mobile-menu-field {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-radius: 10px;
+  background: #1a1f25;
+}
+
+.mobile-menu-field > span {
+  font-size: 13px;
+  color: #b3bcc6;
+  padding-left: 8px;
+}
+
+.mobile-menu-field select {
+  min-height: 38px;
+  margin-right: 4px;
+  border: 1px solid #303944;
+  border-radius: 8px;
+  background: #11161c;
+  color: #f4f7f9;
+  padding: 0 8px;
+}
+
+.mobile-menu-actions,
+.mobile-templates-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-row-button {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #252d35;
+  border-radius: 12px;
+  background: #1a1f25;
+  color: #eef2f4;
+  text-align: left;
+  cursor: pointer;
+  justify-content: flex-start;
+}
+
+.mobile-row-button:hover:not(:disabled) {
+  background: #20262d;
+  border-color: #2d3640;
+}
+
+.mobile-row-button > svg {
+  grid-row: 1 / span 2;
+  flex-shrink: 0;
+  color: #c7ff00;
+}
+
+.mobile-row-button__title {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mobile-row-button__meta {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 11px;
+  color: #8a96a3;
+}
+
+/* When mobile-row-button has no leading svg, title spans full width */
+.mobile-row-button:not(:has(> svg)) .mobile-row-button__title {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.mobile-row-button:not(:has(> svg)) .mobile-row-button__meta {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* --- Mobile inspector sheet body wrapper --------------------- */
+.mobile-inspector-body {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-inspector-body .inspector {
+  position: static;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  padding: 4px 0 24px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* --- Defensive mobile-only CSS (catches missed branch points) - */
+@media (max-width: 768px) {
+  .diagnostics-popover {
+    width: calc(100vw - 24px);
+    max-width: none;
+    right: 0;
+  }
+}

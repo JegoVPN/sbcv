@@ -7,6 +7,7 @@ import { deriveGraph } from "../canvas/graph";
 import type { SbcFlowNode } from "../canvas/graph";
 import { useProjectStore } from "../state/useProjectStore";
 import { getPortSpecs, SbcNode } from "./SbcNode";
+import { useViewport } from "./useViewport";
 
 const nodeTypes: NodeTypes = {
   sbc: SbcNode,
@@ -58,6 +59,7 @@ export function CanvasWorkspace() {
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
+  const { isMobile } = useViewport();
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [interaction, setInteraction] = useState<"pan" | "select">("pan");
   const fitFullGraph = useCallback(() => {
@@ -113,46 +115,55 @@ export function CanvasWorkspace() {
         connectionRadius={54}
         connectionDragThreshold={1}
         connectionLineStyle={connectionLineStyle}
-        nodesDraggable
-        edgesFocusable
+        nodesDraggable={!isMobile}
+        edgesFocusable={!isMobile}
         nodesFocusable
         elementsSelectable
-        panOnDrag={interaction === "pan"}
-        selectionOnDrag={interaction === "select"}
-        deleteKeyCode={["Backspace", "Delete"]}
+        panOnDrag={isMobile ? true : interaction === "pan"}
+        selectionOnDrag={isMobile ? false : interaction === "select"}
+        deleteKeyCode={isMobile ? null : ["Backspace", "Delete"]}
       >
         <Background color="#1f2730" gap={18} size={1} />
-        {showMiniMap ? <MiniMap pannable zoomable className="sbc-minimap" /> : null}
-        <Controls position="bottom-center" showInteractive={false}>
-          <ControlButton
-            className="sbc-ctrl-cursor"
-            onClick={() => setInteraction("select")}
-            data-active={interaction === "select"}
-            title="Select"
-            aria-label="Select mode"
-            aria-pressed={interaction === "select"}
-          >
-            <MousePointer2 size={16} strokeWidth={1.8} />
-          </ControlButton>
-          <ControlButton
-            className="sbc-ctrl-hand"
-            onClick={() => setInteraction("pan")}
-            data-active={interaction === "pan"}
-            title="Pan"
-            aria-label="Pan mode"
-            aria-pressed={interaction === "pan"}
-          >
-            <Hand size={16} strokeWidth={1.8} />
-          </ControlButton>
-          <ControlButton
-            className="sbc-ctrl-map"
-            onClick={() => setShowMiniMap((prev) => !prev)}
-            title={showMiniMap ? "Hide minimap" : "Show minimap"}
-            aria-label={showMiniMap ? "Hide minimap" : "Show minimap"}
-            aria-pressed={showMiniMap}
-          >
-            <MapIcon size={16} strokeWidth={1.8} />
-          </ControlButton>
+        {!isMobile && showMiniMap ? <MiniMap pannable zoomable className="sbc-minimap" /> : null}
+        <Controls
+          position="bottom-center"
+          showZoom={!isMobile}
+          showFitView
+          showInteractive={false}
+        >
+          {isMobile ? null : (
+            <>
+              <ControlButton
+                className="sbc-ctrl-cursor"
+                onClick={() => setInteraction("select")}
+                data-active={interaction === "select"}
+                title="Select"
+                aria-label="Select mode"
+                aria-pressed={interaction === "select"}
+              >
+                <MousePointer2 size={16} strokeWidth={1.8} />
+              </ControlButton>
+              <ControlButton
+                className="sbc-ctrl-hand"
+                onClick={() => setInteraction("pan")}
+                data-active={interaction === "pan"}
+                title="Pan"
+                aria-label="Pan mode"
+                aria-pressed={interaction === "pan"}
+              >
+                <Hand size={16} strokeWidth={1.8} />
+              </ControlButton>
+              <ControlButton
+                className="sbc-ctrl-map"
+                onClick={() => setShowMiniMap((prev) => !prev)}
+                title={showMiniMap ? "Hide minimap" : "Show minimap"}
+                aria-label={showMiniMap ? "Hide minimap" : "Show minimap"}
+                aria-pressed={showMiniMap}
+              >
+                <MapIcon size={16} strokeWidth={1.8} />
+              </ControlButton>
+            </>
+          )}
         </Controls>
       </ReactFlow>
       {selectedId ? <div className="canvas-selection-pill">Selected {selectedId}</div> : null}
