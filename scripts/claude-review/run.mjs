@@ -25,6 +25,12 @@ export function parseSeverities(stdout) {
   return out;
 }
 
+export function parseShortstat(out) {
+  const ins = out.match(/(\d+)\s+insertion/);
+  const del = out.match(/(\d+)\s+deletion/);
+  return (ins ? parseInt(ins[1], 10) : 0) + (del ? parseInt(del[1], 10) : 0);
+}
+
 export function pickGoalDoc({ run = defaultRun } = {}) {
   try {
     const raw = run("git ls-files docs/goals/*.md").trim();

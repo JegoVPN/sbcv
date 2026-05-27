@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSeverities, pickGoalDoc } from "../scripts/claude-review/run.mjs";
+import { parseSeverities, parseShortstat, pickGoalDoc } from "../scripts/claude-review/run.mjs";
 
 describe("parseSeverities", () => {
   it("extracts severities in order, ignoring non-line-start matches", () => {
@@ -51,5 +51,31 @@ describe("pickGoalDoc", () => {
       throw new Error("not a git repo");
     };
     expect(pickGoalDoc({ run })).toBeNull();
+  });
+});
+
+describe("parseShortstat", () => {
+  it("sums insertions + deletions from git --shortstat output", () => {
+    const out = " 8 files changed, 945 insertions(+), 196 deletions(-)";
+    expect(parseShortstat(out)).toBe(1141);
+  });
+
+  it("handles insertions only", () => {
+    const out = " 1 file changed, 50 insertions(+)";
+    expect(parseShortstat(out)).toBe(50);
+  });
+
+  it("handles deletions only", () => {
+    const out = " 1 file changed, 30 deletions(-)";
+    expect(parseShortstat(out)).toBe(30);
+  });
+
+  it("returns 0 for empty input", () => {
+    expect(parseShortstat("")).toBe(0);
+  });
+
+  it("handles singular forms (1 insertion / 1 deletion)", () => {
+    const out = " 1 file changed, 1 insertion(+), 1 deletion(-)";
+    expect(parseShortstat(out)).toBe(2);
   });
 });
