@@ -228,6 +228,37 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("locks vless flow + multiplex / flow + TLS mutual-exclusion diagnostics", () => {
+    const config = createStableTunSplitConfig();
+    config.outbounds = [
+      ...(config.outbounds ?? []),
+      {
+        type: "vless",
+        tag: "vless-out",
+        server: "127.0.0.1",
+        server_port: 4443,
+        uuid: "bf000d23-0752-40b4-affe-68f7707a9661",
+        flow: "xtls-rprx-vision",
+        multiplex: { enabled: true, protocol: "smux" },
+      } as never,
+    ];
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("vless-flow-multiplex-conflict");
+    expect(codes).toContain("vless-flow-requires-tls");
+
+    const last = (config.outbounds as Array<Record<string, unknown>>)[
+      (config.outbounds as Array<Record<string, unknown>>).length - 1
+    ]!;
+    last.tls = { enabled: true };
+    last.multiplex = undefined;
+    expect(
+      validateConfig(config, "stable").some(
+        (d) =>
+          d.code === "vless-flow-multiplex-conflict" || d.code === "vless-flow-requires-tls",
+      ),
+    ).toBe(false);
+  });
+
   it("warns on SSH outbound with multiple auth methods set simultaneously", () => {
     const config = createStableTunSplitConfig();
     config.outbounds = [
