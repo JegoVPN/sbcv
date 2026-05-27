@@ -258,6 +258,31 @@ describe("canonical sing-box domain model", () => {
     expect(dnsServerEdges.some((edge) => edge.id === "edge:dns-rule:1:local-dns")).toBe(false);
   });
 
+  it("seeds tls.enabled=true on derp service scaffold", () => {
+    const config = createStableTunSplitConfig();
+    config.services = [
+      ...(config.services ?? []),
+      {
+        type: "derp",
+        tag: "derp-test",
+        listen: "127.0.0.1",
+        listen_port: 8443,
+        config_path: "derper.key",
+        tls: { enabled: true, server_name: "" },
+      } as never,
+    ];
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "derp-service-needs-tls"),
+    ).toBe(false);
+
+    const derpNoTls = { ...config.services?.[config.services.length - 1] };
+    delete (derpNoTls as Record<string, unknown>).tls;
+    config.services = [...(config.services ?? []).slice(0, -1), derpNoTls as never];
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "derp-service-needs-tls"),
+    ).toBe(true);
+  });
+
   it("does not seed a dangling tailscale endpoint reference in dns-server scaffold", () => {
     const tailscaleServer = createDnsServer("tailscale", "tailscale-dns") as Record<string, unknown>;
     expect(tailscaleServer).not.toHaveProperty("endpoint");
