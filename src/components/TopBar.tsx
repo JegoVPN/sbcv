@@ -44,8 +44,36 @@ export function TopBar() {
   const target = targetFromVersion(channel, version);
   const StatusIcon =
     pillState === "checking" ? LoaderCircle : pillState === "error" ? CircleX : pillState === "warning" ? CircleAlert : CheckCircle2;
-  const statusLabel =
-    pillState === "checking" ? "Checking" : pillState === "error" ? "Invalid" : pillState === "warning" ? "Warning" : "Valid";
+
+  // While checking, the pill cycles through two phases so the user can see
+  // which leg is in flight. validateNow lands in ~250ms; the binary call
+  // can take a few hundred ms more (the worker forwards to a Cloudflare
+  // Container that spawns sing-box).
+  const checkingPhase: "both" | "local" | "binary" | null =
+    isChecking && isOfficialChecking
+      ? "both"
+      : isChecking
+        ? "local"
+        : isOfficialChecking
+          ? "binary"
+          : null;
+  const statusLabel = (() => {
+    if (checkingPhase === "both") return "Checking";
+    if (checkingPhase === "local") return "Parsing JSON";
+    if (checkingPhase === "binary") return `Running sing-box ${target.version}`;
+    if (pillState === "error") return "Invalid";
+    if (pillState === "warning") return "Warning";
+    return "Valid";
+  })();
+  const statusTitle = (() => {
+    if (checkingPhase === "both")
+      return "Checking — running semantic validator locally and calling api.sbcv.app for sing-box.";
+    if (checkingPhase === "local")
+      return "Parsing JSON and running semantic validator in your browser.";
+    if (checkingPhase === "binary")
+      return `Forwarding the config to api.sbcv.app, which spawns sing-box ${target.binaryName} in a Cloudflare Container.`;
+    return checkNotice || statusLabel;
+  })();
 
   const pillInteractive = pillState !== "checking";
   const popoverTone: "valid" | "warning" | "error" =
@@ -104,10 +132,10 @@ export function TopBar() {
         </button>
         <div className="status-pill-host">
           <button
-            key={busy ? "checking" : checkNotice || pillState}
+            key={busy ? `checking-${checkingPhase}` : checkNotice || pillState}
             type="button"
             className={`status-pill status-pill--${pillState} ${checkNotice && !busy && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
-            title={checkNotice || statusLabel}
+            title={statusTitle}
             aria-label={statusLabel}
             aria-haspopup={pillInteractive ? "dialog" : undefined}
             aria-expanded={pillInteractive ? popoverOpen : undefined}
