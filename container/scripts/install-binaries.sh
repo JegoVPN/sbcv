@@ -7,7 +7,7 @@
 #
 # Architecture is taken from TARGETARCH (Docker buildx) and defaults to amd64.
 
-set -eu
+set -eux
 
 SB_112_VERSION="${SB_112_VERSION:-1.12.25}"
 SB_STABLE_VERSION="${SB_STABLE_VERSION:-1.13.12}"
