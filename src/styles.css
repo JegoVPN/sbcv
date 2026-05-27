@@ -418,28 +418,29 @@ textarea {
   padding: 0;
 }
 
-.diagnostics-popover__item-button {
+.diagnostics-popover .diagnostics-popover__item-button {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
   width: 100%;
+  min-height: 0;
+  margin: 0;
   background: transparent;
   border: 0;
+  border-radius: 0;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 120ms ease;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
-.diagnostics-popover__item-button:hover,
-.diagnostics-popover__item-button:focus-visible {
-  background: #161d25;
+.diagnostics-popover .diagnostics-popover__item-button:hover:not(:disabled),
+.diagnostics-popover .diagnostics-popover__item-button:focus {
+  background: transparent;
+  border: 0;
   outline: none;
-}
-
-.diagnostics-popover__item-button:focus-visible {
-  box-shadow: inset 0 0 0 1px #2f3a48;
 }
 
 .diagnostics-popover__icon {
