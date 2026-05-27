@@ -38,13 +38,13 @@ RUN chmod +x install-binaries.sh \
 # ---- Stage 2: install Node.js production deps
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json ./
+COPY package.json pnpm-lock.yaml ./
 RUN corepack enable && pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # ---- Stage 3: compile TypeScript
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package.json tsconfig.json ./
+COPY package.json pnpm-lock.yaml tsconfig.json ./
 RUN corepack enable && pnpm install --frozen-lockfile --ignore-scripts
 COPY src ./src
 RUN pnpm exec tsc
