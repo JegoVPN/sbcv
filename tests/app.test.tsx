@@ -289,6 +289,23 @@ describe("SBC editor shell", () => {
     expect(config.certificate_providers?.find((provider) => provider.tag === "ts-cert")?.endpoint).toBe("ts-ep");
   });
 
+  it("creates chip-picked nodes through the same canonical port connection path", () => {
+    useProjectStore.getState().importJson(JSON.stringify({ route: {}, outbounds: [] }));
+
+    useProjectStore.getState().createNodeAndConnect(
+      "route:main",
+      "outbound",
+      { nodeKind: "outbound", nodeType: "socks", handleId: "route" },
+      { x: 320, y: 180 },
+    );
+
+    const state = useProjectStore.getState();
+    expect(state.config.route?.final).toBe("proxy-out");
+    expect(state.config.outbounds?.find((outbound) => outbound.tag === "proxy-out")).toMatchObject({ type: "socks" });
+    expect(state.layout.positions["outbound:proxy-out"]).toEqual({ x: 320, y: 180 });
+    expect(state.selectedId).toBe("outbound:proxy-out");
+  });
+
   it("links newly created outbounds to the selected upstream context", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

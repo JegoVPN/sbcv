@@ -35,6 +35,7 @@ import {
   isPortNodeKind,
   parseNodeId as parsePortNodeId,
   relationForHandles,
+  type PortNodeKind,
 } from "../domain/portRelationRegistry";
 import { parseConfigJson, stringifyConfig } from "../domain/serialization";
 import {
@@ -77,6 +78,11 @@ type PortConnection = {
   sourceHandle?: string | null;
   targetHandle?: string | null;
 };
+type CreateNodeAndConnectCandidate = {
+  nodeKind: PortNodeKind;
+  nodeType: string;
+  handleId: string;
+};
 
 type ProjectStore = {
   channel: SingBoxChannel;
@@ -109,6 +115,12 @@ type ProjectStore = {
   loadMinimal: () => void;
   createFromPalette: (kind: string) => void;
   createCompatible: (sourceId: string, kind: string) => void;
+  createNodeAndConnect: (
+    sourceId: string,
+    sourceHandle: string,
+    candidate: CreateNodeAndConnectCandidate,
+    position: { x: number; y: number },
+  ) => void;
   connectOutboundReference: (outboundTag: string, reference: OutboundReferenceKind, parentTag?: string) => void;
   connectPorts: (connection: PortConnection) => void;
   togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
@@ -676,6 +688,65 @@ function connectDirectedPortReference(
   return null;
 }
 
+function createNodeForConnectCandidate(config: SingBoxConfig, candidate: CreateNodeAndConnectCandidate) {
+  let next = config;
+  if (candidate.nodeKind === "outbound") {
+    const insertIndex = next.outbounds?.length ?? 0;
+    next = addOutbound(next, candidate.nodeType, preferredOutboundTag(candidate.nodeType));
+    const created = next.outbounds?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `outbound:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "dns-server") {
+    const insertIndex = next.dns?.servers?.length ?? 0;
+    next = addDnsServer(next, candidate.nodeType, preferredDnsServerTag(candidate.nodeType));
+    const created = next.dns?.servers?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `dns-server:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "endpoint") {
+    const insertIndex = next.endpoints?.length ?? 0;
+    next = addEndpoint(next, candidate.nodeType, preferredEndpointTag(candidate.nodeType));
+    const created = next.endpoints?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `endpoint:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "service") {
+    const insertIndex = next.services?.length ?? 0;
+    next = addService(next, candidate.nodeType, preferredServiceTag(candidate.nodeType));
+    const created = next.services?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `service:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "rule-set") {
+    const insertIndex = next.route?.rule_set?.length ?? 0;
+    next = addRuleSet(next, candidate.nodeType, preferredRuleSetTag(candidate.nodeType));
+    const created = next.route?.rule_set?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `rule-set:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "inbound") {
+    const insertIndex = next.inbounds?.length ?? 0;
+    next = addInbound(next, candidate.nodeType, preferredInboundTag(candidate.nodeType));
+    const created = next.inbounds?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `inbound:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "route") {
+    next = ensureRoute(next);
+    return { config: next, nodeId: "route:main" };
+  }
+  if (candidate.nodeKind === "route-rule") {
+    const insertIndex = next.route?.rules?.length ?? 0;
+    next = addRouteRule(next);
+    return { config: next, nodeId: `route-rule:${insertIndex}` };
+  }
+  if (candidate.nodeKind === "dns") {
+    next = next.dns ? next : addDnsServer(next, "local", preferredDnsServerTag("local"));
+    return { config: next, nodeId: "dns:main" };
+  }
+  if (candidate.nodeKind === "dns-rule") {
+    const insertIndex = next.dns?.rules?.length ?? 0;
+    next = addDnsRule(next);
+    return { config: next, nodeId: `dns-rule:${insertIndex}` };
+  }
+  return null;
+}
+
 const initialConfig = createStableTunSplitConfig();
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -999,6 +1070,26 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         connectDirectedPortReference(state.config, source, connection.sourceHandle, target, connection.targetHandle) ??
         connectDirectedPortReference(state.config, target, connection.targetHandle, source, connection.sourceHandle);
       return connected ? sync(connected, state.channel) : state;
+    }),
+
+  createNodeAndConnect: (sourceId, sourceHandle, candidate, position) =>
+    set((state) => {
+      const created = createNodeForConnectCandidate(state.config, candidate);
+      if (!created) return state;
+      const source = parseNodeId(sourceId);
+      const target = parseNodeId(created.nodeId);
+      const connected =
+        connectDirectedPortReference(created.config, source, sourceHandle, target, candidate.handleId) ??
+        connectDirectedPortReference(created.config, target, candidate.handleId, source, sourceHandle);
+      if (!connected) return state;
+      return {
+        ...sync(connected, state.channel),
+        layout: pinLayout(state.layout, created.nodeId, position.x, position.y),
+        selectedId: created.nodeId,
+        focusedNodeId: created.nodeId,
+        focusToken: state.focusToken + 1,
+        globalPanelOpen: false,
+      };
     }),
 
   togglePortConnection: (nodeId, direction, port) =>

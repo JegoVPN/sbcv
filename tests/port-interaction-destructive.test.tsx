@@ -5,7 +5,7 @@ import { useProjectStore } from "../src/state/useProjectStore";
 
 function clickPort(nodeId: string, portKey: string) {
   const node = screen.getByTestId(`node-${nodeId}`);
-  const port = node.querySelector<HTMLButtonElement>(`button[data-port-type="${portKey}"]`);
+  const port = node.querySelector<HTMLElement>(`[data-port-type="${portKey}"]`);
   if (!port) throw new Error(`Missing port ${portKey} on ${nodeId}`);
   fireEvent.click(port);
 }

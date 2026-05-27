@@ -1119,6 +1119,13 @@ textarea {
   border-color: #55616d;
 }
 
+.sbc-port.is-compatible,
+.sbc-port.is-pending {
+  border-color: #c7ff00;
+  color: #c7ff00;
+  box-shadow: 0 0 0 4px rgba(199, 255, 0, 0.12), 0 14px 30px rgba(0, 0, 0, 0.38);
+}
+
 .sbc-port.is-connected {
   background: #11161c;
   border-color: #3c4650;
@@ -1142,11 +1149,22 @@ textarea {
   place-items: center;
   background: #101418;
   color: #dfe6ed;
+  padding: 0;
   opacity: 0;
   transform: scale(0.86);
   transition:
     opacity 120ms ease,
     transform 120ms ease;
+}
+
+button.sbc-port__action {
+  cursor: pointer;
+}
+
+button.sbc-port__action:hover,
+button.sbc-port__action:focus-visible {
+  border-color: #c7ff00;
+  color: #c7ff00;
 }
 
 .sbc-port__label {
@@ -1227,6 +1245,66 @@ textarea {
 
 .react-flow__connection.valid .react-flow__connection-path {
   stroke: #c7ff00;
+}
+
+.chip-picker {
+  position: absolute;
+  z-index: 30;
+  width: min(320px, calc(100vw - 32px));
+  max-height: 360px;
+  padding: 10px;
+  border: 1px solid #2f3944;
+  border-radius: 14px;
+  background: rgba(18, 22, 27, 0.98);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46);
+}
+
+.chip-picker__search {
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #303944;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #101418;
+  color: #97a3ae;
+}
+
+.chip-picker__search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #eef2f4;
+  font: inherit;
+}
+
+.chip-picker__list {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.chip-picker__item {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  color: #eef2f4;
+  font: inherit;
+  font-weight: 760;
+  text-align: left;
+}
+
+.chip-picker__item:hover,
+.chip-picker__item:focus-visible {
+  outline: 0;
+  background: #20262d;
+  color: #c7ff00;
 }
 
 .sbc-node__summary {
