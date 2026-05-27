@@ -434,6 +434,9 @@ export function createOutbound(type: string, tag: string): OutboundConfig {
       outbounds: [],
       url: "https://www.gstatic.com/generate_204",
       interval: "3m",
+      tolerance: 50,
+      idle_timeout: "30m",
+      interrupt_exist_connections: false,
     };
   }
   return { type, tag };
