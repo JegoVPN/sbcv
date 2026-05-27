@@ -143,7 +143,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| dns-server-local | `prefer_go` not in `dnsServerHandledFields` (line 205-221). `neighbor_domain` has no "Since 1.14.0 (testing)" annotation nor channel-gate diagnostic. |
+| dns-server-local | ✅ Closed 2026-05-27. ~~`prefer_go` not in `dnsServerHandledFields`~~ fixed — added `prefer_go` to the Set and rendered a first-class toggle row inside the new `entityType === "local"` block in Inspector. Label includes "since sing-box 1.13.0" so users see the channel requirement inline. ~~`neighbor_domain` has no "Since 1.14.0 (testing)" annotation nor channel-gate diagnostic~~ fixed — new `dns-server-neighbor-domain-testing-only` diagnostic now fires on `channel === "stable"` whenever a `dns.servers[]` entry of type `local` has a non-empty `neighbor_domain[]`, mirroring the existing `ssh-cipher-testing-only` pattern. Regression tests "renders prefer_go toggle on dns-server:local with a 1.13+ note" + "emits dns-server-neighbor-domain-testing-only on stable only" lock both. |
 | dns-server-hosts | ✅ ~~`path` strongly typed as `string`~~ — fixed; multi-path support landed. ✅ ~~No `predefined` non-empty diagnostic~~ — fixed 2026-05-27, `dns-server-hosts-empty` warning fires when neither `predefined` (non-empty map) nor `path` (non-empty string/array) is set. Canvas detour port still renders for hosts despite `dnsServerDialTypes` excluding it. |
 | dns-server-udp | ✅ Clean. |
 | dns-server-tcp | ✅ ~~`missing-dns-server-address` diagnostic missing~~ — fixed 2026-05-27, `dns-server-missing-server` error fires for any udp/tcp/tls/https/quic/h3 DNS server that lacks a non-empty `server` string. |

@@ -1005,6 +1005,19 @@ export function validateConfig(
         "http_clients is version-gated for stable targets; verify with sing-box-stable.",
       );
     }
+    listItems(config.dns?.servers).forEach((server, index) => {
+      const obj = server as Record<string, unknown>;
+      if (obj.type !== "local") return;
+      if (!Array.isArray(obj.neighbor_domain) || obj.neighbor_domain.length === 0) return;
+      const tag = server.tag ?? `dns-server-${index}`;
+      push(
+        diagnostics,
+        "warning",
+        "dns-server-neighbor-domain-testing-only",
+        `/dns/servers/${index}/neighbor_domain`,
+        `DNS server "${tag}" (local) sets neighbor_domain; this field is testing-only (sing-box 1.14+).`,
+      );
+    });
   }
 
   if (channel === "stable") {
