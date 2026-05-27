@@ -228,6 +228,23 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on settings.certificate top-level block on stable channel + chrome store gate", () => {
+    const config = createStableTunSplitConfig();
+    config.certificate = { store: "system" } as never;
+    const stableNoChrome = validateConfig(config, "stable").map((d) => d.code);
+    expect(stableNoChrome).toContain("settings-certificate-block-testing-only");
+    expect(stableNoChrome).not.toContain("settings-certificate-store-chrome-testing-only");
+
+    config.certificate = { store: "chrome" } as never;
+    const stableChrome = validateConfig(config, "stable").map((d) => d.code);
+    expect(stableChrome).toContain("settings-certificate-block-testing-only");
+    expect(stableChrome).toContain("settings-certificate-store-chrome-testing-only");
+
+    const testing = validateConfig(config, "testing").map((d) => d.code);
+    expect(testing).not.toContain("settings-certificate-block-testing-only");
+    expect(testing).not.toContain("settings-certificate-store-chrome-testing-only");
+  });
+
   it("warns when a hosts DNS server has no predefined or path", () => {
     const config = createStableTunSplitConfig();
     config.dns = {

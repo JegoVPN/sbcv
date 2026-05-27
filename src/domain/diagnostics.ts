@@ -851,6 +851,32 @@ export function validateConfig(
         );
       }
     }
+    void server;
+  });
+
+  if (channel === "stable") {
+    const certificate = config.certificate as Record<string, unknown> | undefined;
+    if (certificate && typeof certificate === "object" && !Array.isArray(certificate)) {
+      push(
+        diagnostics,
+        "warning",
+        "settings-certificate-block-testing-only",
+        "/certificate",
+        "The top-level `certificate` block is testing-only (sing-box 1.12+). Stable targets may reject it; verify with sing-box-stable.",
+      );
+      if (certificate.store === "chrome") {
+        push(
+          diagnostics,
+          "warning",
+          "settings-certificate-store-chrome-testing-only",
+          "/certificate/store",
+          "certificate.store=chrome requires sing-box 1.13+ and may be unavailable on stable channels older than 1.13.",
+        );
+      }
+    }
+  }
+
+  listItems(config.dns?.servers).forEach((server, index) => {
     if (server.type === "hosts") {
       const hosts = server as Record<string, unknown>;
       const predefined = hosts.predefined;
