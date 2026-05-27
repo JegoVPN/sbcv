@@ -851,6 +851,23 @@ export function validateConfig(
         );
       }
     }
+    if (server.type === "hosts") {
+      const hosts = server as Record<string, unknown>;
+      const predefined = hosts.predefined;
+      const path = hosts.path;
+      const hasPredefined =
+        predefined && typeof predefined === "object" && !Array.isArray(predefined) && Object.keys(predefined).length > 0;
+      const hasPath = (typeof path === "string" && path.trim().length > 0) || (Array.isArray(path) && path.length > 0);
+      if (!hasPredefined && !hasPath) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-server-hosts-empty",
+          `/dns/servers/${index}`,
+          `Hosts DNS server "${server.tag ?? `dns-server-${index}`}" has no predefined entries or path; it will match nothing.`,
+        );
+      }
+    }
     if (server.type === "resolved") {
       const obj = server as Record<string, unknown>;
       const serviceTag = typeof obj.service === "string" ? obj.service : "";
