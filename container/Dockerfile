@@ -1,7 +1,12 @@
 # syntax=docker/dockerfile:1.7
 
 # Multi-stage build for the SBC validator container.
-# Final image: distroless-ish Node 22 with three pinned sing-box binaries.
+#
+# Note on libc: stages 1-3 use alpine (musl) because they only download or
+# compile, they never execute sing-box. Stage 4 (final runtime) MUST be
+# Debian-based (glibc): sing-box 1.13+ ships a CGO-built binary linked
+# against glibc with libcronet.so as a side car, and musl/alpine cannot
+# resolve the ELF interpreter even though the binary file is present.
 
 ARG SB_112_VERSION=1.12.25
 ARG SB_STABLE_VERSION=1.13.12
@@ -26,13 +31,7 @@ RUN chmod +x install-binaries.sh \
     TARGETOS="${TARGETOS}" \
     TARGETARCH="${TARGETARCH}" \
     ./install-binaries.sh \
- && echo "==== POST-INSTALL DIRECTORY DUMP ====" \
- && ls -la /stage/bin \
- && file /stage/bin/sing-box-1.12     /stage/bin/sing-box-stable     /stage/bin/sing-box-testing 2>/dev/null || true \
- && for f in /stage/bin/sing-box-1.12 /stage/bin/sing-box-stable /stage/bin/sing-box-testing; do \
-       echo "----- $f -----"; \
-       [ -x "$f" ] && "$f" version | head -n 1 || echo "MISSING OR NOT EXECUTABLE: $f"; \
-    done
+ && ls -la /stage/bin
 
 # ---- Stage 2: install Node.js production deps
 FROM node:22-alpine AS deps
@@ -48,9 +47,14 @@ RUN corepack enable && pnpm install --no-frozen-lockfile --ignore-scripts
 COPY src ./src
 RUN pnpm exec tsc
 
-# ---- Stage 4: final runtime image
-FROM node:22-alpine
-RUN addgroup -S sbc && adduser -S sbc -G sbc \
+# ---- Stage 4: final runtime image (Debian/glibc, see top-of-file note)
+FROM node:22-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -r sbc \
+ && useradd -r -g sbc -d /app -s /usr/sbin/nologin sbc \
  && mkdir -p /app/bin /app/dist /app/node_modules \
  && chown -R sbc:sbc /app
 
@@ -60,6 +64,11 @@ COPY --from=deps     /app/node_modules ./node_modules
 COPY --from=binaries /stage/bin/      ./bin/
 COPY --from=build    --chown=sbc:sbc /app/dist ./dist
 COPY --chown=sbc:sbc package.json ./
+
+# Build-time hard fail if any binary cannot actually execute on glibc.
+RUN /app/bin/sing-box-1.12    version | head -n 1 \
+ && /app/bin/sing-box-stable  version | head -n 1 \
+ && /app/bin/sing-box-testing version | head -n 1
 
 USER sbc
 
