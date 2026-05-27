@@ -3,7 +3,7 @@
 // Pre-push commit review engine. See spec:
 // docs/superpowers/specs/2026-05-28-claude-pre-push-review-gate-design.md
 
-import { execSync, spawn } from "node:child_process";
+import { execFileSync, execSync, spawn } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,7 +14,8 @@ const TIMEOUT_MS = 90_000;
 const CONCURRENCY = 4;
 const SIZE_BUDGET = 400; // AGENTS.md #8 small-atomic budget (logical lines)
 
-const defaultRun = (cmd) => execSync(cmd, { encoding: "utf8" });
+const defaultGit = (args, options = {}) =>
+  execFileSync("git", args, { encoding: "utf8", ...options });
 
 export function parseSeverities(stdout) {
   const lines = stdout.split(/\r?\n/);
@@ -32,15 +33,31 @@ export function parseShortstat(out) {
   return (ins ? parseInt(ins[1], 10) : 0) + (del ? parseInt(del[1], 10) : 0);
 }
 
-export function pickGoalDoc({ run = defaultRun } = {}) {
+export function isSizeBudgetedPath(path) {
+  return !path.endsWith(".md");
+}
+
+export function parseBudgetedNumstat(out) {
+  return out.split(/\r?\n/).reduce((total, line) => {
+    if (!line.trim()) return total;
+    const [rawAdded, rawDeleted, ...pathParts] = line.split("\t");
+    const path = pathParts.join("\t");
+    if (!path || !isSizeBudgetedPath(path)) return total;
+    const added = rawAdded === "-" ? 0 : parseInt(rawAdded, 10);
+    const deleted = rawDeleted === "-" ? 0 : parseInt(rawDeleted, 10);
+    return total + (Number.isFinite(added) ? added : 0) + (Number.isFinite(deleted) ? deleted : 0);
+  }, 0);
+}
+
+export function pickGoalDoc({ git = defaultGit } = {}) {
   try {
-    const raw = run("git ls-files docs/goals/*.md").trim();
+    const raw = git(["ls-files", "docs/goals/*.md"]).trim();
     if (!raw) return null;
     const files = raw.split(/\r?\n/).filter(Boolean);
     let best = { ts: -Infinity, file: null };
     for (const f of files) {
       const ts = parseInt(
-        run(`git log -1 --format=%ct -- ${JSON.stringify(f)}`).trim(),
+        git(["log", "-1", "--format=%ct", "--", f]).trim(),
         10,
       );
       if (Number.isFinite(ts) && ts > best.ts) best = { ts, file: f };
@@ -146,7 +163,7 @@ async function main(args) {
 
   let shas;
   try {
-    const raw = execSync(`git rev-list --reverse ${args.join(" ")}`, { encoding: "utf8" }).trim();
+    const raw = defaultGit(["rev-list", "--reverse", ...args]).trim();
     shas = raw ? raw.split(/\r?\n/) : [];
   } catch (err) {
     process.stderr.write(`claude-review: git rev-list failed: ${err.message}\n`);
@@ -181,24 +198,23 @@ async function main(args) {
   );
 
   const results = await pmap(shas, CONCURRENCY, async (sha) => {
-    const shortstat = execSync(`git show --shortstat --format='' ${sha}`, { encoding: "utf8" });
-    const size = parseShortstat(shortstat);
+    const numstat = defaultGit(["show", "--numstat", "--format=", sha]);
+    const size = parseBudgetedNumstat(numstat);
     if (size > SIZE_BUDGET) {
-      const subject = execSync(`git log -1 --format=%s ${sha}`, { encoding: "utf8" }).trim();
+      const subject = defaultGit(["log", "-1", "--format=%s", sha]).trim();
       const stdout = [
         `## Review for ${sha.slice(0, 8)} — ${subject}`,
         ``,
-        `Size pre-check: ${size} LOC exceeds AGENTS.md #8 budget (~${SIZE_BUDGET}). Short-circuiting before Claude (large commits both signal a #8 violation and exceed the per-commit review timeout).`,
+        `Size pre-check: ${size} non-Markdown LOC exceeds AGENTS.md #8 budget (~${SIZE_BUDGET}). Short-circuiting before Claude (large code commits both signal a #8 violation and exceed the per-commit review timeout).`,
         ``,
-        `SEVERITY:major — commit size ${size} LOC exceeds AGENTS.md #8 atomic budget (~${SIZE_BUDGET}); split into smaller atomics before pushing.`,
+        `SEVERITY:major — commit size ${size} non-Markdown LOC exceeds AGENTS.md #8 atomic budget (~${SIZE_BUDGET}); split into smaller atomics before pushing.`,
         `SUMMARY: 0 critical, 1 major, 0 minor.`,
         ``,
       ].join("\n");
       return { sha, stdout, severities: ["major"], error: null };
     }
-    const commitMsg = execSync(`git log -1 --format=%B ${sha}`, { encoding: "utf8" });
-    const commitDiff = execSync(`git show --stat -p ${sha}`, {
-      encoding: "utf8",
+    const commitMsg = defaultGit(["log", "-1", "--format=%B", sha]);
+    const commitDiff = defaultGit(["show", "--stat", "-p", sha], {
       maxBuffer: 32 * 1024 * 1024,
     });
     const prompt = buildPrompt({ rubric, agentsMd, commitMsg, commitDiff, goalDoc });

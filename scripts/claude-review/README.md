@@ -10,12 +10,13 @@ On `git push`:
    with `git verify-commit` (signature). Failure aborts the push.
 2. **Stage 2** (this directory): `run.mjs` reviews every commit in the
    push range in parallel (cap 4). For each commit:
-   - **Size pre-check**: if the commit's `insertions + deletions` exceeds
-     **400 logical lines** (AGENTS.md #8 atomic budget), Claude is **not**
-     invoked. The script emits a synthetic `SEVERITY:major` finding asking
-     to split the commit. Rationale: large commits both signal a #8
-     violation AND don't fit Claude's per-commit timeout — short-circuit
-     catches them cheaply.
+   - **Size pre-check**: if the commit's non-Markdown `insertions + deletions`
+     exceeds **400 logical lines** (AGENTS.md #8 atomic budget), Claude is
+     **not** invoked. The script emits a synthetic `SEVERITY:major` finding
+     asking to split the commit. Rationale: large code commits both signal a
+     #8 violation AND don't fit Claude's per-commit timeout. Markdown-heavy
+     goal/spec/docs commits still go to Claude review instead of being blocked
+     by this cheap code-size short-circuit.
    - **Claude review** (commits within budget): invoked via `claude --print`
      with `rubric.md` + `AGENTS.md` + commit diff + active goal doc. Four
      review dimensions: correctness, AGENTS.md non-negotiables (#1–#11),
