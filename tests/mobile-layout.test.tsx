@@ -61,15 +61,15 @@ describe("mobile layout switch", () => {
     // Desktop shell first: Inspector mounts without compact class
     setMatchMedia(false);
     const desktop = render(<App />);
-    const desktopInspector = desktop.container.querySelector('[data-testid="node-inspector"]');
+    const desktopInspector = document.querySelector('[data-testid="node-inspector"]');
     expect(desktopInspector).not.toBeNull();
     expect(desktopInspector!.classList.contains("inspector--compact")).toBe(false);
     desktop.unmount();
 
-    // Mobile shell: Inspector inside the bottom sheet gets compact class
+    // Mobile shell: Inspector inside the bottom sheet (portaled to body) gets compact class
     setMatchMedia(true);
     const mobile = render(<App />);
-    const mobileInspector = mobile.container.querySelector('[data-testid="node-inspector"]');
+    const mobileInspector = document.querySelector('[data-testid="node-inspector"]');
     expect(mobileInspector).not.toBeNull();
     expect(mobileInspector!.classList.contains("inspector--compact")).toBe(true);
     mobile.unmount();

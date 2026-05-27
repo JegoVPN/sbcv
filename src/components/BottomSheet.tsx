@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
 export type SheetSnap = "peek" | "mid" | "full";
@@ -78,10 +79,15 @@ export function BottomSheet({
   };
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   const currentVh = dragHeightVh ?? SNAP_VH[snap];
 
-  return (
+  // Portal to <body> so that `position: fixed` resolves against the viewport.
+  // Without this, an ancestor with `backdrop-filter` / `transform` / `filter`
+  // (e.g. .mobile-topbar) becomes the containing block and the sheet collapses
+  // to that ancestor's height.
+  return createPortal(
     <div className="bottom-sheet-root" role="dialog" aria-modal="true" aria-label={ariaLabel} data-testid={testId}>
       <div className="bottom-sheet-backdrop" onPointerDown={onClose} />
       <div
@@ -105,6 +111,7 @@ export function BottomSheet({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
