@@ -9,6 +9,8 @@ interface DiagnosticsPopoverProps {
   diagnostics: Diagnostic[];
   tone: Tone;
   onClose: () => void;
+  resolveFocusTarget?: (diagnostic: Diagnostic) => string | null;
+  onFocus?: (nodeId: string) => void;
 }
 
 const LEVEL_ORDER: Record<Diagnostic["level"], number> = {
@@ -23,7 +25,13 @@ const TONE_TITLE: Record<Tone, string> = {
   error: "Errors found",
 };
 
-export function DiagnosticsPopover({ diagnostics, tone, onClose }: DiagnosticsPopoverProps) {
+export function DiagnosticsPopover({
+  diagnostics,
+  tone,
+  onClose,
+  resolveFocusTarget,
+  onFocus,
+}: DiagnosticsPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,11 +110,14 @@ export function DiagnosticsPopover({ diagnostics, tone, onClose }: DiagnosticsPo
                 : diagnostic.level === "warning"
                   ? CircleAlert
                   : Info;
-            return (
-              <li
-                key={`${diagnostic.code}-${diagnostic.path}-${index}`}
-                className={`diagnostics-popover__item diagnostics-popover__item--${diagnostic.level}`}
-              >
+            const targetId = resolveFocusTarget?.(diagnostic) ?? null;
+            const interactive = Boolean(targetId && onFocus);
+            const key = `${diagnostic.code}-${diagnostic.path}-${index}`;
+            const itemClass = `diagnostics-popover__item diagnostics-popover__item--${diagnostic.level}${
+              interactive ? " diagnostics-popover__item--interactive" : ""
+            }`;
+            const body = (
+              <>
                 <Icon size={14} className="diagnostics-popover__icon" aria-hidden />
                 <div className="diagnostics-popover__body">
                   <div className="diagnostics-popover__code">
@@ -120,6 +131,22 @@ export function DiagnosticsPopover({ diagnostics, tone, onClose }: DiagnosticsPo
                   </div>
                   <div className="diagnostics-popover__message">{diagnostic.message}</div>
                 </div>
+              </>
+            );
+            return (
+              <li key={key} className={itemClass}>
+                {interactive && targetId ? (
+                  <button
+                    type="button"
+                    className="diagnostics-popover__item-button"
+                    title={`Focus ${targetId}`}
+                    onClick={() => onFocus?.(targetId)}
+                  >
+                    {body}
+                  </button>
+                ) : (
+                  body
+                )}
               </li>
             );
           })}

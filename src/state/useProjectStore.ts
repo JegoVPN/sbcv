@@ -85,7 +85,10 @@ type ProjectStore = {
   isChecking: boolean;
   isOfficialChecking: boolean;
   freshLoadToken: number;
+  focusToken: number;
+  focusedNodeId: string | null;
   setSelectedId: (id: string | null) => void;
+  focusNode: (id: string) => void;
   setPanelTab: (tab: PanelTab) => void;
   openGlobalPanel: (tab: PanelTab) => void;
   closeGlobalPanel: () => void;
@@ -494,8 +497,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   isChecking: false,
   isOfficialChecking: false,
   freshLoadToken: 0,
+  focusToken: 0,
+  focusedNodeId: null,
 
   setSelectedId: (id) => set({ selectedId: id }),
+  focusNode: (id) =>
+    set((state) => ({
+      selectedId: id,
+      focusedNodeId: id,
+      focusToken: state.focusToken + 1,
+      globalPanelOpen: false,
+    })),
   setPanelTab: (tab) => set({ panelTab: tab }),
   openGlobalPanel: (tab) => set({ panelTab: tab, globalPanelOpen: true, selectedId: null }),
   closeGlobalPanel: () => set({ globalPanelOpen: false }),
