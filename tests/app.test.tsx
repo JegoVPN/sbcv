@@ -380,6 +380,26 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("shows an inline deprecation banner when tls.acme is set on an inbound", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-trojan");
+    });
+    const inboundId = useProjectStore.getState().selectedId;
+    expect(inboundId).toBeTruthy();
+    const tag = inboundId!.replace("inbound:", "");
+    act(() => {
+      useProjectStore
+        .getState()
+        .updateField({ kind: "inbound", tag }, "tls", {
+          enabled: true,
+          acme: { domain: ["example.com"], email: "ops@example.com" },
+        });
+    });
+    render(<App />);
+    expect(screen.getByText(/Inline tls.acme is deprecated since sing-box 1.14/)).toBeInTheDocument();
+  });
+
   it("renders accept_default_resolvers toggle on dns-server:tailscale", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
