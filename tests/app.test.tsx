@@ -663,6 +663,31 @@ describe("SBC editor shell", () => {
     expect(direct?.override_port).toBe(53);
   });
 
+  it("renders inbound:mixed/http/socks set_system_proxy toggle in dedicated row", () => {
+    const cases: Array<{ paletteKind: string; entityType: string }> = [
+      { paletteKind: "inbound-mixed", entityType: "mixed" },
+      { paletteKind: "inbound-http", entityType: "http" },
+      { paletteKind: "inbound-socks", entityType: "socks" },
+    ];
+    for (const { paletteKind, entityType } of cases) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(paletteKind);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      const row = inspector.getByTestId("inbound-set-system-proxy");
+      const checkbox = within(row).getByRole("checkbox") as HTMLInputElement;
+      expect(checkbox.checked).toBe(false);
+      fireEvent.click(checkbox);
+      const inbound = useProjectStore
+        .getState()
+        .config.inbounds?.find((entry) => entry.type === entityType);
+      expect(inbound?.set_system_proxy).toBe(true);
+      unmount();
+    }
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
