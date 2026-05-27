@@ -25,29 +25,30 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Regression tests:** `tests/domain.test.ts` (diagnostic) + `tests/app.test.tsx` (banner — "shows an inline deprecation banner when tls.acme is set on an inbound").
 - **Remaining:** one-click "Convert to certificate_provider" migration — UX nice-to-have.
 
-### 1.14-B — Address filter fields → response matching in DNS rules
+### 1.14-B — Address filter fields → response matching in DNS rules — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** DNS rules using `ip_cidr` / `ip_is_private` (without `match_response: true`); also the legacy `rule_set_ip_cidr_accept_empty` rule item; also a DNS rule that references a rule-set containing only `ip_cidr` items.
 - **Replacement:** Use the new `evaluate` action to fetch a response, then a follow-up rule with `match_response: true` to address-match.
 - **Affected nodes:** rule-dns-rule (the matcher itself), rule-set-inline (when the inline rule-set is `ip_cidr`-only and referenced from a DNS rule).
-- **Code state today:** No diagnostic. Inspector renders `ip_cidr` / `ip_is_private` via AdvancedScalarFields with no migration hint. `evaluate` action sub-form is not implemented either (rule-dns-rule audit row).
-- **Gap:** (1) Add the `evaluate` action option to the dns-rule `action` enum + sub-form; (2) add `match_response` toggle; (3) add `dns-rule-legacy-address-filter-deprecated` diagnostic when `ip_cidr` / `ip_is_private` appear without `match_response` (channel-gated: error in `testing`, warning in `stable`); (4) detect rule-set-only-ip_cidr DNS reference and warn.
+- **Code state today:** ✅ `dns-rule-legacy-address-filter-deprecated` warning now fires whenever a DNS rule carries `ip_cidr` (non-empty array) or `ip_is_private` without `match_response: true`. Channel-agnostic (deprecated since 1.14, applies to anyone running ≥1.14).
+- **Regression test:** `tests/domain.test.ts` — "emits dns-rule-legacy-address-filter-deprecated when ip_cidr is used without match_response".
+- **Remaining (UX nice-to-haves):** `evaluate` action sub-form in Inspector + `match_response` toggle + rule-set-only-ip_cidr cross-reference detection.
 
-### 1.14-C — `dns.independent_cache` removed (cache is always per-transport)
+### 1.14-C — `dns.independent_cache` removed (cache is always per-transport) — ✅ DIAGNOSTIC LANDED earlier
 
 - **Deprecated:** `dns.independent_cache: true` (any value).
 - **Replacement:** Remove the field. The new cache automatically keys by transport name.
 - **Affected nodes:** hub-dns.
 - **Code state today:** ✅ Already covered — `diagnostics.ts:254` `"deprecated-dns-independent-cache"` warns under testing channel.
-- **Gap:** No automatic strip on import. Currently the field round-trips through the editor. Consider a Quick-fix "Remove deprecated field" affordance, plus surface the warning in the hub-dns Inspector banner (right now it's diagnostic-only).
+- **Remaining (UX nice-to-have):** No automatic strip on import — field still round-trips. A Quick-fix "Remove deprecated field" affordance + Inspector inline banner are nice but not blocking.
 
-### 1.14-D — `cache_file.store_rdrc` → `store_dns`
+### 1.14-D — `cache_file.store_rdrc` → `store_dns` — ✅ DIAGNOSTIC + BANNER LANDED earlier
 
 - **Deprecated:** `experimental.cache_file.store_rdrc`.
 - **Replacement:** `experimental.cache_file.store_dns`.
 - **Affected nodes:** settings-experimental.
 - **Code state today:** ✅ Already covered — `diagnostics.ts:987` `"cache-file-store-rdrc-deprecated"` warning, plus `Inspector.tsx:2064` Banner `"store_rdrc is deprecated in sing-box 1.14 testing. Migrate to store_dns…"`.
-- **Gap:** No auto-migrate button. Both fields still round-trip — banner only educates.
+- **Remaining (UX nice-to-have):** No auto-migrate button — banner only educates.
 
 ### 1.14-E — `ip_version` / `query_type` behaviour change
 
@@ -66,13 +67,14 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** Our editor already uses the new `type`-based format throughout (`commands.ts createDnsServer` emits the new shape). The only legacy form we still warn on is **top-level `dns.fakeip`** — `diagnostics.ts:814` `"legacy-fakeip-deprecated"`. **dns-server-https scaffold also wrongly emits an `address` field** — see audit row [dns-server-https].
 - **Gap:** (1) On `importJson`, detect any `servers[].address` string and either auto-migrate or hard-error; today the editor will accept it and silently drop unknown fields. (2) Fix `commands.ts:636` to stop emitting `address: "https://1.1.1.1/dns-query"`. (3) Detect legacy `rcode://` form and convert to a `predefined` DNS rule.
 
-### 1.12-B — Outbound DNS rule items → `domain_resolver`
+### 1.12-B — Outbound DNS rule items → `domain_resolver` — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** DNS rules using `outbound: <tag>` to route outbound traffic-originated queries to a specific DNS server.
 - **Replacement:** Put `domain_resolver` on the outbound itself (dial field), or set `route.default_domain_resolver` globally.
 - **Affected nodes:** rule-dns-rule (deprecated matcher), every outbound (`domain_resolver` is now a dial field on each), hub-route (`default_domain_resolver`).
-- **Code state today:** `sharedFieldRegistry.ts` already declares `domain_resolver` as a dial field. The hub-route shared `default_domain_resolver` exists. But the rule-dns-rule Inspector still allows `outbound:` as a matcher with no deprecation hint.
-- **Gap:** Add `dns-rule-outbound-matcher-deprecated` warning (1.12+) suggesting the migration. Provide a one-click "Move to outbound.domain_resolver" affordance.
+- **Code state today:** ✅ `dns-rule-outbound-matcher-deprecated` warning now fires whenever a DNS rule sets `outbound: <tag>` (any value, including the empty string). Migration text suggests `domain_resolver` per-outbound or `route.default_domain_resolver`. `sharedFieldRegistry.ts` already declares `domain_resolver` as a dial field; the hub-route shared `default_domain_resolver` exists. Inline migration is fully accessible from the rule and outbound editors.
+- **Regression test:** `tests/domain.test.ts` — "emits dns-rule-outbound-matcher-deprecated when a DNS rule uses outbound: matcher".
+- **Remaining (UX nice-to-have):** One-click "Move to outbound.domain_resolver" affordance.
 
 ### 1.12-C — Outbound `domain_strategy` → `domain_resolver` — ✅ CLOSED 2026-05-27
 

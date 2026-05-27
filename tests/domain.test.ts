@@ -1332,6 +1332,50 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits dns-rule-outbound-matcher-deprecated when a DNS rule uses outbound: matcher", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        rules: [
+          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
+          { outbound: "proxy", server: "fakeip" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("dns-rule-outbound-matcher-deprecated");
+  });
+
+  it("emits dns-rule-legacy-address-filter-deprecated when ip_cidr is used without match_response", () => {
+    const base = createStableTunSplitConfig();
+    const configWithoutMatch = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        rules: [
+          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
+          { ip_cidr: ["198.18.0.0/15"], server: "fakeip" },
+        ],
+      },
+    } as typeof base;
+    const noMatchCodes = validateConfig(configWithoutMatch, "stable").map((d) => d.code);
+    expect(noMatchCodes).toContain("dns-rule-legacy-address-filter-deprecated");
+    const configWithMatch = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        rules: [
+          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
+          { ip_cidr: ["198.18.0.0/15"], match_response: true, server: "fakeip" },
+        ],
+      },
+    } as typeof base;
+    const matchCodes = validateConfig(configWithMatch, "stable").map((d) => d.code);
+    expect(matchCodes).not.toContain("dns-rule-legacy-address-filter-deprecated");
+  });
+
   it("emits v2ray-stats-inbound-missing + outbound-missing when stats references unknown tags", () => {
     const base = createStableTunSplitConfig();
     const config = {
