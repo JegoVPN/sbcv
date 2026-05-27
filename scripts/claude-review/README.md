@@ -87,13 +87,43 @@ Caveats:
 - `--dry-run` skips push / PR create / issue create but still computes branch,
   head sha, and prints intended command-lines.
 
+## Fully autonomous: polled review across all open PRs
+
+`poll-and-submit.mjs` is the "watch all PRs" entrypoint, intended for
+a `/loop` schedule (e.g. every 30 min):
+
+```bash
+node scripts/claude-review/poll-and-submit.mjs
+```
+
+What it does each invocation:
+
+1. `gh pr list --state open` — enumerate every open PR in the repo.
+2. For each PR: `gh issue list --search '"Review of PR #N" in:title'`.
+   If a matching issue already exists → **skip** (idempotent).
+3. Otherwise: `git fetch origin pull/N/head:...` to pull commits, then
+   run `run.mjs` on `merge-base..head`, capture output.
+4. `gh issue create --title "Review of PR #N: <title>"` with the
+   review as body. Cross-link by commenting the PR with the issue URL.
+
+Properties:
+- **Idempotent**: re-runs are no-ops for already-reviewed PRs.
+  Re-pushing the PR head doesn't re-trigger; the existing issue
+  stands until manually closed.
+- **Fail-open**: a single PR errors → loop logs it and continues.
+- **No human in the loop**: meant for an automated `/loop` cadence.
+
+Recommended cadence: every 30 min. Run cost = subscription quota per
+unreviewed PR commit reviewed.
+
 ## Files
 
 | File | Role |
 |---|---|
 | `rubric.md` | Static prompt: severity + 4 review dimensions + output contract |
 | `run.mjs` | Review engine: spawn-per-commit, parse severities, exit non-zero on critical/major |
-| `submit.mjs` | Unattended submit: push + ensure PR + run review + open issue + cross-link |
+| `submit.mjs` | One-shot: push current branch + ensure PR + run review + open issue + cross-link |
+| `poll-and-submit.mjs` | Autonomous: poll all open PRs, open review issue for any without one |
 | `README.md` | This file |
 
 Spec: `docs/superpowers/specs/2026-05-28-claude-pre-push-review-gate-design.md`
