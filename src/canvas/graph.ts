@@ -674,7 +674,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     );
 
     if (service.detour) {
-      edges.push(makeEdge(formatEdgeId("service-detour", tag, service.detour), id, `outbound:${service.detour}`, "detour", "service-detour"));
+      const relationId = service.type === "ocm" ? "service-detour-ocm" : "service-detour-ccm";
+      edges.push(makeEdge(formatEdgeId(relationId, tag, service.detour), id, `outbound:${service.detour}`, "detour", "service-detour"));
     }
 
     const verifyEndpoints = stringRefs(service.verify_client_endpoint as string | string[] | undefined);

@@ -743,11 +743,12 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr4-disconnect-coverage`.
 Status: implemented on 2026-05-28 in `atomic/canvas-pr5-reference-coverage`.
 
 - Added registry-aligned parameterized tests that enumerate every `referenceRegistry` kind/path and assert both rename and delete behavior from canonical `SingBoxConfig`.
-- The coverage fixture exercises inbound, outbound, DNS server, endpoint, service, rule-set, HTTP client, and certificate provider references, including DNS server `domain_resolver`, NTP/clash/rule-set detours, v2ray stats arrays, service HTTP client references, resolved service links, and TLS certificate provider references across supported owners.
+- The coverage fixture exercises inbound, outbound, DNS server, endpoint, service, rule-set, HTTP client, and certificate provider references, including DNS server `domain_resolver`, NTP/clash/rule-set detours, v2ray stats arrays, resolved service links, and TLS certificate provider references across supported owners.
 - Delete tests assert that semantic diagnostics do not report stale known references after `deleteEntity` scrubs the removed entity's registered references.
-- No domain command changes were required: the current registry/command implementation already satisfied the new coverage.
+- Follow-up review fixes in this atomic remove an untraced `services[].http_client` registry path, scrub `domain_resolver` objects when their server tag is removed, avoid treating HTTP client `domain_resolver` as an outbound detour reference, and make service detour relation ids unique.
+- Frontend performance review: the only frontend touch is a static `SbcNode` icon-map addition for `certificate-provider` / `http-client` ids; no new subscription, async path, drag state, or render-time derived graph work was added.
 - Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/domain.test.ts tests/port-disconnect-symmetry.test.ts tests/port-relation-registry.test.ts tests/config-doc-capability.test.ts --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
-- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes tests and goal documentation only, not bundled fixture/exported config output.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
 
 ## Open Decisions
 

@@ -209,3 +209,5 @@ These fields are used by the first release template, fixtures, Inspector, and E2
 | `route.rules[].domain_suffix`, `domain_keyword`, `outbound` | https://sing-box.sagernet.org/configuration/route/rule/ | Route Rules ordered table |
 | `route.final`, `auto_detect_interface`, `default_domain_resolver` | https://sing-box.sagernet.org/configuration/route/ | Route Hub node and stable template |
 | `http_clients[].tag`, `engine` | https://sing-box.sagernet.org/configuration/shared/http-client/ | testing channel fixture only |
+| `route.rule_set[].http_client` | https://sing-box.sagernet.org/configuration/rule-set/ | Remote rule-set HTTP client reference |
+| `certificate_providers[].http_client`, `certificate_providers[].endpoint` | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | Certificate Provider resource references |

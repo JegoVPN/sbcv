@@ -72,9 +72,7 @@ function replaceResolverRef(value: unknown, oldTag: string, newTag: string): unk
 function removeResolverRef(value: unknown, tag: string): unknown {
   if (value === tag) return undefined;
   if (!isRecord(value)) return value;
-  const next = { ...value };
-  removeStringField(next, "server", tag);
-  return Object.values(next).some((item) => item !== undefined) ? next : undefined;
+  return value.server === tag ? undefined : value;
 }
 
 function replaceResolverField(record: MutableRecord | undefined, field: string, oldTag: string, newTag: string) {
@@ -91,7 +89,6 @@ function replaceHttpClientOutboundDetour(value: unknown, oldTag: string, newTag:
   if (!isRecord(value)) return value;
   const next = { ...value };
   replaceStringField(next, "detour", oldTag, newTag);
-  replaceResolverField(next, "domain_resolver", oldTag, newTag);
   return next;
 }
 
@@ -99,7 +96,6 @@ function removeHttpClientOutboundDetour(value: unknown, tag: string): unknown {
   if (!isRecord(value)) return value;
   const next = { ...value };
   removeStringField(next, "detour", tag);
-  removeResolverField(next, "domain_resolver", tag);
   return next;
 }
 
@@ -210,7 +206,6 @@ function replaceInlineHttpClientOutboundRefs(config: SingBoxConfig, oldTag: stri
   });
   config.http_clients?.forEach((client) => {
     replaceStringField(client as MutableRecord, "detour", oldTag, newTag);
-    replaceResolverField(client as MutableRecord, "domain_resolver", oldTag, newTag);
   });
 }
 
@@ -224,7 +219,6 @@ function removeInlineHttpClientOutboundRefs(config: SingBoxConfig, tag: string) 
   });
   config.http_clients?.forEach((client) => {
     removeStringField(client as MutableRecord, "detour", tag);
-    removeResolverField(client as MutableRecord, "domain_resolver", tag);
   });
 }
 
@@ -308,9 +302,6 @@ function replaceHttpClientRefs(config: SingBoxConfig, oldTag: string, newTag: st
   config.certificate_providers?.forEach((provider) => {
     (provider as MutableRecord).http_client = replaceHttpClientRef((provider as MutableRecord).http_client, oldTag, newTag);
   });
-  config.services?.forEach((service) => {
-    (service as MutableRecord).http_client = replaceHttpClientRef((service as MutableRecord).http_client, oldTag, newTag);
-  });
 }
 
 function removeHttpClientRefs(config: SingBoxConfig, tag: string) {
@@ -320,9 +311,6 @@ function removeHttpClientRefs(config: SingBoxConfig, tag: string) {
   });
   config.certificate_providers?.forEach((provider) => {
     (provider as MutableRecord).http_client = removeHttpClientRef((provider as MutableRecord).http_client, tag);
-  });
-  config.services?.forEach((service) => {
-    (service as MutableRecord).http_client = removeHttpClientRef((service as MutableRecord).http_client, tag);
   });
 }
 
@@ -373,7 +361,7 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   },
   {
     kind: "http-client",
-    paths: ["/route/default_http_client", "/route/rule_set/*/http_client", "/certificate_providers/*/http_client", "/services/*/http_client"],
+    paths: ["/route/default_http_client", "/route/rule_set/*/http_client", "/certificate_providers/*/http_client"],
     replace: replaceHttpClientRefs,
     remove: removeHttpClientRefs,
   },

@@ -135,7 +135,7 @@ const cases: Array<{
   },
   {
     name: "service detour",
-    edgeId: formatEdgeId("service-detour", "ccm", "proxy"),
+    edgeId: formatEdgeId("service-detour-ccm", "ccm", "proxy"),
     assert: (config) => expect(config.services?.find((service) => service.tag === "ccm")?.detour).toBeUndefined(),
   },
   {

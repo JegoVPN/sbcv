@@ -9,6 +9,8 @@ export const PORT_NODE_KINDS = [
   "service",
   "outbound",
   "rule-set",
+  "certificate-provider",
+  "http-client",
   "settings",
 ] as const;
 
@@ -104,8 +106,8 @@ export const portRelations: PortRelation[] = [
   relation("outbound-detour", "writable", endpoint("output", "outbound", "dial-detour", "Downstream dial detour", "network", undefined, ["block", "selector", "urltest", "dns"]), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network"), "/outbounds/*/detour", ["outbound"]),
   relation("dns-server-endpoint", "writable", endpoint("output", "dns-server", "endpoint", "Tailscale endpoint", "waypoints", "tailscale"), endpoint("input", "endpoint", "dns-server", "Upstream Tailscale DNS server", "server", "tailscale"), "/dns/servers/*/endpoint", ["endpoint"]),
   relation("endpoint-detour", "writable", endpoint("output", "endpoint", "dial-detour", "Dial detour outbound", "network"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network"), "/endpoints/*/detour", ["outbound"]),
-  relation("service-detour", "writable", endpoint("output", "service", "detour", "API detour outbound", "network", "ccm"), endpoint("input", "outbound", "service-detour", "Upstream service detour target", "server"), "/services/*/detour", ["outbound"]),
-  relation("service-detour", "writable", endpoint("output", "service", "detour", "API detour outbound", "network", "ocm"), endpoint("input", "outbound", "service-detour", "Upstream service detour target", "server"), "/services/*/detour", ["outbound"]),
+  relation("service-detour-ccm", "writable", endpoint("output", "service", "detour", "API detour outbound", "network", "ccm"), endpoint("input", "outbound", "service-detour", "Upstream service detour target", "server"), "/services/*/detour", ["outbound"]),
+  relation("service-detour-ocm", "writable", endpoint("output", "service", "detour", "API detour outbound", "network", "ocm"), endpoint("input", "outbound", "service-detour", "Upstream service detour target", "server"), "/services/*/detour", ["outbound"]),
   relation("rule-set-download", "writable", endpoint("output", "rule-set", "download-detour", "Download detour", "network", "remote"), endpoint("input", "outbound", "rule-set-download", "Upstream Rule Set download detour", "layers"), "/route/rule_set/*/download_detour", ["outbound"]),
   relation("service-verify-endpoint", "writable", endpoint("output", "service", "verify-client-endpoint", "Verify client endpoint", "waypoints", "derp"), endpoint("input", "endpoint", "derp-service", "Upstream DERP service", "server", "tailscale"), "/services/*/verify_client_endpoint", ["endpoint"]),
   relation("service-ssm-inbound", "writable", endpoint("output", "inbound", "service", "SSM API service", "server", "shadowsocks"), endpoint("input", "service", "managed-inbound", "Managed Shadowsocks inbound", "radio", "ssm-api"), "/services/*/servers", ["inbound"]),
@@ -138,6 +140,7 @@ export function decodeEdgePart(value: string) {
 }
 
 export function formatEdgeId(relationId: string, ...parts: Array<string | number>) {
+  if (relationId.includes(":")) throw new Error(`Relation id cannot contain ":": ${relationId}`);
   return ["edge", relationId, ...parts.map(encodeEdgePart)].join(":");
 }
 
