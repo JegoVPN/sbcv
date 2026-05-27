@@ -1332,6 +1332,52 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits v2ray-stats-inbound-missing + outbound-missing when stats references unknown tags", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      experimental: {
+        ...(base.experimental ?? {}),
+        v2ray_api: {
+          listen: "127.0.0.1:8443",
+          stats: {
+            enabled: true,
+            inbounds: ["does-not-exist"],
+            outbounds: ["also-not-real"],
+          },
+        },
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("v2ray-stats-inbound-missing");
+    expect(codes).toContain("v2ray-stats-outbound-missing");
+  });
+
+  it("does NOT emit v2ray-stats-*-missing when tags exist", () => {
+    const base = createStableTunSplitConfig();
+    const existingInboundTag = base.inbounds?.[0]?.tag;
+    const existingOutboundTag = base.outbounds?.[0]?.tag;
+    expect(existingInboundTag).toBeTruthy();
+    expect(existingOutboundTag).toBeTruthy();
+    const config = {
+      ...base,
+      experimental: {
+        ...(base.experimental ?? {}),
+        v2ray_api: {
+          listen: "127.0.0.1:8443",
+          stats: {
+            enabled: true,
+            inbounds: [existingInboundTag!],
+            outbounds: [existingOutboundTag!],
+          },
+        },
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).not.toContain("v2ray-stats-inbound-missing");
+    expect(codes).not.toContain("v2ray-stats-outbound-missing");
+  });
+
   it("emits dns-optimistic-testing-only + dns-timeout-testing-only on stable channel", () => {
     const base = createStableTunSplitConfig();
     const config = {

@@ -1254,6 +1254,45 @@ export function validateConfig(
         );
       }
     }
+    const v2rayApi = (experimental as Record<string, unknown>).v2ray_api;
+    if (v2rayApi && typeof v2rayApi === "object" && !Array.isArray(v2rayApi)) {
+      const stats = (v2rayApi as Record<string, unknown>).stats;
+      if (stats && typeof stats === "object" && !Array.isArray(stats)) {
+        const inboundTags = new Set(
+          (config.inbounds ?? []).map((i) => i.tag).filter((tag): tag is string => Boolean(tag)),
+        );
+        const inboundsList = Array.isArray((stats as Record<string, unknown>).inbounds)
+          ? ((stats as Record<string, unknown>).inbounds as unknown[])
+          : [];
+        inboundsList.forEach((tag) => {
+          if (typeof tag !== "string") return;
+          if (!inboundTags.has(tag)) {
+            push(
+              diagnostics,
+              "error",
+              "v2ray-stats-inbound-missing",
+              "/experimental/v2ray_api/stats/inbounds",
+              `experimental.v2ray_api.stats.inbounds references missing inbound "${tag}".`,
+            );
+          }
+        });
+        const outboundsList = Array.isArray((stats as Record<string, unknown>).outbounds)
+          ? ((stats as Record<string, unknown>).outbounds as unknown[])
+          : [];
+        outboundsList.forEach((tag) => {
+          if (typeof tag !== "string") return;
+          if (!outboundTags.has(tag)) {
+            push(
+              diagnostics,
+              "error",
+              "v2ray-stats-outbound-missing",
+              "/experimental/v2ray_api/stats/outbounds",
+              `experimental.v2ray_api.stats.outbounds references missing outbound "${tag}".`,
+            );
+          }
+        });
+      }
+    }
     const clashApi = (experimental as Record<string, unknown>).clash_api;
     if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
       const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
