@@ -153,6 +153,7 @@ const inboundHandledFields = new Set([
   "loopback_address",
   "endpoint_independent_nat",
   "platform",
+  "quic_congestion_control",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2707,6 +2708,38 @@ export function Inspector() {
                 </optgroup>
               </select>
             </label>
+          ) : null}
+          {entityType === "naive" ? (
+            <>
+              <label className="field" data-testid="inbound-naive-network">
+                <span>Network</span>
+                <select
+                  value={typeof entity.network === "string" ? entity.network : ""}
+                  onChange={(event) => updateField(ref, "network", event.target.value || undefined)}
+                >
+                  <option value="">(both)</option>
+                  <option value="tcp">tcp</option>
+                  <option value="udp">udp</option>
+                </select>
+              </label>
+              <label className="field" data-testid="inbound-naive-quic-congestion-control">
+                <span>QUIC Congestion Control</span>
+                <select
+                  value={typeof entity.quic_congestion_control === "string" ? entity.quic_congestion_control : ""}
+                  onChange={(event) =>
+                    updateField(ref, "quic_congestion_control", event.target.value || undefined)
+                  }
+                >
+                  <option value="">(default — bbr)</option>
+                  <option value="bbr">bbr</option>
+                  <option value="bbr_standard">bbr_standard</option>
+                  <option value="bbr2">bbr2</option>
+                  <option value="bbr2_variant">bbr2_variant</option>
+                  <option value="cubic">cubic</option>
+                  <option value="reno">reno</option>
+                </select>
+              </label>
+            </>
           ) : null}
           {(() => {
             const schema = INBOUND_USER_SCHEMAS[entityType ?? ""];
