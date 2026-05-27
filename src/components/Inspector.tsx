@@ -3245,11 +3245,57 @@ export function Inspector() {
             />
           ) : null}
           {entityType === "hysteria" ? (
-            <SensitiveTextField
-              label="Auth (string)"
-              value={String(entity.auth_str ?? "")}
-              onChange={(next) => updateField(ref, "auth_str", next || undefined)}
-            />
+            <>
+              <SensitiveTextField
+                label="Auth (string)"
+                value={String(entity.auth_str ?? "")}
+                onChange={(next) => updateField(ref, "auth_str", next || undefined)}
+              />
+              <label className="field" data-testid="outbound-hysteria-up-mbps">
+                <span>Up Mbps</span>
+                <input
+                  type="number"
+                  value={typeof entity.up_mbps === "number" ? entity.up_mbps : ""}
+                  placeholder="empty = no rate limit"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (!raw) return updateField(ref, "up_mbps", undefined);
+                    const parsed = Number(raw);
+                    updateField(
+                      ref,
+                      "up_mbps",
+                      Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined,
+                    );
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="outbound-hysteria-down-mbps">
+                <span>Down Mbps</span>
+                <input
+                  type="number"
+                  value={typeof entity.down_mbps === "number" ? entity.down_mbps : ""}
+                  placeholder="empty = no rate limit"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (!raw) return updateField(ref, "down_mbps", undefined);
+                    const parsed = Number(raw);
+                    updateField(
+                      ref,
+                      "down_mbps",
+                      Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined,
+                    );
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="outbound-hysteria-obfs">
+                <span>Obfs (string, optional)</span>
+                <input
+                  value={typeof entity.obfs === "string" ? entity.obfs : ""}
+                  placeholder="obfuscation password"
+                  onChange={(event) => updateField(ref, "obfs", event.target.value || undefined)}
+                />
+              </label>
+            </>
           ) : null}
           {entityType === "ssh" ? (
             <>
