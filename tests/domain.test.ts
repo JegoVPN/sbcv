@@ -228,6 +228,36 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on Hysteria v1 in both inbound and outbound", () => {
+    const config = createStableTunSplitConfig();
+    config.outbounds = [
+      ...(config.outbounds ?? []),
+      {
+        type: "hysteria",
+        tag: "hy1-out",
+        server: "127.0.0.1",
+        server_port: 8443,
+        up_mbps: 100,
+        down_mbps: 100,
+        tls: { enabled: true },
+      } as never,
+    ];
+    config.inbounds = [
+      ...(config.inbounds ?? []),
+      {
+        type: "hysteria",
+        tag: "hy1-in",
+        listen: "127.0.0.1",
+        listen_port: 8443,
+        users: [{ name: "u", auth_str: "p" }],
+        tls: { enabled: true },
+      } as never,
+    ];
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("hysteria-v1-deprecated");
+    expect(codes).toContain("inbound-hysteria-v1-deprecated");
+  });
+
   it("locks vless flow + multiplex / flow + TLS mutual-exclusion diagnostics", () => {
     const config = createStableTunSplitConfig();
     config.outbounds = [
