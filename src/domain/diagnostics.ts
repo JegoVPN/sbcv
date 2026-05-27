@@ -838,6 +838,19 @@ export function validateConfig(
         );
       }
     }
+    const serverRequiredTypes = new Set(["udp", "tcp", "tls", "https", "quic", "h3"]);
+    if (serverRequiredTypes.has(server.type)) {
+      const value = (server as Record<string, unknown>).server;
+      if (typeof value !== "string" || !value.trim()) {
+        push(
+          diagnostics,
+          "error",
+          "dns-server-missing-server",
+          `/dns/servers/${index}/server`,
+          `DNS server "${server.tag ?? `dns-server-${index}`}" of type ${server.type} requires a server address.`,
+        );
+      }
+    }
     if (server.type === "resolved") {
       const obj = server as Record<string, unknown>;
       const serviceTag = typeof obj.service === "string" ? obj.service : "";
