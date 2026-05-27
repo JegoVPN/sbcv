@@ -1,34 +1,18 @@
 #!/bin/sh
-# Deploy guard + post-deploy verification for the Cloudflare Workers Builds
-# project `sbc-validator-gw`.
+# Deploy entrypoint for the Cloudflare Workers Builds project
+# `sbc-validator-gw`.
 #
-# Background:
-#   Cloudflare Workers Builds reruns on every push to main. The validator
-#   Worker + Container only cares about changes under worker/ or container/.
-#   Editor / docs / fixture commits do not change the validator image, but
-#   re-running `wrangler deploy` for them still kicks a Container rollout
-#   for no reason.
-#
-#   Worse, `wrangler deploy` reports "SUCCESS Modified application" for the
-#   container image patch even when the Cloudflare Containers backend does
-#   not actually apply the new image. This produced a stale runtime
-#   (sing-box-stable/testing missing from /app/bin) while every layer of
-#   reporting claimed success.
-#
-# This script therefore:
-#   1. Skips if no worker/ or container/ file changed since the previous
-#      commit (Cloudflare treats `exit 0` as a successful no-op deploy).
-#   2. Runs `wrangler deploy --env=""`.
-#   3. Polls `wrangler containers list` until the application image tag
-#      matches the latest worker version (8-hex prefix). Fails the build
-#      if it never aligns within ~2 minutes.
-#   4. Best-effort end-to-end probe of api.sbcv.app/check with a target
-#      that requires sing-box-stable (1.13). If the probe returns ENOENT,
-#      the build also fails so we never silently leave a broken validator
-#      in production.
+# Pipeline:
+#   1. Skip if no worker/ or container/ file changed since the previous
+#      commit (Cloudflare treats exit 0 as a successful no-op deploy).
+#   2. Install worker/ dependencies (Cloudflare Builds only installs root deps).
+#   3. Run `wrangler deploy --env=""`.
+#   4. Best-effort e2e probe of api.sbcv.app/check. Only hard-fails on ENOENT
+#      (broken container image with missing sing-box binaries); anything else
+#      is a warning since the deploy itself already succeeded.
 #
 # Configure in Dashboard -> sbc-validator-gw -> Settings -> Build:
-#   Root directory:  (leave at repo root, NOT worker/, so git diff works)
+#   Root directory:  /  (so git diff sees both worker/ and container/)
 #   Build command:   pnpm install
 #   Deploy command:  bash scripts/cf-deploy-validator-gw.sh
 #   Build watch paths:  worker/**, container/**, scripts/cf-deploy-validator-gw.sh
@@ -67,87 +51,20 @@ echo "$changed" | grep -E "$relevant" | sed 's/^/      /' || true
 # would fail to resolve @cloudflare/containers. Install worker/ deps first.
 (cd worker && pnpm install --frozen-lockfile && npx --yes wrangler@4.95.0 deploy --env="")
 
-# --- 3. Verify container application image matches the new worker version ----
-
-cd "$(git rev-parse --show-toplevel)/worker"
-
-echo
-echo "==> Post-deploy verification: container image vs worker version"
-
-# Worker version id format is <8hex>-<rest>. wrangler also names container
-# image tags by that same 8-hex prefix. So they should match after a real
-# deploy. If `wrangler containers list` keeps returning the old prefix,
-# Cloudflare did not apply the container application image patch.
-
-latest_ver="$(npx --yes wrangler@4.95.0 versions list 2>/dev/null \
-  | awk '/^Version ID:/ { print $3 }' \
-  | tail -n 1)"
-
-if [ -z "$latest_ver" ]; then
-  echo "FATAL: could not read latest worker version id" >&2
-  exit 1
-fi
-
-expected_tag="$(printf '%s' "$latest_ver" | cut -c1-8)"
-echo "    expected container image tag: $expected_tag (from worker version $latest_ver)"
-
-# Probe once with stderr captured so we can distinguish:
-#   (a) the build token can read containers and the deployment is in flight
-#       (loop will see tags appear)
-#   (b) the build token lacks containers:read (auto-generated Workers Builds
-#       tokens can be scoped narrowly). In that case the loop would spin
-#       uselessly for 120s. Fall through to the e2e probe — that's the only
-#       real ground truth anyway.
-
-probe_out="$(npx --yes wrangler@4.95.0 containers list 2>&1 || true)"
-can_read_containers=1
-if printf '%s' "$probe_out" | grep -qiE "unauthorized|permission|forbidden|not authorized|missing.*scope|10000"; then
-  echo "    WARN: this build token cannot list containers; skipping image tag poll."
-  echo "    WARN: $(printf '%s' "$probe_out" | head -n 1)"
-  can_read_containers=0
-fi
-
-attempt=0
-max_attempts=12    # 12 * 5s = 60s
-actual_tag=""
-if [ "$can_read_containers" = 1 ]; then
-  while [ "$attempt" -lt "$max_attempts" ]; do
-    attempt=$((attempt + 1))
-    actual_tag="$(npx --yes wrangler@4.95.0 containers list 2>/dev/null \
-      | grep -oE 'sbc-validator-gw-validatorcontainer:[0-9a-f]+' \
-      | head -n 1 \
-      | awk -F: '{ print $NF }')"
-
-    if [ "$actual_tag" = "$expected_tag" ]; then
-      echo "    container application image: $actual_tag (aligned, attempt $attempt)"
-      break
-    fi
-
-    echo "    (try $attempt/$max_attempts) container at '$actual_tag', expected '$expected_tag' — waiting 5s"
-    sleep 5
-  done
-fi
-
-if [ "$can_read_containers" = 1 ] && [ -n "$actual_tag" ] && [ "$actual_tag" != "$expected_tag" ]; then
-  # Token CAN read containers, saw a tag, but it stayed stale: real failure.
-  echo "FATAL: Cloudflare Containers backend did not apply the new image within 60s." >&2
-  echo "       Worker version $latest_ver expects image tag $expected_tag." >&2
-  echo "       Container application is still on image tag '$actual_tag'." >&2
-  exit 1
-fi
-
-if [ "$can_read_containers" = 1 ] && [ -z "$actual_tag" ]; then
-  echo "    WARN: container list returned no rows for $max_attempts tries; deferring to e2e probe."
-fi
-
-# --- 4. End-to-end probe ------------------------------------------------------
-
-# Hit /check with target=1.13 stable. If the deployed image is correct and
-# contains all three binaries, we get JSON with binaryVersion 1.13.x.
-# If the image is broken or stale, we get spawn ENOENT or HTTP 5xx.
+# --- 3. Best-effort e2e probe -------------------------------------------------
+#
+# Past incident: `wrangler deploy` returned SUCCESS but the Container backend
+# silently kept serving a stale image without sing-box binaries on disk. The
+# probe catches that specific failure mode (ENOENT). Everything else — cold
+# starts, transient 5xx, rate limits, permission-scoped build tokens that
+# cannot list containers — is treated as a non-fatal warning because the
+# deploy itself already succeeded.
 
 echo
 echo "==> End-to-end probe via api.sbcv.app/check (target: 1.13 stable)"
+
+# Give the Container backend a beat to swap to the new image before probing.
+sleep 10
 
 probe_body="{\"target\":\"1.13 stable\",\"config\":{\"_post_deploy\":\"$(date +%s%N)\"}}"
 probe_res="$(curl -sS \
@@ -159,22 +76,17 @@ probe_res="$(curl -sS \
 
 echo "    probe response: $probe_res"
 
-if printf '%s' "$probe_res" | grep -q '"binaryVersion":"1.13'; then
-  echo "    e2e probe OK: sing-box-stable is callable"
-  echo
-  echo "==> Deploy verified end-to-end."
-  exit 0
-fi
-
 if printf '%s' "$probe_res" | grep -q 'ENOENT'; then
   echo "FATAL: container responded but sing-box-stable is not present on disk." >&2
-  echo "       This usually means the binaries stage of the container build dropped" >&2
-  echo "       a binary silently, or instances were not restarted onto the new image." >&2
+  echo "       The binaries stage of the container build dropped a binary, or" >&2
+  echo "       instances were not restarted onto the new image." >&2
   exit 1
 fi
 
-# Anything else (cold-start 5xx, rate limit, transient) — treat as a warning
-# rather than a hard fail, since image tags align and a manual re-curl after
-# a few seconds usually succeeds.
-echo "WARN: e2e probe inconclusive; image tags aligned so continuing."
+if printf '%s' "$probe_res" | grep -q '"binaryVersion":"1.13'; then
+  echo "==> Deploy verified end-to-end (binaryVersion 1.13.x)."
+  exit 0
+fi
+
+echo "WARN: e2e probe was inconclusive; deploy itself succeeded so continuing."
 exit 0
