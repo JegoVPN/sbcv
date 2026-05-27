@@ -1332,6 +1332,26 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits endpoint-tailscale-advertise-tags-1-13-only + system-interface gate on testing channel", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      endpoints: [
+        ...(((base as Record<string, unknown>).endpoints as Record<string, unknown>[]) ?? []),
+        {
+          type: "tailscale",
+          tag: "ts-ep",
+          auth_key: "tskey",
+          advertise_tags: ["tag:server"],
+          system_interface: "tailscale0",
+        },
+      ],
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("endpoint-tailscale-advertise-tags-1-13-only");
+    expect(codes).toContain("endpoint-tailscale-system-interface-1-13-only");
+  });
+
   it("emits hysteria-realm-users-required when users[] is empty", () => {
     const base = createStableTunSplitConfig();
     const config = {

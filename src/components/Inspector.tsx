@@ -257,6 +257,8 @@ const endpointHandledFields = new Set([
   "control_url",
   "advertise_routes",
   "advertise_tags",
+  "auth_key",
+  "system_interface",
   "relay_server_static_endpoints",
   ...dialSharedFields,
 ]);
@@ -4466,6 +4468,12 @@ export function Inspector() {
                 kind="build-tag"
                 text="Build-tag gate: endpoint `tailscale` requires sing-box built with the `with_tailscale` tag. Stock release binaries omit Tailscale support."
               />
+              <SensitiveTextField
+                label="Auth Key"
+                value={String(entity.auth_key ?? "")}
+                onChange={(next) => updateField(ref, "auth_key", next || undefined)}
+                placeholder="tskey-auth-..."
+              />
               <label className="field">
                 <span>State Directory</span>
                 <input
@@ -4488,10 +4496,20 @@ export function Inspector() {
                 />
               </label>
               <label className="field">
-                <span>Advertise Tags</span>
+                <span>Advertise Tags (since sing-box 1.13.0)</span>
                 <input
                   value={toList(entity.advertise_tags)}
                   onChange={(event) => updateField(ref, "advertise_tags", fromList(event.target.value))}
+                />
+              </label>
+              <label className="field">
+                <span>System Interface (since sing-box 1.13.0)</span>
+                <input
+                  value={typeof entity.system_interface === "string" ? entity.system_interface : ""}
+                  placeholder="tailscale0"
+                  onChange={(event) =>
+                    updateField(ref, "system_interface", event.target.value || undefined)
+                  }
                 />
               </label>
             </>

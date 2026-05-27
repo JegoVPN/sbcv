@@ -1085,6 +1085,29 @@ export function validateConfig(
         `DNS server "${tag}" (local) sets neighbor_domain; this field is testing-only (sing-box 1.14+).`,
       );
     });
+    listItems(((config as Record<string, unknown>).endpoints as Record<string, unknown>[]) ?? []).forEach((endpoint, index) => {
+      const obj = endpoint as Record<string, unknown>;
+      if (obj.type !== "tailscale") return;
+      const tag = (obj.tag as string | undefined) ?? `endpoint-${index}`;
+      if (Array.isArray(obj.advertise_tags) && obj.advertise_tags.length > 0) {
+        push(
+          diagnostics,
+          "warning",
+          "endpoint-tailscale-advertise-tags-1-13-only",
+          `/endpoints/${index}/advertise_tags`,
+          `Endpoint "${tag}" (tailscale) sets advertise_tags; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
+        );
+      }
+      if (typeof obj.system_interface === "string" && obj.system_interface.trim() !== "") {
+        push(
+          diagnostics,
+          "warning",
+          "endpoint-tailscale-system-interface-1-13-only",
+          `/endpoints/${index}/system_interface`,
+          `Endpoint "${tag}" (tailscale) sets system_interface; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
+        );
+      }
+    });
   }
 
   listItems(config.dns?.servers).forEach((server, index) => {
