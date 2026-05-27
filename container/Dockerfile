@@ -7,6 +7,8 @@
 # Debian-based (glibc): sing-box 1.13+ ships a CGO-built binary linked
 # against glibc with libcronet.so as a side car, and musl/alpine cannot
 # resolve the ELF interpreter even though the binary file is present.
+#
+# Cache-bust marker (touch to force a fresh image hash): 2026-05-27-1
 
 ARG SB_112_VERSION=1.12.25
 ARG SB_STABLE_VERSION=1.13.12
