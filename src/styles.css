@@ -2221,9 +2221,16 @@ textarea {
 
 /* --- Defensive mobile-only CSS (catches missed branch points) - */
 @media (max-width: 768px) {
+  /* Popover anchors to the pill on desktop (`position:absolute; right:0`).
+     On mobile the pill sits centred in the top bar — `right:0` would push the
+     ~full-width popover off the left edge of the viewport. Pin it to the
+     viewport edges instead so it stays inside the visible area. */
   .diagnostics-popover {
-    width: calc(100vw - 24px);
+    position: fixed;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    width: auto;
     max-width: none;
-    right: 0;
   }
 }
