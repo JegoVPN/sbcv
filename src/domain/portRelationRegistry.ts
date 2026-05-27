@@ -48,6 +48,7 @@ export type PortRelation = {
   canonicalPath?: string;
   stableGate?: "stable" | "testing";
   createTarget?: string[];
+  disconnectable?: boolean;
 };
 
 export type ParsedNodeId = {
@@ -79,8 +80,9 @@ function relation(
   target: PortEndpoint,
   canonicalPath?: string,
   createTarget?: string[],
+  disconnectable?: boolean,
 ): PortRelation {
-  return { id, mode, source, target, canonicalPath, createTarget };
+  return { id, mode, source, target, canonicalPath, createTarget, disconnectable };
 }
 
 export const portRelations: PortRelation[] = [
@@ -107,8 +109,8 @@ export const portRelations: PortRelation[] = [
   relation("rule-set-download", "writable", endpoint("output", "rule-set", "download-detour", "Download detour", "network", "remote"), endpoint("input", "outbound", "rule-set-download", "Upstream Rule Set download detour", "layers"), "/route/rule_set/*/download_detour", ["outbound"]),
   relation("service-verify-endpoint", "writable", endpoint("output", "service", "verify-client-endpoint", "Verify client endpoint", "waypoints", "derp"), endpoint("input", "endpoint", "derp-service", "Upstream DERP service", "server", "tailscale"), "/services/*/verify_client_endpoint", ["endpoint"]),
   relation("service-ssm-inbound", "writable", endpoint("output", "inbound", "service", "SSM API service", "server", "shadowsocks"), endpoint("input", "service", "managed-inbound", "Managed Shadowsocks inbound", "radio", "ssm-api"), "/services/*/servers", ["inbound"]),
-  relation("dns-server-service", "readonly", endpoint("output", "dns-server", "service", "systemd-resolved service", "server", "resolved"), endpoint("input", "service", "dns-server", "Upstream resolved DNS server", "globe", "resolved"), "/dns/servers/*/service"),
-  relation("settings-ntp-detour", "readonly", endpoint("output", "settings", "dial-detour", "NTP detour outbound", "network", "ntp"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network"), "/ntp/detour", ["outbound"]),
+  relation("dns-server-service", "readonly", endpoint("output", "dns-server", "service", "systemd-resolved service", "server", "resolved"), endpoint("input", "service", "dns-server", "Upstream resolved DNS server", "globe", "resolved"), "/dns/servers/*/service", undefined, true),
+  relation("settings-ntp-detour", "readonly", endpoint("output", "settings", "dial-detour", "NTP detour outbound", "network", "ntp"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network"), "/ntp/detour", ["outbound"], true),
 ];
 
 export function isPortNodeKind(value: string): value is PortNodeKind {
@@ -172,6 +174,20 @@ export function relationForHandles(
     entry.source.portKey === sourceHandle &&
     entry.target.portKey === targetHandle,
   );
+}
+
+export function relationForId(relationId: string) {
+  return portRelations.find((entry) => entry.id === relationId);
+}
+
+export function relationIsDisconnectable(relationId: string) {
+  const entry = relationForId(relationId);
+  return entry ? entry.disconnectable ?? entry.mode === "writable" : false;
+}
+
+export function edgeIsDisconnectable(edgeId: string) {
+  const parsed = parseEdgeId(edgeId);
+  return parsed ? relationIsDisconnectable(parsed.relationId) : false;
 }
 
 export function portEndpointsForNode(kind: PortNodeKind, type: string, direction: PortDirection) {

@@ -1,5 +1,5 @@
 import type { Edge, Node } from "@xyflow/react";
-import { formatEdgeId, type PortNodeKind } from "../domain/portRelationRegistry";
+import { edgeIsDisconnectable, formatEdgeId, type PortNodeKind } from "../domain/portRelationRegistry";
 import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
@@ -139,6 +139,7 @@ function makeEdge(
     sourceHandle,
     targetHandle,
     animated,
+    deletable: edgeIsDisconnectable(id),
   };
 }
 
