@@ -906,6 +906,24 @@ describe("SBC editor shell", () => {
     expect(dns?.timeout).toBe("7s");
   });
 
+  it("brand pill click clears selection + closes panel + bumps freshLoadToken", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().openGlobalPanel("json");
+      useProjectStore.getState().setSelectedId("route:main");
+    });
+    expect(useProjectStore.getState().selectedId).toBe("route:main");
+    expect(useProjectStore.getState().globalPanelOpen).toBe(true);
+    const beforeToken = useProjectStore.getState().freshLoadToken;
+    render(<App />);
+    const brand = screen.getByTestId("brand-home");
+    expect(brand.tagName).toBe("BUTTON");
+    fireEvent.click(brand);
+    expect(useProjectStore.getState().selectedId).toBeNull();
+    expect(useProjectStore.getState().globalPanelOpen).toBe(false);
+    expect(useProjectStore.getState().freshLoadToken).toBe(beforeToken + 1);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

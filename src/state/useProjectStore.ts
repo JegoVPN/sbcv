@@ -89,6 +89,7 @@ type ProjectStore = {
   setPanelTab: (tab: PanelTab) => void;
   openGlobalPanel: (tab: PanelTab) => void;
   closeGlobalPanel: () => void;
+  goHome: () => void;
   setChannel: (channel: SingBoxChannel) => void;
   setTarget: (id: SingBoxTargetId) => void;
   loadTemplate: () => void;
@@ -498,6 +499,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setPanelTab: (tab) => set({ panelTab: tab }),
   openGlobalPanel: (tab) => set({ panelTab: tab, globalPanelOpen: true, selectedId: null }),
   closeGlobalPanel: () => set({ globalPanelOpen: false }),
+  goHome: () =>
+    set((state) => ({
+      selectedId: null,
+      globalPanelOpen: false,
+      freshLoadToken: state.freshLoadToken + 1,
+    })),
   setChannel: (channel) =>
     set((state) => ({
       channel,
