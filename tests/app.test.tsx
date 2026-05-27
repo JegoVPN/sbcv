@@ -482,6 +482,42 @@ describe("SBC editor shell", () => {
     expect(tuic?.zero_rtt_handshake).toBe(true);
   });
 
+  it("renders inbound:naive network + quic_congestion_control as first-class enum selects", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-naive");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const networkRow = inspector.getByTestId("inbound-naive-network");
+    const networkSelect = within(networkRow).getByLabelText("Network") as HTMLSelectElement;
+    expect(networkSelect.tagName).toBe("SELECT");
+    expect(Array.from(networkSelect.querySelectorAll("option")).map((o) => o.value)).toEqual(["", "tcp", "udp"]);
+
+    const qccRow = inspector.getByTestId("inbound-naive-quic-congestion-control");
+    const qccSelect = within(qccRow).getByLabelText("QUIC Congestion Control") as HTMLSelectElement;
+    expect(qccSelect.tagName).toBe("SELECT");
+    expect(Array.from(qccSelect.querySelectorAll("option")).map((o) => o.value)).toEqual([
+      "",
+      "bbr",
+      "bbr_standard",
+      "bbr2",
+      "bbr2_variant",
+      "cubic",
+      "reno",
+    ]);
+
+    fireEvent.change(networkSelect, { target: { value: "tcp" } });
+    fireEvent.change(qccSelect, { target: { value: "bbr2_variant" } });
+
+    const naive = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "naive");
+    expect(naive?.network).toBe("tcp");
+    expect(naive?.quic_congestion_control).toBe("bbr2_variant");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
