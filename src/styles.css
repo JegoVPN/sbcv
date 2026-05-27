@@ -682,6 +682,15 @@ textarea {
   font-weight: 760;
 }
 
+/* 防止长 label（如 "Certificate Providers"）换行时挤压 chevron/小徽章宽度。
+   flex children 默认 shrink:1，svg 没固有 min-size，所以会被压扁。 */
+.palette-nav button > svg,
+.palette-nav button > small,
+.palette-mode-pills button > svg,
+.palette-mode-pills button > small {
+  flex-shrink: 0;
+}
+
 .palette-entry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
