@@ -154,6 +154,8 @@ const inboundHandledFields = new Set([
   "endpoint_independent_nat",
   "platform",
   "quic_congestion_control",
+  "masquerade",
+  "brutal_debug",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2710,6 +2712,28 @@ export function Inspector() {
                 </optgroup>
               </select>
             </label>
+          ) : null}
+          {entityType === "hysteria2" ? (
+            <>
+              <label className="field" data-testid="inbound-hysteria2-masquerade">
+                <span>Masquerade (URL)</span>
+                <input
+                  value={typeof entity.masquerade === "string" ? entity.masquerade : ""}
+                  placeholder="http://127.0.0.1:8080 or file:///var/www"
+                  onChange={(event) => updateField(ref, "masquerade", event.target.value || undefined)}
+                />
+              </label>
+              <label className="toggle-row" data-testid="inbound-hysteria2-brutal-debug">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.brutal_debug)}
+                  onChange={(event) =>
+                    updateField(ref, "brutal_debug", event.target.checked || undefined)
+                  }
+                />
+                <span>Brutal Debug (verbose congestion-control logging)</span>
+              </label>
+            </>
           ) : null}
           {entityType === "naive" ? (
             <>

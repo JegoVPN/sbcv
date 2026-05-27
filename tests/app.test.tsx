@@ -550,6 +550,31 @@ describe("SBC editor shell", () => {
     expect((http?.headers as Record<string, unknown>)["X-Auth"]).toBe("Bearer xyz");
   });
 
+  it("renders inbound:hysteria2 masquerade URL + brutal_debug toggle", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-hysteria2");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const masqueradeRow = inspector.getByTestId("inbound-hysteria2-masquerade");
+    const masqueradeInput = within(masqueradeRow).getByLabelText("Masquerade (URL)") as HTMLInputElement;
+    expect(masqueradeInput.placeholder).toContain("file:///");
+    fireEvent.change(masqueradeInput, { target: { value: "http://127.0.0.1:8080" } });
+
+    const brutalRow = inspector.getByTestId("inbound-hysteria2-brutal-debug");
+    const brutalCheckbox = within(brutalRow).getByRole("checkbox") as HTMLInputElement;
+    expect(brutalCheckbox.checked).toBe(false);
+    fireEvent.click(brutalCheckbox);
+
+    const inbound = useProjectStore
+      .getState()
+      .config.inbounds?.find((entry) => entry.type === "hysteria2");
+    expect(inbound?.masquerade).toBe("http://127.0.0.1:8080");
+    expect(inbound?.brutal_debug).toBe(true);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
