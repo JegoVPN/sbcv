@@ -439,6 +439,25 @@ describe("SBC editor shell", () => {
     expect(users[0]?.flow).toBe("xtls-rprx-vision");
   });
 
+  it("renders outbound:naive quic_congestion_control as an enum select with bbr/bbr2/cubic/reno", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("naive-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const wrapper = inspector.getByTestId("naive-quic-congestion-control");
+    const control = within(wrapper).getByLabelText("QUIC Congestion Control") as HTMLSelectElement;
+    expect(control.tagName).toBe("SELECT");
+    const optionValues = Array.from(control.querySelectorAll("option")).map((o) => o.value);
+    expect(optionValues).toEqual(["", "bbr", "bbr2", "cubic", "reno"]);
+    fireEvent.change(control, { target: { value: "bbr2" } });
+    const naive = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "naive");
+    expect(naive?.quic_congestion_control).toBe("bbr2");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
