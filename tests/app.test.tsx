@@ -518,6 +518,38 @@ describe("SBC editor shell", () => {
     expect(naive?.quic_congestion_control).toBe("bbr2_variant");
   });
 
+  it("renders outbound:http path + headers map editor with round-trip persistence", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("http-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const pathRow = inspector.getByTestId("outbound-http-path");
+    const pathInput = within(pathRow).getByLabelText("Path") as HTMLInputElement;
+    fireEvent.change(pathInput, { target: { value: "/proxy" } });
+
+    const headersFieldset = inspector.getByTestId("outbound-http-headers");
+    fireEvent.click(within(headersFieldset).getByRole("button", { name: /Add header/ }));
+    const refreshed = within(screen.getByLabelText("Node inspector")).getByTestId(
+      "outbound-http-headers",
+    );
+    const nameInputs = within(refreshed).getAllByLabelText("Name");
+    const valueInputs = within(refreshed).getAllByLabelText("Value");
+    fireEvent.change(nameInputs[0]!, { target: { value: "X-Auth" } });
+    const valueInputsAfterKey = within(
+      within(screen.getByLabelText("Node inspector")).getByTestId("outbound-http-headers"),
+    ).getAllByLabelText("Value");
+    fireEvent.change(valueInputsAfterKey[0]!, { target: { value: "Bearer xyz" } });
+
+    const http = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "http");
+    expect(http?.path).toBe("/proxy");
+    expect((http?.headers as Record<string, unknown>)["X-Auth"]).toBe("Bearer xyz");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

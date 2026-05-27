@@ -202,6 +202,8 @@ const outboundHandledFields = new Set([
   "extra_args",
   "torrc",
   "extra_headers",
+  "path",
+  "headers",
   "quic_congestion_control",
   "heartbeat",
   "zero_rtt_handshake",
@@ -3269,6 +3271,75 @@ export function Inspector() {
                 <option value="reno">reno</option>
               </select>
             </label>
+          ) : null}
+          {entityType === "http" ? (
+            <>
+              <label className="field" data-testid="outbound-http-path">
+                <span>Path</span>
+                <input
+                  value={typeof entity.path === "string" ? entity.path : ""}
+                  placeholder="/proxy"
+                  onChange={(event) => updateField(ref, "path", event.target.value || undefined)}
+                />
+              </label>
+              {(() => {
+                const headers = objectField(entity.headers);
+                const entries = Object.entries(headers);
+                const writeHeaders = (next: InspectorEntity) =>
+                  updateField(ref, "headers", Object.keys(next).length ? next : undefined);
+                return (
+                  <fieldset className="field field--checklist" data-testid="outbound-http-headers">
+                    <legend>Headers</legend>
+                    {entries.length === 0 ? (
+                      <p className="field__hint">No extra request headers.</p>
+                    ) : null}
+                    {entries.map(([key, value], index) => (
+                      <div key={`${key}-${index}`} className="rule-row">
+                        <label className="field">
+                          <span>Name</span>
+                          <input
+                            value={key}
+                            onChange={(event) => {
+                              const newKey = event.target.value;
+                              if (!newKey || newKey === key) return;
+                              const next: InspectorEntity = {};
+                              for (const [k, v] of entries) next[k === key ? newKey : k] = v;
+                              writeHeaders(next);
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Value</span>
+                          <input
+                            value={typeof value === "string" ? value : String(value ?? "")}
+                            onChange={(event) => writeHeaders({ ...headers, [key]: event.target.value })}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          aria-label={`Remove header ${key}`}
+                          onClick={() => {
+                            const next: InspectorEntity = { ...headers };
+                            delete next[key];
+                            writeHeaders(next);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="palette-action"
+                      onClick={() => writeHeaders({ ...headers, "": "" })}
+                    >
+                      Add header
+                    </button>
+                  </fieldset>
+                );
+              })()}
+            </>
           ) : null}
           {entityType === "naive" ? (
             (() => {
