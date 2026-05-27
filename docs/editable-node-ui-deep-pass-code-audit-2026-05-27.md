@@ -136,7 +136,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | outbound-anytls | `idle_session_check_interval` / `idle_session_timeout` / `min_idle_session` missing from `outboundHandledFields`. No 1.12.0+ version gate on Palette. |
 | outbound-ssh | Three-way auth mutual exclusion (`password` / `private_key` / `private_key_path`) has no diagnostic. 1.14 testing fields (`cipher`, `mac`, `kex_algorithm`) have diagnostics but **no editing controls** in Inspector. |
 | outbound-tor | ✅ Clean. |
-| outbound-selector | `compatible` array (`graph.ts:414-415`) limited to `["SOCKS","Direct","Block"]` — should expand to all proxy types. |
+| outbound-selector | ✅ ~~`compatible` array limited to `["SOCKS","Direct","Block"]`~~ — fixed 2026-05-27; expanded to all 19 outbound types (Direct/Block/SOCKS/HTTP/Shadowsocks/VMess/Trojan/Naive/Hysteria/Hysteria2/ShadowTLS/VLESS/TUIC/AnyTLS/Tor/SSH/WireGuard/Selector/URLTest). |
 | outbound-urltest | `createOutbound("urltest")` scaffold doesn't seed `tolerance` / `idle_timeout` / `interrupt_exist_connections`. |
 
 ### DNS server

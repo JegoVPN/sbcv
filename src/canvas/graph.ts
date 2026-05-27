@@ -414,7 +414,27 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           status: diagnosticStatus(`/outbounds/${index}`, diagnostics),
           compatible:
             isOutboundGroup(outbound)
-              ? ["SOCKS", "Direct", "Block"]
+              ? [
+                  "Direct",
+                  "Block",
+                  "SOCKS",
+                  "HTTP",
+                  "Shadowsocks",
+                  "VMess",
+                  "Trojan",
+                  "Naive",
+                  "Hysteria",
+                  "Hysteria2",
+                  "ShadowTLS",
+                  "VLESS",
+                  "TUIC",
+                  "AnyTLS",
+                  "Tor",
+                  "SSH",
+                  "WireGuard",
+                  "Selector",
+                  "URLTest",
+                ]
               : [],
         },
         layout,
