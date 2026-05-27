@@ -796,7 +796,7 @@ function JsonField({
   onChange: (value: unknown) => void;
 }) {
   return (
-    <label className="field">
+    <label className="field inspector-json-field">
       <span>{label}</span>
       <textarea
         value={JSON.stringify(value ?? null, null, 2)}
@@ -1739,7 +1739,7 @@ function SharedFieldCards({
   );
 }
 
-export function Inspector() {
+export function Inspector({ compact = false }: { compact?: boolean } = {}) {
   const selectedId = useProjectStore((state) => state.selectedId);
   const config = useProjectStore((state) => state.config);
   const channel = useProjectStore((state) => state.channel);
@@ -1790,7 +1790,7 @@ export function Inspector() {
   const sharedGroups = sharedGroupsForEntity(ref, entityType, channel);
 
   return (
-    <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">
+    <aside className={`inspector ${compact ? "inspector--compact" : ""}`} aria-label="Node inspector" data-testid="node-inspector">
       <div className="inspector__header" data-testid="inspector-header">
         <div className="inspector__title">
           <InspectorIcon size={18} />
