@@ -228,6 +228,25 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("flags every dns-server type that requires a server address when server is missing", () => {
+    const config = createStableTunSplitConfig();
+    const remoteTypes = ["udp", "tcp", "tls", "https", "quic", "h3"];
+    config.dns = {
+      ...config.dns,
+      servers: [
+        ...(config.dns?.servers ?? []),
+        ...remoteTypes.map((type) => ({ type, tag: `${type}-dns` } as never)),
+      ],
+    };
+    const findings = validateConfig(config, "stable").filter(
+      (finding) => finding.code === "dns-server-missing-server",
+    );
+    expect(findings).toHaveLength(remoteTypes.length);
+    for (const type of remoteTypes) {
+      expect(findings.some((finding) => finding.message.includes(`${type}-dns`))).toBe(true);
+    }
+  });
+
   it("draws a dns-server:resolved -> service:resolved edge when resolved.service is set", () => {
     const config = createStableTunSplitConfig();
     config.dns = {
