@@ -159,6 +159,7 @@ const inboundHandledFields = new Set([
   "fallback",
   "override_address",
   "override_port",
+  "set_system_proxy",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2717,6 +2718,18 @@ export function Inspector() {
                   <option value="xchacha20">xchacha20</option>
                 </optgroup>
               </select>
+            </label>
+          ) : null}
+          {entityType === "mixed" || entityType === "http" || entityType === "socks" ? (
+            <label className="toggle-row" data-testid="inbound-set-system-proxy">
+              <input
+                type="checkbox"
+                checked={Boolean(entity.set_system_proxy)}
+                onChange={(event) =>
+                  updateField(ref, "set_system_proxy", event.target.checked || undefined)
+                }
+              />
+              <span>Set System Proxy (Linux / Android / Windows / macOS)</span>
             </label>
           ) : null}
           {entityType === "direct" ? (
