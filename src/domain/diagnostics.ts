@@ -1020,6 +1020,21 @@ export function validateConfig(
     });
   }
 
+  listItems(config.dns?.servers).forEach((server, index) => {
+    const obj = server as Record<string, unknown>;
+    if (obj.type !== "dhcp") return;
+    if (!Object.prototype.hasOwnProperty.call(obj, "interface")) return;
+    if (typeof obj.interface !== "string" || obj.interface.trim() !== "") return;
+    const tag = server.tag ?? `dns-server-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "dns-server-dhcp-interface-empty",
+      `/dns/servers/${index}/interface`,
+      `DNS server "${tag}" (dhcp) sets interface to an empty string; remove the field to let sing-box pick the default interface.`,
+    );
+  });
+
   if (channel === "stable") {
     const route = config.route as Record<string, unknown> | undefined;
     if (route && typeof route === "object" && !Array.isArray(route)) {
