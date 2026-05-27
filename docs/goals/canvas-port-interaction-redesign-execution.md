@@ -700,6 +700,19 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr1-stop-destructive-clicks`
 - Verification passed locally: `git diff --check`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
 - Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change fixture/exported config output.
 
+### PR-2 Canonical Reference Registry And Identity State Repair
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr2-reference-registry`.
+
+- Added a canonical reference registry for known tag reference replacement/removal, including inbound, outbound, DNS server, endpoint, service, rule-set, HTTP client, and certificate provider references.
+- `renameTag` now rejects duplicate target tags before mutation and uses the registry for cascading references.
+- `deleteEntity` and `changeEntityType` now scrub registered dependent references instead of relying on scattered command branches.
+- Store command wrappers remap or clear `selectedId`, `focusedNodeId`, and `layout.positions` after tag rename, entity delete, and ordered rule move/delete.
+- Inspector tag editing no longer overwrites a focused draft when unrelated entity fields update.
+- Frontend performance review: identity repair is kept in store command callbacks; no new broad subscriptions or drag/hover global state were added. The registry is command-path code with no new dependency.
+- Verification passed locally: `git diff --check`, `pnpm exec vitest run tests/domain.test.ts tests/app.test.tsx`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
+
 ## Open Decisions
 
 - Disconnect affordance: default to connected-handle small `x`; edge context menu and keyboard delete are optional additions.

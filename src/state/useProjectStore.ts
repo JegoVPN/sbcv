@@ -161,6 +161,126 @@ function parseNodeId(nodeId: string) {
   return { kind: kind ?? "", value: rest.join(":") };
 }
 
+function nodeIdForRef(ref: EntityRef): string | null {
+  if (
+    ref.kind === "inbound" ||
+    ref.kind === "outbound" ||
+    ref.kind === "dns-server" ||
+    ref.kind === "endpoint" ||
+    ref.kind === "service" ||
+    ref.kind === "rule-set" ||
+    ref.kind === "certificate-provider" ||
+    ref.kind === "http-client"
+  ) {
+    return `${ref.kind}:${ref.tag}`;
+  }
+  if (ref.kind === "route-rule") return `route-rule:${ref.index}`;
+  if (ref.kind === "dns-rule") return `dns-rule:${ref.index}`;
+  if (ref.kind === "route") return "route:main";
+  if (ref.kind === "dns") return "dns:main";
+  if (ref.kind === "settings") return `settings:${ref.path}`;
+  return null;
+}
+
+function isTaggedNodeKind(kind: string) {
+  return (
+    kind === "inbound" ||
+    kind === "outbound" ||
+    kind === "dns-server" ||
+    kind === "endpoint" ||
+    kind === "service" ||
+    kind === "rule-set" ||
+    kind === "certificate-provider" ||
+    kind === "http-client"
+  );
+}
+
+function remapTaggedNodeId(id: string | null, oldTag: string, newTag: string) {
+  if (!id) return id;
+  const parsed = parseNodeId(id);
+  return isTaggedNodeKind(parsed.kind) && parsed.value === oldTag ? `${parsed.kind}:${newTag}` : id;
+}
+
+function clearNodeId(id: string | null, deletedId: string | null) {
+  return id && deletedId && id === deletedId ? null : id;
+}
+
+function remapTaggedLayout(layout: ProjectLayout, oldTag: string, newTag: string): ProjectLayout {
+  const nextPositions: ProjectLayout["positions"] = {};
+  let changed = false;
+  for (const [id, position] of Object.entries(layout.positions)) {
+    const nextId = remapTaggedNodeId(id, oldTag, newTag) ?? id;
+    if (nextId !== id) changed = true;
+    nextPositions[nextId] = position;
+  }
+  return changed ? { positions: nextPositions } : layout;
+}
+
+function removeLayoutPosition(layout: ProjectLayout, deletedId: string | null): ProjectLayout {
+  if (!deletedId || !layout.positions[deletedId]) return layout;
+  const { [deletedId]: _deleted, ...positions } = layout.positions;
+  return { positions };
+}
+
+function remapRuleMoveId(id: string | null, kind: "route-rule" | "dns-rule", index: number, target: number) {
+  if (!id) return id;
+  const parsed = parseNodeId(id);
+  if (parsed.kind !== kind) return id;
+  const current = Number(parsed.value);
+  if (current === index) return `${kind}:${target}`;
+  if (current === target) return `${kind}:${index}`;
+  return id;
+}
+
+function remapRuleDeleteId(id: string | null, kind: "route-rule" | "dns-rule", index: number) {
+  if (!id) return id;
+  const parsed = parseNodeId(id);
+  if (parsed.kind !== kind) return id;
+  const current = Number(parsed.value);
+  if (!Number.isInteger(current)) return id;
+  if (current === index) return null;
+  return current > index ? `${kind}:${current - 1}` : id;
+}
+
+function remapRuleMoveLayout(layout: ProjectLayout, kind: "route-rule" | "dns-rule", index: number, target: number): ProjectLayout {
+  const sourceId = `${kind}:${index}`;
+  const targetId = `${kind}:${target}`;
+  if (!layout.positions[sourceId] && !layout.positions[targetId]) return layout;
+  const positions = { ...layout.positions };
+  const sourcePosition = positions[sourceId];
+  const targetPosition = positions[targetId];
+  if (targetPosition) positions[sourceId] = targetPosition;
+  else delete positions[sourceId];
+  if (sourcePosition) positions[targetId] = sourcePosition;
+  else delete positions[targetId];
+  return { positions };
+}
+
+function remapRuleDeleteLayout(layout: ProjectLayout, kind: "route-rule" | "dns-rule", index: number): ProjectLayout {
+  let changed = false;
+  const positions: ProjectLayout["positions"] = {};
+  for (const [id, position] of Object.entries(layout.positions)) {
+    const parsed = parseNodeId(id);
+    if (parsed.kind !== kind) {
+      positions[id] = position;
+      continue;
+    }
+    const current = Number(parsed.value);
+    if (!Number.isInteger(current)) {
+      positions[id] = position;
+      continue;
+    }
+    if (current === index) {
+      changed = true;
+      continue;
+    }
+    const nextId = current > index ? `${kind}:${current - 1}` : id;
+    if (nextId !== id) changed = true;
+    positions[nextId] = position;
+  }
+  return changed ? { positions } : layout;
+}
+
 function firstOutboundParent(config: SingBoxConfig, childTag: string, parentType?: string) {
   return (config.outbounds ?? []).find((outbound) => {
     if (parentType && outbound.type !== parentType) return false;
@@ -1278,19 +1398,99 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
       return sync(changeEntityType(state.config, ref, nextType), state.channel);
     }),
-  renameTag: (oldTag, newTag) => set((state) => sync(renameTag(state.config, oldTag, newTag), state.channel)),
-  deleteEntity: (ref) => set((state) => sync(deleteEntity(state.config, ref), state.channel)),
+  renameTag: (oldTag, newTag) =>
+    set((state) => {
+      const config = renameTag(state.config, oldTag, newTag);
+      if (config === state.config) return state;
+      return {
+        ...sync(config, state.channel),
+        selectedId: remapTaggedNodeId(state.selectedId, oldTag, newTag),
+        focusedNodeId: remapTaggedNodeId(state.focusedNodeId, oldTag, newTag),
+        layout: remapTaggedLayout(state.layout, oldTag, newTag),
+      };
+    }),
+  deleteEntity: (ref) =>
+    set((state) => {
+      if (ref.kind === "route-rule") {
+        const rules = state.config.route?.rules ?? [];
+        if (!rules[ref.index]) return state;
+        return {
+          ...sync(deleteEntity(state.config, ref), state.channel),
+          selectedId: remapRuleDeleteId(state.selectedId, "route-rule", ref.index),
+          focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "route-rule", ref.index),
+          layout: remapRuleDeleteLayout(state.layout, "route-rule", ref.index),
+        };
+      }
+      if (ref.kind === "dns-rule") {
+        const rules = state.config.dns?.rules ?? [];
+        if (!rules[ref.index]) return state;
+        return {
+          ...sync(deleteEntity(state.config, ref), state.channel),
+          selectedId: remapRuleDeleteId(state.selectedId, "dns-rule", ref.index),
+          focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "dns-rule", ref.index),
+          layout: remapRuleDeleteLayout(state.layout, "dns-rule", ref.index),
+        };
+      }
+      const deletedId = nodeIdForRef(ref);
+      return {
+        ...sync(deleteEntity(state.config, ref), state.channel),
+        selectedId: clearNodeId(state.selectedId, deletedId),
+        focusedNodeId: clearNodeId(state.focusedNodeId, deletedId),
+        layout: removeLayoutPosition(state.layout, deletedId),
+      };
+    }),
   disconnectEdge: (edgeId) => set((state) => sync(disconnectEdge(state.config, edgeId), state.channel)),
   addRouteRule: () => set((state) => sync(addRouteRule(state.config), state.channel)),
   updateRouteRule: (index, patch) =>
     set((state) => sync(updateRouteRule(state.config, index, patch), state.channel)),
   moveRouteRule: (index, direction) =>
-    set((state) => sync(moveRouteRule(state.config, index, direction), state.channel)),
-  deleteRouteRule: (index) => set((state) => sync(deleteRouteRule(state.config, index), state.channel)),
+    set((state) => {
+      const rules = state.config.route?.rules ?? [];
+      const target = index + direction;
+      if (target < 0 || target >= rules.length || !rules[index] || !rules[target]) return state;
+      return {
+        ...sync(moveRouteRule(state.config, index, direction), state.channel),
+        selectedId: remapRuleMoveId(state.selectedId, "route-rule", index, target),
+        focusedNodeId: remapRuleMoveId(state.focusedNodeId, "route-rule", index, target),
+        layout: remapRuleMoveLayout(state.layout, "route-rule", index, target),
+      };
+    }),
+  deleteRouteRule: (index) =>
+    set((state) => {
+      const rules = state.config.route?.rules ?? [];
+      if (!rules[index]) return state;
+      return {
+        ...sync(deleteRouteRule(state.config, index), state.channel),
+        selectedId: remapRuleDeleteId(state.selectedId, "route-rule", index),
+        focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "route-rule", index),
+        layout: remapRuleDeleteLayout(state.layout, "route-rule", index),
+      };
+    }),
   addDnsRule: () => set((state) => sync(addDnsRule(state.config), state.channel)),
   updateDnsRule: (index, patch) => set((state) => sync(updateDnsRule(state.config, index, patch), state.channel)),
-  moveDnsRule: (index, direction) => set((state) => sync(moveDnsRule(state.config, index, direction), state.channel)),
-  deleteDnsRule: (index) => set((state) => sync(deleteDnsRule(state.config, index), state.channel)),
+  moveDnsRule: (index, direction) =>
+    set((state) => {
+      const rules = state.config.dns?.rules ?? [];
+      const target = index + direction;
+      if (target < 0 || target >= rules.length || !rules[index] || !rules[target]) return state;
+      return {
+        ...sync(moveDnsRule(state.config, index, direction), state.channel),
+        selectedId: remapRuleMoveId(state.selectedId, "dns-rule", index, target),
+        focusedNodeId: remapRuleMoveId(state.focusedNodeId, "dns-rule", index, target),
+        layout: remapRuleMoveLayout(state.layout, "dns-rule", index, target),
+      };
+    }),
+  deleteDnsRule: (index) =>
+    set((state) => {
+      const rules = state.config.dns?.rules ?? [];
+      if (!rules[index]) return state;
+      return {
+        ...sync(deleteDnsRule(state.config, index), state.channel),
+        selectedId: remapRuleDeleteId(state.selectedId, "dns-rule", index),
+        focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "dns-rule", index),
+        layout: remapRuleDeleteLayout(state.layout, "dns-rule", index),
+      };
+    }),
   setJsonDraft: (value) => set({ jsonDraft: value }),
   applyJsonDraft: () =>
     set((state) => {

@@ -140,6 +140,8 @@ export type EntityRef =
   | { kind: "endpoint"; tag: string }
   | { kind: "service"; tag: string }
   | { kind: "rule-set"; tag: string }
+  | { kind: "certificate-provider"; tag: string }
+  | { kind: "http-client"; tag: string }
   | { kind: "route"; id: "main" }
   | { kind: "route-rule"; index: number }
   | { kind: "dns"; id: "main" }
