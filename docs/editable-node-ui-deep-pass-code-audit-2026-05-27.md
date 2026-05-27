@@ -120,7 +120,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| outbound-direct | `domain_strategy` 1.12+ deprecation diagnostic missing (`diagnostics.ts:589`). |
+| outbound-direct | ✅ ~~`domain_strategy` 1.12+ deprecation diagnostic missing~~ — covered by the cross-outbound `dial-domain-strategy-deprecated` warning landed under 1.12-C; new lock test in domain.test.ts ("lock-tests dial-domain-strategy-deprecated covers outbound:direct") pins coverage. |
 | outbound-block | ✅ ~~No canvas deprecation badge~~ — fixed 2026-05-27, SbcNode renders an amber "deprecated" pill on the title bar and dims the card border when `kind === "outbound" && type === "block"`. ✅ `outbound-block-deprecated` diagnostic landed under 1.11-A. |
 | outbound-socks | `network` falls back to text (no enum). `username`/`password` not first-class for socks branch. |
 | outbound-http | **`headers` map invisible** — not in `outboundHandledFields`; `AdvancedNonScalarFields` skips object fields. `path` not in `outboundHandledFields` → new HTTP outbounds drop it on round-trip. |
