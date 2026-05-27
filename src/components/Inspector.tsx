@@ -3461,20 +3461,32 @@ export function Inspector() {
             )
           ) : null}
           {entityType === "tailscale" ? (
-            <label className="field">
-              <span>Tailscale Endpoint</span>
-              <select
-                value={String(entity.endpoint ?? "")}
-                onChange={(event) => updateField(ref, "endpoint", event.target.value || undefined)}
-              >
-                <option value="">Create or select endpoint</option>
-                {endpointTags(config, "tailscale").map((tag) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <>
+              <label className="field">
+                <span>Tailscale Endpoint</span>
+                <select
+                  value={String(entity.endpoint ?? "")}
+                  onChange={(event) => updateField(ref, "endpoint", event.target.value || undefined)}
+                >
+                  <option value="">Create or select endpoint</option>
+                  {endpointTags(config, "tailscale").map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.accept_default_resolvers)}
+                  onChange={(event) =>
+                    updateField(ref, "accept_default_resolvers", event.target.checked || undefined)
+                  }
+                />
+                <span>Accept default resolvers (forward queries to MagicDNS chain)</span>
+              </label>
+            </>
           ) : null}
           {entityType === "hosts" ? (
             (() => {

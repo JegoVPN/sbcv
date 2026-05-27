@@ -380,6 +380,22 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders accept_default_resolvers toggle on dns-server:tailscale", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-tailscale");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const toggle = inspector.getByLabelText(/Accept default resolvers/i) as HTMLInputElement;
+    expect(toggle.type).toBe("checkbox");
+    fireEvent.click(toggle);
+    const tailscaleServer = useProjectStore.getState().config.dns?.servers?.find(
+      (server) => server.type === "tailscale",
+    ) as Record<string, unknown>;
+    expect(tailscaleServer.accept_default_resolvers).toBe(true);
+  });
+
   it("renders wireguard peer.public_key with sensitive masking", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
