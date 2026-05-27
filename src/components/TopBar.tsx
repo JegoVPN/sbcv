@@ -89,23 +89,6 @@ export function TopBar() {
           <FileCheck2 size={15} />
           Check
         </button>
-        <OfficialCheckButton />
-        <button type="button" onClick={exportConfig}>
-          <Download size={15} />
-          Export
-        </button>
-        <button type="button" onClick={() => fileInputRef.current?.click()}>
-          <FolderOpen size={15} />
-          Import
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          aria-label="Import JSON file"
-          accept="application/json,.json"
-          className="visually-hidden"
-          onChange={handleImport}
-        />
         <div className="status-pill-host">
           <button
             key={isChecking ? "checking" : checkNotice || pillState}
@@ -131,6 +114,23 @@ export function TopBar() {
             />
           ) : null}
         </div>
+        <OfficialCheckButton />
+        <button type="button" onClick={exportConfig}>
+          <Download size={15} />
+          Export
+        </button>
+        <button type="button" onClick={() => fileInputRef.current?.click()}>
+          <FolderOpen size={15} />
+          Import
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          aria-label="Import JSON file"
+          accept="application/json,.json"
+          className="visually-hidden"
+          onChange={handleImport}
+        />
       </div>
     </header>
   );

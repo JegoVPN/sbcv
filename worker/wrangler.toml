@@ -11,7 +11,7 @@ routes = [
 
 # Plain config vars. Override per-env in [env.staging] if needed.
 [vars]
-ALLOWED_ORIGIN = "https://sbcv.app"
+ALLOWED_ORIGIN = "https://sbcv.app,https://www.sbcv.app"
 MAX_BODY_BYTES = "524288"
 CHECK_TIMEOUT_MS = "30000"
 VALIDATOR_VERSION = "v1"

@@ -1,3 +1,4 @@
+import { isAllowedOrigin } from "./cors.js";
 import type { Env } from "./env.js";
 import { cacheKey } from "./hash.js";
 import { forwardToContainer } from "./forward.js";
@@ -14,7 +15,7 @@ function jsonError(message: string, status: number): Response {
 
 export async function handleCheck(req: Request, env: Env): Promise<Response> {
   const origin = req.headers.get("origin");
-  if (origin && origin !== env.ALLOWED_ORIGIN) {
+  if (origin && !isAllowedOrigin(origin, env)) {
     return jsonError("Origin not allowed", 403);
   }
 
