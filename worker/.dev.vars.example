@@ -1,7 +1,10 @@
 # Copy to .dev.vars and fill in. .dev.vars is gitignored.
 # Local-only secrets consumed by `wrangler dev`.
+#
+# `wrangler dev` runs the Worker locally with a real Container Durable Object
+# binding; the container image is built by Docker on the dev host. Set
+# INTERNAL_TOKEN to the same value the container would receive.
 
 INTERNAL_TOKEN=dev-shared-secret
-VALIDATOR_URL=http://localhost:8080
 # Leave TURNSTILE_SECRET_KEY empty during local dev to bypass Turnstile.
 TURNSTILE_SECRET_KEY=
