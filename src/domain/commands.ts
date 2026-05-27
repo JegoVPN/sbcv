@@ -1163,7 +1163,7 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
       );
     }
   }
-  if (relation === "service-detour") {
+  if (relation === "service-detour-ccm" || relation === "service-detour-ocm") {
     const serviceTag = parts[0];
     const detourTag = parts[1];
     next.services = next.services?.map((service) =>

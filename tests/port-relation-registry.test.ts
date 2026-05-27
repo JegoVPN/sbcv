@@ -5,6 +5,7 @@ import {
   formatEdgeId,
   parseEdgeId,
   parseNodeId,
+  portRelations,
   relationForHandles,
   type PortRelationMode,
 } from "../src/domain/portRelationRegistry";
@@ -61,11 +62,19 @@ function graphWithBroadPortCoverage() {
 describe("port relation registry", () => {
   it("parses node and edge ids without dropping colon tag segments", () => {
     expect(parseNodeId("outbound:proxy:sg")).toEqual({ kind: "outbound", value: "proxy:sg" });
+    expect(parseNodeId("certificate-provider:cert:edge")).toEqual({ kind: "certificate-provider", value: "cert:edge" });
+    expect(parseNodeId("http-client:client:edge")).toEqual({ kind: "http-client", value: "client:edge" });
 
     const edgeId = formatEdgeId("route-rule", 12, "proxy:sg");
     expect(edgeId).toBe("edge:route-rule:12:proxy%3Asg");
     expect(parseEdgeId(edgeId)).toEqual({ relationId: "route-rule", parts: ["12", "proxy:sg"] });
     expect(parseEdgeId("edge:route-rule:%E0%A4%A")).toBeNull();
+    expect(() => formatEdgeId("route:rule", 12)).toThrow(/Relation id cannot contain/);
+  });
+
+  it("keeps relation ids unique", () => {
+    const ids = portRelations.map((relation) => relation.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("matches writable handles while excluding visual-only relations from writable validation", () => {

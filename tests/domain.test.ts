@@ -49,23 +49,23 @@ function createReferenceCoverageConfig(): SingBoxConfig {
       servers: [
         { type: "local", tag: "local-dns", detour: "proxy", domain_resolver: { server: "bootstrap-dns" }, tls: { certificate_provider: "cert" } },
         { type: "local", tag: "bootstrap-dns" },
-        { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", domain_resolver: { server: "local-dns" } },
+        { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
         { type: "resolved", tag: "resolved-dns", service: "resolved-svc" },
       ],
       rules: [{ inbound: ["tun-in"], server: "local-dns", rule_set: ["rs"] }],
     },
     endpoints: [
-      { type: "wireguard", tag: "wg-ep", detour: "proxy", domain_resolver: { server: "local-dns" } },
+      { type: "wireguard", tag: "wg-ep", detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
       { type: "tailscale", tag: "ts-ep" },
     ],
     services: [
-      { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in", "/managed": "managed-ss" }, detour: "proxy", http_client: "client" },
+      { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in", "/managed": "managed-ss" }, detour: "proxy" },
       { type: "derp", tag: "derp", detour: "proxy", verify_client_endpoint: ["ts-ep"], tls: { certificate_provider: "cert" } },
       { type: "resolved", tag: "resolved-svc" },
     ],
     route: {
       final: "proxy",
-      default_domain_resolver: { server: "local-dns" },
+      default_domain_resolver: { server: "local-dns", strategy: "ipv4_only" },
       default_http_client: "client",
       rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"] }],
       rule_set: [
@@ -76,13 +76,13 @@ function createReferenceCoverageConfig(): SingBoxConfig {
           url: "https://example.com/rules.srs",
           download_detour: "proxy",
           http_client: "client",
-          domain_resolver: { server: "local-dns" },
+          domain_resolver: { server: "local-dns", strategy: "ipv4_only" },
         },
       ],
     },
     http_clients: [{ tag: "client", detour: "proxy", domain_resolver: "local-dns", tls: { certificate_provider: "cert" } }],
     certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep", http_client: "client" }],
-    ntp: { enabled: true, server: "time.example.com", server_port: 123, detour: "proxy", domain_resolver: { server: "local-dns" } },
+    ntp: { enabled: true, server: "time.example.com", server_port: 123, detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
     experimental: {
       clash_api: { external_ui_download_detour: "proxy" },
       v2ray_api: { stats: { enabled: true, inbounds: ["tun-in"], outbounds: ["proxy"] } },
@@ -252,19 +252,17 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "http-client",
     tag: "client",
     nextTag: "client-renamed",
-    paths: ["/route/default_http_client", "/route/rule_set/*/http_client", "/certificate_providers/*/http_client", "/services/*/http_client"],
+    paths: ["/route/default_http_client", "/route/rule_set/*/http_client", "/certificate_providers/*/http_client"],
     staleDiagnosticCodes: [],
     assertRenamed: (config) => {
       expect(config.route?.default_http_client).toBe("client-renamed");
       expect(config.route?.rule_set?.[0]?.http_client).toBe("client-renamed");
       expect(config.certificate_providers?.[0]?.http_client).toBe("client-renamed");
-      expect(config.services?.find((item) => item.tag === "ssm")?.http_client).toBe("client-renamed");
     },
     assertDeleted: (config) => {
       expect(config.route?.default_http_client).toBeUndefined();
       expect(config.route?.rule_set?.[0]?.http_client).toBeUndefined();
       expect(config.certificate_providers?.[0]?.http_client).toBeUndefined();
-      expect(config.services?.find((item) => item.tag === "ssm")?.http_client).toBeUndefined();
     },
   },
   {

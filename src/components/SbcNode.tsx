@@ -44,6 +44,8 @@ const iconMap = {
   service: Server,
   outbound: Network,
   "rule-set": Layers3,
+  "certificate-provider": Shield,
+  "http-client": Network,
   settings: Braces,
 };
 
