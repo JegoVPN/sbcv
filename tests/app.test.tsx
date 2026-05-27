@@ -771,6 +771,31 @@ describe("SBC editor shell", () => {
     expect(dnsServer?.prefer_go).toBe(true);
   });
 
+  it("renders TLS certificate_provider as a select sourced from config.certificate_providers tags", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-trojan");
+    });
+    act(() => {
+      useProjectStore.setState((state) => ({
+        config: {
+          ...state.config,
+          certificate_providers: [
+            { type: "acme", tag: "lets-encrypt-1" },
+            { type: "acme", tag: "lets-encrypt-2" },
+          ],
+        },
+      }));
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const select = inspector.getByLabelText("Certificate Provider") as HTMLSelectElement;
+    expect(select.tagName).toBe("SELECT");
+    const values = Array.from(select.querySelectorAll("option")).map((o) => o.value);
+    expect(values).toContain("lets-encrypt-1");
+    expect(values).toContain("lets-encrypt-2");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

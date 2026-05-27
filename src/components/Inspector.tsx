@@ -1486,6 +1486,12 @@ function sharedFieldDefinitions(
   }
 
   if (group === "tls") {
+    const certificateProviderOptions = [
+      "",
+      ...((config.certificate_providers ?? [])
+        .map((provider) => provider.tag)
+        .filter((tag): tag is string => Boolean(tag))),
+    ];
     return [
       { label: "Enabled", path: ["tls", "enabled"], kind: "boolean" },
       { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
@@ -1502,7 +1508,12 @@ function sharedFieldDefinitions(
       { label: "Key Path (server)", path: ["tls", "key_path"], kind: "text" },
       { label: "Certificate Public Key SHA256 (client only)", path: ["tls", "certificate_public_key_sha256"], kind: "list" },
       { label: "Client Authentication (server)", path: ["tls", "client_authentication"], kind: "select", options: ["", "request", "require", "verify-if-given", "require-and-verify"] },
-      { label: "Certificate Provider", path: ["tls", "certificate_provider"], kind: "text" },
+      {
+        label: "Certificate Provider",
+        path: ["tls", "certificate_provider"],
+        kind: "select",
+        options: certificateProviderOptions,
+      },
       { label: "Fragment (client, 1.12+)", path: ["tls", "fragment"], kind: "boolean" },
       { label: "Fragment Fallback Delay (1.12+)", path: ["tls", "fragment_fallback_delay"], kind: "text" },
       { label: "Record Fragment (client, 1.12+)", path: ["tls", "record_fragment"], kind: "boolean" },
