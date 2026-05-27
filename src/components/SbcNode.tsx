@@ -128,6 +128,17 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
           },
         ];
       }
+      if (type === "resolved") {
+        return [
+          {
+            key: "dns-server",
+            label: "Upstream resolved DNS server",
+            nodeKind: "dns-server",
+            nodeType: "resolved",
+            icon: Globe2,
+          },
+        ];
+      }
       return [];
     }
     return [];
@@ -170,6 +181,7 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
   if (kind === "dns-server") {
     const ports: PortSpec[] = [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
     if (type === "tailscale") ports.push({ key: "endpoint", label: "Tailscale endpoint", nodeKind: "endpoint", nodeType: "tailscale", icon: Waypoints });
+    if (type === "resolved") ports.push({ key: "service", label: "systemd-resolved service", nodeKind: "service", nodeType: "resolved", icon: Server });
     return ports;
   }
   if (kind === "endpoint") return [{ key: "dial-detour", label: "Dial detour outbound", nodeKind: "outbound", icon: Network }];

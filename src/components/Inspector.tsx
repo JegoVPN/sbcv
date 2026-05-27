@@ -211,6 +211,8 @@ const dnsServerHandledFields = new Set([
   "server_port",
   "path",
   "endpoint",
+  "service",
+  "accept_default_resolvers",
   "tls",
   "neighbor_domain",
   "predefined",
@@ -3336,10 +3338,38 @@ export function Inspector() {
       {ref.kind === "dns-server" ? (
         <>
           {entityType === "resolved" ? (
-            <PlatformBanner
-              kind="platform"
-              text="Platform gate: dns-server `resolved` is Linux/systemd specific. It requires a matching service:resolved peer; exports work on any host but sing-box will refuse to start on macOS/Windows/Android/iOS."
-            />
+            <>
+              <PlatformBanner
+                kind="platform"
+                text="Platform gate: dns-server `resolved` is Linux/systemd specific. It requires a matching service:resolved peer; exports work on any host but sing-box will refuse to start on macOS/Windows/Android/iOS."
+              />
+              <label className="field">
+                <span>Service</span>
+                <select
+                  value={typeof entity.service === "string" ? entity.service : ""}
+                  onChange={(event) => updateField(ref, "service", event.target.value || undefined)}
+                >
+                  <option value="">(select service:resolved)</option>
+                  {(config.services ?? [])
+                    .filter((service) => service.type === "resolved" && typeof service.tag === "string")
+                    .map((service) => (
+                      <option key={service.tag} value={service.tag}>
+                        {service.tag}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.accept_default_resolvers)}
+                  onChange={(event) =>
+                    updateField(ref, "accept_default_resolvers", event.target.checked || undefined)
+                  }
+                />
+                <span>Accept default resolvers</span>
+              </label>
+            </>
           ) : null}
           {entityType === "tailscale" ? (
             <PlatformBanner

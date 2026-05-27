@@ -47,7 +47,7 @@ const cases: PortCase[] = [
   { kind: "service", type: "ssm-api", inputKeys: ["managed-inbound"], outputKeys: [] },
   { kind: "service", type: "derp", inputKeys: [], outputKeys: ["verify-client-endpoint"] },
   { kind: "service", type: "ccm", inputKeys: [], outputKeys: ["detour"] },
-  { kind: "service", type: "resolved", inputKeys: [], outputKeys: [] },
+  { kind: "service", type: "resolved", inputKeys: ["dns-server"], outputKeys: [] },
 ];
 
 describe("SBC node port registry", () => {

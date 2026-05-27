@@ -838,6 +838,32 @@ export function validateConfig(
         );
       }
     }
+    if (server.type === "resolved") {
+      const obj = server as Record<string, unknown>;
+      const serviceTag = typeof obj.service === "string" ? obj.service : "";
+      if (!serviceTag) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-server-resolved-service-missing",
+          `/dns/servers/${index}/service`,
+          `Resolved DNS server "${server.tag}" requires a service reference to a service:resolved node.`,
+        );
+      } else {
+        const found = (config.services ?? []).some(
+          (entry) => entry.type === "resolved" && entry.tag === serviceTag,
+        );
+        if (!found) {
+          push(
+            diagnostics,
+            "error",
+            "dns-server-resolved-service-not-found",
+            `/dns/servers/${index}/service`,
+            `Resolved DNS server "${server.tag}" references missing service:resolved tag "${serviceTag}".`,
+          );
+        }
+      }
+    }
     if (server.type === "tailscale" && !server.endpoint) {
       push(
         diagnostics,

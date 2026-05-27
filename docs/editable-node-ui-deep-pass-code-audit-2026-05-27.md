@@ -153,7 +153,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | dns-server-h3 | Palette kind still `dns-http3` (CC-4). `DnsServerConfig.headers` missing in types. No `domain_resolver`-required-for-domain diagnostic. |
 | dns-server-dhcp | No diagnostic when `server.interface === ""`. |
 | dns-server-fakeip | Legacy `dns-fakeip` Palette entry has no deprecation badge — users may pick it accidentally. Canvas subtitle stays generic. Two Palette entries (`dns-fakeip` / `dns-fakeip-server`) share the same `Blocks` icon. |
-| dns-server-resolved | `service` field **has no Inspector control** — falls to AdvancedScalarFields raw text. `graph.ts:542-545` draws an edge for tailscale endpoint but not for resolved → service. No diagnostic validates `resolved` server's `service` reference. |
+| dns-server-resolved | ✅ ~~`service` field has no Inspector control~~ — fixed 2026-05-27. Inspector resolved branch now renders a `Service` select (limited to `service:resolved` tags) plus an `accept_default_resolvers` toggle. `graph.ts` emits `edge:dns-server-service:<dns>:<service>` and SbcNode exposes matching ports (dns-server output + service:resolved input). Two new diagnostics: `dns-server-resolved-service-missing` (warning) and `dns-server-resolved-service-not-found` (error). |
 | dns-server-tailscale | `accept_default_resolvers` not in `dnsServerHandledFields` — drops to Advanced. ✅ ~~scaffold hardcodes `endpoint: "tailscale-ep"`~~ — fixed 2026-05-27; scaffold no longer seeds the dangling ref so the existing `dns-server-tailscale-endpoint-missing` warning now correctly fires until the user wires a real endpoint. `SbcNode.tsx` always renders outbound detour port; tailscale should suppress it. `accept_search_domain` (testing 1.14) has diagnostic but no UI. |
 
 ### Endpoint
@@ -172,7 +172,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | service-hysteria-realm | Palette `statusTitle()` falls back to generic gate text instead of "Requires sing-box 1.14 testing target". No `users` required diagnostic (no `hysteria-realm-user-name-required` / `-token-required`). Scaffold uses placeholder `"change-me"` token with no diagnostic prompting replacement. |
 | service-ccm | `credential_path` / `usages_path` scaffold writes empty strings instead of `undefined`. No ccm-specific diagnostics (public listen warning, empty users, missing detour). Canvas subtitle stays static "Claude Code multiplexer". |
 | service-ocm | ✅ Clean. |
-| service-resolved | `DnsServerConfig.service` field missing in `types.ts`. `SbcNode.tsx:119-131` returns empty port array for resolved (ssm-api has a branch, resolved doesn't). `useProjectStore.ts:427-431` has no `dns-server-service → service:resolved` connect handler. |
+| service-resolved | ✅ ~~`SbcNode.tsx` returns empty port array for resolved~~ — fixed 2026-05-27, service:resolved now has a `dns-server` input port. Canvas edge from dns-server:resolved to service:resolved emitted by graph.ts. `DnsServerConfig.path` widened earlier; `service` is read via the broader `[key: string]: unknown` escape but a regression test verifies edge generation. Store-side `dns-server-service → service:resolved` connect handler still pending. |
 
 ## Suggested Repair Plan
 

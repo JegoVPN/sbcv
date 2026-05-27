@@ -228,6 +228,53 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("draws a dns-server:resolved -> service:resolved edge when resolved.service is set", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      servers: [
+        ...(config.dns?.servers ?? []),
+        { type: "resolved", tag: "resolved-dns", service: "resolved-svc" } as never,
+      ],
+    };
+    config.services = [
+      ...(config.services ?? []),
+      { type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 } as never,
+    ];
+    const { edges } = deriveGraph(config, { positions: {} }, []);
+    const edge = edges.find(
+      (item) => item.id === "edge:dns-server-service:resolved-dns:resolved-svc",
+    );
+    expect(edge).toBeDefined();
+    expect(edge?.source).toBe("dns-server:resolved-dns");
+    expect(edge?.target).toBe("service:resolved-svc");
+  });
+
+  it("flags resolved dns-server with missing or unresolved service reference", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      servers: [
+        ...(config.dns?.servers ?? []),
+        { type: "resolved", tag: "resolved-dns" } as never,
+      ],
+    };
+    expect(
+      validateConfig(config, "stable").some(
+        (finding) => finding.code === "dns-server-resolved-service-missing",
+      ),
+    ).toBe(true);
+
+    (config.dns!.servers as Array<Record<string, unknown>>)[
+      (config.dns!.servers as Array<Record<string, unknown>>).length - 1
+    ].service = "ghost";
+    expect(
+      validateConfig(config, "stable").some(
+        (finding) => finding.code === "dns-server-resolved-service-not-found",
+      ),
+    ).toBe(true);
+  });
+
   it("draws a settings:ntp -> outbound edge when ntp.detour is set", () => {
     const config = createStableTunSplitConfig();
     config.ntp = { enabled: true, server: "time.apple.com", detour: "direct" } as never;
