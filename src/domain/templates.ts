@@ -57,10 +57,6 @@ export const STABLE_TUN_SPLIT_CONFIG: SingBoxConfig = {
       tag: "direct",
     },
     {
-      type: "block",
-      tag: "block",
-    },
-    {
       type: "socks",
       tag: "hk",
       server: "127.0.0.1",
@@ -94,7 +90,7 @@ export const STABLE_TUN_SPLIT_CONFIG: SingBoxConfig = {
       },
       {
         domain_keyword: ["ads"],
-        outbound: "block",
+        action: "reject",
       },
     ],
     final: "proxy",

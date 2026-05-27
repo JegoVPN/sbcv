@@ -85,13 +85,13 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 
 ## 1.11.0 Deprecations (still affect imports / current 66 nodes)
 
-### 1.11-A — `outbound: "block"` → `route.rules[].action: "reject"`
+### 1.11-A — `outbound: "block"` → `route.rules[].action: "reject"` — ✅ CLOSED 2026-05-27
 
 - **Deprecated:** Adding a `{ type: "block", tag: "..." }` outbound and referencing it from route rules.
 - **Replacement:** Drop the outbound; set `action: "reject"` on the route rule.
 - **Affected nodes:** outbound-block, rule-route-rule (the consumer side).
-- **Code state today:** Palette marks `block` as `deprecated` (`Palette.tsx:252` `deprecatedKinds.has("block")` → status `"deprecated"`). Inspector shows a deprecation banner inside the `entityType === "block"` branch. **No `diagnostics.ts` warning** — audit row [outbound-block] flagged this.
-- **Gap:** Add `outbound-block-deprecated` warning recommending `action: "reject"`. Optionally: when the user wires a route rule to a `block` outbound, suggest converting the rule.
+- **Code state today:** Palette already marks `block` as `deprecated`. Inspector shows a deprecation banner. **Now also**: `outbound-block-deprecated` warning emitted from `diagnostics.ts` for any outbound with `type === "block"`. The project default config (`STABLE_TUN_SPLIT_CONFIG`) modernized — `block` outbound removed and its route rule migrated to `{ action: "reject" }`, so first-load is warning-free.
+- **Regression test:** `tests/domain.test.ts` — "warns on deprecated outbound type=block (1.11-A)".
 
 ### 1.11-B — Legacy `dns` outbound → `action: "hijack-dns"` rule
 

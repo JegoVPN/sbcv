@@ -249,6 +249,24 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on deprecated outbound type=block (1.11-A)", () => {
+    const config = createStableTunSplitConfig();
+    config.outbounds = [
+      ...(config.outbounds ?? []),
+      { type: "block", tag: "legacy-block" } as never,
+    ];
+    const findings = validateConfig(config, "stable").filter(
+      (f) => f.code === "outbound-block-deprecated",
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.path).toMatch(/\/outbounds\/\d+/);
+
+    config.outbounds = (config.outbounds ?? []).filter((item) => item.type !== "block");
+    expect(
+      validateConfig(config, "stable").filter((f) => f.code === "outbound-block-deprecated"),
+    ).toEqual([]);
+  });
+
   it("warns on legacy inbound sniff / domain_strategy (1.11-C)", () => {
     const config = createStableTunSplitConfig();
     config.inbounds = [

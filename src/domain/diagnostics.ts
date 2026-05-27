@@ -1200,6 +1200,18 @@ export function validateConfig(
     });
   }
 
+  outbounds.forEach((outbound, index) => {
+    if (outbound.type !== "block") return;
+    const tag = outbound.tag ?? `outbound-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "outbound-block-deprecated",
+      `/outbounds/${index}`,
+      `Outbound "${tag}" (block) is deprecated since sing-box 1.11.0. Remove the outbound and use a route rule with action="reject" instead.`,
+    );
+  });
+
   const legacyInboundSniffFields = ["sniff", "sniff_override_destination", "sniff_timeout"] as const;
   const inboundLegacySniffMessage =
     'Inbound-level sniff/sniff_timeout/sniff_override_destination are deprecated since sing-box 1.11.0. Move sniffing to a route rule with action="sniff" (and optional timeout/override_destination).';
