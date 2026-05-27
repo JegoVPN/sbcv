@@ -18,7 +18,7 @@ routes = [
 ALLOWED_ORIGIN = "https://sbcv.app,https://www.sbcv.app"
 MAX_BODY_BYTES = "524288"
 CHECK_TIMEOUT_MS = "30000"
-VALIDATOR_VERSION = "v1"
+VALIDATOR_VERSION = "v2"
 RATE_LIMIT_PER_MIN = "30"
 
 # KV cache binding (created via `wrangler kv namespace create CHECK_CACHE`).
@@ -60,7 +60,7 @@ routes = [
 ALLOWED_ORIGIN = "https://staging.sbcv.app"
 MAX_BODY_BYTES = "524288"
 CHECK_TIMEOUT_MS = "30000"
-VALIDATOR_VERSION = "v1"
+VALIDATOR_VERSION = "v2"
 RATE_LIMIT_PER_MIN = "60"
 
 [[env.staging.kv_namespaces]]
