@@ -98,7 +98,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| inbound-direct | `network`, `override_address`, `override_port` not in `inboundHandledFields` (lines 135-160) — drop to AdvancedScalarFields as raw inputs instead of dedicated select/number controls. |
+| inbound-direct | ✅ ~~`network`, `override_address`, `override_port` only as raw inputs in Advanced~~ — fixed 2026-05-27, inbound direct now has a dedicated block with `Network` select (`(both)` / `tcp` / `udp`), `Override Address` text input (placeholder `1.1.1.1`), and `Override Port` numeric input (placeholder `53`). `override_address` and `override_port` added to `inboundHandledFields`. `network` stays out of the shared inboundHandledFields set since other inbound types still rely on AdvancedScalarFields for that key — direct just shadows it locally. Regression test "renders inbound:direct network select + override_address/override_port" locks all three controls and the resulting numeric port (Number, not string). |
 | inbound-mixed | Palette `kind: "mixed"` violates `inbound-*` prefix (CC-4). `set_system_proxy` toggle not in inbound block. `address`/`auto_route` shown despite mixed not supporting them (CC-1). |
 | inbound-socks | `address`/`auto_route` shown (CC-1). |
 | inbound-http | `address`/`auto_route` shown (CC-1). No `set_system_proxy` platform restriction warning. |

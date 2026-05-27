@@ -630,6 +630,39 @@ describe("SBC editor shell", () => {
     expect((trojan?.fallback as Record<string, unknown>)?.server_port).toBe(8443);
   });
 
+  it("renders inbound:direct network select + override_address/override_port", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-direct");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const networkSelect = within(inspector.getByTestId("inbound-direct-network")).getByLabelText(
+      "Network",
+    ) as HTMLSelectElement;
+    expect(networkSelect.tagName).toBe("SELECT");
+    expect(Array.from(networkSelect.querySelectorAll("option")).map((o) => o.value)).toEqual(["", "tcp", "udp"]);
+    fireEvent.change(networkSelect, { target: { value: "udp" } });
+
+    const overrideAddr = within(inspector.getByTestId("inbound-direct-override-address")).getByLabelText(
+      "Override Address",
+    ) as HTMLInputElement;
+    fireEvent.change(overrideAddr, { target: { value: "1.1.1.1" } });
+
+    const overridePort = within(inspector.getByTestId("inbound-direct-override-port")).getByLabelText(
+      "Override Port",
+    ) as HTMLInputElement;
+    fireEvent.change(overridePort, { target: { value: "53" } });
+
+    const direct = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "direct");
+    expect(direct?.network).toBe("udp");
+    expect(direct?.override_address).toBe("1.1.1.1");
+    expect(direct?.override_port).toBe(53);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

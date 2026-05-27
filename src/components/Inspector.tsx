@@ -157,6 +157,8 @@ const inboundHandledFields = new Set([
   "masquerade",
   "brutal_debug",
   "fallback",
+  "override_address",
+  "override_port",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2716,6 +2718,43 @@ export function Inspector() {
                 </optgroup>
               </select>
             </label>
+          ) : null}
+          {entityType === "direct" ? (
+            <>
+              <label className="field" data-testid="inbound-direct-network">
+                <span>Network</span>
+                <select
+                  value={typeof entity.network === "string" ? entity.network : ""}
+                  onChange={(event) => updateField(ref, "network", event.target.value || undefined)}
+                >
+                  <option value="">(both)</option>
+                  <option value="tcp">tcp</option>
+                  <option value="udp">udp</option>
+                </select>
+              </label>
+              <label className="field" data-testid="inbound-direct-override-address">
+                <span>Override Address</span>
+                <input
+                  value={typeof entity.override_address === "string" ? entity.override_address : ""}
+                  placeholder="1.1.1.1"
+                  onChange={(event) => updateField(ref, "override_address", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field" data-testid="inbound-direct-override-port">
+                <span>Override Port</span>
+                <input
+                  type="number"
+                  value={typeof entity.override_port === "number" ? entity.override_port : ""}
+                  placeholder="53"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    if (!raw) return updateField(ref, "override_port", undefined);
+                    const parsed = Number(raw);
+                    updateField(ref, "override_port", Number.isFinite(parsed) ? parsed : undefined);
+                  }}
+                />
+              </label>
+            </>
           ) : null}
           {entityType === "trojan" ? (
             (() => {
