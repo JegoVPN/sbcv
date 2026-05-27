@@ -3696,13 +3696,11 @@ export function Inspector() {
                             onChange={(event) => patchPeer(index, { server_port: Number(event.target.value) })}
                           />
                         </label>
-                        <label className="field">
-                          <span>Public Key</span>
-                          <input
-                            value={String(peer.public_key ?? "")}
-                            onChange={(event) => patchPeer(index, { public_key: event.target.value })}
-                          />
-                        </label>
+                        <SensitiveTextField
+                          label="Public Key"
+                          value={String(peer.public_key ?? "")}
+                          onChange={(next) => patchPeer(index, { public_key: next })}
+                        />
                         <SensitiveTextField
                           label="Pre-Shared Key"
                           value={String(peer.pre_shared_key ?? "")}
