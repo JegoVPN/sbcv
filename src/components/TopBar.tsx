@@ -1,11 +1,12 @@
 import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, LoaderCircle } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
+import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
-import type { SingBoxTargetId } from "../domain/types";
+import type { Diagnostic, SingBoxTargetId } from "../domain/types";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
 
 function padTimestampPart(value: number) {
@@ -29,6 +30,7 @@ export function TopBar() {
   const validateNow = useProjectStore((state) => state.validateNow);
   const runOfficialCheck = useProjectStore((state) => state.runOfficialCheck);
   const importJson = useProjectStore((state) => state.importJson);
+  const focusNode = useProjectStore((state) => state.focusNode);
   const goHome = useProjectStore((state) => state.goHome);
   const checkNotice = useProjectStore((state) => state.checkNotice);
   const isChecking = useProjectStore((state) => state.isChecking);
@@ -38,6 +40,17 @@ export function TopBar() {
   const allDiagnostics = useMemo(
     () => [...diagnostics, ...officialDiagnostics],
     [diagnostics, officialDiagnostics],
+  );
+  const resolveFocusTarget = useCallback(
+    (diagnostic: Diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, config),
+    [config],
+  );
+  const handleDiagnosticFocus = useCallback(
+    (nodeId: string) => {
+      focusNode(nodeId);
+      setPopoverOpen(false);
+    },
+    [focusNode],
   );
   const status = summarizeDiagnostics(allDiagnostics);
   const busy = isChecking || isOfficialChecking;
@@ -178,6 +191,8 @@ export function TopBar() {
               diagnostics={allDiagnostics}
               tone={popoverTone}
               onClose={() => setPopoverOpen(false)}
+              resolveFocusTarget={resolveFocusTarget}
+              onFocus={handleDiagnosticFocus}
             />
           ) : null}
         </div>

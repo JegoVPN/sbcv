@@ -55,6 +55,8 @@ export function CanvasWorkspace() {
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const setNodePosition = useProjectStore((state) => state.setNodePosition);
   const freshLoadToken = useProjectStore((state) => state.freshLoadToken);
+  const focusToken = useProjectStore((state) => state.focusToken);
+  const focusedNodeId = useProjectStore((state) => state.focusedNodeId);
   const graph = useMemo(() => deriveGraph(config, layout, diagnostics), [config, diagnostics, layout]);
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
@@ -88,6 +90,18 @@ export function CanvasWorkspace() {
     if (freshLoadToken === 0) return;
     fitFullGraph();
   }, [fitFullGraph, freshLoadToken]);
+
+  useEffect(() => {
+    if (focusToken === 0 || !focusedNodeId) return;
+    window.requestAnimationFrame(() => {
+      flowRef.current?.fitView({
+        nodes: [{ id: focusedNodeId }],
+        padding: 0.6,
+        duration: 320,
+        maxZoom: 1,
+      });
+    });
+  }, [focusToken, focusedNodeId]);
 
   return (
     <section className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
