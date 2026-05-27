@@ -160,6 +160,13 @@ const inboundHandledFields = new Set([
   "override_address",
   "override_port",
   "set_system_proxy",
+  "include_uid_range",
+  "exclude_uid_range",
+  "include_interface",
+  "exclude_interface",
+  "include_package",
+  "exclude_package",
+  "auto_redirect",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -2567,6 +2574,82 @@ export function Inspector() {
                     updateField(ref, "loopback_address", next.length ? next : undefined);
                   }}
                 />
+              </label>
+              <label className="field" data-testid="tun-include-uid-range">
+                <span>Include UID range (Linux, CSV)</span>
+                <input
+                  value={toList(entity.include_uid_range)}
+                  placeholder="1000:2000, 3000:4000"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "include_uid_range", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-exclude-uid-range">
+                <span>Exclude UID range (Linux, CSV)</span>
+                <input
+                  value={toList(entity.exclude_uid_range)}
+                  placeholder="0:999"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "exclude_uid_range", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-include-interface">
+                <span>Include Interface (CSV)</span>
+                <input
+                  value={toList(entity.include_interface)}
+                  placeholder="eth0, wlan0"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "include_interface", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-exclude-interface">
+                <span>Exclude Interface (CSV)</span>
+                <input
+                  value={toList(entity.exclude_interface)}
+                  placeholder="lo, docker0"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "exclude_interface", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-include-package">
+                <span>Include Package (Android, CSV)</span>
+                <input
+                  value={toList(entity.include_package)}
+                  placeholder="com.example.app"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "include_package", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-exclude-package">
+                <span>Exclude Package (Android, CSV)</span>
+                <input
+                  value={toList(entity.exclude_package)}
+                  placeholder="com.android.geoclient"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "exclude_package", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="toggle-row" data-testid="tun-auto-redirect">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.auto_redirect)}
+                  onChange={(event) =>
+                    updateField(ref, "auto_redirect", event.target.checked || undefined)
+                  }
+                />
+                <span>Auto redirect (Linux, requires `auto_route`)</span>
               </label>
               {entity.stack === "gvisor" ? (
                 <label className="toggle-row">
