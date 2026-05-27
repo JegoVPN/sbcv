@@ -31,10 +31,11 @@ These appear in many nodes simultaneously. One PR per item can close 10–30 nod
   - outbound `socks` → `network` enum, `username`/`password` first-class
   - outbound `http` → `headers` map (entirely invisible), `path` not in `outboundHandledFields`
 
-### CC-3 Scaffold hardcodes `network: "tcp"` / `"udp"` instead of omitting
+### CC-3 Scaffold hardcodes `network: "tcp"` / `"udp"` instead of omitting — ✅ CLOSED 2026-05-27
 
-- Official semantics: omit `network` to mean "both TCP and UDP". The scaffold lies to the user.
-- **Affected:** `createOutbound` for `direct`, `vmess`, `vless`, `shadowsocks`, `tuic` (and others — grep `network:` in `src/domain/commands.ts`).
+- ~~Official semantics: omit `network` to mean "both TCP and UDP". The scaffold lies to the user.~~ All 10 hardcoded `network:` defaults stripped from `createInbound` / `createOutbound`.
+- **Affected (now fixed):** inbound — direct, naive, tproxy. outbound — shadowsocks, vmess, vless, trojan, hysteria, hysteria2, tuic.
+- **Regression test:** `tests/domain.test.ts` — "omits the network field from scaffolds so sing-box defaults to both TCP and UDP".
 
 ### CC-4 Palette kind naming still inconsistent (M1.8 incomplete)
 

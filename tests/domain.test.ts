@@ -228,6 +228,27 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("omits the network field from scaffolds so sing-box defaults to both TCP and UDP", () => {
+    const inboundTypes = ["direct", "naive", "tproxy"];
+    for (const type of inboundTypes) {
+      const inbound = createInbound(type, `${type}-in`) as Record<string, unknown>;
+      expect(inbound).not.toHaveProperty("network");
+    }
+    const outboundTypes = [
+      "shadowsocks",
+      "vmess",
+      "vless",
+      "trojan",
+      "hysteria",
+      "hysteria2",
+      "tuic",
+    ];
+    for (const type of outboundTypes) {
+      const outbound = createOutbound(type, `${type}-out`) as Record<string, unknown>;
+      expect(outbound).not.toHaveProperty("network");
+    }
+  });
+
   it("changes inbound and outbound protocol type while preserving tags and references", () => {
     const config = createStableTunSplitConfig();
     const changedOutbound = changeEntityType(config, { kind: "outbound", tag: "hk" }, "http");
