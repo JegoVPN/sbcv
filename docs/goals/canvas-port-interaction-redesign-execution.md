@@ -750,6 +750,20 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr5-reference-coverage`.
 - Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/domain.test.ts tests/port-disconnect-symmetry.test.ts tests/port-relation-registry.test.ts tests/config-doc-capability.test.ts --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
 - Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
 
+### PR-6 Source-Type Guards And Validator-Safe Scaffolds
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr6-source-guards`.
+
+- `connectSelectorCandidate` now writes only to existing selector/urltest parents with existing child outbounds, so command paths cannot inject candidates into arbitrary outbound objects or create missing-candidate diagnostics.
+- Route rule outbound writes and DNS rule server writes are normalized by rule `action` in the domain command layer, with store connection paths prechecking the same guards before creating helper resources.
+- Dial detour writes now share the same outbound/DNS-server Dial Field eligibility used by `sharedFieldRegistry`, so selector/urltest/block/DNS outbounds and non-dialable DNS server types are not mutated by canvas/store helpers.
+- `createCompatible` tracks the entity created by the current action and connects only that entity; it no longer reads stale latest outbound/DNS server entries and overwrites route/DNS finals or group membership.
+- Palette migration/documentation resources for legacy DNS server, legacy WireGuard outbound, and DNS outbound are explicitly non-actionable `Docs` entries; cloudflared and mDNS remain disabled gates.
+- `addDnsServer("tailscale")` and `addDnsServer("resolved")` create validator-safe dependent endpoint/service scaffolds, while `createRuleSet` now rejects unknown types instead of silently falling back to remote.
+- Frontend performance review: Palette changes are static metadata/status changes and tests only; no new subscriptions, render-time graph work, async/data waterfall, or bundle dependency was added. The existing Vite single-bundle warning remains a PR-11 performance item.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/domain.test.ts tests/app.test.tsx --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor command scaffolds and guard behavior, not bundled fixture/exported config files.
+
 ## Open Decisions
 
 - Disconnect affordance: default to connected-handle small `x`; edge context menu and keyboard delete are optional additions.
