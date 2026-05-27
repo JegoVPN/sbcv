@@ -46,7 +46,7 @@ export type OutboundPaletteKind = keyof typeof OUTBOUND_PALETTE_TYPES;
 
 export const INBOUND_PALETTE_TYPES = {
   "inbound-direct": "direct",
-  mixed: "mixed",
+  "inbound-mixed": "mixed",
   "inbound-socks": "socks",
   "inbound-http": "http",
   "inbound-shadowsocks": "shadowsocks",
@@ -59,7 +59,7 @@ export const INBOUND_PALETTE_TYPES = {
   "inbound-tuic": "tuic",
   "inbound-hysteria2": "hysteria2",
   "inbound-anytls": "anytls",
-  tun: "tun",
+  "inbound-tun": "tun",
   "inbound-redirect": "redirect",
   "inbound-tproxy": "tproxy",
   "inbound-cloudflared": "cloudflared",
@@ -96,7 +96,7 @@ export const DNS_SERVER_PALETTE_TYPES = {
   "dns-tls": "tls",
   "dns-quic": "quic",
   "dns-https": "https",
-  "dns-http3": "h3",
+  "dns-h3": "h3",
   "dns-dhcp": "dhcp",
   "dns-fakeip-server": "fakeip",
   "dns-mdns": "mdns",
