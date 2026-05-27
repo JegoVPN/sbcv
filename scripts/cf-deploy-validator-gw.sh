@@ -62,7 +62,10 @@ echo "$changed" | grep -E "$relevant" | sed 's/^/      /' || true
 
 # --- 2. wrangler deploy -------------------------------------------------------
 
-(cd worker && npx --yes wrangler@4.95.0 deploy --env="")
+# worker/ is its own pnpm package, not a workspace member of the root.
+# Cloudflare Builds installs root deps but never enters worker/, so wrangler
+# would fail to resolve @cloudflare/containers. Install worker/ deps first.
+(cd worker && pnpm install --frozen-lockfile && npx --yes wrangler@4.95.0 deploy --env="")
 
 # --- 3. Verify container application image matches the new worker version ----
 
