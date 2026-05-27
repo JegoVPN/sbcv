@@ -458,6 +458,30 @@ describe("SBC editor shell", () => {
     expect(naive?.quic_congestion_control).toBe("bbr2");
   });
 
+  it("renders outbound:tuic heartbeat + zero_rtt_handshake as first-class controls", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("tuic-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const heartbeatField = inspector.getByTestId("tuic-heartbeat");
+    const heartbeatInput = within(heartbeatField).getByLabelText("Heartbeat") as HTMLInputElement;
+    expect(heartbeatInput.placeholder).toBe("10s");
+    fireEvent.change(heartbeatInput, { target: { value: "5s" } });
+
+    const zeroRttRow = inspector.getByTestId("tuic-zero-rtt-handshake");
+    const zeroRttCheckbox = within(zeroRttRow).getByRole("checkbox") as HTMLInputElement;
+    expect(zeroRttCheckbox.checked).toBe(false);
+    fireEvent.click(zeroRttCheckbox);
+
+    const tuic = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "tuic");
+    expect(tuic?.heartbeat).toBe("5s");
+    expect(tuic?.zero_rtt_handshake).toBe(true);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
