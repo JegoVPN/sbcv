@@ -202,6 +202,8 @@ const outboundHandledFields = new Set([
   "torrc",
   "extra_headers",
   "quic_congestion_control",
+  "heartbeat",
+  "zero_rtt_handshake",
   "server_ports",
   "hop_interval",
   "up_mbps",
@@ -3476,6 +3478,24 @@ export function Inspector() {
                   }}
                 />
                 <span>UDP over Stream (conflicts with udp_relay_mode)</span>
+              </label>
+              <label className="field" data-testid="tuic-heartbeat">
+                <span>Heartbeat</span>
+                <input
+                  value={typeof entity.heartbeat === "string" ? entity.heartbeat : ""}
+                  placeholder="10s"
+                  onChange={(event) => updateField(ref, "heartbeat", event.target.value || undefined)}
+                />
+              </label>
+              <label className="toggle-row" data-testid="tuic-zero-rtt-handshake">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.zero_rtt_handshake)}
+                  onChange={(event) =>
+                    updateField(ref, "zero_rtt_handshake", event.target.checked || undefined)
+                  }
+                />
+                <span>0-RTT Handshake (faster reconnects, weaker forward secrecy)</span>
               </label>
             </>
           ) : null}
