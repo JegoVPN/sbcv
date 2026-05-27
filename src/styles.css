@@ -227,6 +227,201 @@ textarea {
   animation: status-check-pulse 420ms ease-out;
 }
 
+button.status-pill {
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: default;
+  padding: 0 11px;
+}
+
+.status-pill--interactive {
+  cursor: pointer;
+}
+
+.status-pill--interactive:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.status-pill-host {
+  position: relative;
+  display: inline-flex;
+}
+
+.diagnostics-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(60vh, 540px);
+  display: flex;
+  flex-direction: column;
+  background: rgba(16, 20, 24, 0.98);
+  border: 1px solid #2a3340;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.diagnostics-popover--valid {
+  border-top: 3px solid #c7ff00;
+}
+
+.diagnostics-popover--warning {
+  border-top: 3px solid #f2bc4b;
+}
+
+.diagnostics-popover--error {
+  border-top: 3px solid #e34b4b;
+}
+
+.diagnostics-popover__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #1f2731;
+}
+
+.diagnostics-popover__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diagnostics-popover--valid .diagnostics-popover__title {
+  color: #c7ff00;
+}
+
+.diagnostics-popover--warning .diagnostics-popover__title {
+  color: #f2bc4b;
+}
+
+.diagnostics-popover--error .diagnostics-popover__title {
+  color: #e34b4b;
+}
+
+.diagnostics-popover__summary {
+  flex: 1;
+  text-align: right;
+  font-size: 11px;
+  color: #8a96a3;
+}
+
+.diagnostics-popover__close {
+  background: transparent;
+  border: 0;
+  color: #6f7b86;
+  cursor: pointer;
+  padding: 2px;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diagnostics-popover__close:hover {
+  color: #d7dee7;
+}
+
+.diagnostics-popover__list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  overflow-y: auto;
+}
+
+.diagnostics-popover__empty {
+  padding: 14px;
+  font-size: 12px;
+  color: #b7c2cd;
+  line-height: 1.5;
+}
+
+.diagnostics-popover__empty strong {
+  color: #d7dee7;
+}
+
+.diagnostics-popover__item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #181e25;
+  font-size: 12px;
+}
+
+.diagnostics-popover__item:last-child {
+  border-bottom: 0;
+}
+
+.diagnostics-popover__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.diagnostics-popover__item--error .diagnostics-popover__icon {
+  color: #e34b4b;
+}
+
+.diagnostics-popover__item--warning .diagnostics-popover__icon {
+  color: #f2bc4b;
+}
+
+.diagnostics-popover__item--info .diagnostics-popover__icon {
+  color: #59b4ff;
+}
+
+.diagnostics-popover__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.diagnostics-popover__code {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #eef2f4;
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.diagnostics-popover__badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #1a222b;
+  color: #9aa5b0;
+  border: 1px solid #2a3340;
+}
+
+.diagnostics-popover__path {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: #8a96a3;
+  font-size: 11px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagnostics-popover__message {
+  color: #b7c2cd;
+  line-height: 1.45;
+  word-wrap: break-word;
+}
+
 .official-check-btn {
   min-height: 34px;
   border-radius: 999px;

@@ -1,11 +1,12 @@
 import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, LoaderCircle } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import type { SingBoxTargetId } from "../domain/types";
+import { DiagnosticsPopover } from "./DiagnosticsPopover";
 import { OfficialCheckButton } from "./OfficialCheckButton";
 
 function padTimestampPart(value: number) {
@@ -29,6 +30,7 @@ export function TopBar() {
   const importJson = useProjectStore((state) => state.importJson);
   const checkNotice = useProjectStore((state) => state.checkNotice);
   const isChecking = useProjectStore((state) => state.isChecking);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const status = summarizeDiagnostics(diagnostics);
   const pillState = isChecking ? "checking" : status;
   const target = targetFromVersion(channel, version);
@@ -36,6 +38,10 @@ export function TopBar() {
     pillState === "checking" ? LoaderCircle : pillState === "error" ? CircleX : pillState === "warning" ? CircleAlert : CheckCircle2;
   const statusLabel =
     pillState === "checking" ? "Checking" : pillState === "error" ? "Invalid" : pillState === "warning" ? "Warning" : "Valid";
+
+  const pillInteractive = pillState !== "checking";
+  const popoverTone: "valid" | "warning" | "error" =
+    pillState === "error" ? "error" : pillState === "warning" ? "warning" : "valid";
 
   function exportConfig() {
     const exportedConfig = createConfigExport(config);
@@ -100,15 +106,31 @@ export function TopBar() {
           className="visually-hidden"
           onChange={handleImport}
         />
-        <span
-          key={isChecking ? "checking" : checkNotice || pillState}
-          className={`status-pill status-pill--${pillState} ${checkNotice && !isChecking && pillState === "valid" ? "status-pill--checked" : ""}`}
-          title={checkNotice || statusLabel}
-          aria-label={statusLabel}
-        >
-          <StatusIcon className={pillState === "checking" ? "status-pill__spinner" : undefined} size={14} />
-          {statusLabel}
-        </span>
+        <div className="status-pill-host">
+          <button
+            key={isChecking ? "checking" : checkNotice || pillState}
+            type="button"
+            className={`status-pill status-pill--${pillState} ${checkNotice && !isChecking && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
+            title={checkNotice || statusLabel}
+            aria-label={statusLabel}
+            aria-haspopup={pillInteractive ? "dialog" : undefined}
+            aria-expanded={pillInteractive ? popoverOpen : undefined}
+            disabled={!pillInteractive}
+            onClick={() => {
+              if (pillInteractive) setPopoverOpen((prev) => !prev);
+            }}
+          >
+            <StatusIcon className={pillState === "checking" ? "status-pill__spinner" : undefined} size={14} />
+            {statusLabel}
+          </button>
+          {popoverOpen && pillInteractive ? (
+            <DiagnosticsPopover
+              diagnostics={diagnostics}
+              tone={popoverTone}
+              onClose={() => setPopoverOpen(false)}
+            />
+          ) : null}
+        </div>
       </div>
     </header>
   );
