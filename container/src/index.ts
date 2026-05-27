@@ -10,7 +10,12 @@ const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN ?? "";
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 524288);
 
 function authorizeInternal(headers: Headers): Response | null {
-  if (!INTERNAL_TOKEN) return null;
+  if (!INTERNAL_TOKEN) {
+    return new Response(JSON.stringify({ error: "Service misconfigured" }), {
+      status: 503,
+      headers: { "content-type": "application/json" },
+    });
+  }
   const got = headers.get("x-internal-token");
   if (got !== INTERNAL_TOKEN) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -54,9 +59,9 @@ app.post("/check", async (c) => {
   try {
     const result = await runCheck({ target: body.target, config: body.config });
     return c.json(result, 200);
-  } catch (err) {
+  } catch {
     return c.json(
-      { status: "invalid", errors: [(err as Error).message ?? "Internal error"] },
+      { status: "invalid", errors: ["Internal validator error"] },
       500,
     );
   }

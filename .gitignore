@@ -16,8 +16,12 @@ playwright-report/
 # local env
 .env
 .env.*
+.dev.vars
 !.env.example
 !.env.production
+
+# local tooling
+.claude/
 
 # logs
 *.log
