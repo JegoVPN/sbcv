@@ -82,6 +82,7 @@ type ProjectStore = {
   officialValidationMessage: string;
   checkNotice: string;
   isChecking: boolean;
+  freshLoadToken: number;
   setSelectedId: (id: string | null) => void;
   setPanelTab: (tab: PanelTab) => void;
   openGlobalPanel: (tab: PanelTab) => void;
@@ -485,6 +486,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.",
   checkNotice: "",
   isChecking: false,
+  freshLoadToken: 0,
 
   setSelectedId: (id) => set({ selectedId: id }),
   setPanelTab: (tab) => set({ panelTab: tab }),
@@ -513,9 +515,10 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       selectedId: null,
       globalPanelOpen: false,
       checkNotice: "",
+      freshLoadToken: state.freshLoadToken + 1,
     })),
   loadTemplatePreset: (id) =>
-    set(() => {
+    set((state) => {
       const preset = createTemplatePreset(id);
       return {
         ...sync(preset.config, preset.channel),
@@ -525,6 +528,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         selectedId: null,
         globalPanelOpen: false,
         checkNotice: "",
+        freshLoadToken: state.freshLoadToken + 1,
       };
     }),
   loadMinimal: () =>
@@ -534,6 +538,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       selectedId: null,
       globalPanelOpen: false,
       checkNotice: "",
+      freshLoadToken: state.freshLoadToken + 1,
     })),
 
   createFromPalette: (kind) =>
@@ -1275,7 +1280,7 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   importJson: (value) =>
     set((state) => {
       try {
-        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} }, globalPanelOpen: false, checkNotice: "" };
+        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} }, globalPanelOpen: false, checkNotice: "", freshLoadToken: state.freshLoadToken + 1 };
       } catch (error) {
         return {
           jsonDraft: value,

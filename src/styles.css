@@ -116,7 +116,7 @@ textarea {
   padding: 5px 13px 5px 5px;
   border: 1px solid #252d35;
   border-radius: 999px;
-  background: rgba(16, 20, 24, 0.94);
+  background: #1C1E20;
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
   backdrop-filter: blur(14px);
   pointer-events: auto;
@@ -151,7 +151,7 @@ textarea {
   padding: 6px;
   border: 1px solid #252d35;
   border-radius: 999px;
-  background: rgba(16, 20, 24, 0.94);
+  background: #1C1E20;
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
   backdrop-filter: blur(14px);
   pointer-events: auto;
@@ -164,7 +164,7 @@ textarea {
   min-height: 34px;
   padding: 0 8px 0 11px;
   border-radius: 999px;
-  background: #101418;
+  background: #333537;
   color: #a6b0ba;
   font-size: 12px;
 }
@@ -180,11 +180,11 @@ textarea {
   min-height: 34px;
   border: 0;
   border-radius: 999px;
-  background: #101418;
+  background: #333537;
 }
 
 .topbar-actions button:hover:not(:disabled) {
-  background: #1a222b;
+  background: #494B4D;
 }
 
 .status-pill {
@@ -606,7 +606,7 @@ textarea {
   padding: 6px;
   border: 1px solid #252d35;
   border-radius: 999px;
-  background: rgba(16, 20, 24, 0.94);
+  background: #1C1E20;
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
   backdrop-filter: blur(14px);
 }
@@ -617,13 +617,13 @@ textarea {
   min-height: 36px;
   border: 0;
   border-radius: 999px;
-  background: #101418;
+  background: #333537;
   color: #e6edf3;
   box-shadow: none;
 }
 
 .react-flow__controls-button:hover {
-  background: #1a222b;
+  background: #494B4D;
   color: #fff;
 }
 
