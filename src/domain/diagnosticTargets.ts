@@ -1,11 +1,12 @@
+import { generatedEntityTag } from "./portRelationRegistry";
 import type { SingBoxConfig } from "./types";
 
 function taggedNodeId(
-  kind: "outbound" | "inbound" | "dns-server" | "endpoint" | "service" | "rule-set",
+  kind: "outbound" | "inbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client",
   tag: string | undefined,
   index: number,
 ): string {
-  const safeTag = tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
+  const safeTag = tag && tag.trim() ? tag : generatedEntityTag(kind, index);
   return `${kind}:${safeTag}`;
 }
 
@@ -78,6 +79,22 @@ export function nodeIdForDiagnosticPath(path: string, config: SingBoxConfig): st
     const idx = Number(serviceMatch[1]);
     const item = config.services?.[idx];
     if (item) return taggedNodeId("service", item.tag, idx);
+    return null;
+  }
+
+  const certificateProviderMatch = path.match(/^\/certificate_providers\/(\d+)(?:\/|$)/);
+  if (certificateProviderMatch) {
+    const idx = Number(certificateProviderMatch[1]);
+    const item = config.certificate_providers?.[idx];
+    if (item) return taggedNodeId("certificate-provider", item.tag, idx);
+    return null;
+  }
+
+  const httpClientMatch = path.match(/^\/http_clients\/(\d+)(?:\/|$)/);
+  if (httpClientMatch) {
+    const idx = Number(httpClientMatch[1]);
+    const item = config.http_clients?.[idx];
+    if (item) return taggedNodeId("http-client", item.tag, idx);
     return null;
   }
 

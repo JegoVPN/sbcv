@@ -109,7 +109,9 @@ export function CanvasWorkspace() {
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodesDelete={(deleted) => deleted.forEach((node) => deleteEntity(node.data.ref))}
+        onNodesDelete={(deleted) => deleted.forEach((node) => {
+          if (node.data.kind !== "notice") deleteEntity(node.data.ref);
+        })}
         onEdgesDelete={(deleted) => deleted.forEach((edge) => disconnectEdge(edge.id))}
         onConnect={connectPorts}
         isValidConnection={isValidConnection}

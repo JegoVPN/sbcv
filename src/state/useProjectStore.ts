@@ -501,6 +501,7 @@ function portNodeType(config: SingBoxConfig, node: { kind: string; value: string
   if (node.kind === "service") return config.services?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "rule-set") return config.route?.rule_set?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "certificate-provider") return config.certificate_providers?.find((item) => item.tag === node.value)?.type;
+  if (node.kind === "http-client") return "http-client";
   if (node.kind === "route") return "route";
   if (node.kind === "route-rule") return "route-rule";
   if (node.kind === "dns") return "dns";

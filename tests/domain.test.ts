@@ -16,9 +16,11 @@ import {
   renameTag,
   createRuleSet,
   updateDnsRule,
+  updateEntityField,
   updateRouteRule,
 } from "../src/domain/commands";
 import { deriveGraph } from "../src/canvas/graph";
+import { nodeIdForDiagnosticPath } from "../src/domain/diagnosticTargets";
 import { validateConfig } from "../src/domain/diagnostics";
 import { referenceRegistry, type ReferenceKind } from "../src/domain/referenceRegistry";
 import { parseConfigJson, stringifyConfig } from "../src/domain/serialization";
@@ -298,6 +300,47 @@ describe("canonical sing-box domain model", () => {
     expect(json).toContain('"inbounds"');
     expect(json).not.toContain("positions");
     expect(parseConfigJson(json)).toEqual(config);
+  });
+
+  it.each([
+    ["inbounds", { inbounds: "bad" }],
+    ["outbounds", { outbounds: "bad" }],
+    ["endpoints", { endpoints: "bad" }],
+    ["services", { services: "bad" }],
+    ["certificate_providers", { certificate_providers: "bad" }],
+    ["http_clients", { http_clients: "bad" }],
+    ["route.rules", { route: { rules: "bad" } }],
+    ["route.rule_set", { route: { rule_set: "bad" } }],
+    ["dns.servers", { dns: { servers: "bad" } }],
+    ["dns.rules", { dns: { rules: "bad" } }],
+  ])("rejects malformed collection shape %s during parse", (path, value) => {
+    expect(() => parseConfigJson(JSON.stringify(value))).toThrow(`"${path}" must be an array`);
+  });
+
+  it("preserves JSON key order when stringifying updated config objects", () => {
+    const config = parseConfigJson(`{
+  "outbounds": [
+    {
+      "tag": "proxy",
+      "type": "socks",
+      "server": "old.example",
+      "server_port": 1080,
+      "detour": "direct"
+    }
+  ],
+  "route": {
+    "final": "proxy"
+  }
+}`);
+    const updated = updateEntityField(config, { kind: "outbound", tag: "proxy" }, "server", "new.example");
+    const cleared = updateEntityField(updated, { kind: "outbound", tag: "proxy" }, "detour", undefined);
+    const json = stringifyConfig(cleared);
+
+    expect(json).not.toContain('"detour"');
+    expect(json.indexOf('"tag"')).toBeLessThan(json.indexOf('"type"'));
+    expect(json.indexOf('"type"')).toBeLessThan(json.indexOf('"server"'));
+    expect(json.indexOf('"server"')).toBeLessThan(json.indexOf('"server_port"'));
+    expect(json.indexOf('"outbounds"')).toBeLessThan(json.indexOf('"route"'));
   });
 
   it("renames tags and cascades route and selector references", () => {
@@ -583,6 +626,25 @@ describe("canonical sing-box domain model", () => {
     expect(new Set(edgeIds).size).toBe(edgeIds.length);
   });
 
+  it("does not render candidate edges for non-group outbounds with stale outbounds arrays", () => {
+    const config: SingBoxConfig = {
+      outbounds: [
+        { type: "direct", tag: "invalid-parent", outbounds: ["child"] },
+        { type: "selector", tag: "valid-parent", outbounds: ["child"] },
+        { type: "direct", tag: "child" },
+      ],
+      route: { final: "valid-parent" },
+    };
+
+    const { edges, nodes } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(edges.some((edge) => edge.id.startsWith("edge:direct:invalid-parent"))).toBe(false);
+    expect(edges.some((edge) => edge.id === "edge:selector:valid-parent:0:child")).toBe(true);
+    expect(nodes.find((node) => node.id === "outbound:child")?.position.x).toBeGreaterThan(
+      nodes.find((node) => node.id === "outbound:valid-parent")?.position.x ?? 0,
+    );
+  });
+
   it("disconnects selector candidate references from rendered graph edge ids", () => {
     const config = createStableTunSplitConfig();
     const updated = disconnectEdge(config, "edge:selector:proxy:0:auto");
@@ -668,7 +730,93 @@ describe("canonical sing-box domain model", () => {
     const { nodes } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
 
     expect(nodes.some((node) => node.id === "route:main")).toBe(true);
-    expect(nodes.filter((node) => node.data.kind === "route-rule")).toHaveLength(0);
+    expect(nodes.filter((node) => node.data.kind === "route-rule")).toHaveLength(24);
+    expect(nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "notice:route-rules-overflow",
+          data: expect.objectContaining({ title: "+76 route rules not visualized" }),
+        }),
+      ]),
+    );
+  });
+
+  it("adds a visible overflow notice for dense DNS rule lists", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      rules: Array.from({ length: 25 }, (_, index) => ({
+        domain_suffix: [`dns-${index}.example`],
+        server: "local-dns",
+      })),
+    };
+
+    const { nodes } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+
+    expect(nodes.filter((node) => node.data.kind === "dns-rule")).toHaveLength(24);
+    expect(nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "notice:dns-rules-overflow",
+          data: expect.objectContaining({ title: "+1 DNS rules not visualized" }),
+        }),
+      ]),
+    );
+  });
+
+  it("keeps diagnostic paths segment-scoped while deriving node status", () => {
+    const config: SingBoxConfig = {
+      outbounds: Array.from({ length: 11 }, (_, index) => ({ type: "direct", tag: `out-${index}` })),
+    };
+    const { nodes } = deriveGraph(config, { positions: {} }, [
+      {
+        level: "error",
+        code: "test-outbound-10",
+        path: "/outbounds/10/server",
+        message: "Only outbound 10 should be marked.",
+        source: "semantic",
+      },
+    ]);
+
+    expect(nodes.find((node) => node.id === "outbound:out-1")?.data.status).toBe("valid");
+    expect(nodes.find((node) => node.id === "outbound:out-10")?.data.status).toBe("error");
+  });
+
+  it("targets duplicate-tag diagnostics at individual tag paths", () => {
+    const config: SingBoxConfig = {
+      inbounds: [{ type: "tun", tag: "dup" }],
+      outbounds: [{ type: "direct", tag: "dup" }],
+    };
+    const duplicates = validateConfig(config, "stable").filter((diagnostic) => diagnostic.code === "duplicate-tag");
+
+    expect(duplicates.map((diagnostic) => diagnostic.path).sort()).toEqual(["/inbounds/0/tag", "/outbounds/0/tag"]);
+    expect(duplicates.map((diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, config)).sort()).toEqual(["inbound:dup", "outbound:dup"]);
+  });
+
+  it("places DNS-only rule-set nodes after route-referenced rule-set nodes", () => {
+    const config = createStableTunSplitConfig();
+    config.route = {
+      ...config.route,
+      rule_set: [
+        { type: "remote", tag: "route-rs", format: "source", url: "https://example.com/route.json" },
+        { type: "remote", tag: "dns-rs", format: "source", url: "https://example.com/dns.json" },
+      ],
+      rules: Array.from({ length: 20 }, (_, index) => ({
+        domain_suffix: [`route-${index}.example`],
+        outbound: "direct",
+        ...(index === 12 ? { rule_set: "route-rs" } : {}),
+      })),
+    };
+    config.dns = {
+      ...config.dns,
+      rules: [{ rule_set: "dns-rs", server: "local-dns" }],
+    };
+
+    const { nodes } = deriveGraph(config, { positions: {} }, validateConfig(config, "stable"));
+    const routeRuleSetY = nodes.find((node) => node.id === "rule-set:route-rs")?.position.y;
+    const dnsRuleSetY = nodes.find((node) => node.id === "rule-set:dns-rs")?.position.y;
+
+    expect(routeRuleSetY).toBeLessThan(dnsRuleSetY ?? 0);
   });
 
   it("caps selector candidate edges for dense group configs", () => {

@@ -24,13 +24,15 @@ export function validateConfig(
 
   for (const [tag, refs] of tagIndex) {
     if (refs.length > 1) {
-      push(
-        diagnostics,
-        "error",
-        "duplicate-tag",
-        refs.map((ref) => ref.path).join(", "),
-        `Tag "${tag}" is used by ${refs.length} entities.`,
-      );
+      refs.forEach((ref) => {
+        push(
+          diagnostics,
+          "error",
+          "duplicate-tag",
+          `${ref.path}/tag`,
+          `Tag "${tag}" is used by ${refs.length} entities.`,
+        );
+      });
     }
   }
 
