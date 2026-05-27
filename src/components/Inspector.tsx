@@ -2520,6 +2520,48 @@ export function Inspector() {
                   />
                   <span>Enable stats</span>
                 </label>
+                <label className="field" data-testid="v2ray-stats-inbounds">
+                  <span>Stats Inbounds (CSV of inbound tags)</span>
+                  <input
+                    value={toList(v2rayStats.inbounds)}
+                    placeholder="mixed-in, tun-in"
+                    onChange={(event) => {
+                      const next = fromList(event.target.value);
+                      updateField(ref, "v2ray_api", {
+                        ...v2rayApi,
+                        stats: { ...v2rayStats, inbounds: next.length ? next : undefined },
+                      });
+                    }}
+                  />
+                </label>
+                <label className="field" data-testid="v2ray-stats-outbounds">
+                  <span>Stats Outbounds (CSV of outbound tags)</span>
+                  <input
+                    value={toList(v2rayStats.outbounds)}
+                    placeholder="proxy, direct"
+                    onChange={(event) => {
+                      const next = fromList(event.target.value);
+                      updateField(ref, "v2ray_api", {
+                        ...v2rayApi,
+                        stats: { ...v2rayStats, outbounds: next.length ? next : undefined },
+                      });
+                    }}
+                  />
+                </label>
+                <label className="field" data-testid="v2ray-stats-users">
+                  <span>Stats Users (CSV of vmess/vless usernames)</span>
+                  <input
+                    value={toList(v2rayStats.users)}
+                    placeholder="alice, bob"
+                    onChange={(event) => {
+                      const next = fromList(event.target.value);
+                      updateField(ref, "v2ray_api", {
+                        ...v2rayApi,
+                        stats: { ...v2rayStats, users: next.length ? next : undefined },
+                      });
+                    }}
+                  />
+                </label>
               </ModuleCard>
             </div>
           );
