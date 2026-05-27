@@ -54,12 +54,46 @@ subscription's rate limit and session quota. `rubric.md` + `AGENTS.md`
 sit at the prompt prefix to maximize prompt-cache hits across parallel
 commit reviews.
 
+## Unattended submit: one command opens PR + review issue
+
+`submit.mjs` is the "one shot" entrypoint for finishing a branch. Run it from
+the feature branch:
+
+```bash
+node scripts/claude-review/submit.mjs           # do it for real
+node scripts/claude-review/submit.mjs --dry-run # print intentions only
+```
+
+What it does:
+
+1. `git push -u origin HEAD` — with `SBC_SKIP_CLAUDE_REVIEW=1` so the pre-push
+   hook does **not** double-review (submit runs the review explicitly below).
+2. Detects an existing PR for the branch via `gh pr view`. If none, opens one
+   with `gh pr create --fill` (uses recent commit messages).
+3. Runs `node scripts/claude-review/run.mjs <merge-base>..HEAD` capturing the
+   full review output.
+4. Opens a GitHub issue titled `Review of PR #N: <title>` with the review as
+   body, links back to the PR.
+5. Comments the PR with the issue URL so the cross-link is visible from both
+   directions.
+
+Result: one command per PR. Per-PR review issue policy enforced.
+
+Caveats:
+- If `gh pr create --fill` fails (e.g. branch has no commits ahead of base),
+  `submit` exits non-zero before opening any issue.
+- If the review subprocess exits non-zero (critical/major findings), `submit`
+  still opens the issue (the findings ARE the issue you want to track).
+- `--dry-run` skips push / PR create / issue create but still computes branch,
+  head sha, and prints intended command-lines.
+
 ## Files
 
 | File | Role |
 |---|---|
 | `rubric.md` | Static prompt: severity + 4 review dimensions + output contract |
-| `run.mjs` | Engine: spawn-per-commit, parse severities, exit non-zero on critical/major |
+| `run.mjs` | Review engine: spawn-per-commit, parse severities, exit non-zero on critical/major |
+| `submit.mjs` | Unattended submit: push + ensure PR + run review + open issue + cross-link |
 | `README.md` | This file |
 
 Spec: `docs/superpowers/specs/2026-05-28-claude-pre-push-review-gate-design.md`

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error Review script is a Node ESM helper without TS declarations.
 import * as claudeReview from "../scripts/claude-review/run.mjs";
+// @ts-expect-error Submit script is a Node ESM helper without TS declarations.
+import * as claudeSubmit from "../scripts/claude-review/submit.mjs";
 
 const {
   buildPrompt,
@@ -10,6 +12,8 @@ const {
   parseShortstat,
   pickGoalDoc,
 } = claudeReview;
+
+const { formatIssueBody } = claudeSubmit;
 
 describe("parseSeverities", () => {
   it("extracts severities in order, ignoring non-line-start matches", () => {
@@ -147,5 +151,33 @@ describe("buildPrompt", () => {
     expect(prompt).toContain("goal text");
     expect(prompt).toContain("feat: add thing");
     expect(prompt).toContain("diff --git a/file b/file");
+  });
+});
+
+describe("formatIssueBody", () => {
+  it("includes PR link, head sha, branch name, and review output", () => {
+    const body = formatIssueBody({
+      reviewStdout: "## Review for abc12345 — foo\n\nSUMMARY: 0 critical, 0 major, 0 minor.",
+      prNumber: 42,
+      prUrl: "https://github.com/x/y/pull/42",
+      headSha: "abcdef1234567890",
+      branchName: "feature/bar",
+    });
+    expect(body).toContain("PR #42");
+    expect(body).toContain("https://github.com/x/y/pull/42");
+    expect(body).toContain("abcdef12");
+    expect(body).toContain("feature/bar");
+    expect(body).toContain("SUMMARY: 0 critical, 0 major, 0 minor.");
+  });
+
+  it("falls back to placeholder when review output is empty", () => {
+    const body = formatIssueBody({
+      reviewStdout: "",
+      prNumber: 1,
+      prUrl: "https://github.com/x/y/pull/1",
+      headSha: "00000000",
+      branchName: "br",
+    });
+    expect(body).toContain("(no review output");
   });
 });
