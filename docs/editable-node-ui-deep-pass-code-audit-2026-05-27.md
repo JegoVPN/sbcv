@@ -160,7 +160,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| endpoint-wireguard | **`peer.public_key` uses plain `<input>` — no sensitive masking** (line 3558). `address` is CSV via `toList`/`fromList`, no CIDR-tagged repeater. No wireguard-specific diagnostics (private_key / peers / peer.public_key / peer.allowed_ips emptiness). `listen_port` / `workers` not in `endpointHandledFields`. References card still shows tailscale-only rows for wireguard. |
+| endpoint-wireguard | ✅ ~~`peer.public_key` uses plain `<input>` — no sensitive masking~~ — fixed 2026-05-27; peer.public_key now wrapped in SensitiveTextField (matches peer.pre_shared_key). `address` is CSV via `toList`/`fromList`, no CIDR-tagged repeater. No wireguard-specific diagnostics (private_key / peers / peer.allowed_ips emptiness). `listen_port` / `workers` not in `endpointHandledFields`. |
 | endpoint-tailscale | `auth_key` not wrapped in `SensitiveTextField` inside the tailscale block (lines 3606-3641) — it's in `endpointHandledFields` but doesn't render with masking. 14 fields (`ephemeral`, `hostname`, `exit_node`, `exit_node_allow_lan_access`, `relay_server_port`, `system_interface_name`, `system_interface_mtu`, etc.) drop to Advanced. `advertise_tags` and `system_interface` have no 1.13 channel gate — exporting on 1.12 target writes unknown fields. |
 
 ### Service

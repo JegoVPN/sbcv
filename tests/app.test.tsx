@@ -380,6 +380,17 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders wireguard peer.public_key with sensitive masking", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("endpoint-wireguard");
+    });
+    render(<App />);
+    const editor = within(screen.getByTestId("wireguard-peers-editor"));
+    const publicKey = editor.getByLabelText("Public Key") as HTMLInputElement;
+    expect(publicKey.type).toBe("password");
+  });
+
   it("preserves a multi-path hosts dns-server through Inspector round-trip", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
