@@ -860,6 +860,21 @@ textarea {
   fill: currentColor;
 }
 
+.react-flow__controls-button svg.lucide {
+  fill: none;
+  stroke: currentColor;
+}
+
+.react-flow__controls-button[data-active="true"] {
+  background: #f3f4f6;
+  color: #1c1e20;
+}
+
+.react-flow__controls-button[data-active="true"]:hover {
+  background: #ffffff;
+  color: #1c1e20;
+}
+
 .sbc-node-shell {
   width: 330px;
   position: relative;

@@ -1,7 +1,8 @@
 import "@xyflow/react/dist/style.css";
-import { Background, ConnectionMode, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
+import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
 import type { Connection, Edge, NodeTypes, ReactFlowInstance } from "@xyflow/react";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
 import type { SbcFlowNode } from "../canvas/graph";
 import { useProjectStore } from "../state/useProjectStore";
@@ -57,6 +58,8 @@ export function CanvasWorkspace() {
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
+  const [showMiniMap, setShowMiniMap] = useState(true);
+  const [interaction, setInteraction] = useState<"pan" | "select">("pan");
   const fitFullGraph = useCallback(() => {
     window.requestAnimationFrame(() => {
       flowRef.current?.fitView({ padding: 0.24, duration: 120 });
@@ -114,11 +117,40 @@ export function CanvasWorkspace() {
         edgesFocusable
         nodesFocusable
         elementsSelectable
+        panOnDrag={interaction === "pan"}
+        selectionOnDrag={interaction === "select"}
         deleteKeyCode={["Backspace", "Delete"]}
       >
         <Background color="#1f2730" gap={18} size={1} />
-        <MiniMap pannable zoomable className="sbc-minimap" />
-        <Controls position="bottom-center" showInteractive={false} />
+        {showMiniMap ? <MiniMap pannable zoomable className="sbc-minimap" /> : null}
+        <Controls position="bottom-center" showInteractive={false}>
+          <ControlButton
+            onClick={() => setInteraction("select")}
+            data-active={interaction === "select"}
+            title="Select"
+            aria-label="Select mode"
+            aria-pressed={interaction === "select"}
+          >
+            <MousePointer2 size={16} strokeWidth={1.8} />
+          </ControlButton>
+          <ControlButton
+            onClick={() => setInteraction("pan")}
+            data-active={interaction === "pan"}
+            title="Pan"
+            aria-label="Pan mode"
+            aria-pressed={interaction === "pan"}
+          >
+            <Hand size={16} strokeWidth={1.8} />
+          </ControlButton>
+          <ControlButton
+            onClick={() => setShowMiniMap((prev) => !prev)}
+            title={showMiniMap ? "Hide minimap" : "Show minimap"}
+            aria-label={showMiniMap ? "Hide minimap" : "Show minimap"}
+            aria-pressed={showMiniMap}
+          >
+            <MapIcon size={16} strokeWidth={1.8} />
+          </ControlButton>
+        </Controls>
       </ReactFlow>
       {selectedId ? <div className="canvas-selection-pill">Selected {selectedId}</div> : null}
     </section>
