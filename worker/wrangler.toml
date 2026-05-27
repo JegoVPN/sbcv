@@ -1,0 +1,69 @@
+name = "sbc-validator-gw"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+workers_dev = false
+
+# Custom domain. Create the route binding in the Cloudflare dashboard or via
+# `wrangler deploy` after the API zone (`api.sbcv.app`) is added to the account.
+routes = [
+  { pattern = "api.sbcv.app/*", custom_domain = true }
+]
+
+# Plain config vars. Override per-env in [env.staging] / [env.production] if needed.
+[vars]
+ALLOWED_ORIGIN = "https://sbcv.app"
+MAX_BODY_BYTES = "524288"
+CHECK_TIMEOUT_MS = "6000"
+VALIDATOR_VERSION = "v1"
+RATE_LIMIT_PER_MIN = "30"
+# VALIDATOR_URL points at the Container. Set via `wrangler secret put VALIDATOR_URL`
+# in staging/production. Locally, set in `.dev.vars` (e.g. http://localhost:8080).
+
+# KV cache binding. Create the namespace first:
+#   wrangler kv namespace create CHECK_CACHE
+# then paste the id below.
+[[kv_namespaces]]
+binding = "CHECK_CACHE"
+id = "PLACEHOLDER_KV_ID"
+
+# Secrets (set via `wrangler secret put` once and not committed to source):
+#   wrangler secret put INTERNAL_TOKEN
+#   wrangler secret put TURNSTILE_SECRET_KEY
+#   wrangler secret put VALIDATOR_URL          # if not in [vars]
+
+# Cloudflare Containers binding (uncomment after the container is registered).
+# When you switch to a Containers binding instead of VALIDATOR_URL fetch, update
+# src/forward.ts to call env.VALIDATOR.fetch(...) and drop the URL path below.
+#
+# [[containers]]
+# class_name = "ValidatorContainer"
+# image = "../container/Dockerfile"
+# instance_type = "lite"
+# max_instances = 3
+#
+# [[durable_objects.bindings]]
+# class_name = "ValidatorContainer"
+# name = "VALIDATOR"
+#
+# [[migrations]]
+# tag = "v1"
+# new_classes = ["ValidatorContainer"]
+
+# ---- Environments -----------------------------------------------------------
+
+[env.staging]
+name = "sbc-validator-gw-staging"
+routes = [
+  { pattern = "api-staging.sbcv.app/*", custom_domain = true }
+]
+
+[env.staging.vars]
+ALLOWED_ORIGIN = "https://staging.sbcv.app"
+MAX_BODY_BYTES = "524288"
+CHECK_TIMEOUT_MS = "6000"
+VALIDATOR_VERSION = "v1"
+RATE_LIMIT_PER_MIN = "60"
+
+[[env.staging.kv_namespaces]]
+binding = "CHECK_CACHE"
+id = "PLACEHOLDER_STAGING_KV_ID"

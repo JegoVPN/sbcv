@@ -16,6 +16,7 @@ Useful checks:
 ```bash
 pnpm build
 pnpm test
+pnpm docs:install
 pnpm validate:fixtures
 pnpm e2e
 pnpm release:check
@@ -30,7 +31,7 @@ pnpm build
 pnpm preview
 ```
 
-The app builds to `dist/` and can be hosted as a static site. Hosted deployment credentials or platform selection are intentionally outside the repo.
+The app builds to `dist/` and can be hosted as a static site. Public deployment targets `https://sbcv.app` via Cloudflare Pages connected to GitHub `main`, with `pnpm build` as the build command and `dist` as the output directory. Official `sing-box` validation runs at `https://api.sbcv.app` via a Cloudflare Worker + Container. See [Cloudflare Deployment Plan](docs/cloudflare-deployment.md).
 
 ## Documents
 
@@ -41,4 +42,5 @@ The app builds to `dist/` and can be hosted as a static site. Hosted deployment 
 - [Release Goal: Stable-First SBC Visual Editor](docs/goals/stable-first-sbc-visual-editor-release.md)
 - [First Goal: Project Scaffold And UI Shell](docs/goals/project-scaffold-and-ui-shell.md)
 - [External Config E2E Hardening Goal](docs/goals/external-config-e2e-hardening.md)
+- [Cloudflare Deployment Plan](docs/cloudflare-deployment.md)
 - [Release Notes](docs/release-notes.md)

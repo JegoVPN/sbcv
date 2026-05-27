@@ -227,6 +227,46 @@ textarea {
   animation: status-check-pulse 420ms ease-out;
 }
 
+.official-check-btn {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid #2a3340;
+  background: #101418;
+  color: #d7dee7;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.official-check-btn:hover:not(:disabled) {
+  background: #1a222b;
+}
+
+.official-check-btn:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.official-check-btn--valid {
+  border-color: #c7ff00;
+  color: #c7ff00;
+}
+
+.official-check-btn--warning {
+  border-color: #f2bc4b;
+  color: #f2bc4b;
+}
+
+.official-check-btn--invalid,
+.official-check-btn--error {
+  border-color: #e34b4b;
+  color: #e34b4b;
+}
+
 @keyframes status-spin {
   to {
     transform: rotate(360deg);

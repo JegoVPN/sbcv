@@ -14,10 +14,7 @@ Sources read on 2026-05-26:
 Local source checkout used for this readthrough:
 
 ```bash
-git clone --depth 1 --branch stable --filter=blob:none --sparse https://github.com/SagerNet/sing-box.git .tmp/sing-box-docs/stable
-git -C .tmp/sing-box-docs/stable sparse-checkout set docs/configuration
-git clone --depth 1 --branch testing --filter=blob:none --sparse https://github.com/SagerNet/sing-box.git .tmp/sing-box-docs/testing
-git -C .tmp/sing-box-docs/testing sparse-checkout set docs/configuration
+pnpm docs:install
 ```
 
 Testing-only docs versus stable:

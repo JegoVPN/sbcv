@@ -1,0 +1,7 @@
+# Copy to .dev.vars and fill in. .dev.vars is gitignored.
+# Local-only secrets consumed by `wrangler dev`.
+
+INTERNAL_TOKEN=dev-shared-secret
+VALIDATOR_URL=http://localhost:8080
+# Leave TURNSTILE_SECRET_KEY empty during local dev to bypass Turnstile.
+TURNSTILE_SECRET_KEY=

@@ -484,7 +484,8 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
             aria-label={`Add from ${data.title}`}
             onClick={(event) => {
               event.stopPropagation();
-              createCompatible(id, data.compatible[0]);
+              const first = data.compatible[0];
+              if (first) createCompatible(id, first);
             }}
           >
             <Plus size={20} />
