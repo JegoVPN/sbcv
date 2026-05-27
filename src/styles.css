@@ -878,6 +878,16 @@ textarea {
   color: #1c1e20;
 }
 
+/* 鼠标点击不留 focus 残留；键盘 focus 保留主色 outline 给 a11y */
+.react-flow__controls-button:focus {
+  outline: none;
+}
+
+.react-flow__controls-button:focus-visible {
+  outline: 2px solid #c7ff00;
+  outline-offset: 2px;
+}
+
 .react-flow__controls .sbc-ctrl-cursor { order: 1; }
 .react-flow__controls .sbc-ctrl-hand { order: 2; }
 .react-flow__controls .react-flow__controls-zoomin { order: 3; margin-left: 8px; }
@@ -1544,6 +1554,11 @@ textarea {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.toggle-row--inline {
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .toggle-row input[type="checkbox"],
