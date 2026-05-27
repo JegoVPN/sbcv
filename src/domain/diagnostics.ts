@@ -358,6 +358,28 @@ export function validateConfig(
         );
       }
     });
+    const ruleObj = rule as Record<string, unknown>;
+    if (ruleObj.outbound !== undefined) {
+      push(
+        diagnostics,
+        "warning",
+        "dns-rule-outbound-matcher-deprecated",
+        `/dns/rules/${index}/outbound`,
+        `DNS rule ${index + 1} uses the deprecated \`outbound\` matcher (sing-box 1.12). Migrate to per-outbound \`domain_resolver\` or set \`route.default_domain_resolver\`.`,
+      );
+    }
+    const hasIpCidr = Array.isArray(ruleObj.ip_cidr) && ruleObj.ip_cidr.length > 0;
+    const hasIpIsPrivate = ruleObj.ip_is_private !== undefined;
+    const matchResponse = ruleObj.match_response === true;
+    if ((hasIpCidr || hasIpIsPrivate) && !matchResponse) {
+      push(
+        diagnostics,
+        "warning",
+        "dns-rule-legacy-address-filter-deprecated",
+        `/dns/rules/${index}`,
+        `DNS rule ${index + 1} uses address-filter fields (ip_cidr / ip_is_private) without match_response (sing-box 1.14). Migrate to an \`evaluate\` action + a follow-up rule with \`match_response: true\`.`,
+      );
+    }
   });
 
   listItems(config.dns?.servers).forEach((server, index) => {
