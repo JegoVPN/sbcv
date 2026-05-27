@@ -691,6 +691,12 @@ textarea {
   flex-shrink: 0;
 }
 
+/* <button> 默认 text-align:center，导致长 label 换行后每行都居中。强制左对齐。 */
+.palette-nav button > span,
+.palette-mode-pills button > span {
+  text-align: left;
+}
+
 .palette-entry {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
