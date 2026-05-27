@@ -71,8 +71,8 @@ export async function handleCheck(req: Request, env: Env): Promise<Response> {
   let upstream: Response;
   try {
     upstream = await forwardToContainer({ target: body.target, config: body.config }, env);
-  } catch (err) {
-    return jsonError(`Validator unreachable: ${(err as Error).message}`, 502);
+  } catch {
+    return jsonError("Validation service temporarily unavailable", 502);
   }
 
   if (upstream.status === 401) {

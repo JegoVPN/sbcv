@@ -51,6 +51,6 @@ Issues and PRs welcome. Useful kinds of feedback:
 
 ## License
 
-MIT © 2026 JegoVPN. See [LICENSE](LICENSE).
+MIT © 2026. See [LICENSE](LICENSE).
 
 Thanks to [SagerNet/sing-box](https://github.com/SagerNet/sing-box) — sbcv just makes its config easier to live with.
