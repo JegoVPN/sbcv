@@ -37,10 +37,12 @@ These appear in many nodes simultaneously. One PR per item can close 10–30 nod
 - **Affected (now fixed):** inbound — direct, naive, tproxy. outbound — shadowsocks, vmess, vless, trojan, hysteria, hysteria2, tuic.
 - **Regression test:** `tests/domain.test.ts` — "omits the network field from scaffolds so sing-box defaults to both TCP and UDP".
 
-### CC-4 Palette kind naming still inconsistent (M1.8 incomplete)
+### CC-4 Palette kind naming still inconsistent (M1.8 incomplete) — ✅ CLOSED 2026-05-27
 
-- `Palette.tsx:132` uses `kind: "mixed"` instead of `"inbound-mixed"` (every other inbound is `inbound-*`).
-- `Palette.tsx:92` still ships `dns-http3` instead of `dns-h3` (despite `protocols.ts:99` mapping to `"h3"`).
+- ~~`Palette.tsx:132` uses `kind: "mixed"` instead of `"inbound-mixed"`.~~ Now `inbound-mixed`.
+- ~~`Palette.tsx:145` uses `kind: "tun"` instead of `"inbound-tun"`.~~ Now `inbound-tun`.
+- ~~`Palette.tsx:92` still ships `dns-http3` instead of `dns-h3`.~~ Now `dns-h3`.
+- Lookup keys in `INBOUND_PALETTE_TYPES` (`protocols.ts`) and `OUTBOUND_PALETTE_TYPES` updated to match; affected test files updated.
 
 ### CC-5 TLS-required / users-required diagnostics missing for several protocols
 

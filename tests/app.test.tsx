@@ -386,7 +386,7 @@ describe("SBC editor shell", () => {
   it("renders address/auto_route fields for inbound:tun", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
-      useProjectStore.getState().createFromPalette("tun");
+      useProjectStore.getState().createFromPalette("inbound-tun");
     });
     render(<App />);
     const inspector = within(screen.getByLabelText("Node inspector"));
@@ -1385,7 +1385,7 @@ describe("SBC editor shell", () => {
   it("renders TUN-specific stack, route_address, and platform.http_proxy controls", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
-      useProjectStore.getState().createFromPalette("tun");
+      useProjectStore.getState().createFromPalette("inbound-tun");
     });
     render(<App />);
     const inspector = within(screen.getByLabelText("Node inspector"));
