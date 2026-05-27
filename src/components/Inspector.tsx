@@ -370,6 +370,12 @@ const routeRulePrimaryFields = new Set([
   "timeout",
   "server",
   "strategy",
+  "override_address",
+  "override_port",
+  "network_strategy",
+  "fallback_delay",
+  "udp_disable_domain_unmapping",
+  "tls_fragment",
 ]);
 
 const dnsRulePrimaryFields = new Set([
@@ -1054,6 +1060,74 @@ function RouteRuleInspector({
             </select>
           </label>
         </>
+      ) : null}
+      {String(rule.action) === "route-options" || String(rule.action) === "route" ? (
+        <fieldset className="field field--checklist" data-testid="route-rule-route-options">
+          <legend>Route options</legend>
+          <label className="field">
+            <span>Override Address</span>
+            <input
+              value={typeof rule.override_address === "string" ? rule.override_address : ""}
+              placeholder="e.g. 1.1.1.1 (replaces destination IP)"
+              onChange={(event) => patch({ override_address: event.target.value || undefined })}
+            />
+          </label>
+          <label className="field">
+            <span>Override Port</span>
+            <input
+              type="number"
+              value={typeof rule.override_port === "number" ? rule.override_port : ""}
+              placeholder="e.g. 443"
+              onChange={(event) => {
+                const next = event.target.value;
+                if (!next) return patch({ override_port: undefined });
+                const parsed = Number(next);
+                patch({ override_port: Number.isFinite(parsed) && parsed > 0 ? parsed : undefined });
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Network Strategy</span>
+            <select
+              value={typeof rule.network_strategy === "string" ? rule.network_strategy : ""}
+              onChange={(event) => patch({ network_strategy: event.target.value || undefined })}
+            >
+              <option value="">(unset)</option>
+              <option value="default">default</option>
+              <option value="hybrid">hybrid</option>
+              <option value="fallback">fallback</option>
+              <option value="wifi">wifi</option>
+              <option value="cellular">cellular</option>
+              <option value="ethernet">ethernet</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Fallback Delay</span>
+            <input
+              value={typeof rule.fallback_delay === "string" ? rule.fallback_delay : ""}
+              placeholder="e.g. 300ms"
+              onChange={(event) => patch({ fallback_delay: event.target.value || undefined })}
+            />
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(rule.udp_disable_domain_unmapping)}
+              onChange={(event) =>
+                patch({ udp_disable_domain_unmapping: event.target.checked || undefined })
+              }
+            />
+            <span>UDP disable domain unmapping</span>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(rule.tls_fragment)}
+              onChange={(event) => patch({ tls_fragment: event.target.checked || undefined })}
+            />
+            <span>TLS fragment</span>
+          </label>
+        </fieldset>
       ) : null}
       <label className="toggle-row">
         <input type="checkbox" checked={Boolean(rule.invert)} onChange={(event) => patch({ invert: event.target.checked || undefined })} />
