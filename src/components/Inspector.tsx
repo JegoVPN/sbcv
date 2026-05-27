@@ -139,6 +139,7 @@ const inboundHandledFields = new Set([
   "auto_route",
   "users",
   "method",
+  "version",
   "tls",
   "multiplex",
   "transport",
@@ -168,6 +169,7 @@ const outboundHandledFields = new Set([
   "udp_over_tcp",
   "network",
   "method",
+  "version",
   "security",
   "flow",
   "congestion_control",
@@ -2604,6 +2606,28 @@ export function Inspector() {
               })()}
             </>
           ) : null}
+          {entityType === "shadowtls" ? (
+            <label className="field">
+              <span>Version</span>
+              <select
+                value={typeof entity.version === "number" ? String(entity.version) : ""}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (!raw) {
+                    updateField(ref, "version", undefined);
+                    return;
+                  }
+                  const parsed = Number(raw);
+                  updateField(ref, "version", Number.isFinite(parsed) ? parsed : undefined);
+                }}
+              >
+                <option value="">(default — 3)</option>
+                <option value="1">1 (no auth)</option>
+                <option value="2">2 (single user)</option>
+                <option value="3">3 (multi-user via users[])</option>
+              </select>
+            </label>
+          ) : null}
           {entityType === "shadowsocks" ? (
             <label className="field">
               <span>Method</span>
@@ -2714,6 +2738,28 @@ export function Inspector() {
 
       {ref.kind === "outbound" ? (
         <>
+          {entityType === "shadowtls" ? (
+            <label className="field">
+              <span>Version</span>
+              <select
+                value={typeof entity.version === "number" ? String(entity.version) : ""}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (!raw) {
+                    updateField(ref, "version", undefined);
+                    return;
+                  }
+                  const parsed = Number(raw);
+                  updateField(ref, "version", Number.isFinite(parsed) ? parsed : undefined);
+                }}
+              >
+                <option value="">(default — 3)</option>
+                <option value="1">1 (no auth)</option>
+                <option value="2">2 (single user)</option>
+                <option value="3">3 (single user, server-side hash)</option>
+              </select>
+            </label>
+          ) : null}
           {entityType === "tor" ? (
             <>
               <PlatformBanner
