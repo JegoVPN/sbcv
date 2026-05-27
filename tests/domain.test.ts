@@ -284,7 +284,7 @@ describe("canonical sing-box domain model", () => {
 
     (config.dns!.servers as Array<Record<string, unknown>>)[
       (config.dns!.servers as Array<Record<string, unknown>>).length - 1
-    ].path = "/etc/hosts";
+    ]!.path = "/etc/hosts";
     expect(
       validateConfig(config, "stable").some((finding) => finding.code === "dns-server-hosts-empty"),
     ).toBe(false);
@@ -348,7 +348,7 @@ describe("canonical sing-box domain model", () => {
 
     (config.dns!.servers as Array<Record<string, unknown>>)[
       (config.dns!.servers as Array<Record<string, unknown>>).length - 1
-    ].service = "ghost";
+    ]!.service = "ghost";
     expect(
       validateConfig(config, "stable").some(
         (finding) => finding.code === "dns-server-resolved-service-not-found",
