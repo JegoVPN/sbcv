@@ -15,6 +15,8 @@ type Counts = {
   outbounds: number;
   endpoints: number;
   services: number;
+  certificateProviders: number;
+  httpClients: number;
   routeHub: number;
   routeRules: number;
   routeRuleSets: number;
@@ -34,6 +36,8 @@ function expectedCounts(config: SingBoxConfig): Counts {
     outbounds: Array.isArray(config.outbounds) ? config.outbounds.length : 0,
     endpoints: Array.isArray(config.endpoints) ? config.endpoints.length : 0,
     services: Array.isArray(config.services) ? config.services.length : 0,
+    certificateProviders: Array.isArray(config.certificate_providers) ? config.certificate_providers.length : 0,
+    httpClients: Array.isArray(config.http_clients) ? config.http_clients.length : 0,
     routeHub: config.route ? 1 : 0,
     routeRules: Array.isArray(config.route?.rules) ? config.route!.rules!.length : 0,
     routeRuleSets: Array.isArray(config.route?.rule_set) ? config.route!.rule_set!.length : 0,
@@ -54,6 +58,8 @@ function actualCounts(graph: ReturnType<typeof deriveGraph>): Counts {
     outbounds: 0,
     endpoints: 0,
     services: 0,
+    certificateProviders: 0,
+    httpClients: 0,
     routeHub: 0,
     routeRules: 0,
     routeRuleSets: 0,
@@ -68,6 +74,8 @@ function actualCounts(graph: ReturnType<typeof deriveGraph>): Counts {
     else if (kind === "outbound") result.outbounds += 1;
     else if (kind === "endpoint") result.endpoints += 1;
     else if (kind === "service") result.services += 1;
+    else if (kind === "certificate-provider") result.certificateProviders += 1;
+    else if (kind === "http-client") result.httpClients += 1;
     else if (kind === "route") result.routeHub += 1;
     else if (kind === "route-rule") result.routeRules += 1;
     else if (kind === "rule-set") result.routeRuleSets += 1;
@@ -83,10 +91,10 @@ type DropCheck = { key: keyof Counts; expected: number; actual: number };
 
 function diffCounts(expected: Counts, actual: Counts): DropCheck[] {
   const drops: DropCheck[] = [];
-  const expectedRouteRules = expected.routeRules > MAX_VISUAL_RULE_NODES ? 0 : expected.routeRules;
+  const expectedRouteRules = Math.min(expected.routeRules, MAX_VISUAL_RULE_NODES);
   const expectedRouteRuleSets =
     expected.routeRuleSets > MAX_VISUAL_RULE_SET_NODES ? 0 : expected.routeRuleSets;
-  const expectedDnsRules = expected.dnsRules > MAX_VISUAL_RULE_NODES ? 0 : expected.dnsRules;
+  const expectedDnsRules = Math.min(expected.dnsRules, MAX_VISUAL_RULE_NODES);
 
   const cmp = (key: keyof Counts, exp: number, act: number) => {
     if (exp !== act) drops.push({ key, expected: exp, actual: act });
@@ -96,6 +104,8 @@ function diffCounts(expected: Counts, actual: Counts): DropCheck[] {
   cmp("outbounds", expected.outbounds, actual.outbounds);
   cmp("endpoints", expected.endpoints, actual.endpoints);
   cmp("services", expected.services, actual.services);
+  cmp("certificateProviders", expected.certificateProviders, actual.certificateProviders);
+  cmp("httpClients", expected.httpClients, actual.httpClients);
   cmp("routeHub", expected.routeHub, actual.routeHub);
   cmp("routeRules", expectedRouteRules, actual.routeRules);
   cmp("routeRuleSets", expectedRouteRuleSets, actual.routeRuleSets);

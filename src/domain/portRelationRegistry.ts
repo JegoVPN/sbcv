@@ -12,6 +12,7 @@ export const PORT_NODE_KINDS = [
   "certificate-provider",
   "http-client",
   "settings",
+  "notice",
 ] as const;
 
 export type PortNodeKind = (typeof PORT_NODE_KINDS)[number];
@@ -130,6 +131,13 @@ export function parseNodeId(id: string): ParsedNodeId | null {
 
 export function formatNodeId(kind: PortNodeKind, value: string | number) {
   return `${kind}:${value}`;
+}
+
+export function generatedEntityTag(
+  kind: Exclude<PortNodeKind, "route" | "route-rule" | "dns" | "dns-rule" | "settings" | "notice">,
+  index: number,
+) {
+  return `untagged-${kind}-${index + 1}`;
 }
 
 export function encodeEdgePart(value: string | number) {

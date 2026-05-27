@@ -1,7 +1,7 @@
 import type { Edge, Node } from "@xyflow/react";
-import { edgeIsDisconnectable, formatEdgeId, type PortNodeKind } from "../domain/portRelationRegistry";
+import { edgeIsDisconnectable, formatEdgeId, generatedEntityTag, type PortNodeKind } from "../domain/portRelationRegistry";
 import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
-import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig } from "../domain/types";
+import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
 export type SbcNodeKind = PortNodeKind;
@@ -57,6 +57,7 @@ function makeNode(
     type: "sbc",
     position: nodePosition(layout, id, fallback),
     data,
+    deletable: data.kind !== "notice",
   };
 }
 
@@ -79,9 +80,7 @@ function createColumnAllocator() {
 }
 
 function diagnosticStatus(pathPrefix: string, diagnostics: Diagnostic[]): SbcNodeData["status"] {
-  const scoped = diagnostics.filter((diagnostic) =>
-    diagnostic.path.startsWith(pathPrefix),
-  );
+  const scoped = diagnostics.filter((diagnostic) => diagnostic.path === pathPrefix || diagnostic.path.startsWith(`${pathPrefix}/`));
   if (scoped.some((diagnostic) => diagnostic.level === "error")) return "error";
   if (scoped.some((diagnostic) => diagnostic.level === "warning")) return "warning";
   return "valid";
@@ -110,7 +109,7 @@ function stringRefs(value: string | string[] | undefined): string[] {
 }
 
 function visualizeRouteRulesCount(count: number) {
-  return count <= MAX_VISUAL_RULE_NODES ? count : 1;
+  return Math.min(count, MAX_VISUAL_RULE_NODES);
 }
 
 function isOutboundGroup(outbound: OutboundConfig) {
@@ -122,7 +121,12 @@ function outboundDetourTag(outbound: OutboundConfig) {
 }
 
 function entityTag(tag: string | undefined, kind: string, index: number) {
-  return tag && tag.trim() ? tag : `untagged-${kind}-${index + 1}`;
+  return tag && tag.trim() ? tag : generatedEntityTag(kind as Parameters<typeof generatedEntityTag>[0], index);
+}
+
+function rememberMinY(targets: Map<string, number>, tag: string, y: number) {
+  const current = targets.get(tag);
+  if (current === undefined || y < current) targets.set(tag, y);
 }
 
 function makeEdge(
@@ -157,6 +161,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const services = listItems(config.services);
   const ruleSets = listItems(config.route?.rule_set);
   const certificateProviders = listItems(config.certificate_providers);
+  const httpClients = listItems(config.http_clients);
   const visualizeRuleSets = ruleSets.length <= MAX_VISUAL_RULE_SET_NODES;
   let visualCandidateEdges = 0;
   const routeTargetY = new Map<string, number>();
@@ -194,7 +199,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
   outbounds.forEach((outbound, index) => {
     outboundByTag.set(entityTag(outbound.tag, "outbound", index), outbound);
-    if (Array.isArray(outbound.outbounds)) {
+    if (isOutboundGroup(outbound) && Array.isArray(outbound.outbounds)) {
       outbound.outbounds.forEach((tag) => memberTags.add(tag));
     }
     const detour = outboundDetourTag(outbound);
@@ -244,7 +249,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   });
 
   if (config.route) {
-    const visualizeRouteRules = routeRules.length <= MAX_VISUAL_RULE_NODES;
+    const visibleRouteRules = routeRules.slice(0, MAX_VISUAL_RULE_NODES);
+    const hiddenRouteRules = routeRules.length - visibleRouteRules.length;
     const routeY = columnLayout.reserve("entry", ROUTE_HUB_Y);
     nodes.push(
       makeNode(
@@ -263,8 +269,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    if (visualizeRouteRules) {
-      routeRules.forEach((rule, index) => {
+    if (visibleRouteRules.length > 0) {
+      visibleRouteRules.forEach((rule, index) => {
         const id = `route-rule:${index}`;
         const y = columnLayout.reserve("rule", ROUTE_RULE_START_Y + index * NODE_SLOT_Y);
         if (rule.outbound && !routeTargetY.has(rule.outbound)) {
@@ -272,9 +278,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         }
         const inboundRefs = stringRefs(rule.inbound);
         const ruleSetRefs = stringRefs(rule.rule_set);
-        ruleSetRefs.forEach((tag) => {
-          if (!ruleSetTargetY.has(tag)) ruleSetTargetY.set(tag, y);
-        });
+        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
         const label =
           listLabel(rule.domain_suffix) ??
           listLabel(rule.domain_keyword) ??
@@ -313,6 +317,24 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           });
         }
       });
+    }
+    if (hiddenRouteRules > 0) {
+      nodes.push(
+        makeNode(
+          "notice:route-rules-overflow",
+          {
+            ref: { kind: "route", id: "main" },
+            kind: "notice",
+            type: "route-rules",
+            title: `+${hiddenRouteRules} route rules not visualized`,
+            subtitle: `${routeRules.length} ordered route rules stay in the Rules table`,
+            status: diagnosticStatus("/route/rules", diagnostics),
+            compatible: [],
+          },
+          layout,
+          { x: COLUMNS.rule, y: columnLayout.reserve("rule", ROUTE_RULE_START_Y) },
+        ),
+      );
     }
 
     if (config.route.final) {
@@ -434,7 +456,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
 
-    if (Array.isArray(outbound.outbounds)) {
+    if (isOutboundGroup(outbound) && Array.isArray(outbound.outbounds)) {
       outbound.outbounds.forEach((candidateTag, candidateIndex) => {
         if (visualCandidateEdges >= MAX_VISUAL_CANDIDATE_EDGES) return;
         visualCandidateEdges += 1;
@@ -455,59 +477,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   });
 
-  dnsRules.forEach((rule, index) => {
-    const ruleSetRefs = stringRefs(rule.rule_set);
-    ruleSetRefs.forEach((tag) => {
-      if (!ruleSetTargetY.has(tag)) ruleSetTargetY.set(tag, DNS_LANE_MIN_Y + index * NODE_SLOT_Y);
-    });
-  });
-
-  if (visualizeRuleSets) {
-    ruleSets.forEach((ruleSet, index) => {
-      const tag = entityTag(ruleSet.tag, "rule-set", index);
-      nodes.push(
-        makeNode(
-          `rule-set:${tag}`,
-          {
-            ref: { kind: "rule-set", tag },
-            kind: "rule-set",
-            type: ruleSet.type,
-            title: tag,
-            subtitle:
-              ruleSet.type === "remote" && typeof ruleSet.url === "string"
-                ? ruleSet.url
-                : ruleSet.type === "local" && typeof ruleSet.path === "string"
-                  ? ruleSet.path
-                  : `${ruleSet.type} rule-set`,
-            status: diagnosticStatus(`/route/rule_set/${index}`, diagnostics),
-            compatible: [],
-          },
-          layout,
-          {
-            x: COLUMNS.member,
-            y: columnLayout.reserve(
-              "member",
-              ruleSetTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + 1) * NODE_SLOT_Y,
-            ),
-          },
-        ),
-      );
-      if (ruleSet.type === "remote" && typeof ruleSet.download_detour === "string" && ruleSet.download_detour) {
-        edges.push(
-          makeEdge(
-            formatEdgeId("rule-set-download", tag, ruleSet.download_detour),
-            `rule-set:${tag}`,
-            `outbound:${ruleSet.download_detour}`,
-            "download-detour",
-            "rule-set-download",
-          ),
-        );
-      }
-    });
-  }
-
   if (config.dns) {
-    const visualizeDnsRules = dnsRules.length <= MAX_VISUAL_RULE_NODES;
+    const visibleDnsRules = dnsRules.slice(0, MAX_VISUAL_RULE_NODES);
+    const hiddenDnsRules = dnsRules.length - visibleDnsRules.length;
     const dnsLaneY =
       ROUTE_RULE_START_Y +
       Math.max(3, visualizeRouteRulesCount(routeRules.length) + 1) *
@@ -573,8 +545,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       }
     });
 
-    if (visualizeDnsRules) {
-      dnsRules.forEach((rule, index) => {
+    if (visibleDnsRules.length > 0) {
+      visibleDnsRules.forEach((rule, index) => {
         const id = `dns-rule:${index}`;
         const y = columnLayout.reserve("rule", dnsY + index * NODE_SLOT_Y);
         nodes.push(
@@ -609,6 +581,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           edges.push(makeEdge(formatEdgeId("dns-rule", index, rule.server), id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
         const ruleSetRefs = stringRefs(rule.rule_set);
+        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
             edges.push(makeEdge(formatEdgeId("dns-rule-set", index, tag), id, `rule-set:${tag}`, "rule-set", "dns-rule"));
@@ -616,10 +589,72 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         }
       });
     }
+    if (hiddenDnsRules > 0) {
+      nodes.push(
+        makeNode(
+          "notice:dns-rules-overflow",
+          {
+            ref: { kind: "dns", id: "main" },
+            kind: "notice",
+            type: "dns-rules",
+            title: `+${hiddenDnsRules} DNS rules not visualized`,
+            subtitle: `${dnsRules.length} ordered DNS rules stay in the DNS rules table`,
+            status: diagnosticStatus("/dns/rules", diagnostics),
+            compatible: [],
+          },
+          layout,
+          { x: COLUMNS.rule, y: columnLayout.reserve("rule", dnsY) },
+        ),
+      );
+    }
 
     if (config.dns.final) {
       edges.push(makeEdge(formatEdgeId("dns-final", config.dns.final), "dns:main", `dns-server:${config.dns.final}`, "dns-server", "dns"));
     }
+  }
+
+  if (visualizeRuleSets) {
+    ruleSets.forEach((ruleSet, index) => {
+      const tag = entityTag(ruleSet.tag, "rule-set", index);
+      nodes.push(
+        makeNode(
+          `rule-set:${tag}`,
+          {
+            ref: { kind: "rule-set", tag },
+            kind: "rule-set",
+            type: ruleSet.type,
+            title: tag,
+            subtitle:
+              ruleSet.type === "remote" && typeof ruleSet.url === "string"
+                ? ruleSet.url
+                : ruleSet.type === "local" && typeof ruleSet.path === "string"
+                  ? ruleSet.path
+                  : `${ruleSet.type} rule-set`,
+            status: diagnosticStatus(`/route/rule_set/${index}`, diagnostics),
+            compatible: [],
+          },
+          layout,
+          {
+            x: COLUMNS.member,
+            y: columnLayout.reserve(
+              "member",
+              ruleSetTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + 1) * NODE_SLOT_Y,
+            ),
+          },
+        ),
+      );
+      if (ruleSet.type === "remote" && typeof ruleSet.download_detour === "string" && ruleSet.download_detour) {
+        edges.push(
+          makeEdge(
+            formatEdgeId("rule-set-download", tag, ruleSet.download_detour),
+            `rule-set:${tag}`,
+            `outbound:${ruleSet.download_detour}`,
+            "download-detour",
+            "rule-set-download",
+          ),
+        );
+      }
+    });
   }
 
   certificateProviders.forEach((provider, index) => {
@@ -655,6 +690,27 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         ),
       );
     }
+  });
+
+  httpClients.forEach((client, index) => {
+    const tag = entityTag(client.tag, "http-client", index);
+    const desiredY = DNS_LANE_MIN_Y + (dnsServers.length + dnsRules.length + certificateProviders.length + index + 2) * NODE_SLOT_Y;
+    nodes.push(
+      makeNode(
+        `http-client:${tag}`,
+        {
+          ref: { kind: "http-client", tag },
+          kind: "http-client",
+          type: "http-client",
+          title: tag,
+          subtitle: httpClientSubtitle(client),
+          status: diagnosticStatus(`/http_clients/${index}`, diagnostics),
+          compatible: [],
+        },
+        layout,
+        { x: COLUMNS.target, y: columnLayout.reserve("target", desiredY) },
+      ),
+    );
   });
 
   endpoints.forEach((endpoint, index) => {
@@ -846,4 +902,9 @@ function certificateProviderSubtitle(provider: TaggedConfig) {
   if (provider.type === "acme") return "ACME certificate provider";
   if (provider.type === "cloudflare-origin-ca") return "Cloudflare Origin CA provider";
   return `${provider.type} certificate provider`;
+}
+
+function httpClientSubtitle(client: TaggedResourceConfig) {
+  const engine = typeof client.engine === "string" && client.engine ? client.engine : "default";
+  return `${engine} HTTP client`;
 }

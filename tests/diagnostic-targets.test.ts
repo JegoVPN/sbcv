@@ -19,6 +19,14 @@ const config: SingBoxConfig = {
   ],
   endpoints: [{ type: "wireguard", tag: "wg" }],
   services: [{ type: "ccm", tag: "ccm" }],
+  certificate_providers: [
+    { type: "tailscale", tag: "ts-cert" },
+    { type: "acme", tag: "" },
+  ],
+  http_clients: [
+    { tag: "client" },
+    { tag: "" },
+  ],
   route: {
     final: "direct",
     rules: [{ outbound: "Manual" }, { outbound: "direct" }],
@@ -71,11 +79,19 @@ describe("nodeIdForDiagnosticPath", () => {
     expect(nodeIdForDiagnosticPath("/inbounds/0/auto_route", config)).toBe("inbound:tun-in");
     expect(nodeIdForDiagnosticPath("/endpoints/0/detour", config)).toBe("endpoint:wg");
     expect(nodeIdForDiagnosticPath("/services/0/users", config)).toBe("service:ccm");
+    expect(nodeIdForDiagnosticPath("/certificate_providers/0/endpoint", config)).toBe("certificate-provider:ts-cert");
+    expect(nodeIdForDiagnosticPath("/http_clients/0/detour", config)).toBe("http-client:client");
   });
 
   it("falls back to deterministic untagged ids when entity has no tag", () => {
     expect(nodeIdForDiagnosticPath("/inbounds/2/listen_port", config)).toBe(
       "inbound:untagged-inbound-3",
+    );
+    expect(nodeIdForDiagnosticPath("/certificate_providers/1/http_client", config)).toBe(
+      "certificate-provider:untagged-certificate-provider-2",
+    );
+    expect(nodeIdForDiagnosticPath("/http_clients/1/tls", config)).toBe(
+      "http-client:untagged-http-client-2",
     );
   });
 

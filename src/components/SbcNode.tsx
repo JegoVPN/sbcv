@@ -48,6 +48,7 @@ const iconMap = {
   "certificate-provider": Shield,
   "http-client": Network,
   settings: Braces,
+  notice: CircleAlert,
 };
 
 function outboundIcon(type: string) {
@@ -310,6 +311,8 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
   const outputPorts = getPortSpecs(data.kind, data.type, "output");
   const isDeprecated = data.kind === "outbound" && data.type === "block";
+  const isNotice = data.kind === "notice";
+  const canDelete = !isNotice;
 
   return (
     <div
@@ -447,65 +450,71 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
           </button>
         ) : null}
 
-        <div className="sbc-node__toolbar nodrag" data-testid="node-bottom-toolbar">
-          <span className="sbc-node-pill sbc-node-pill--type">
-            <Icon size={16} />
-            {data.type}
-          </span>
-          <span className={`sbc-node-pill sbc-node-pill--${data.status}`}>
-            {data.status === "error" ? <CircleAlert size={14} /> : <CheckCircle2 size={14} />}
-            {data.status}
-          </span>
-          <button
-            className="node-icon-button"
-            type="button"
-            aria-label={`Open inspector for ${data.title}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              setSelectedId(id);
-            }}
-          >
-            <Settings2 size={15} />
-          </button>
-          <button
-            className="sbc-node-primary"
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              setSelectedId(id);
-            }}
-          >
-            <CheckCircle2 size={15} />
-            {data.compatible.length || 1}
-          </button>
-        </div>
+        {!isNotice ? (
+          <>
+            <div className="sbc-node__toolbar nodrag" data-testid="node-bottom-toolbar">
+              <span className="sbc-node-pill sbc-node-pill--type">
+                <Icon size={16} />
+                {data.type}
+              </span>
+              <span className={`sbc-node-pill sbc-node-pill--${data.status}`}>
+                {data.status === "error" ? <CircleAlert size={14} /> : <CheckCircle2 size={14} />}
+                {data.status}
+              </span>
+              <button
+                className="node-icon-button"
+                type="button"
+                aria-label={`Open inspector for ${data.title}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedId(id);
+                }}
+              >
+                <Settings2 size={15} />
+              </button>
+              <button
+                className="sbc-node-primary"
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setSelectedId(id);
+                }}
+              >
+                <CheckCircle2 size={15} />
+                {data.compatible.length || 1}
+              </button>
+            </div>
 
-        <div className="sbc-node__actions nodrag" data-testid="node-hover-actions">
-          {data.compatible.map((kind) => (
-            <button
-              key={kind}
-              className="node-chip"
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                createCompatible(id, kind);
-              }}
-            >
-              + {kind}
-            </button>
-          ))}
-          <button
-            className="node-icon-button node-icon-button--danger"
-            type="button"
-            aria-label={`Delete ${data.title}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              deleteEntity(data.ref);
-            }}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+            <div className="sbc-node__actions nodrag" data-testid="node-hover-actions">
+              {data.compatible.map((kind) => (
+                <button
+                  key={kind}
+                  className="node-chip"
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    createCompatible(id, kind);
+                  }}
+                >
+                  + {kind}
+                </button>
+              ))}
+              {canDelete ? (
+                <button
+                  className="node-icon-button node-icon-button--danger"
+                  type="button"
+                  aria-label={`Delete ${data.title}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deleteEntity(data.ref);
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

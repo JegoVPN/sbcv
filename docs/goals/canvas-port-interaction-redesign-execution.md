@@ -493,6 +493,20 @@ Acceptance:
 - `/outbounds/1` diagnostics never affect `/outbounds/10`.
 - Users are never surprised by silently missing rules when there are more than 24 rules.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr8-graph-correctness`.
+
+- Replaced graph diagnostic prefix matching with strict segment matching, so diagnostics like `/outbounds/10/server` no longer mark `/outbounds/1`.
+- Split duplicate-tag diagnostics into one targetable `/.../tag` diagnostic per referenced entity instead of a comma-joined multi-path string.
+- Added diagnostic focus and graph node coverage for `certificate_providers[]` and `http_clients[]`, including shared fallback untagged ids.
+- Mirrored domain selector/urltest guards in graph derivation so stale `outbounds[]` arrays on non-group outbounds do not render editable candidate edges or consume candidate-edge budget.
+- Dense route and DNS rule lists now render the first 24 ordered rule nodes plus a visual overflow notice instead of silently hiding every rule node.
+- Moved rule-set node derivation after DNS rule target positions are known, keeping DNS-only rule-set nodes ordered below route-referenced rule-set nodes when appropriate.
+- `normalizeConfig` now rejects malformed top-level and nested collection shapes before graph/list helpers can silently treat them as empty, and `stringifyConfig` now preserves object key order by relying on native JSON omission of `undefined` instead of recursively rebuilding objects.
+- Frontend performance review: the graph changes add no new subscriptions, async work, dependencies, or hover/drag state. Overflow notices are derived during the existing memoized graph build and are non-deletable visual nodes.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/domain.test.ts tests/diagnostic-targets.test.ts tests/fixture-node-coverage.test.ts tests/config-doc-capability.test.ts --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- `pnpm build` still reports the existing Vite >500 kB single chunk warning; this remains tracked as PR-11 performance work.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes import validation, semantic diagnostics, and derived graph visibility, not bundled fixture/exported config files.
+
 ### PR-9: Pending Line And Chip Picker UX
 
 Implements the user-visible expected flow.
