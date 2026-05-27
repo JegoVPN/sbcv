@@ -228,6 +228,30 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on SSH outbound with multiple auth methods set simultaneously", () => {
+    const config = createStableTunSplitConfig();
+    config.outbounds = [
+      ...(config.outbounds ?? []),
+      {
+        type: "ssh",
+        tag: "ssh-out",
+        server: "127.0.0.1",
+        server_port: 22,
+        user: "root",
+        password: "secret",
+        private_key_path: "~/.ssh/id_ed25519",
+      } as never,
+    ];
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "ssh-auth-mutex"),
+    ).toBe(true);
+
+    delete (config.outbounds[config.outbounds.length - 1] as Record<string, unknown>).password;
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "ssh-auth-mutex"),
+    ).toBe(false);
+  });
+
   it("warns on settings.certificate top-level block on stable channel + chrome store gate", () => {
     const config = createStableTunSplitConfig();
     config.certificate = { store: "system" } as never;

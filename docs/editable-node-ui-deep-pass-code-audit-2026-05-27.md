@@ -134,7 +134,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | outbound-vless | ✅ Clean. |
 | outbound-shadowtls | `version` no enum select (drops to Advanced raw text). No version-conditional password visibility. No version-conditional warning diagnostic. |
 | outbound-anytls | `idle_session_check_interval` / `idle_session_timeout` / `min_idle_session` missing from `outboundHandledFields`. No 1.12.0+ version gate on Palette. |
-| outbound-ssh | Three-way auth mutual exclusion (`password` / `private_key` / `private_key_path`) has no diagnostic. 1.14 testing fields (`cipher`, `mac`, `kex_algorithm`) have diagnostics but **no editing controls** in Inspector. |
+| outbound-ssh | ✅ ~~Three-way auth mutual exclusion has no diagnostic~~ — fixed 2026-05-27, `ssh-auth-mutex` warning fires when more than one of `password` / `private_key` / `private_key_path` is set. 1.14 testing fields (`cipher`, `mac`, `kex_algorithm`) have diagnostics but **no editing controls** in Inspector. |
 | outbound-tor | ✅ Clean. |
 | outbound-selector | ✅ ~~`compatible` array limited to `["SOCKS","Direct","Block"]`~~ — fixed 2026-05-27; expanded to all 19 outbound types (Direct/Block/SOCKS/HTTP/Shadowsocks/VMess/Trojan/Naive/Hysteria/Hysteria2/ShadowTLS/VLESS/TUIC/AnyTLS/Tor/SSH/WireGuard/Selector/URLTest). |
 | outbound-urltest | `createOutbound("urltest")` scaffold doesn't seed `tolerance` / `idle_timeout` / `interrupt_exist_connections`. |
