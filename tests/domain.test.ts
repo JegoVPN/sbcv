@@ -993,10 +993,10 @@ describe("canonical sing-box domain model", () => {
     expect(edges.some((edge) => edge.id.startsWith("edge:route-rule-set"))).toBe(false);
   });
 
-  it("derives independent settings nodes only after the user pins them to the canvas", () => {
+  it("derives settings nodes whenever the config has the singleton, regardless of layout pinning", () => {
     const config = ensureSettings(createStableTunSplitConfig(), "log");
 
-    expect(deriveGraph(config, { positions: {} }, []).nodes.some((node) => node.id === "settings:log")).toBe(false);
+    expect(deriveGraph(config, { positions: {} }, []).nodes.some((node) => node.id === "settings:log")).toBe(true);
     expect(
       deriveGraph(config, { positions: { "settings:log": { x: -300, y: 40 } } }, []).nodes.some(
         (node) => node.id === "settings:log" && node.data.kind === "settings",
@@ -1027,15 +1027,17 @@ describe("canonical sing-box domain model", () => {
       cache_id: "",
       store_fakeip: false,
     });
-    expect(
-      deriveGraph(withExperimental, {
-        positions: {
-          "settings:ntp": { x: -300, y: 370 },
-          "settings:certificate": { x: -300, y: 700 },
-          "settings:experimental": { x: -300, y: 1030 },
-        },
-      }, []).nodes.filter((node) => node.data.kind === "settings"),
-    ).toHaveLength(3);
+    const settingsNodes = deriveGraph(withExperimental, { positions: {} }, []).nodes.filter(
+      (node) => node.data.kind === "settings",
+    );
+    const expectedSettings = ["log", "ntp", "certificate", "experimental"].filter(
+      (key) =>
+        withExperimental[key as keyof typeof withExperimental] &&
+        typeof withExperimental[key as keyof typeof withExperimental] === "object",
+    );
+    expect(settingsNodes.map((node) => node.id).sort()).toEqual(
+      expectedSettings.map((key) => `settings:${key}`).sort(),
+    );
   });
 
   it("emits vmess/vless validation diagnostics (uuid, alterId, flow/multiplex)", () => {
