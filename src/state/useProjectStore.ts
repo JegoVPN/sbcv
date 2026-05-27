@@ -21,6 +21,8 @@ import {
   moveDnsRule,
   moveRouteRule,
   renameTag,
+  dnsRuleAllowsServer,
+  routeRuleAllowsOutbound,
   setDnsFinal,
   setRouteFinal,
   updateDnsRule,
@@ -48,6 +50,7 @@ import {
   preferredServiceTag,
   serviceTypeForPaletteKind,
 } from "../domain/protocols";
+import { supportsDnsServerDialFields, supportsOutboundDialFields } from "../domain/sharedFieldRegistry";
 import { targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
@@ -345,8 +348,7 @@ function firstDnsServerDetouringThrough(config: SingBoxConfig, outboundTag: stri
 }
 
 function firstDialableDnsServer(config: SingBoxConfig) {
-  const nonDialableTypes = new Set(["local", "hosts", "fakeip"]);
-  return config.dns?.servers?.find((server) => !nonDialableTypes.has(server.type));
+  return config.dns?.servers?.find((server) => supportsDnsServerDialFields(server.type));
 }
 
 function firstOutboundDetouringThrough(config: SingBoxConfig, outboundTag: string) {
@@ -427,7 +429,7 @@ function ensureService(config: SingBoxConfig, type: string) {
 }
 
 function supportsOutboundDetour(type: string | undefined) {
-  return Boolean(type && !["block", "selector", "urltest", "dns"].includes(type));
+  return supportsOutboundDialFields(type);
 }
 
 function connectCreatedOutboundForSelection(
@@ -447,7 +449,8 @@ function connectCreatedOutboundForSelection(
 
   if (selected.kind === "route-rule") {
     const index = Number(selected.value);
-    if (Number.isInteger(index)) return updateRouteRule(config, index, { outbound: createdTag });
+    const rule = Number.isInteger(index) ? config.route?.rules?.[index] : undefined;
+    if (Number.isInteger(index) && routeRuleAllowsOutbound(rule)) return updateRouteRule(config, index, { outbound: createdTag });
   }
 
   if (selected.kind === "outbound") {
@@ -461,7 +464,10 @@ function connectCreatedOutboundForSelection(
   }
 
   if (selected.kind === "dns-server") {
-    return updateEntityField(config, { kind: "dns-server", tag: selected.value }, "detour", createdTag);
+    const server = config.dns?.servers?.find((item) => item.tag === selected.value);
+    return supportsDnsServerDialFields(server?.type)
+      ? updateEntityField(config, { kind: "dns-server", tag: selected.value }, "detour", createdTag)
+      : config;
   }
 
   if (selected.kind === "endpoint") {
@@ -469,7 +475,10 @@ function connectCreatedOutboundForSelection(
   }
 
   if (selected.kind === "rule-set") {
-    return updateEntityField(config, { kind: "rule-set", tag: selected.value }, "download_detour", createdTag);
+    const ruleSet = config.route?.rule_set?.find((item) => item.tag === selected.value);
+    return ruleSet?.type === "remote"
+      ? updateEntityField(config, { kind: "rule-set", tag: selected.value }, "download_detour", createdTag)
+      : config;
   }
 
   return config;
@@ -547,7 +556,8 @@ function connectDirectedPortReference(
 
   if (outputNode.kind === "route-rule" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "route-rule") {
     const index = numberedNodeIndex(outputNode);
-    return index >= 0 ? updateRouteRule(config, index, { outbound: inputNode.value }) : null;
+    const rule = index >= 0 ? config.route?.rules?.[index] : undefined;
+    return index >= 0 && routeRuleAllowsOutbound(rule) ? updateRouteRule(config, index, { outbound: inputNode.value }) : null;
   }
 
   if (outputNode.kind === "route-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "route-rule") {
@@ -562,7 +572,8 @@ function connectDirectedPortReference(
 
   if (outputNode.kind === "dns-rule" && outputHandle === "dns-server" && inputNode.kind === "dns-server" && inputHandle === "dns-rule") {
     const index = numberedNodeIndex(outputNode);
-    return index >= 0 ? updateDnsRule(config, index, { server: inputNode.value }) : null;
+    const rule = index >= 0 ? config.dns?.rules?.[index] : undefined;
+    return index >= 0 && dnsRuleAllowsServer(rule) ? updateDnsRule(config, index, { server: inputNode.value }) : null;
   }
 
   if (outputNode.kind === "dns-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "dns-rule") {
@@ -572,7 +583,10 @@ function connectDirectedPortReference(
   }
 
   if (outputNode.kind === "dns-server" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "dns-detour") {
-    return updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "detour", inputNode.value);
+    const server = config.dns?.servers?.find((item) => item.tag === outputNode.value);
+    return supportsDnsServerDialFields(server?.type)
+      ? updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "detour", inputNode.value)
+      : null;
   }
 
   if (outputNode.kind === "dns-server" && outputHandle === "endpoint" && inputNode.kind === "endpoint" && inputHandle === "dns-server") {
@@ -610,7 +624,10 @@ function connectDirectedPortReference(
       return connectSelectorCandidate(config, outputNode.value, inputNode.value);
     }
     if (outputHandle === "dial-detour" && inputHandle === "detour-target") {
-      return updateEntityField(config, { kind: "outbound", tag: outputNode.value }, "detour", inputNode.value);
+      const outbound = config.outbounds?.find((item) => item.tag === outputNode.value);
+      return supportsOutboundDetour(outbound?.type)
+        ? updateEntityField(config, { kind: "outbound", tag: outputNode.value }, "detour", inputNode.value)
+        : null;
     }
   }
 
@@ -798,39 +815,66 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   createCompatible: (sourceId, kind) =>
     set((state) => {
       let config = state.config;
+      let createdOutboundTag: string | null = null;
+      let createdDnsServerTag: string | null = null;
       if (kind === "Route") config = ensureRoute(config);
-      if (kind === "Direct") config = addOutbound(config, "direct", "direct");
-      if (kind === "Block") config = addOutbound(config, "block", "block");
-      if (kind === "Selector") config = addOutbound(config, "selector", "proxy");
-      if (kind === "URLTest") config = addOutbound(config, "urltest", "auto");
-      if (kind === "SOCKS") config = addOutbound(config, "socks", "proxy-out");
-      if (kind === "DNS Server") config = addDnsServer(config, "local");
-      if (kind === "DNS Tailscale Server") config = addDnsServer(config, "tailscale");
 
-      const outbounds = config.outbounds ?? [];
-      const latestOutbound = outbounds[outbounds.length - 1];
-      if (latestOutbound && sourceId === "route:main") {
-        config = setRouteFinal(config, latestOutbound.tag);
-      }
+      const createOutboundForKind = (type: string, preferredTag: string) => {
+        const insertIndex = config.outbounds?.length ?? 0;
+        config = addOutbound(config, type, preferredTag);
+        createdOutboundTag = config.outbounds?.[insertIndex]?.tag ?? null;
+      };
+      const createDnsServerForKind = (type: string) => {
+        const insertIndex = config.dns?.servers?.length ?? 0;
+        config = addDnsServer(config, type);
+        createdDnsServerTag = config.dns?.servers?.[insertIndex]?.tag ?? null;
+      };
+
+      if (kind === "Direct") createOutboundForKind("direct", "direct");
+      if (kind === "Block") createOutboundForKind("block", "block");
+      if (kind === "Selector") createOutboundForKind("selector", "proxy");
+      if (kind === "URLTest") createOutboundForKind("urltest", "auto");
+      if (kind === "SOCKS") createOutboundForKind("socks", "proxy-out");
+      if (kind === "DNS Server") createDnsServerForKind("local");
+      if (kind === "DNS Tailscale Server") createDnsServerForKind("tailscale");
+
       const source = parseNodeId(sourceId);
-      if (latestOutbound && source.kind === "outbound") {
-        config = connectSelectorCandidate(config, source.value, latestOutbound.tag);
+      if (createdOutboundTag && source.kind === "route") {
+        const withRoute = ensureRoute(config);
+        config = !withRoute.route?.final
+          ? setRouteFinal(withRoute, createdOutboundTag)
+          : addRouteRule(withRoute, { domain_suffix: ["example"], outbound: createdOutboundTag });
       }
-      const servers = config.dns?.servers ?? [];
-      const latestServer = servers[servers.length - 1];
-      if (latestServer && sourceId === "dns:main") {
-        config = setDnsFinal(config, latestServer.tag);
+      if (createdOutboundTag && source.kind === "route-rule") {
+        const index = Number(source.value);
+        const rule = Number.isInteger(index) ? config.route?.rules?.[index] : undefined;
+        if (Number.isInteger(index) && routeRuleAllowsOutbound(rule)) {
+          config = updateRouteRule(config, index, { outbound: createdOutboundTag });
+        }
       }
-      if (latestServer && source.kind === "endpoint") {
-        config = updateEntityField(config, { kind: "dns-server", tag: latestServer.tag }, "endpoint", source.value);
+      if (createdOutboundTag && source.kind === "outbound") {
+        config = connectCreatedOutboundForSelection(config, sourceId, createdOutboundTag);
+      }
+      if (createdOutboundTag && (source.kind === "dns-server" || source.kind === "endpoint" || source.kind === "rule-set")) {
+        config = connectCreatedOutboundForSelection(config, sourceId, createdOutboundTag);
+      }
+      if (createdDnsServerTag && source.kind === "dns") {
+        config = setDnsFinal(config, createdDnsServerTag);
+      }
+      if (createdDnsServerTag && source.kind === "endpoint") {
+        const endpoint = config.endpoints?.find((item) => item.tag === source.value);
+        const server = config.dns?.servers?.find((item) => item.tag === createdDnsServerTag);
+        if (endpoint?.type === "tailscale" && server?.type === "tailscale") {
+          config = updateEntityField(config, { kind: "dns-server", tag: createdDnsServerTag }, "endpoint", source.value);
+        }
       }
 
       let layout = state.layout;
-      if (latestOutbound) {
-        layout = nextLayout(layout, `outbound:${latestOutbound.tag}`, 1050, 140 + outbounds.length * 110);
+      if (createdOutboundTag) {
+        layout = nextLayout(layout, `outbound:${createdOutboundTag}`, 1050, 140 + (config.outbounds?.length ?? 1) * 110);
       }
-      if (latestServer) {
-        layout = nextLayout(layout, `dns-server:${latestServer.tag}`, 850, 560 + servers.length * 100);
+      if (createdDnsServerTag) {
+        layout = nextLayout(layout, `dns-server:${createdDnsServerTag}`, 850, 560 + (config.dns?.servers?.length ?? 1) * 100);
       }
       return { ...sync(config, state.channel), layout };
     }),
@@ -878,13 +922,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           }
         }
         if (serverTag) {
-          config = updateEntityField(config, { kind: "dns-server", tag: serverTag }, "detour", outboundTag);
+          const server = config.dns?.servers?.find((item) => item.tag === serverTag);
+          if (supportsDnsServerDialFields(server?.type)) {
+            config = updateEntityField(config, { kind: "dns-server", tag: serverTag }, "detour", outboundTag);
+          }
         }
       }
 
       if (reference === "outbound-detour") {
         if (parentTag) {
-          config = updateEntityField(config, { kind: "outbound", tag: parentTag }, "detour", outboundTag);
+          const parent = config.outbounds?.find((item) => item.tag === parentTag);
+          if (supportsOutboundDetour(parent?.type)) {
+            config = updateEntityField(config, { kind: "outbound", tag: parentTag }, "detour", outboundTag);
+          }
         } else {
           config = addOutbound(config, "socks", preferredOutboundTag("socks"));
           const created = config.outbounds?.[config.outbounds.length - 1];
@@ -1212,7 +1262,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "route-rule" && port.key === "outbound") {
           const index = Number(node.value);
-          const outbound = Number.isInteger(index) ? config.route?.rules?.[index]?.outbound : undefined;
+          const rule = Number.isInteger(index) ? config.route?.rules?.[index] : undefined;
+          if (!Number.isInteger(index) || !rule || !routeRuleAllowsOutbound(rule)) return state;
+          const outbound = rule?.outbound;
           if (outbound) config = disconnectEdge(config, formatEdgeId("route-rule", index, outbound));
           else {
             config = addOutbound(config, "direct", "direct");
@@ -1254,6 +1306,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "outbound" && port.key === "dial-detour") {
           const outbound = config.outbounds?.find((item) => item.tag === node.value);
+          if (!supportsOutboundDetour(outbound?.type)) return state;
           if (outbound?.detour) {
             config = updateEntityField(config, { kind: "outbound", tag: node.value }, "detour", undefined);
           } else {
@@ -1281,7 +1334,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "dns-rule" && port.key === "dns-server") {
           const index = Number(node.value);
-          const server = Number.isInteger(index) ? config.dns?.rules?.[index]?.server : undefined;
+          const rule = Number.isInteger(index) ? config.dns?.rules?.[index] : undefined;
+          if (!Number.isInteger(index) || !rule || !dnsRuleAllowsServer(rule)) return state;
+          const server = rule?.server;
           if (server) config = disconnectEdge(config, formatEdgeId("dns-rule", index, server));
           else {
             config = addDnsServer(config, "local");
@@ -1310,6 +1365,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "rule-set" && port.key === "download-detour") {
           const ruleSet = config.route?.rule_set?.find((item) => item.tag === node.value);
+          if (ruleSet?.type !== "remote") return state;
           if (ruleSet?.download_detour) {
             config = updateEntityField(config, { kind: "rule-set", tag: node.value }, "download_detour", undefined);
           } else {
@@ -1325,6 +1381,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "dns-server" && port.key === "outbound") {
           const server = config.dns?.servers?.find((item) => item.tag === node.value);
+          if (!supportsDnsServerDialFields(server?.type)) return state;
           if (server?.detour) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "detour", undefined);
           else {
             config = addOutbound(config, "direct", "direct");

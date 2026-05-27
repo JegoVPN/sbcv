@@ -70,6 +70,20 @@ describe("SBC editor shell", () => {
     expect(palette.getByRole("button", { name: /Log Settings/ })).toBeInTheDocument();
   });
 
+  it("disables migration-only palette entries instead of exposing no-op creation buttons", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    const palette = within(screen.getByLabelText("Node palette"));
+    fireEvent.click(palette.getByRole("button", { name: /Library/ }));
+    fireEvent.click(palette.getByRole("button", { name: /^DNS/ }));
+    expect(palette.getByRole("button", { name: "Legacy Server: Docs" })).toBeDisabled();
+
+    fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
+    expect(palette.getByRole("button", { name: "WireGuard: Docs" })).toBeDisabled();
+    expect(palette.getByRole("button", { name: "DNS: Docs" })).toBeDisabled();
+  });
+
   it("marks the loaded template without closing the template panel", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
@@ -250,6 +264,22 @@ describe("SBC editor shell", () => {
 
     const proxy = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "proxy");
     expect(proxy?.outbounds).toContain("http-out");
+  });
+
+  it("does not connect chip-created resources through stale latest entities", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "direct");
+      useProjectStore.getState().updateField({ kind: "dns", id: "main" }, "final", "local-dns");
+      useProjectStore.getState().createCompatible("route:main", "DNS Server");
+      useProjectStore.getState().createCompatible("outbound:proxy", "DNS Server");
+      useProjectStore.getState().createCompatible("dns:main", "Direct");
+    });
+
+    const state = useProjectStore.getState();
+    expect(state.config.route?.final).toBe("direct");
+    expect(state.config.dns?.final).toBe("local-dns");
+    expect(state.config.outbounds?.find((outbound) => outbound.tag === "proxy")?.outbounds).not.toContain("proxy");
   });
 
   it("adds inbound setup drafts from the Library and opens editable listen fields", () => {
@@ -1053,7 +1083,10 @@ describe("SBC editor shell", () => {
     const tailscaleServer = useProjectStore.getState().config.dns?.servers?.find(
       (server) => server.type === "tailscale",
     ) as Record<string, unknown>;
+    expect(tailscaleServer.endpoint).toBe("ts-ep");
+    expect(useProjectStore.getState().config.endpoints?.find((endpoint) => endpoint.tag === "ts-ep")).toMatchObject({ type: "tailscale" });
     expect(tailscaleServer.accept_default_resolvers).toBe(true);
+    expect(useProjectStore.getState().diagnostics.filter((finding) => finding.level === "error")).toEqual([]);
   });
 
   it("renders wireguard peer.public_key with sensitive masking", () => {

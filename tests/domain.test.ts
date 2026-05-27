@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addDnsServer,
   addRuleSet,
   changeEntityType,
   connectSelectorCandidate,
@@ -13,6 +14,8 @@ import {
   ensureSettings,
   moveRouteRule,
   renameTag,
+  createRuleSet,
+  updateDnsRule,
   updateRouteRule,
 } from "../src/domain/commands";
 import { deriveGraph } from "../src/canvas/graph";
@@ -517,8 +520,42 @@ describe("canonical sing-box domain model", () => {
     expect(moved.route?.rules?.[1]?.domain_suffix).toEqual(["sg"]);
   });
 
+  it("guards selector candidate writes to selector and urltest parents with existing children", () => {
+    const config = createStableTunSplitConfig();
+    const directAsParent = connectSelectorCandidate(config, "direct", "hk");
+    expect(directAsParent).toBe(config);
+    expect(directAsParent.outbounds?.find((outbound) => outbound.tag === "direct")?.outbounds).toBeUndefined();
+
+    const missingChild = connectSelectorCandidate(config, "proxy", "missing-outbound");
+    expect(missingChild).toBe(config);
+
+    const updated = connectSelectorCandidate(config, "proxy", "direct");
+    expect(updated.outbounds?.find((outbound) => outbound.tag === "proxy")?.outbounds).toContain("direct");
+  });
+
+  it("scrubs route and DNS action target refs when actions do not accept them", () => {
+    const config = createStableTunSplitConfig();
+
+    const routeReject = updateRouteRule(config, 0, { action: "reject", outbound: "proxy" });
+    expect(routeReject.route?.rules?.[0]?.outbound).toBeUndefined();
+    const routeBack = updateRouteRule(routeReject, 0, { action: "route", outbound: "proxy" });
+    expect(routeBack.route?.rules?.[0]?.outbound).toBe("proxy");
+
+    const dnsReject = updateDnsRule(config, 0, { action: "reject", server: "remote-doh" });
+    expect(dnsReject.dns?.rules?.[0]?.server).toBeUndefined();
+    const dnsEvaluate = updateDnsRule(dnsReject, 0, { action: "evaluate", server: "remote-doh" });
+    expect(dnsEvaluate.dns?.rules?.[0]?.server).toBe("remote-doh");
+  });
+
+  it("rejects unknown rule-set scaffold types instead of falling back to remote", () => {
+    expect(() => createRuleSet("adguard", "adguard-rules")).toThrow(/Unsupported rule-set type/);
+  });
+
   it("detects missing outbound references", () => {
-    const config = connectSelectorCandidate(createStableTunSplitConfig(), "proxy", "missing");
+    const config = createStableTunSplitConfig();
+    config.outbounds = config.outbounds?.map((outbound) =>
+      outbound.tag === "proxy" ? { ...outbound, outbounds: [...(outbound.outbounds ?? []), "missing"] } : outbound,
+    );
     const diagnostics = validateConfig(config, "stable");
     expect(diagnostics.some((diagnostic) => diagnostic.code === "missing-outbound-candidate")).toBe(true);
   });
@@ -1003,6 +1040,21 @@ describe("canonical sing-box domain model", () => {
     config.dns = { ...config.dns, servers: [...(config.dns?.servers ?? []), tailscaleServer as never] };
     const diagnosticCodes = validateConfig(config, "stable").map((finding) => finding.code);
     expect(diagnosticCodes).toContain("dns-server-tailscale-endpoint-missing");
+  });
+
+  it("adds dependent resources for DNS server scaffolds that require tag references", () => {
+    const withTailscale = addDnsServer(createStableTunSplitConfig(), "tailscale", "tailscale-dns");
+    const tailscaleServer = withTailscale.dns?.servers?.find((server) => server.tag === "tailscale-dns");
+    expect(tailscaleServer).toMatchObject({ type: "tailscale", endpoint: "ts-ep" });
+    expect(withTailscale.endpoints?.find((endpoint) => endpoint.tag === "ts-ep")).toMatchObject({ type: "tailscale" });
+
+    const withResolved = addDnsServer(createStableTunSplitConfig(), "resolved", "resolved-dns");
+    const resolvedServer = withResolved.dns?.servers?.find((server) => server.tag === "resolved-dns") as Record<string, unknown> | undefined;
+    expect(resolvedServer).toMatchObject({ type: "resolved", service: "resolved" });
+    expect(withResolved.services?.find((service) => service.tag === "resolved")).toMatchObject({ type: "resolved" });
+
+    expect(validateConfig(withTailscale, "stable").filter((finding) => finding.level === "error")).toEqual([]);
+    expect(validateConfig(withResolved, "stable").filter((finding) => finding.level === "error")).toEqual([]);
   });
 
   it("does not seed legacy DNS server address strings (1.12-A)", () => {

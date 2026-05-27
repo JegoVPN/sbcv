@@ -158,6 +158,14 @@ const dnsServerTlsTypes = new Set(["tls", "quic", "https", "h3"]);
 const serviceListenTypes = new Set(["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
 const serviceTlsTypes = new Set(["derp", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
 
+export function supportsOutboundDialFields(type: string | null | undefined) {
+  return Boolean(type && outboundDialTypes.has(type));
+}
+
+export function supportsDnsServerDialFields(type: string | null | undefined) {
+  return Boolean(type && dnsServerDialTypes.has(type));
+}
+
 export function sharedGroupsForEntity(
   ref: EntityRef,
   type?: string | null,
@@ -176,7 +184,7 @@ export function sharedGroupsForEntity(
   }
 
   if (ref.kind === "outbound") {
-    if (outboundDialTypes.has(entityType)) groups.push("dial");
+    if (supportsOutboundDialFields(entityType)) groups.push("dial");
     if (outboundTlsTypes.has(entityType)) groups.push("tls");
     if (outboundQuicTypes.has(entityType)) groups.push("quic");
     if (outboundMultiplexTypes.has(entityType)) groups.push("multiplex", "tcp-brutal");
@@ -185,7 +193,7 @@ export function sharedGroupsForEntity(
   }
 
   if (ref.kind === "dns-server") {
-    if (dnsServerDialTypes.has(entityType)) groups.push("dial");
+    if (supportsDnsServerDialFields(entityType)) groups.push("dial");
     if (dnsServerTlsTypes.has(entityType)) groups.push("tls");
     if (entityType === "local") groups.push("neighbor");
   }

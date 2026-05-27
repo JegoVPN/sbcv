@@ -452,7 +452,24 @@ export function addDnsServer(config: SingBoxConfig, type = "local", preferredTag
   const next = cloneConfig(config);
   next.dns = next.dns ?? {};
   const tag = getUniqueTag(next, preferredTag ?? preferredDnsServerTag(type));
-  next.dns.servers = [...(next.dns.servers ?? []), createDnsServer(type, tag)];
+  let server = createDnsServer(type, tag);
+  if (type === "tailscale") {
+    let endpointTag = next.endpoints?.find((endpoint) => endpoint.type === "tailscale" && typeof endpoint.tag === "string" && endpoint.tag)?.tag;
+    if (!endpointTag) {
+      endpointTag = getUniqueTag(next, preferredEndpointTag("tailscale"));
+      next.endpoints = [...(next.endpoints ?? []), createEndpoint("tailscale", endpointTag)];
+    }
+    server = { ...server, endpoint: endpointTag };
+  }
+  if (type === "resolved") {
+    let serviceTag = next.services?.find((service) => service.type === "resolved" && typeof service.tag === "string" && service.tag)?.tag;
+    if (!serviceTag) {
+      serviceTag = getUniqueTag(next, preferredServiceTag("resolved"));
+      next.services = [...(next.services ?? []), createService("resolved", serviceTag)];
+    }
+    server = { ...server, service: serviceTag };
+  }
+  next.dns.servers = [...(next.dns.servers ?? []), server];
   next.dns.final = next.dns.final ?? tag;
   return next;
 }
@@ -707,6 +724,9 @@ export function createRuleSet(type: string, tag: string): TaggedConfig {
       path: "./rules.json",
     };
   }
+  if (type !== "remote") {
+    throw new Error(`Unsupported rule-set type: ${type}`);
+  }
   return {
     type: "remote",
     tag,
@@ -716,11 +736,33 @@ export function createRuleSet(type: string, tag: string): TaggedConfig {
   };
 }
 
+export function routeRuleAllowsOutbound(rule: Pick<RouteRule, "action"> | undefined): boolean {
+  const action = typeof rule?.action === "string" ? rule.action : "";
+  return action === "" || action === "route" || action === "bypass";
+}
+
+function normalizeRouteRule(rule: RouteRule): RouteRule {
+  if (routeRuleAllowsOutbound(rule)) return rule;
+  const { outbound: _outbound, ...rest } = rule;
+  return rest;
+}
+
+export function dnsRuleAllowsServer(rule: Pick<DnsRule, "action"> | undefined): boolean {
+  const action = typeof rule?.action === "string" ? rule.action : "";
+  return action === "" || action === "route" || action === "evaluate";
+}
+
+function normalizeDnsRule(rule: DnsRule): DnsRule {
+  if (dnsRuleAllowsServer(rule)) return rule;
+  const { server: _server, ...rest } = rule;
+  return rest;
+}
+
 export function addRouteRule(config: SingBoxConfig, rule?: RouteRule): SingBoxConfig {
   const next = ensureRoute(config);
   next.route!.rules = [
     ...(next.route!.rules ?? []),
-    rule ?? { domain_suffix: ["example"], outbound: next.route?.final },
+    normalizeRouteRule(rule ?? { domain_suffix: ["example"], outbound: next.route?.final }),
   ];
   return next;
 }
@@ -730,7 +772,7 @@ export function addDnsRule(config: SingBoxConfig, rule?: DnsRule): SingBoxConfig
   next.dns = next.dns ?? {};
   next.dns.rules = [
     ...(next.dns.rules ?? []),
-    rule ?? { domain_suffix: ["example"], server: next.dns.final },
+    normalizeDnsRule(rule ?? { domain_suffix: ["example"], server: next.dns.final }),
   ];
   return next;
 }
@@ -744,7 +786,7 @@ export function updateRouteRule(
   const rules = [...(next.route!.rules ?? [])];
   const current = rules[index];
   if (!current) return next;
-  rules[index] = { ...current, ...patch };
+  rules[index] = normalizeRouteRule({ ...current, ...patch });
   next.route!.rules = rules;
   return next;
 }
@@ -759,7 +801,7 @@ export function updateDnsRule(
   const rules = [...(next.dns.rules ?? [])];
   const current = rules[index];
   if (!current) return next;
-  rules[index] = { ...current, ...patch };
+  rules[index] = normalizeDnsRule({ ...current, ...patch });
   next.dns.rules = rules;
   return next;
 }
@@ -825,11 +867,16 @@ export function connectSelectorCandidate(
   selectorTag: string,
   outboundTag: string,
 ): SingBoxConfig {
+  const outbounds = config.outbounds ?? [];
+  const parent = outbounds.find((outbound) => outbound.tag === selectorTag);
+  const child = outbounds.find((outbound) => outbound.tag === outboundTag);
+  if (!parent || !child || parent.tag === child.tag) return config;
+  if (parent.type !== "selector" && parent.type !== "urltest") return config;
+  const current = parent.outbounds ?? [];
+  if (current.includes(outboundTag)) return config;
   const next = cloneConfig(config);
   next.outbounds = (next.outbounds ?? []).map((outbound) => {
     if (outbound.tag !== selectorTag) return outbound;
-    const current = outbound.outbounds ?? [];
-    if (current.includes(outboundTag)) return outbound;
     return { ...outbound, outbounds: [...current, outboundTag] };
   });
   return next;
