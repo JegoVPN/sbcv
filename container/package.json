@@ -1,6 +1,8 @@
 {
   "name": "@sbc/validator-container",
   "version": "0.1.0",
+  "description": "sbcv — validator container that runs the sing-box check binary against user-submitted JSON configs.",
+  "homepage": "https://sbcv.app",
   "private": true,
   "type": "module",
   "main": "dist/index.js",
