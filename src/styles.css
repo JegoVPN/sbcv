@@ -199,22 +199,26 @@ textarea {
   text-transform: uppercase;
 }
 
-.status-pill--valid {
+/* Prefixed with `.topbar-actions` to outrank the earlier
+   `.topbar-actions button` rule (specificity 0,1,1) — without that, the pill
+   inherits the generic action-button background (#101418) and 999px radius
+   now that it's a real <button>, losing its bright fill color. */
+.topbar-actions .status-pill--valid {
   color: #151900;
   background: #c7ff00;
 }
 
-.status-pill--warning {
+.topbar-actions .status-pill--warning {
   color: #1f1600;
   background: #f2bc4b;
 }
 
-.status-pill--checking {
+.topbar-actions .status-pill--checking {
   color: #d7dee7;
   background: #20262d;
 }
 
-.status-pill--error {
+.topbar-actions .status-pill--error {
   color: #fff;
   background: #e34b4b;
 }
@@ -227,13 +231,16 @@ textarea {
   animation: status-check-pulse 420ms ease-out;
 }
 
-button.status-pill {
+.topbar-actions button.status-pill {
   border: 0;
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
+  text-transform: uppercase;
   cursor: default;
   padding: 0 11px;
+  min-height: 28px;
+  border-radius: 999px;
 }
 
 .status-pill--interactive {
@@ -316,20 +323,28 @@ button.status-pill {
   color: #8a96a3;
 }
 
-.diagnostics-popover__close {
+/* The popover is rendered inside `.topbar-actions`, so the `.topbar-actions
+   button` rule (999px radius, #101418 fill, 34px min-height) would otherwise
+   turn this X into another pill. Prefix bumps specificity to 0,2,0. */
+.diagnostics-popover .diagnostics-popover__close {
   background: transparent;
   border: 0;
   color: #6f7b86;
   cursor: pointer;
-  padding: 2px;
+  padding: 0;
   min-height: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.diagnostics-popover__close:hover {
+.diagnostics-popover .diagnostics-popover__close:hover {
   color: #d7dee7;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .diagnostics-popover__list {
