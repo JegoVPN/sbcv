@@ -380,6 +380,31 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders Password as a first-class sensitive field for shadowsocks-like outbounds", () => {
+    const shadowsocksLikeKinds = [
+      "ss-out",
+      "trojan-out",
+      "tuic-out",
+      "hysteria2-out",
+      "anytls-out",
+    ];
+    for (const kind of shadowsocksLikeKinds) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(kind);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      const passwords = inspector.getAllByLabelText("Password");
+      expect(passwords.length, `${kind} should expose Password`).toBeGreaterThan(0);
+      expect(
+        passwords.some((node) => (node as HTMLInputElement).type === "password"),
+        `${kind} Password must be type=password`,
+      ).toBe(true);
+      unmount();
+    }
+  });
+
   it("hides address/auto_route fields for non-tun inbounds", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

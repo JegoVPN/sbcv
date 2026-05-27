@@ -125,7 +125,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | outbound-block | No canvas deprecation badge in `SbcNode` (only Palette + Inspector banner). No `deprecated-block-outbound` warning diagnostic. |
 | outbound-socks | `network` falls back to text (no enum). `username`/`password` not first-class for socks branch. |
 | outbound-http | **`headers` map invisible** — not in `outboundHandledFields`; `AdvancedNonScalarFields` skips object fields. `path` not in `outboundHandledFields` → new HTTP outbounds drop it on round-trip. |
-| outbound-shadowsocks | `password` not rendered in shadowsocks block (line 2806-2867). `network` enum select absent. `commands.ts` scaffold still hardcodes `network: "tcp"`. password input has no sensitive masking. `udp_over_tcp` / `multiplex` conflict diagnostic absent. |
+| outbound-shadowsocks | ✅ ~~`password` not rendered in shadowsocks block~~ — false positive in original audit; shared password block at Inspector.tsx:2730 already renders `Password` (SensitiveTextField) for shadowsocks/trojan/naive/tuic/hysteria2/anytls/shadowtls. Regression test in app.test.tsx ("renders Password as a first-class sensitive field for shadowsocks-like outbounds") locks this. ✅ `commands.ts network:"tcp"` removed under CC-3. `network` enum select absent in shadowsocks-specific sub-block — fall through to AdvancedScalarFields. `udp_over_tcp` / `multiplex` conflict diagnostic still absent. |
 | outbound-vmess | `network` default in `commands.ts:319` still `"tcp"`. |
 | outbound-trojan | `password` not in `outboundHandledFields:156-170` (only sensitive-user list). `network` default `"tcp"`. |
 | outbound-naive | `username` no dedicated branch (degrades to Advanced). `quic_congestion_control` enum select missing. |
