@@ -475,6 +475,7 @@ type InboundUserField = {
   label: string;
   sensitive?: boolean;
   type?: "text" | "number";
+  enum?: ReadonlyArray<{ value: string; label?: string }>;
 };
 
 type InboundUserSchema = {
@@ -544,7 +545,14 @@ const INBOUND_USER_SCHEMAS: Record<string, InboundUserSchema> = {
     fields: [
       { key: "name", label: "Name" },
       { key: "uuid", label: "UUID", sensitive: true },
-      { key: "flow", label: "Flow" },
+      {
+        key: "flow",
+        label: "Flow",
+        enum: [
+          { value: "", label: "(none)" },
+          { value: "xtls-rprx-vision", label: "xtls-rprx-vision" },
+        ],
+      },
     ],
     defaultUser: (n) => ({ name: `user${n}`, uuid: "" }),
   },
@@ -2761,6 +2769,25 @@ export function Inspector() {
                               value={Number(value ?? 0)}
                               onChange={(event) => patchUser(index, { [field.key]: Number(event.target.value) })}
                             />
+                          </label>
+                        );
+                      }
+                      if (field.enum && field.enum.length > 0) {
+                        return (
+                          <label className="field" key={field.key}>
+                            <span>{field.label}</span>
+                            <select
+                              value={String(value ?? "")}
+                              onChange={(event) =>
+                                patchUser(index, { [field.key]: event.target.value || undefined })
+                              }
+                            >
+                              {field.enum.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label ?? option.value}
+                                </option>
+                              ))}
+                            </select>
                           </label>
                         );
                       }
