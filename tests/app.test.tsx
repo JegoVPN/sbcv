@@ -330,7 +330,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Endpoints/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Tailscale" }));
+    fireEvent.click(screen.getByRole("button", { name: "Setup Tailscale (with_tailscale)" }));
 
     expect(useProjectStore.getState().selectedId).toBe("endpoint:ts-ep");
     expect(useProjectStore.getState().config.endpoints?.at(-1)).toMatchObject({ type: "tailscale", tag: "ts-ep" });

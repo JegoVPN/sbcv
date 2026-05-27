@@ -55,10 +55,9 @@ These appear in many nodes simultaneously. One PR per item can close 10–30 nod
 - ~~`graph.ts:313` and the equivalent dns-rule block create outbound/dns-server edges regardless of `action`.~~ Now gated. Route rule outbound edge renders only when `action ∈ {"", "route", "bypass"}`; dns rule server edge renders only when `action ∈ {"", "route", "evaluate"}`. Other actions (reject/sniff/route-options/hijack-dns/resolve/predefined/respond) suppress the dangling reference visually.
 - **Regression test:** `tests/domain.test.ts` — "hides route-rule outbound canvas edge when action is not route/bypass" + "hides dns-rule server canvas edge when action is not route/evaluate".
 
-### CC-7 Platform / channel badges declared in code but not surfaced on Palette
+### CC-7 Platform / channel badges declared in code but not surfaced on Palette — ✅ CLOSED 2026-05-27
 
-- `redirect`, `tproxy`, `hysteria-realm` still show `status: "setup"` on the Palette instead of a gated badge with the correct gate reason.
-- `hysteria-realm`'s `statusTitle()` falls back to the generic "target-gated and needs matching sing-box validation" — should say "Requires sing-box 1.14 testing target".
+- ~~`redirect`, `tproxy`, `hysteria-realm` still show `status: "setup"` on the Palette instead of a gated badge with the correct gate reason.~~ Labels now carry the gate inline: `Redirect (Linux only)`, `TProxy (Linux only)`, `Resolved Server (Linux only)`, `Resolved (Linux only)`, `Hysteria Realm (1.14 testing)`, `DERP (with_tailscale)`, `Tailscale Server (with_tailscale)`, `Tailscale (with_tailscale)` endpoint, `Tor (with_tor)`. Status stays `setup` so the items remain addable; the suffix is visible at-a-glance in the search list and screen-reader-friendly.
 
 ## Node-Specific P0 Defects
 
