@@ -500,12 +500,29 @@ function portNodeType(config: SingBoxConfig, node: { kind: string; value: string
   if (node.kind === "endpoint") return config.endpoints?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "service") return config.services?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "rule-set") return config.route?.rule_set?.find((item) => item.tag === node.value)?.type;
+  if (node.kind === "certificate-provider") return config.certificate_providers?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "route") return "route";
   if (node.kind === "route-rule") return "route-rule";
   if (node.kind === "dns") return "dns";
   if (node.kind === "dns-rule") return "dns-rule";
   if (node.kind === "settings") return node.value;
   return undefined;
+}
+
+function clashApiObject(config: SingBoxConfig) {
+  const clashApi = config.experimental?.clash_api;
+  return clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)
+    ? clashApi as Record<string, unknown>
+    : {};
+}
+
+function setClashApiDownloadDetour(config: SingBoxConfig, outboundTag: string | undefined) {
+  return updateEntityField(
+    config,
+    { kind: "settings", path: "experimental" },
+    "clash_api",
+    { ...clashApiObject(config), external_ui_download_detour: outboundTag },
+  );
 }
 
 function connectDirectedPortReference(
@@ -593,6 +610,14 @@ function connectDirectedPortReference(
     return updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "endpoint", inputNode.value);
   }
 
+  if (outputNode.kind === "dns-server" && outputHandle === "service" && inputNode.kind === "service" && inputHandle === "dns-server") {
+    const server = config.dns?.servers?.find((item) => item.tag === outputNode.value);
+    const service = config.services?.find((item) => item.tag === inputNode.value);
+    return server?.type === "resolved" && service?.type === "resolved"
+      ? updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "service", inputNode.value)
+      : null;
+  }
+
   if (outputNode.kind === "endpoint" && outputHandle === "dial-detour" && inputNode.kind === "outbound" && inputHandle === "detour-target") {
     return updateEntityField(config, { kind: "endpoint", tag: outputNode.value }, "detour", inputNode.value);
   }
@@ -617,6 +642,22 @@ function connectDirectedPortReference(
 
   if (outputNode.kind === "rule-set" && outputHandle === "download-detour" && inputNode.kind === "outbound" && inputHandle === "rule-set-download") {
     return updateEntityField(config, { kind: "rule-set", tag: outputNode.value }, "download_detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "settings" && outputNode.value === "experimental" && outputHandle === "clash-download-detour" && inputNode.kind === "outbound" && inputHandle === "clash-download-detour") {
+    return setClashApiDownloadDetour(config, inputNode.value);
+  }
+
+  if (outputNode.kind === "settings" && outputNode.value === "ntp" && outputHandle === "dial-detour" && inputNode.kind === "outbound" && inputHandle === "detour-target") {
+    return updateEntityField(config, { kind: "settings", path: "ntp" }, "detour", inputNode.value);
+  }
+
+  if (outputNode.kind === "certificate-provider" && outputHandle === "endpoint" && inputNode.kind === "endpoint" && inputHandle === "certificate-provider") {
+    const provider = config.certificate_providers?.find((item) => item.tag === outputNode.value);
+    const endpoint = config.endpoints?.find((item) => item.tag === inputNode.value);
+    return provider?.type === "tailscale" && endpoint?.type === "tailscale"
+      ? updateEntityField(config, { kind: "certificate-provider", tag: outputNode.value }, "endpoint", inputNode.value)
+      : null;
   }
 
   if (outputNode.kind === "outbound" && inputNode.kind === "outbound") {
@@ -989,11 +1030,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (inboundTag) config = updateRouteRule(config, index, { inbound: inboundTag });
           }
-          return sync(config, state.channel);
-        }
-
-        if (node.kind === "dns" && port.key === "inbound-query") {
-          config = addInbound(config, "tun");
           return sync(config, state.channel);
         }
 

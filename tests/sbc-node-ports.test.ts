@@ -13,43 +13,47 @@ const cases: PortCase[] = [
   { kind: "inbound", type: "tun", inputKeys: [], outputKeys: ["route", "route-rule-match", "dns-rule-match"] },
   { kind: "route", type: "route", inputKeys: ["inbound"], outputKeys: ["route-rule", "outbound"] },
   { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set"] },
-  { kind: "dns", type: "dns", inputKeys: ["inbound-query"], outputKeys: ["dns-rule", "dns-server"] },
+  { kind: "dns", type: "dns", inputKeys: [], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
   { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound"] },
-  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound", "endpoint"] },
+  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule"], outputKeys: ["endpoint"] },
+  { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule"], outputKeys: ["service"] },
   { kind: "endpoint", type: "wireguard", inputKeys: [], outputKeys: ["dial-detour"] },
-  { kind: "endpoint", type: "tailscale", inputKeys: ["dns-server", "derp-service"], outputKeys: ["dial-detour"] },
+  { kind: "endpoint", type: "tailscale", inputKeys: ["dns-server", "derp-service", "certificate-provider"], outputKeys: ["dial-detour"] },
   { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
   { kind: "rule-set", type: "local", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   { kind: "rule-set", type: "inline", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   {
     kind: "outbound",
     type: "direct",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
     outputKeys: ["dial-detour"],
   },
   {
     kind: "outbound",
     type: "socks",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
     outputKeys: ["dial-detour"],
   },
   {
     kind: "outbound",
     type: "selector",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
     outputKeys: ["outbound-member"],
   },
   {
     kind: "outbound",
     type: "urltest",
-    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download"],
+    inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
     outputKeys: ["outbound-member"],
   },
   { kind: "service", type: "ssm-api", inputKeys: ["managed-inbound"], outputKeys: [] },
   { kind: "service", type: "derp", inputKeys: [], outputKeys: ["verify-client-endpoint"] },
   { kind: "service", type: "ccm", inputKeys: [], outputKeys: ["detour"] },
   { kind: "service", type: "resolved", inputKeys: ["dns-server"], outputKeys: [] },
+  { kind: "certificate-provider", type: "tailscale", inputKeys: [], outputKeys: ["endpoint"] },
+  { kind: "settings", type: "ntp", inputKeys: [], outputKeys: ["dial-detour"] },
+  { kind: "settings", type: "experimental", inputKeys: [], outputKeys: ["clash-download-detour"] },
 ];
 
 describe("SBC node port registry", () => {
@@ -81,6 +85,21 @@ describe("SBC node port registry", () => {
     expect(memberInputs.find((port) => port.key === "urltest-group")).toMatchObject({
       nodeKind: "outbound",
       nodeType: "urltest",
+    });
+  });
+
+  it("marks visual hub and ordered-list ports readonly instead of editable", () => {
+    expect(getPortSpecs("route", "route", "input").find((port) => port.key === "inbound")).toMatchObject({
+      editable: false,
+      mode: "decorative",
+    });
+    expect(getPortSpecs("route", "route", "output").find((port) => port.key === "route-rule")).toMatchObject({
+      editable: false,
+      mode: "readonly",
+    });
+    expect(getPortSpecs("dns", "dns", "output").find((port) => port.key === "dns-rule")).toMatchObject({
+      editable: false,
+      mode: "readonly",
     });
   });
 });

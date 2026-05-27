@@ -39,6 +39,9 @@ function createDisconnectFixture(): SingBoxConfig {
     { type: "tailscale", tag: "ts-ep", detour: "proxy" },
     { type: "tailscale", tag: "ts-ep-2" },
   ];
+  config.certificate_providers = [
+    { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
+  ];
   config.services = [
     { type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 } as never,
     { type: "ssm-api", tag: "ssm", servers: { "/": "ss-in", "/alt": "tun-in" } } as never,
@@ -46,6 +49,9 @@ function createDisconnectFixture(): SingBoxConfig {
     { type: "ccm", tag: "ccm", detour: "proxy" } as never,
   ];
   config.ntp = { enabled: true, server: "time.apple.com", detour: "proxy" } as never;
+  config.experimental = {
+    clash_api: { external_ui_download_detour: "proxy" },
+  };
   return config;
 }
 
@@ -152,6 +158,16 @@ const cases: Array<{
     name: "rule-set download detour",
     edgeId: formatEdgeId("rule-set-download", "remote-rules", "proxy"),
     assert: (config) => expect(config.route?.rule_set?.find((ruleSet) => ruleSet.tag === "remote-rules")?.download_detour).toBeUndefined(),
+  },
+  {
+    name: "Clash API external UI download detour",
+    edgeId: formatEdgeId("clash-api-download-detour", "proxy"),
+    assert: (config) => expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: undefined }),
+  },
+  {
+    name: "certificate provider endpoint",
+    edgeId: formatEdgeId("certificate-provider-endpoint", "ts-cert", "ts-ep"),
+    assert: (config) => expect(config.certificate_providers?.find((provider) => provider.tag === "ts-cert")?.endpoint).toBeUndefined(),
   },
   {
     name: "settings NTP detour",

@@ -452,6 +452,19 @@ Acceptance:
 - No rendered port is inert.
 - Every rendered editable port has at least one connect and one disconnect test.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr7-wire-decorative-ports`.
+
+- Removed the decorative DNS hub `inbound-query` port because sing-box has no canonical DNS-hub inbound-query field; inbound-to-DNS matching remains represented by `dns.rules[].inbound`.
+- Converted route/DNS rule ordering edges to readonly ports and made non-writable port UI non-connectable, so visual hubs/order lines remain inspectable but cannot start false drag writes.
+- Wired previously readonly canonical references through drag/connect and disconnect paths: `ntp.detour`, `dns.servers[type=resolved].service`, `experimental.clash_api.external_ui_download_detour`, and `certificate_providers[type=tailscale].endpoint`.
+- Added certificate provider graph nodes and endpoint edges, plus graph edge emission for Clash API external UI download detour.
+- Removed unsupported DNS server detour ports/edges for non-dialable DNS server types by sharing the existing DNS server Dial Field guard.
+- Replaced the floating canvas selected-id pill with the selected node title.
+- Frontend performance review: the UI changes add only static port metadata and local DOM attributes; no new dependencies, async/data waterfalls, broad store subscriptions, or transient drag/hover global state were introduced. Existing broad canvas subscriptions and the Vite single-bundle warning remain PR-11 items.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/sbc-node-ports.test.ts tests/port-relation-registry.test.ts tests/port-disconnect-symmetry.test.ts tests/app.test.tsx --reporter=dot`, `pnpm test`, `pnpm build`, `pnpm e2e`, and a browser smoke at `http://127.0.0.1:5174/`.
+- `pnpm build` still reports the existing Vite >500 kB single chunk warning; this is tracked as PR-11 performance work.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor graph/port interaction behavior and docs, not bundled fixture/exported config files.
+
 ### PR-8: Graph Derivation Correctness
 
 Fixes PR P0-13, P1-9, P1-10, P2-8.

@@ -246,6 +246,49 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().config.route?.final).toBe("jp");
   });
 
+  it("connects PR-7 writable resource ports through canonical JSON commands", () => {
+    useProjectStore.getState().importJson(JSON.stringify({
+      outbounds: [{ type: "direct", tag: "direct" }],
+      dns: { servers: [{ type: "resolved", tag: "resolved-dns" }] },
+      services: [{ type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 }],
+      endpoints: [{ type: "tailscale", tag: "ts-ep" }],
+      certificate_providers: [{ type: "tailscale", tag: "ts-cert" }],
+      ntp: { enabled: true, server: "time.apple.com" },
+      experimental: { clash_api: {} },
+    }));
+
+    useProjectStore.getState().connectPorts({
+      source: "dns-server:resolved-dns",
+      sourceHandle: "service",
+      target: "service:resolved-svc",
+      targetHandle: "dns-server",
+    });
+    useProjectStore.getState().connectPorts({
+      source: "settings:ntp",
+      sourceHandle: "dial-detour",
+      target: "outbound:direct",
+      targetHandle: "detour-target",
+    });
+    useProjectStore.getState().connectPorts({
+      source: "settings:experimental",
+      sourceHandle: "clash-download-detour",
+      target: "outbound:direct",
+      targetHandle: "clash-download-detour",
+    });
+    useProjectStore.getState().connectPorts({
+      source: "certificate-provider:ts-cert",
+      sourceHandle: "endpoint",
+      target: "endpoint:ts-ep",
+      targetHandle: "certificate-provider",
+    });
+
+    const config = useProjectStore.getState().config;
+    expect(config.dns?.servers?.find((server) => server.tag === "resolved-dns")?.service).toBe("resolved-svc");
+    expect(config.ntp?.detour).toBe("direct");
+    expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: "direct" });
+    expect(config.certificate_providers?.find((provider) => provider.tag === "ts-cert")?.endpoint).toBe("ts-ep");
+  });
+
   it("links newly created outbounds to the selected upstream context", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
