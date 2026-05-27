@@ -96,7 +96,7 @@ export function createInbound(type: string, tag: string): InboundConfig {
     return {
       type,
       tag,
-      address: ["172.19.0.1/30"],
+      address: ["172.19.0.1/30", "fdfe:dcba:9876::1/126"],
       auto_route: true,
     };
   }

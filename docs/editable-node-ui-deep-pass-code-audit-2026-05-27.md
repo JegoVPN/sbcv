@@ -112,7 +112,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | inbound-vless | `users[].flow` in repeater is plain text instead of enum select — accepts illegal values. |
 | inbound-shadowtls | **No version select in inbound** (falls to AdvancedScalarFields as text). No version-gated visibility for v2/v3 password vs users. `handshake_for_server_name` no repeater/UI. No version-validation diagnostics. |
 | inbound-anytls | **`padding_scheme[]` completely invisible** (not in `inboundHandledFields`). `address`/`auto_route` shown (CC-1). No 1.12+ version gate on Palette. |
-| inbound-tun | Missing UI for `include_uid[]` / `exclude_uid[]` / `include_uid_range[]` / `exclude_uid_range[]` / `include_interface[]` / `exclude_interface[]` / `include_android_user[]` / `include_package[]` / `exclude_package[]`. `auto_redirect` and its 5 companion fields not in Inspector. `createInbound` scaffold is IPv4-only — official template is dual-stack. |
+| inbound-tun | Missing UI for `include_uid[]` / `exclude_uid[]` / `include_uid_range[]` / `exclude_uid_range[]` / `include_interface[]` / `exclude_interface[]` / `include_android_user[]` / `include_package[]` / `exclude_package[]`. `auto_redirect` and its 5 companion fields not in Inspector. ✅ ~~`createInbound` scaffold is IPv4-only~~ — fixed 2026-05-27, scaffold now seeds dual-stack `["172.19.0.1/30", "fdfe:dcba:9876::1/126"]` matching the official 1.13 template. |
 | inbound-redirect | No `redirect-platform-warning` diagnostic in `diagnostics.ts`. `address`/`auto_route` rendered (CC-1). Palette `status` still `"setup"` instead of gated. |
 | inbound-tproxy | Palette has no "Linux only" status. `network` not in `inboundHandledFields` → no enum select for tproxy. |
 

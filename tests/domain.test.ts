@@ -356,6 +356,12 @@ describe("canonical sing-box domain model", () => {
     expect(httpsServer).toMatchObject({ type: "https", server: "1.1.1.1", server_port: 443, path: "/dns-query" });
   });
 
+  it("seeds tun inbound with dual-stack address by default (1.10-A)", () => {
+    const tunInbound = createInbound("tun", "tun-in") as Record<string, unknown>;
+    expect(Array.isArray(tunInbound.address)).toBe(true);
+    expect(tunInbound.address).toEqual(["172.19.0.1/30", "fdfe:dcba:9876::1/126"]);
+  });
+
   it("omits the network field from scaffolds so sing-box defaults to both TCP and UDP", () => {
     const inboundTypes = ["direct", "naive", "tproxy"];
     for (const type of inboundTypes) {
