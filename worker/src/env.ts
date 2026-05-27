@@ -1,0 +1,11 @@
+export interface Env {
+  CHECK_CACHE: KVNamespace;
+  INTERNAL_TOKEN: string;
+  TURNSTILE_SECRET_KEY: string;
+  ALLOWED_ORIGIN: string;
+  MAX_BODY_BYTES: string;
+  CHECK_TIMEOUT_MS: string;
+  VALIDATOR_VERSION: string;
+  VALIDATOR_URL: string;
+  RATE_LIMIT_PER_MIN: string;
+}

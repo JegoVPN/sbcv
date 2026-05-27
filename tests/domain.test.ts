@@ -762,7 +762,7 @@ describe("canonical sing-box domain model", () => {
         { type: "derp", tag: "derp", config_path: "" },
       ],
       ntp: { enabled: true, server: "" },
-    } as typeof base;
+    } as unknown as typeof base;
     const codes = validateConfig(config, "stable").map((d) => d.code);
     expect(codes).toContain("derp-config-path-missing");
     expect(codes).toContain("ntp-server-missing");

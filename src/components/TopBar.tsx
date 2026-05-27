@@ -6,6 +6,7 @@ import { summarizeDiagnostics } from "../domain/diagnostics";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import type { SingBoxTargetId } from "../domain/types";
+import { OfficialCheckButton } from "./OfficialCheckButton";
 
 function padTimestampPart(value: number) {
   return String(value).padStart(2, "0");
@@ -82,6 +83,7 @@ export function TopBar() {
           <FileCheck2 size={15} />
           Check
         </button>
+        <OfficialCheckButton />
         <button type="button" onClick={exportConfig}>
           <Download size={15} />
           Export

@@ -1174,7 +1174,7 @@ describe("SBC editor shell", () => {
     expect(blockBtn.title).toMatch(/deprecated/i);
     const hysteriaBtn = palette.getByRole("button", { name: "Legacy Hysteria" });
     expect(hysteriaBtn.title).toMatch(/deprecated/i);
-    fireEvent.click(palette.getAllByRole("button", { name: /^DNS/ })[0]);
+    fireEvent.click(palette.getAllByRole("button", { name: /^DNS/ })[0]!);
     const fakeipBtn = palette.getByRole("button", { name: "Legacy FakeIP" });
     expect(fakeipBtn.title).toMatch(/deprecated/i);
   });
