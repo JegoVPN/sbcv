@@ -157,7 +157,7 @@ describe("buildPrompt", () => {
 describe("formatIssueBody", () => {
   it("includes PR link, head sha, branch name, and review output", () => {
     const body = formatIssueBody({
-      reviewStdout: "## Review for abc12345 — foo\n\nSUMMARY: 0 critical, 0 major, 0 minor.",
+      reviewOutput: "## Review for abc12345 — foo\n\nSUMMARY: 0 critical, 0 major, 0 minor.",
       prNumber: 42,
       prUrl: "https://github.com/x/y/pull/42",
       headSha: "abcdef1234567890",
@@ -172,12 +172,24 @@ describe("formatIssueBody", () => {
 
   it("falls back to placeholder when review output is empty", () => {
     const body = formatIssueBody({
-      reviewStdout: "",
+      reviewOutput: "",
       prNumber: 1,
       prUrl: "https://github.com/x/y/pull/1",
       headSha: "00000000",
       branchName: "br",
     });
     expect(body).toContain("(no review output");
+  });
+
+  it("truncates very large review output before embedding it in an issue", () => {
+    const body = formatIssueBody({
+      reviewOutput: "x".repeat(60_000),
+      prNumber: 1,
+      prUrl: "https://github.com/x/y/pull/1",
+      headSha: "00000000",
+      branchName: "br",
+    });
+    expect(body.length).toBeLessThan(58_000);
+    expect(body).toContain("[review output truncated:");
   });
 });

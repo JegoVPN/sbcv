@@ -2,6 +2,8 @@
 set -eu
 
 zero_sha="0000000000000000000000000000000000000000"
+remote_name="${1:-origin}"
+default_base_ref="${SBC_PRE_PUSH_BASE_REF:-refs/remotes/${remote_name}/main}"
 
 ranges=""
 
@@ -11,7 +13,12 @@ while read -r local_ref local_sha remote_ref remote_sha; do
   fi
 
   if [ "$remote_sha" = "$zero_sha" ]; then
-    range="$local_sha"
+    base="$(git merge-base "$default_base_ref" "$local_sha" 2>/dev/null || true)"
+    if [ -n "$base" ]; then
+      range="$base..$local_sha"
+    else
+      range="$local_sha"
+    fi
   else
     range="$remote_sha..$local_sha"
   fi
