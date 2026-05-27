@@ -148,6 +148,7 @@ const allowedStatuses = new Set(["add", "setup", "table", "inspector", "docs", "
 const baseDocsWithoutDirectPalette = new Set([
   "index.md",
   "dns/server/index.md",
+  "dns/rule_action.md",
   "endpoint/index.md",
   "inbound/index.md",
   "outbound/index.md",

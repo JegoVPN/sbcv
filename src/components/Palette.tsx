@@ -79,7 +79,6 @@ const groups: PaletteGroup[] = [
     items: [
       { label: "DNS Hub", kind: "dns-hub", icon: Globe2, docsUrl: docs("dns/"), ready: true },
       { label: "DNS Rule", kind: "dns-rule", icon: GitBranch, docsUrl: docs("dns/rule/"), status: "table" },
-      { label: "DNS Rule Action", kind: "dns-rule-action", icon: GitBranch, docsUrl: docs("dns/rule_action/"), status: "inspector" },
       { label: "FakeIP", kind: "dns-fakeip", icon: Blocks, docsUrl: docs("dns/fakeip/") },
       { label: "Legacy Server", kind: "dns-legacy", icon: Server, docsUrl: docs("dns/server/legacy/") },
       { label: "Local Server", kind: "dns-local", icon: Globe2, docsUrl: docs("dns/server/local/"), ready: true },
