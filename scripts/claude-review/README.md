@@ -2,6 +2,19 @@
 
 Local Claude Code review wired into `.githooks/pre-push` stage 2.
 
+## One-time setup (per clone)
+
+This repo ships hooks in `.githooks/` instead of the default `.git/hooks/`.
+After cloning, run **once** on each machine / each clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Verify: `git config --get core.hooksPath` should print `.githooks`. Without
+this, `git push` skips the review gate entirely (the hook file exists in
+the repo but git doesn't see it).
+
 ## How it works
 
 On `git push`:
@@ -54,12 +67,76 @@ subscription's rate limit and session quota. `rubric.md` + `AGENTS.md`
 sit at the prompt prefix to maximize prompt-cache hits across parallel
 commit reviews.
 
+## Unattended submit: one command opens PR + review issue
+
+`submit.mjs` is the "one shot" entrypoint for finishing a branch. Run it from
+the feature branch:
+
+```bash
+node scripts/claude-review/submit.mjs           # do it for real
+node scripts/claude-review/submit.mjs --dry-run # print intentions only
+```
+
+What it does:
+
+1. `git push -u origin HEAD` — with `SBC_SKIP_CLAUDE_REVIEW=1` so the pre-push
+   hook does **not** double-review (submit runs the review explicitly below).
+2. Detects an existing PR for the branch via `gh pr view`. If none, opens one
+   with `gh pr create --fill` (uses recent commit messages).
+3. Runs `node scripts/claude-review/run.mjs <merge-base>..HEAD` capturing the
+   full review output.
+4. Opens a GitHub issue titled `Review of PR #N: <title>` with the review as
+   body, links back to the PR.
+5. Comments the PR with the issue URL so the cross-link is visible from both
+   directions.
+
+Result: one command per PR. Per-PR review issue policy enforced.
+
+Caveats:
+- If `gh pr create --fill` fails (e.g. branch has no commits ahead of base),
+  `submit` exits non-zero before opening any issue.
+- If the review subprocess exits non-zero (critical/major findings), `submit`
+  still opens the issue (the findings ARE the issue you want to track).
+- `--dry-run` skips push / PR create / issue create but still computes branch,
+  head sha, and prints intended command-lines.
+
+## Fully autonomous: polled review across all open PRs
+
+`poll-and-submit.mjs` is the "watch all PRs" entrypoint, intended for
+a `/loop` schedule (e.g. every 30 min):
+
+```bash
+node scripts/claude-review/poll-and-submit.mjs
+```
+
+What it does each invocation:
+
+1. `gh pr list --state open` — enumerate every open PR in the repo.
+2. For each PR: `gh issue list --search '"Review of PR #N" in:title'`.
+   If a matching issue already exists → **skip** (idempotent).
+3. Otherwise: `git fetch origin pull/N/head:...` to pull commits, then
+   run `run.mjs` on `merge-base..head`, capture output.
+4. `gh issue create --title "Review of PR #N: <title>"` with the
+   review as body. Cross-link by commenting the PR with the issue URL.
+
+Properties:
+- **Idempotent**: re-runs are no-ops for already-reviewed PRs.
+  Re-pushing the PR head doesn't re-trigger; the existing issue
+  stands until manually closed.
+- **Fail-open**: a single PR errors → loop logs it and continues.
+- **No human in the loop**: meant for an automated `/loop` cadence.
+
+Recommended cadence: every 30 min. Run cost = subscription quota per
+unreviewed PR commit reviewed.
+
 ## Files
 
 | File | Role |
 |---|---|
 | `rubric.md` | Static prompt: severity + 4 review dimensions + output contract |
-| `run.mjs` | Engine: spawn-per-commit, parse severities, exit non-zero on critical/major |
+| `run.mjs` | Review engine: spawn-per-commit, parse severities, exit non-zero on critical/major |
+| `submit.mjs` | One-shot: push current branch + ensure PR + run review + open issue + cross-link |
+| `poll-and-submit.mjs` | Autonomous: poll all open PRs, open review issue for any without one |
 | `README.md` | This file |
 
 Spec: `docs/superpowers/specs/2026-05-28-claude-pre-push-review-gate-design.md`

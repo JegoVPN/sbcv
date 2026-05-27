@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..", "..");
-const TIMEOUT_MS = 90_000;
+const TIMEOUT_MS = 180_000;
 const CONCURRENCY = 4;
 const SIZE_BUDGET = 400; // AGENTS.md #8 small-atomic budget (logical lines)
 
