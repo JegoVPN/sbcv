@@ -1278,6 +1278,20 @@ export function validateConfig(
           `Remote rule-set "${tag}" has no url; the resource cannot be downloaded.`,
         );
       }
+      const formatField = typeof ruleSet.format === "string" ? ruleSet.format : "";
+      if (!formatField && url) {
+        const pathOnly = url.split("?")[0]?.split("#")[0] ?? "";
+        const ext = pathOnly.split(".").pop()?.toLowerCase() ?? "";
+        if (ext !== "json" && ext !== "srs") {
+          push(
+            diagnostics,
+            "error",
+            "rule-set-format-missing",
+            `/route/rule_set/${index}/format`,
+            `Remote rule-set "${tag}" has no format and the url does not end in .json or .srs; sing-box cannot infer the format.`,
+          );
+        }
+      }
       const detour = typeof ruleSet.download_detour === "string" ? ruleSet.download_detour : "";
       if (detour && !outboundTags.has(detour)) {
         push(

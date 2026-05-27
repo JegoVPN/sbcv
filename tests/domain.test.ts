@@ -1332,6 +1332,45 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits rule-set-format-missing when remote URL extension is unknown and format is unset", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      route: {
+        ...(base.route ?? {}),
+        rule_set: [
+          ...(((base.route as Record<string, unknown>)?.rule_set as Record<string, unknown>[]) ?? []),
+          { type: "remote", tag: "ads", url: "https://example.com/ads.txt" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("rule-set-format-missing");
+  });
+
+  it("does NOT emit rule-set-format-missing when url ends in .srs or .json or format is set", () => {
+    const base = createStableTunSplitConfig();
+    const variants = [
+      { url: "https://example.com/ads.srs" },
+      { url: "https://example.com/ads.json" },
+      { url: "https://example.com/ads.txt", format: "binary" },
+    ];
+    for (const variant of variants) {
+      const config = {
+        ...base,
+        route: {
+          ...(base.route ?? {}),
+          rule_set: [
+            ...(((base.route as Record<string, unknown>)?.rule_set as Record<string, unknown>[]) ?? []),
+            { type: "remote", tag: "ads", ...variant },
+          ],
+        },
+      } as typeof base;
+      const codes = validateConfig(config, "stable").map((d) => d.code);
+      expect(codes).not.toContain("rule-set-format-missing");
+    }
+  });
+
   it("emits endpoint-tailscale-advertise-tags-1-13-only + system-interface gate on testing channel", () => {
     const base = createStableTunSplitConfig();
     const config = {
