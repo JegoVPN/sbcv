@@ -53,6 +53,7 @@ export function CanvasWorkspace() {
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const connectPorts = useProjectStore((state) => state.connectPorts);
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
+  const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const setNodePosition = useProjectStore((state) => state.setNodePosition);
   const freshLoadToken = useProjectStore((state) => state.freshLoadToken);
   const focusToken = useProjectStore((state) => state.focusToken);
@@ -111,6 +112,7 @@ export function CanvasWorkspace() {
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodesDelete={(deleted) => deleted.forEach((node) => deleteEntity(node.data.ref))}
         onEdgesDelete={(deleted) => deleted.forEach((edge) => disconnectEdge(edge.id))}
         onConnect={connectPorts}
         isValidConnection={isValidConnection}

@@ -76,14 +76,18 @@ The registry must replace scattered relationship knowledge across:
 
 - `useProjectStore.ts:659-697` implements `createCompatible` with node-level kind strings. It can set `route.final` or `dns.final` based on the latest pre-existing entity, and uses `sourceId.split(":")`, which is unsafe for tags containing `:`.
 - `useProjectStore.ts:778-1263` implements dozens of port click branches. Many create or delete canonical objects directly: add TUN on route input, add TUN on DNS inbound-query, delete last rule, add/delete selector member, add DNS server without setting `dns.final`, and create detour targets.
+- `useProjectStore.ts` inbound `route-rule-match` / `dns-rule-match` click-disconnect logic only removes the first matching rule reference. When multiple route or DNS rules reference the same inbound, the other rules continue to retain the inbound.
 - `useProjectStore.ts:401-407` writes route-rule `outbound` without checking rule `action`; graph derivation only shows the edge when action allows routing.
 - `useProjectStore.ts:469-475` and `commands.ts:817-830` allow selector candidate writes without guarding that the parent outbound is actually `selector` or `urltest`.
+- `useProjectStore.ts:1449-1472` exports dead `getSelectedRef` logic and parses ids with `[kind, rest] = split(":")`, losing tag segments after the first colon.
 - `commands.ts:981-1075` renames common refs, but misses documented references such as `dns-server.service`, `route.default_domain_resolver`, `route.default_http_client`, domain resolver shapes, rule-set `http_client`, and v2ray stats arrays.
 - `commands.ts:981-1075` also misses existing live detour refs such as `dns.servers[].detour` and `endpoints[].detour` when an outbound tag is renamed.
+- `commands.ts:961-979` keeps duplicate `replaceTagRef` and `replaceRuleSetRef` implementations, which should be collapsed when the canonical reference registry lands.
 - `commands.ts:1077-1187` delete cascades miss several of the same references, including outbound deletion clearing endpoint detours, and `EntityRef` lacks `http-client` / `certificate-provider` arms (`types.ts:136-147`).
 - `commands.ts:1189-1265` only disconnects a subset of edge ids emitted by `graph.ts`, so many visible edge deletes are no-ops.
 - Store wrappers at `useProjectStore.ts:1281-1293` call sync directly and do not clean or remap `selectedId`, `focusedNodeId`, or `layout.positions`.
 - `Inspector.tsx:1778-1781` overwrites `tagDraft` whenever the entity object changes, and `Inspector.tsx:2092` renames on blur without uniqueness validation or selection/layout remap.
+- `serialization.ts` uses `stripUndefined` on update paths in a way that reconstructs objects and can reorder user JSON keys. `normalizeConfig` also accepts malformed top-level collection shapes such as `{ "outbounds": "string" }`, after which downstream list helpers silently treat the data as empty.
 
 ### Graph And Registry
 
@@ -95,6 +99,9 @@ The registry must replace scattered relationship knowledge across:
 - `graph.ts:560-717` emits edges for DNS detour, DNS-server endpoint/service, endpoint detour, service detour, service verify endpoint, service SSM inbound, and settings NTP detour. Most are not invertible in current `disconnectEdge`.
 - `SbcNode.tsx:75` exposes DNS inbound-query as a port even though the current click path only adds TUN and there is no sing-box DNS-hub inbound relation.
 - `SbcNode.tsx:131-140` exposes `service:resolved` input for resolved DNS servers, but the store has no matching connect/toggle/disconnect branch.
+- `Palette.tsx` exposes creatable types that currently no-op or are not fully wired, including cloudflared, wireguard outbound, DNS outbound, legacy DNS, and mDNS DNS.
+- `graph.entityTag` returns `untagged-${kind}-${index+1}`, while `RuleTables.tsx:137,237` and `Inspector.tsx:1047,1281` display `untagged-${index+1}`. Diagnostic focus can jump to the long id while the table/Inspector display the short label.
+- `CanvasWorkspace.tsx:183` renders the selection pill from raw node ids such as `outbound:my-tag` instead of the node title.
 - `diagnostics.ts` can emit duplicate-tag diagnostics with multiple comma-separated paths even though `Diagnostic.path` is a single path. `indexes.ts` indexes `certificate-provider` and `http-client`, but `EntityRef` and diagnostic targeting cannot focus those resources.
 
 ### Tests And E2E
@@ -111,6 +118,7 @@ The registry must replace scattered relationship knowledge across:
 
 - Broad config subscriptions exist in `CanvasWorkspace.tsx:49`, `SbcNode.tsx:381`, `Inspector.tsx:1744`, `RuleTables.tsx`, `Palette.tsx`, `TopBar.tsx`, and `MobileMenuSheet.tsx`.
 - `SbcNode` recomputes port connection state by scanning full config per node/port. Port connection booleans should be precomputed in graph data or selected narrowly per node.
+- `useViewport` registers a separate `matchMedia.addEventListener` per consumer. Shared viewport state should avoid redundant listeners when multiple responsive components mount.
 - Frequent hover/drag state must not be stored in broad canonical config subscriptions. Pending connection state should stay local to `CanvasWorkspace` or a narrow UI slice.
 - Graph derivation should remain memoized from canonical config/layout/diagnostics, but drag-time node positions must be protected from derived `setNodes` churn.
 - `App.tsx` eagerly imports the canvas, inspector, palette, and mobile sheets. Optional heavy panels should be deferred where practical.
@@ -255,6 +263,7 @@ Work:
 Acceptance:
 
 - Clicking route, DNS, DNS-server, selector/urltest member, route-rule, and detour ports without a drop target does not change `SingBoxConfig`.
+- Clicking inbound `route-rule-match` / `dns-rule-match` ports without a drop target leaves every referencing rule unchanged, including when multiple rules reference the same inbound.
 - Delete/Backspace on a focused deletable node calls the same delete command as the visible delete button.
 
 ### PR-2: Canonical Reference Registry And Identity State Repair
@@ -276,6 +285,7 @@ Work:
 
 - Add tag uniqueness enforcement in `renameTag`.
 - Build the canonical reference registry and move rename/delete/type-change reference rewrites onto it for the required initial coverage.
+- Collapse duplicate tag-reference replacement helpers into registry-driven operations.
 - Remap `selectedId`, `focusedNodeId`, and `layout.positions` on tag rename.
 - Clear stale selected/focused ids and layout positions on delete.
 - Remap rule node selection after `moveRouteRule` / `moveDnsRule`.
@@ -306,6 +316,7 @@ Work:
 
 - Define every editable relation as a registry entry.
 - Add structured node-id and edge-id parsing helpers that support tags containing `:`.
+- Delete or replace dead `getSelectedRef` code with the same structured id helper.
 - Generate `PortSpec` from registry endpoint metadata.
 - Add explicit relation `mode`: `writable`, `readonly`, `decorative`, or `order-only`.
 - Include canonical JSON owner/path, stable/testing gate, semantic guard, edge metadata formatter/parser, and create-target behavior in each writable relation.
@@ -317,6 +328,7 @@ Acceptance:
 - Every editable edge emitted by `graph.ts` has exactly one registry relation.
 - Every registry relation can answer compatible target handles for a pending source port.
 - Tags containing `:` do not break source/target/edge parsing.
+- No local id parsing uses `split(":")` in a way that drops later tag segments.
 - `isValidConnection` accepts exactly the same relation pairs that `connectPorts` can mutate, excluding readonly/order-only relations.
 
 ### PR-4: Complete Disconnect Coverage
@@ -404,6 +416,7 @@ Work:
 - Guard route-rule outbound writes by rule `action`.
 - Guard dial detour writes with the same `supportsOutboundDetour` policy used by Inspector/shared-field metadata.
 - `createCompatible` connects only entities created in that same action and uses parsed node ids.
+- Remove, disable, or fully wire Palette entries that currently click to no-op or invalid resources: cloudflared, wireguard outbound, DNS outbound, legacy DNS, and mDNS DNS.
 - `createRuleSet` rejects unknown types instead of falling back to remote.
 - `createDnsServer("tailscale")` is gated until a Tailscale endpoint exists or creates a validator-safe guided placeholder with a visible required-field state.
 - Audit every `create*` helper against semantic validation.
@@ -432,6 +445,7 @@ Work:
 - Wire resolved DNS server to resolved service, or remove the port until it is supported.
 - Add graph and command support for clash external UI download detour and certificate provider endpoint.
 - Make visual order ports readonly.
+- Replace raw selected-node id display with the selected node title or remove the selection pill if it is redundant.
 
 Acceptance:
 
@@ -455,6 +469,9 @@ Work:
 - Split duplicate-tag diagnostics into targetable single-path diagnostics or add an explicit multi-path diagnostic shape that `diagnosticTargets` understands.
 - Add diagnostic targets or intentional global buckets for `certificate_providers` and `http_clients`.
 - Gate outbound candidate edges on selector/urltest group type.
+- Align untagged display labels and graph ids so RuleTables, Inspector, diagnostics, and graph focus use the same fallback identity.
+- Add top-level collection shape validation in `normalizeConfig` so malformed arrays are rejected instead of silently dropped.
+- Preserve user JSON key order in update paths, or constrain `stripUndefined` to places where object reconstruction is intentional.
 - Replace silent rule-node caps with a visible "+N rules not visualized" node or banner.
 - Stabilize `ruleSetTargetY` ordering.
 
@@ -540,6 +557,7 @@ Work:
 - Keep pending port hover/drag state local or in a narrow UI-only store.
 - Avoid calling `sync()` when a relation command returned no config change.
 - Reduce repeated clone work in managed Shadowsocks service paths.
+- Share `useViewport` media-query listeners across consumers instead of registering one listener per mounted component.
 - Ensure optional heavy panels remain deferred where practical.
 - Defer optional heavy imports such as Inspector/panels/mobile sheets where practical.
 - Avoid React state updates on every BottomSheet pointer move if they cause mobile inspector rerenders.
@@ -588,12 +606,16 @@ Unit and component tests:
 
 - `tests/port-interaction-destructive.test.ts`: click on every old destructive port path leaves config unchanged.
 - Include explicit no-mutation regressions for route hub deleting the last route rule, DNS hub deleting the last DNS rule, selector/urltest member deleting the last candidate, and Tailscale endpoint port auto-creating a DNS server.
+- Include explicit no-mutation regression for inbound `route-rule-match` / `dns-rule-match` clicks when multiple route or DNS rules reference the same inbound.
 - `tests/reference-registry.test.ts`: rename/delete/type-change covers every registered tag reference path.
 - `tests/port-relation-registry.test.ts`: all rendered ports and emitted editable edges map to registry entries.
+- Add structured id parser regressions for tags containing `:` and remove any dead raw `split(":")` helpers.
 - `tests/port-disconnect-symmetry.test.ts`: every editable edge inverse command removes only the intended canonical reference.
 - `tests/port-interaction-symmetry.test.ts`: chip-create path and drag-connect path converge.
 - Existing `tests/app.test.tsx` old click-mutation tests must be rewritten.
 - Existing `tests/sbc-node-ports.test.ts` must be updated after removing or wiring inert ports.
+- Add Palette audit coverage so every exposed item either creates a wired entity, is disabled with a precondition, or is removed.
+- Add serialization tests for malformed top-level collection shapes and update-path key-order preservation.
 - Add diagnostic targeting tests for `/x/1` versus `/x/10`, duplicate-tag multi-path handling, and every semantic diagnostic path resolving to a node or intentional global bucket.
 
 E2E:
@@ -665,6 +687,18 @@ This goal is complete only when:
 - Broad frontend subscriptions are narrowed enough that hover/drag does not rerender unrelated panels/nodes.
 - `pnpm test`, `pnpm build`, and applicable e2e/official checks pass.
 - The final milestone report records deviations, unresolved P2s, and official validation availability.
+
+## Milestone Notes
+
+### PR-1 Stop Destructive Port Clicks
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr1-stop-destructive-clicks`.
+
+- Port button clicks no longer mutate canonical `SingBoxConfig` directly. Pending line, compatible highlight, empty-drop chip picker, and direct-drop connection remain scoped to PR-9.
+- Node deletion through React Flow keyboard deletion is wired to `deleteEntity`.
+- Regression coverage includes old route/DNS/rule/group/detour destructive click paths and the P1-7 multi-rule inbound reference case.
+- Verification passed locally: `git diff --check`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change fixture/exported config output.
 
 ## Open Decisions
 
