@@ -228,6 +228,36 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("hides route-rule outbound canvas edge when action is not route/bypass (CC-6)", () => {
+    const config = createStableTunSplitConfig();
+    config.route = {
+      ...config.route,
+      rules: [
+        { domain_suffix: ["cn"], outbound: "direct" },
+        { domain_keyword: ["ads"], action: "reject", outbound: "direct" },
+      ],
+    };
+    const { edges } = deriveGraph(config, { positions: {} }, []);
+    const routeOutboundEdges = edges.filter((edge) => edge.id.startsWith("edge:route-rule:"));
+    expect(routeOutboundEdges.some((edge) => edge.id === "edge:route-rule:0:direct")).toBe(true);
+    expect(routeOutboundEdges.some((edge) => edge.id === "edge:route-rule:1:direct")).toBe(false);
+  });
+
+  it("hides dns-rule server canvas edge when action is not route/evaluate (CC-6)", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      rules: [
+        { domain_suffix: ["cn"], server: "local-dns" } as never,
+        { domain_keyword: ["ads"], action: "reject", server: "local-dns" } as never,
+      ],
+    };
+    const { edges } = deriveGraph(config, { positions: {} }, []);
+    const dnsServerEdges = edges.filter((edge) => edge.id.startsWith("edge:dns-rule:"));
+    expect(dnsServerEdges.some((edge) => edge.id === "edge:dns-rule:0:local-dns")).toBe(true);
+    expect(dnsServerEdges.some((edge) => edge.id === "edge:dns-rule:1:local-dns")).toBe(false);
+  });
+
   it("does not seed legacy DNS server address strings (1.12-A)", () => {
     const httpsServer = createDnsServer("https", "doh-test") as Record<string, unknown>;
     expect(httpsServer).not.toHaveProperty("address");

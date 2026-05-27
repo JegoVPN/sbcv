@@ -50,9 +50,10 @@ These appear in many nodes simultaneously. One PR per item can close 10–30 nod
 - **users-required gap fixed:** New `inbound-users-required` error covers all 8 authenticating inbound types (vmess / vless / trojan / naive / hysteria / hysteria2 / tuic / anytls) — previously only vmess/vless/tuic had per-user UUID checks via `validateVmessLikeUsers` and even those didn't error on an empty `users[]`.
 - **service derp:** `derp-service-needs-tls` warning already exists at `diagnostics.ts:211`. Scaffold still doesn't seed `tls: { enabled: true }` — see service-derp row below for that piece.
 
-### CC-6 Canvas port action-gating not honoured
+### CC-6 Canvas port action-gating not honoured — ✅ CLOSED 2026-05-27
 
-- `graph.ts:313` (route-rule) and the equivalent dns-rule block create outbound/dns-server edges whenever `rule.outbound` / `rule.server` exists, regardless of `action`. Routes with `action: "reject"` / `"sniff"` / `"route-options"` / `"hijack-dns"` / `"resolve"` should suppress the outbound port and edge entirely.
+- ~~`graph.ts:313` and the equivalent dns-rule block create outbound/dns-server edges regardless of `action`.~~ Now gated. Route rule outbound edge renders only when `action ∈ {"", "route", "bypass"}`; dns rule server edge renders only when `action ∈ {"", "route", "evaluate"}`. Other actions (reject/sniff/route-options/hijack-dns/resolve/predefined/respond) suppress the dangling reference visually.
+- **Regression test:** `tests/domain.test.ts` — "hides route-rule outbound canvas edge when action is not route/bypass" + "hides dns-rule server canvas edge when action is not route/evaluate".
 
 ### CC-7 Platform / channel badges declared in code but not surfaced on Palette
 
