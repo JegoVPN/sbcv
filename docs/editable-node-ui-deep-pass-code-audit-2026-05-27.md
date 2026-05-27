@@ -12,11 +12,11 @@ This audit is the source of truth for the remaining implementation work. Do not 
 
 These appear in many nodes simultaneously. One PR per item can close 10–30 nodes' P0s at once.
 
-### CC-1 `address` / `auto_route` rendered for every inbound (should be tun-only)
+### CC-1 `address` / `auto_route` rendered for every inbound (should be tun-only) — ✅ CLOSED 2026-05-27
 
-- `src/components/Inspector.tsx:2268-2282` unconditionally renders `Address` + `auto_route` for **all** inbound types, with no `entityType === "tun"` guard.
-- **Affected:** mixed / socks / http / shadowsocks / vmess / trojan / naive / hysteria / hysteria2 / tuic / vless / shadowtls / anytls / redirect / tproxy (every non-tun inbound).
-- **Impact:** Exporting any non-tun inbound writes invalid fields the schema rejects.
+- ~~`src/components/Inspector.tsx:2268-2282` unconditionally renders `Address` + `auto_route` for **all** inbound types, with no `entityType === "tun"` guard.~~ Now gated by `entityType === "tun"` wrapper.
+- **Affected (now fixed):** mixed / socks / http / shadowsocks / vmess / trojan / naive / hysteria / hysteria2 / tuic / vless / shadowtls / anytls / redirect / tproxy.
+- **Regression test:** `tests/app.test.tsx` — "hides address/auto_route fields for non-tun inbounds" + "renders address/auto_route fields for inbound:tun".
 
 ### CC-2 Required protocol fields fall through to `AdvancedScalarFields`
 

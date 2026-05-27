@@ -2265,21 +2265,25 @@ export function Inspector() {
               text="Platform-sensitive: TUN inbound behaves differently on Linux / macOS / Windows / Android / iOS. Apple platforms typically need platform.http_proxy and stack=system."
             />
           ) : null}
-          <label className="field">
-            <span>Address</span>
-            <input
-              value={toList(entity.address)}
-              onChange={(event) => updateField(ref, "address", fromList(event.target.value))}
-            />
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.auto_route)}
-              onChange={(event) => updateField(ref, "auto_route", event.target.checked)}
-            />
-            <span>Auto route</span>
-          </label>
+          {entityType === "tun" ? (
+            <>
+              <label className="field">
+                <span>Address</span>
+                <input
+                  value={toList(entity.address)}
+                  onChange={(event) => updateField(ref, "address", fromList(event.target.value))}
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.auto_route)}
+                  onChange={(event) => updateField(ref, "auto_route", event.target.checked)}
+                />
+                <span>Auto route</span>
+              </label>
+            </>
+          ) : null}
           {entityType === "tun" ? (
             <>
               <label className="field" data-testid="tun-stack-field">
