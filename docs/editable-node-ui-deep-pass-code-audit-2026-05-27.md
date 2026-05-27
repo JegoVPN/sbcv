@@ -148,7 +148,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | dns-server-udp | ✅ Clean. |
 | dns-server-tcp | `missing-dns-server-address` (server required-field) diagnostic completely missing. |
 | dns-server-tls | `certificate_provider` still rendered as free text instead of select. `server` field has no required indicator/diagnostic. |
-| dns-server-https | **Scaffold writes non-existent field `address: "https://1.1.1.1/dns-query"`** (`commands.ts:636`) — Inspector renders it as first-class input, misleading users. `DnsServerConfig.headers` field missing from `types.ts:38-45` → cannot persist headers through the type system. No `missing-server` diagnostic. |
+| dns-server-https | ✅ ~~Scaffold writes non-existent field `address: "https://1.1.1.1/dns-query"`~~ — fixed 2026-05-27, `commands.ts` `createDnsServer("https")` no longer emits the deprecated `address`. `DnsServerConfig.headers` field still missing from `types.ts:38-45`. No `missing-server` diagnostic. |
 | dns-server-quic | ✅ Clean. |
 | dns-server-h3 | Palette kind still `dns-http3` (CC-4). `DnsServerConfig.headers` missing in types. No `domain_resolver`-required-for-domain diagnostic. |
 | dns-server-dhcp | No diagnostic when `server.interface === ""`. |
