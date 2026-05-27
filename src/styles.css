@@ -237,18 +237,37 @@ textarea {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  cursor: default;
+  cursor: pointer;
   padding: 0 11px;
   min-height: 28px;
   border-radius: 999px;
+  transition: filter 120ms ease, box-shadow 120ms ease;
 }
 
-.status-pill--interactive {
-  cursor: pointer;
+.topbar-actions button.status-pill:disabled {
+  cursor: progress;
 }
 
-.status-pill--interactive:hover:not(:disabled) {
-  filter: brightness(1.08);
+/* `.topbar-actions button:hover:not(:disabled) { background: #1a222b }` has
+   specificity (0,3,1); to keep the fill color and add a visible hover signal
+   we re-assert each variant's background and add a brightness + glow at
+   specificity (0,4,1). */
+.topbar-actions button.status-pill--valid:hover:not(:disabled) {
+  background: #c7ff00;
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px rgba(199, 255, 0, 0.34);
+}
+
+.topbar-actions button.status-pill--warning:hover:not(:disabled) {
+  background: #f2bc4b;
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px rgba(242, 188, 75, 0.34);
+}
+
+.topbar-actions button.status-pill--error:hover:not(:disabled) {
+  background: #e34b4b;
+  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px rgba(227, 75, 75, 0.34);
 }
 
 .status-pill-host {
