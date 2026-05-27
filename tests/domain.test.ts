@@ -1332,6 +1332,56 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits dns-server-dhcp-interface-empty when interface is set to an empty string", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "dhcp", tag: "dhcp", interface: "" },
+        ],
+      },
+    } as typeof base;
+    const codes = validateConfig(config, "stable").map((d) => d.code);
+    expect(codes).toContain("dns-server-dhcp-interface-empty");
+  });
+
+  it("does NOT emit dns-server-dhcp-interface-empty when interface is omitted or non-empty", () => {
+    const base = createStableTunSplitConfig();
+    const omittedConfig = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "dhcp", tag: "dhcp-default" },
+        ],
+      },
+    } as typeof base;
+    expect(
+      validateConfig(omittedConfig, "stable")
+        .map((d) => d.code)
+        .filter((c) => c === "dns-server-dhcp-interface-empty"),
+    ).toHaveLength(0);
+    const populatedConfig = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "dhcp", tag: "dhcp-eth", interface: "eth0" },
+        ],
+      },
+    } as typeof base;
+    expect(
+      validateConfig(populatedConfig, "stable")
+        .map((d) => d.code)
+        .filter((c) => c === "dns-server-dhcp-interface-empty"),
+    ).toHaveLength(0);
+  });
+
   it("emits dns-server-neighbor-domain-testing-only on stable only", () => {
     const base = createStableTunSplitConfig();
     const config = {
