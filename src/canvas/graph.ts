@@ -310,7 +310,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         inboundRefs.forEach((tag) => {
           edges.push(makeEdge(`edge:route-rule-inbound:${index}:${tag}`, `inbound:${tag}`, id, "route-rule-match", "inbound"));
         });
-        if (rule.outbound) {
+        const ruleAction = typeof rule.action === "string" ? rule.action : "";
+        const routeRuleOutboundAllowed = ruleAction === "" || ruleAction === "route" || ruleAction === "bypass";
+        if (rule.outbound && routeRuleOutboundAllowed) {
           edges.push(makeEdge(`edge:route-rule:${index}:${rule.outbound}`, id, `outbound:${rule.outbound}`, "outbound", "route-rule"));
         }
         if (visualizeRuleSets) {
@@ -575,7 +577,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         stringRefs(rule.inbound).forEach((tag) => {
           edges.push(makeEdge(`edge:dns-rule-inbound:${index}:${tag}`, `inbound:${tag}`, id, "dns-rule-match", "inbound"));
         });
-        if (rule.server) {
+        const dnsAction = typeof rule.action === "string" ? rule.action : "";
+        const dnsRuleServerAllowed = dnsAction === "" || dnsAction === "route" || dnsAction === "evaluate";
+        if (rule.server && dnsRuleServerAllowed) {
           edges.push(makeEdge(`edge:dns-rule:${index}:${rule.server}`, id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
         const ruleSetRefs = stringRefs(rule.rule_set);
