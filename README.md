@@ -53,4 +53,8 @@ Issues and PRs welcome. Useful kinds of feedback:
 
 MIT © 2026. See [LICENSE](LICENSE).
 
-Thanks to [SagerNet/sing-box](https://github.com/SagerNet/sing-box) — sbcv just makes its config easier to live with.
+## Acknowledgements
+
+- [**SagerNet/sing-box**](https://github.com/SagerNet/sing-box) — sbcv just makes its config easier to live with.
+- [**Linux.do**](https://linux.do) — for early feedback, bug reports, and keeping the project pointed at real user needs.
+- [**V2EX**](https://www.v2ex.com) — for thoughtful discussion threads that surfaced edge cases worth supporting.
