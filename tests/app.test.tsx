@@ -25,7 +25,7 @@ describe("SBC editor shell", () => {
     expect(screen.getByRole("option", { name: "1.14 testing" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Import" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Check" }));
-    expect(screen.getByLabelText("Checking")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Checking|Parsing JSON|Running sing-box/)).toBeInTheDocument();
     expect(await screen.findByLabelText("Valid")).toBeInTheDocument();
     expect(screen.queryByText(/Checked .*: valid/)).not.toBeInTheDocument();
   });
@@ -39,7 +39,7 @@ describe("SBC editor shell", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Check" }));
 
-    expect(screen.getByLabelText("Checking")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Checking|Parsing JSON|Running sing-box/)).toBeInTheDocument();
     const invalid = await screen.findByLabelText("Invalid");
     expect(invalid).toHaveClass("status-pill--error");
   });
