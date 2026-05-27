@@ -158,7 +158,11 @@ const dnsServerTlsTypes = new Set(["tls", "quic", "https", "h3"]);
 const serviceListenTypes = new Set(["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
 const serviceTlsTypes = new Set(["derp", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
 
-export function sharedGroupsForEntity(ref: EntityRef, type?: string | null): SharedFieldGroupId[] {
+export function sharedGroupsForEntity(
+  ref: EntityRef,
+  type?: string | null,
+  channel: "stable" | "testing" = "testing",
+): SharedFieldGroupId[] {
   const entityType = type ?? "";
   const groups: SharedFieldGroupId[] = [];
 
@@ -197,9 +201,18 @@ export function sharedGroupsForEntity(ref: EntityRef, type?: string | null): Sha
   }
 
   if (ref.kind === "rule-set" && entityType === "remote") groups.push("http-client");
-  if (ref.kind === "route") groups.push("dial", "http-client", "neighbor");
-  if (ref.kind === "route-rule") groups.push("pre-match", "wifi-state", "neighbor");
-  if (ref.kind === "dns-rule") groups.push("wifi-state", "neighbor");
+  if (ref.kind === "route") {
+    groups.push("dial");
+    if (channel === "testing") groups.push("http-client", "neighbor");
+  }
+  if (ref.kind === "route-rule") {
+    groups.push("pre-match", "wifi-state");
+    if (channel === "testing") groups.push("neighbor");
+  }
+  if (ref.kind === "dns-rule") {
+    groups.push("wifi-state");
+    if (channel === "testing") groups.push("neighbor");
+  }
   if (ref.kind === "settings" && ref.path === "ntp") groups.push("dial");
 
   return groups.filter((group, index) => groups.indexOf(group) === index);

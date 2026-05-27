@@ -76,7 +76,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| hub-route | ✅ ~~5 platform fields missing~~ — fixed 2026-05-27; `default_interface`, `default_mark`, `find_process`, `default_network_strategy`, `default_network_type` rendered as first-class controls in the route Inspector branch; `RouteConfig` (`types.ts`) now declares each one. `sharedFieldRegistry.ts:200` still unconditionally pushes `http-client` + `neighbor` groups (no `channel === "testing"` guard). |
+| hub-route | ✅ ~~5 platform fields missing~~ — fixed 2026-05-27. ✅ ~~sharedFieldRegistry.ts:200 unconditionally pushes http-client + neighbor groups~~ — fixed 2026-05-27, `sharedGroupsForEntity` now takes a `channel` argument and hides `http-client` + `neighbor` groups on stable channel (covers route hub, route-rule, dns-rule). Inspector passes the current channel. |
 | hub-dns | No embedded `fakeip` editor in the dns hub branch. `optimistic` / `timeout` (testing 1.14) have no channel gate. |
 
 ### Rules
