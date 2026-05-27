@@ -39,7 +39,6 @@ class_name = "ValidatorContainer"
 image = "../container/Dockerfile"
 instance_type = "lite"
 max_instances = 3
-observability = { enabled = true }
 
 [[durable_objects.bindings]]
 class_name = "ValidatorContainer"
@@ -49,24 +48,18 @@ name = "VALIDATOR"
 tag = "v1"
 new_sqlite_classes = ["ValidatorContainer"]
 
-# ---- Worker observability (Workers Logs + traces) ---------------------------
-# Mirror of the Cloudflare Dashboard settings so dashboard <-> wrangler.toml
-# do not drift on each deploy. Logs are persisted; traces stay off.
+# ---- Worker observability (Workers Logs) ------------------------------------
+# Enabling observability on the Worker also surfaces stdout/stderr from the
+# bound Container, so this single block covers both layers. Documented fields
+# only (per the wrangler configuration reference); traces are not configured
+# via wrangler.toml.
 
 [observability]
 enabled = true
 head_sampling_rate = 1
 
 [observability.logs]
-enabled = true
-head_sampling_rate = 1
-persist = true
 invocation_logs = true
-
-[observability.traces]
-enabled = false
-persist = true
-head_sampling_rate = 1
 
 # ---- Environments -----------------------------------------------------------
 
@@ -92,7 +85,6 @@ class_name = "ValidatorContainer"
 image = "../container/Dockerfile"
 instance_type = "lite"
 max_instances = 1
-observability = { enabled = true }
 
 [[env.staging.durable_objects.bindings]]
 class_name = "ValidatorContainer"
@@ -107,12 +99,4 @@ enabled = true
 head_sampling_rate = 1
 
 [env.staging.observability.logs]
-enabled = true
-head_sampling_rate = 1
-persist = true
 invocation_logs = true
-
-[env.staging.observability.traces]
-enabled = false
-persist = true
-head_sampling_rate = 1
