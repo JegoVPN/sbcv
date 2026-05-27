@@ -140,6 +140,7 @@ const inboundHandledFields = new Set([
   "users",
   "method",
   "version",
+  "padding_scheme",
   "tls",
   "multiplex",
   "transport",
@@ -2626,6 +2627,28 @@ export function Inspector() {
                 <option value="2">2 (single user)</option>
                 <option value="3">3 (multi-user via users[])</option>
               </select>
+            </label>
+          ) : null}
+          {entityType === "anytls" ? (
+            <label className="field">
+              <span>Padding scheme</span>
+              <textarea
+                rows={4}
+                value={Array.isArray(entity.padding_scheme) ? (entity.padding_scheme as string[]).join("\n") : ""}
+                placeholder={"one rule per line, e.g.\nstop=8\n0=30-30\n1=100-400"}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (!raw.trim()) {
+                    updateField(ref, "padding_scheme", undefined);
+                    return;
+                  }
+                  const lines = raw
+                    .split(/\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean);
+                  updateField(ref, "padding_scheme", lines.length ? lines : undefined);
+                }}
+              />
             </label>
           ) : null}
           {entityType === "shadowsocks" ? (

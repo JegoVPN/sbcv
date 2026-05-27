@@ -511,6 +511,19 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("renders padding_scheme array editor for inbound:anytls", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-anytls");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const textarea = inspector.getByLabelText("Padding scheme") as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "stop=8\n0=30-30\n1=100-400" } });
+    const anytls = useProjectStore.getState().config.inbounds?.find((inbound) => inbound.type === "anytls") as Record<string, unknown>;
+    expect(anytls.padding_scheme).toEqual(["stop=8", "0=30-30", "1=100-400"]);
+  });
+
   it("renders UUID + Password as first-class fields with Generate UUID button on tuic outbound", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
