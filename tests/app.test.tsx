@@ -511,6 +511,16 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("marks the legacy top-level FakeIP palette item as deprecated", () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+    const palette = within(screen.getByLabelText("Node palette"));
+    fireEvent.click(palette.getByRole("button", { name: /Library/ }));
+    fireEvent.click(palette.getByRole("button", { name: /^DNS/ }));
+    const button = palette.getByRole("button", { name: /Legacy FakeIP/ });
+    expect(button.title).toMatch(/deprecated/i);
+  });
+
   it("renders tuic inbound users[] with structured Name/UUID/Password fields", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
