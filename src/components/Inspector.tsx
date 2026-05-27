@@ -1720,6 +1720,70 @@ export function Inspector() {
             />
             <span>Override Android VPN</span>
           </label>
+          <label className="field">
+            <span>Default Interface</span>
+            <input
+              value={typeof entity.default_interface === "string" ? entity.default_interface : ""}
+              placeholder="e.g. eth0 (Linux/macOS, requires permissions)"
+              onChange={(event) =>
+                updateField(ref, "default_interface", event.target.value || undefined)
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Default Routing Mark (Linux)</span>
+            <input
+              type="number"
+              value={typeof entity.default_mark === "number" ? entity.default_mark : ""}
+              placeholder="0..2147483647 (Linux fwmark)"
+              onChange={(event) => {
+                const next = event.target.value;
+                if (!next) {
+                  updateField(ref, "default_mark", undefined);
+                  return;
+                }
+                const parsed = Number(next);
+                updateField(ref, "default_mark", Number.isFinite(parsed) ? parsed : undefined);
+              }}
+            />
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.find_process)}
+              onChange={(event) =>
+                updateField(ref, "find_process", event.target.checked || undefined)
+              }
+            />
+            <span>Find process (process matchers in rules)</span>
+          </label>
+          <label className="field">
+            <span>Default Network Strategy (1.13+)</span>
+            <select
+              value={typeof entity.default_network_strategy === "string" ? entity.default_network_strategy : ""}
+              onChange={(event) =>
+                updateField(ref, "default_network_strategy", event.target.value || undefined)
+              }
+            >
+              <option value="">(unset)</option>
+              <option value="default">default</option>
+              <option value="hybrid">hybrid</option>
+              <option value="fallback">fallback</option>
+              <option value="wifi">wifi</option>
+              <option value="cellular">cellular</option>
+              <option value="ethernet">ethernet</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Default Network Type (1.13+)</span>
+            <input
+              value={typeof entity.default_network_type === "string" ? entity.default_network_type : ""}
+              placeholder="wifi / cellular / ethernet (mobile only)"
+              onChange={(event) =>
+                updateField(ref, "default_network_type", event.target.value || undefined)
+              }
+            />
+          </label>
           <RouteRulesTable />
         </>
       ) : null}

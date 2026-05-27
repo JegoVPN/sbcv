@@ -76,7 +76,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| hub-route | 5 platform fields missing in Inspector route branch: `default_interface`, `default_mark`, `find_process`, `default_network_strategy`, `default_network_type`. `sharedFieldRegistry.ts:200` unconditionally pushes `http-client` + `neighbor` groups with no `channel === "testing"` guard, so testing-only 1.14 fields show on stable. `RouteConfig` type (`types.ts:83`) declares only 5 fields out of the official 13 — the rest degrade to `[key: string]: unknown`. |
+| hub-route | ✅ ~~5 platform fields missing~~ — fixed 2026-05-27; `default_interface`, `default_mark`, `find_process`, `default_network_strategy`, `default_network_type` rendered as first-class controls in the route Inspector branch; `RouteConfig` (`types.ts`) now declares each one. `sharedFieldRegistry.ts:200` still unconditionally pushes `http-client` + `neighbor` groups (no `channel === "testing"` guard). |
 | hub-dns | No embedded `fakeip` editor in the dns hub branch. `optimistic` / `timeout` (testing 1.14) have no channel gate. |
 
 ### Rules
