@@ -52,6 +52,7 @@ export function CanvasWorkspace() {
   const connectPorts = useProjectStore((state) => state.connectPorts);
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const setNodePosition = useProjectStore((state) => state.setNodePosition);
+  const freshLoadToken = useProjectStore((state) => state.freshLoadToken);
   const graph = useMemo(() => deriveGraph(config, layout, diagnostics), [config, diagnostics, layout]);
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
@@ -77,6 +78,11 @@ export function CanvasWorkspace() {
     setNodes(graph.nodes);
     setEdges(graph.edges);
   }, [graph.edges, graph.nodes, setEdges, setNodes]);
+
+  useEffect(() => {
+    if (freshLoadToken === 0) return;
+    fitFullGraph();
+  }, [fitFullGraph, freshLoadToken]);
 
   return (
     <section className="canvas-shell" aria-label="SBC visual canvas">

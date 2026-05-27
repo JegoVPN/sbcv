@@ -27,10 +27,7 @@ export type SbcNodeData = {
 
 export type SbcFlowNode = Node<SbcNodeData, "sbc">;
 
-const DEFAULT_POSITIONS: Record<string, { x: number; y: number }> = {
-  "route:main": { x: 420, y: 260 },
-  "dns:main": { x: 420, y: 620 },
-};
+const DEFAULT_POSITIONS: Record<string, { x: number; y: number }> = {};
 const MAX_VISUAL_RULE_NODES = 24;
 const MAX_VISUAL_RULE_SET_NODES = 24;
 const MAX_VISUAL_CANDIDATE_EDGES = 96;
@@ -43,12 +40,11 @@ const SETTINGS_NODE_IDS = ["settings:log", "settings:ntp", "settings:certificate
 
 const COLUMNS = {
   settings: -300,
-  inbound: 0,
-  hub: 720,
-  rule: 1440,
-  target: 2160,
-  member: 2880,
-  leaf: 3600,
+  entry: 0,
+  rule: 720,
+  target: 1440,
+  member: 2160,
+  leaf: 2880,
 } as const;
 
 type LayoutColumn = keyof typeof COLUMNS;
@@ -242,9 +238,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         },
         layout,
         {
-          x: COLUMNS.inbound,
+          x: COLUMNS.entry,
           y: columnLayout.reserve(
-            "inbound",
+            "entry",
             ROUTE_HUB_Y + (index - Math.floor(inbounds.length / 2)) * NODE_SLOT_Y,
           ),
         },
@@ -257,7 +253,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
   if (config.route) {
     const visualizeRouteRules = routeRules.length <= MAX_VISUAL_RULE_NODES;
-    const routeY = columnLayout.reserve("hub", ROUTE_HUB_Y);
+    const routeY = columnLayout.reserve("entry", ROUTE_HUB_Y);
     nodes.push(
       makeNode(
         "route:main",
@@ -271,7 +267,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
         },
         layout,
-        { x: COLUMNS.hub, y: routeY },
+        { x: COLUMNS.entry, y: routeY },
       ),
     );
 
@@ -502,7 +498,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ROUTE_RULE_START_Y +
       Math.max(3, visualizeRouteRulesCount(routeRules.length) + 1) *
         NODE_SLOT_Y;
-    const dnsY = columnLayout.reserve("hub", Math.max(DNS_LANE_MIN_Y, dnsLaneY));
+    const dnsY = columnLayout.reserve("entry", Math.max(DNS_LANE_MIN_Y, dnsLaneY));
     nodes.push(
       makeNode(
         "dns:main",
@@ -516,7 +512,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: ["DNS Server"],
         },
         layout,
-        { x: COLUMNS.hub, y: dnsY },
+        { x: COLUMNS.entry, y: dnsY },
       ),
     );
 
@@ -629,7 +625,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     const tag = entityTag(service.tag, "service", index);
     const id = `service:${tag}`;
     const y = columnLayout.reserve(
-      "hub",
+      "entry",
       DNS_LANE_MIN_Y + (dnsServers.length + dnsRules.length + endpoints.length + index + 2) * NODE_SLOT_Y,
     );
     nodes.push(
@@ -645,7 +641,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           compatible: service.type === "ssm-api" ? ["Shadowsocks Inbound"] : service.type === "derp" ? ["Tailscale Endpoint"] : [],
         },
         layout,
-        { x: COLUMNS.hub, y },
+        { x: COLUMNS.entry, y },
       ),
     );
 
@@ -666,7 +662,53 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   });
 
+  centerColumnsVertically(nodes, layout);
+
   return { nodes, edges };
+}
+
+function centerColumnsVertically(nodes: SbcFlowNode[], layout: ProjectLayout) {
+  const algorithmicByX = new Map<number, SbcFlowNode[]>();
+  for (const node of nodes) {
+    if (layout.positions[node.id]) continue;
+    const list = algorithmicByX.get(node.position.x) ?? [];
+    list.push(node);
+    algorithmicByX.set(node.position.x, list);
+  }
+  if (algorithmicByX.size <= 1) return;
+
+  let anchorMid: number | undefined;
+  let anchorNodeCount = 0;
+  let anchorExtent = 0;
+  for (const columnNodes of algorithmicByX.values()) {
+    if (columnNodes.length === 0) continue;
+    const ys = columnNodes.map((node) => node.position.y);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const extent = maxY - minY;
+    const beatsByCount = columnNodes.length > anchorNodeCount;
+    const beatsByExtent =
+      columnNodes.length === anchorNodeCount && extent > anchorExtent;
+    if (anchorMid === undefined || beatsByCount || beatsByExtent) {
+      anchorNodeCount = columnNodes.length;
+      anchorExtent = extent;
+      anchorMid = (minY + maxY) / 2;
+    }
+  }
+  if (anchorMid === undefined) return;
+
+  for (const columnNodes of algorithmicByX.values()) {
+    if (columnNodes.length === 0) continue;
+    const ys = columnNodes.map((node) => node.position.y);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const mid = (minY + maxY) / 2;
+    const shift = anchorMid - mid;
+    if (Math.abs(shift) < 1) continue;
+    for (const node of columnNodes) {
+      node.position = { x: node.position.x, y: node.position.y + shift };
+    }
+  }
 }
 
 function endpointSubtitle(endpoint: EndpointConfig) {
