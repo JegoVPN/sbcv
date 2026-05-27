@@ -1735,7 +1735,7 @@ export function Inspector() {
   const InspectorIcon = inspectorIcons[ref.kind];
   const selectedEndpointReferences =
     ref.kind === "endpoint" && tagValue ? endpointReferences(config, tagValue) : null;
-  const sharedGroups = sharedGroupsForEntity(ref, entityType);
+  const sharedGroups = sharedGroupsForEntity(ref, entityType, channel);
 
   return (
     <aside className="inspector" aria-label="Node inspector" data-testid="node-inspector">

@@ -278,6 +278,12 @@ describe("shared field docs attach only to valid parent objects", () => {
     expect(sharedGroupsForEntity({ kind: "settings", path: "ntp" }, null)).toEqual(["dial"]);
     expect(sharedGroupsForEntity({ kind: "rule-set", tag: "remote" }, "remote")).toEqual(["http-client"]);
   });
+
+  it("hides testing-only shared groups (http-client / neighbor) on stable channel", () => {
+    expect(sharedGroupsForEntity({ kind: "route", id: "main" }, "route", "stable")).toEqual(["dial"]);
+    expect(sharedGroupsForEntity({ kind: "route-rule", index: 0 }, "route-rule", "stable")).toEqual(["pre-match", "wifi-state"]);
+    expect(sharedGroupsForEntity({ kind: "dns-rule", index: 0 }, "dns-rule", "stable")).toEqual(["wifi-state"]);
+  });
 });
 
 describe("implemented docs create editable nodes and references", () => {
