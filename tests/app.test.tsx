@@ -511,6 +511,29 @@ describe("SBC editor shell", () => {
     expect(certificateField.certificate).toEqual([pemA, pemB]);
   });
 
+  it("renders up_mbps/down_mbps for outbound:hysteria2 and idle_session fields for outbound:anytls", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("hysteria2-out");
+    });
+    const render1 = render(<App />);
+    let inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByLabelText("Up Mbps")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Down Mbps")).toBeInTheDocument();
+    render1.unmount();
+
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("anytls-out");
+    });
+    render(<App />);
+    inspector = within(screen.getByLabelText("Node inspector"));
+    const idle = within(inspector.getByTestId("anytls-idle-session"));
+    expect(idle.getByLabelText("Check interval")).toBeInTheDocument();
+    expect(idle.getByLabelText("Timeout")).toBeInTheDocument();
+    expect(idle.getByLabelText("Min idle sessions")).toBeInTheDocument();
+  });
+
   it("renders padding_scheme array editor for inbound:anytls", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
