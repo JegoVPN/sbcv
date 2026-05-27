@@ -380,6 +380,27 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("preserves a multi-path hosts dns-server through Inspector round-trip", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-hosts");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const pathInput = inspector.getByLabelText("Path(s)") as HTMLInputElement;
+    fireEvent.change(pathInput, { target: { value: "/etc/hosts, /opt/extra-hosts" } });
+    const hostsServer = useProjectStore.getState().config.dns?.servers?.find(
+      (server) => server.type === "hosts",
+    ) as Record<string, unknown>;
+    expect(hostsServer.path).toEqual(["/etc/hosts", "/opt/extra-hosts"]);
+
+    fireEvent.change(pathInput, { target: { value: "/etc/hosts" } });
+    const hostsServerAfter = useProjectStore.getState().config.dns?.servers?.find(
+      (server) => server.type === "hosts",
+    ) as Record<string, unknown>;
+    expect(hostsServerAfter.path).toBe("/etc/hosts");
+  });
+
   it("renders the route hub platform fields (default_interface / mark / find_process / network_strategy / network_type)", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

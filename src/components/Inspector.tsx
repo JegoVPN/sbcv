@@ -3395,13 +3395,40 @@ export function Inspector() {
             })()
           ) : null}
           {"path" in entity ? (
-            <label className="field">
-              <span>Path</span>
-              <input
-                value={String(entity.path ?? "")}
-                onChange={(event) => updateField(ref, "path", event.target.value)}
-              />
-            </label>
+            entityType === "hosts" ? (
+              <label className="field">
+                <span>Path(s)</span>
+                <input
+                  value={
+                    Array.isArray(entity.path)
+                      ? (entity.path as string[]).join(", ")
+                      : typeof entity.path === "string"
+                        ? entity.path
+                        : ""
+                  }
+                  placeholder="/etc/hosts (comma-separated for multiple)"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    const list = raw.split(",").map((part) => part.trim()).filter(Boolean);
+                    if (!list.length) {
+                      updateField(ref, "path", undefined);
+                    } else if (list.length === 1) {
+                      updateField(ref, "path", list[0]);
+                    } else {
+                      updateField(ref, "path", list);
+                    }
+                  }}
+                />
+              </label>
+            ) : (
+              <label className="field">
+                <span>Path</span>
+                <input
+                  value={typeof entity.path === "string" ? entity.path : ""}
+                  onChange={(event) => updateField(ref, "path", event.target.value || undefined)}
+                />
+              </label>
+            )
           ) : null}
           {entityType === "tailscale" ? (
             <label className="field">
