@@ -29,6 +29,7 @@ export function TopBar() {
   const validateNow = useProjectStore((state) => state.validateNow);
   const runOfficialCheck = useProjectStore((state) => state.runOfficialCheck);
   const importJson = useProjectStore((state) => state.importJson);
+  const goHome = useProjectStore((state) => state.goHome);
   const checkNotice = useProjectStore((state) => state.checkNotice);
   const isChecking = useProjectStore((state) => state.isChecking);
   const isOfficialChecking = useProjectStore((state) => state.isOfficialChecking);
@@ -101,7 +102,13 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="brand">
+      <button
+        type="button"
+        className="brand"
+        onClick={goHome}
+        aria-label="sbcv.app — return to home"
+        data-testid="brand-home"
+      >
         <div className="brand-mark" aria-hidden>
           <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
             <polygon
@@ -123,7 +130,7 @@ export function TopBar() {
           <div className="brand-title">sbcv.app</div>
           <div className="brand-subtitle">sing-box visual config</div>
         </div>
-      </div>
+      </button>
       <div className="topbar-actions">
         <label className="channel-select">
           <span>Target</span>
