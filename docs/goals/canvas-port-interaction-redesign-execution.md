@@ -738,6 +738,17 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr4-disconnect-coverage`.
 - Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/port-disconnect-symmetry.test.ts tests/port-relation-registry.test.ts tests/domain.test.ts tests/sbc-node-ports.test.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
 - Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor commands and derived graph metadata, not bundled fixture/exported config output.
 
+### PR-5 Reference Rename/Delete Completeness Audit
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr5-reference-coverage`.
+
+- Added registry-aligned parameterized tests that enumerate every `referenceRegistry` kind/path and assert both rename and delete behavior from canonical `SingBoxConfig`.
+- The coverage fixture exercises inbound, outbound, DNS server, endpoint, service, rule-set, HTTP client, and certificate provider references, including DNS server `domain_resolver`, NTP/clash/rule-set detours, v2ray stats arrays, service HTTP client references, resolved service links, and TLS certificate provider references across supported owners.
+- Delete tests assert that semantic diagnostics do not report stale known references after `deleteEntity` scrubs the removed entity's registered references.
+- No domain command changes were required: the current registry/command implementation already satisfied the new coverage.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/domain.test.ts tests/port-disconnect-symmetry.test.ts tests/port-relation-registry.test.ts tests/config-doc-capability.test.ts --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes tests and goal documentation only, not bundled fixture/exported config output.
+
 ## Open Decisions
 
 - Disconnect affordance: default to connected-handle small `x`; edge context menu and keyboard delete are optional additions.
