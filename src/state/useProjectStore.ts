@@ -84,6 +84,20 @@ type CreateNodeAndConnectCandidate = {
   handleId: string;
 };
 
+const BROWSER_VALIDATION_MESSAGE =
+  "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.";
+
+let semanticValidationTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
+let semanticValidationToken = 0;
+
+function cancelSemanticValidation() {
+  semanticValidationToken += 1;
+  if (semanticValidationTimer) {
+    globalThis.clearTimeout(semanticValidationTimer);
+    semanticValidationTimer = null;
+  }
+}
+
 type ProjectStore = {
   channel: SingBoxChannel;
   version: string;
@@ -151,10 +165,28 @@ function computeDiagnostics(config: SingBoxConfig, channel: SingBoxChannel) {
 }
 
 function sync(config: SingBoxConfig, channel: SingBoxChannel) {
+  cancelSemanticValidation();
   return {
     config,
     jsonDraft: stringifyConfig(config),
     diagnostics: computeDiagnostics(config, channel),
+    officialDiagnostics: [],
+    officialValidationMessage: BROWSER_VALIDATION_MESSAGE,
+    checkNotice: "",
+    isChecking: false,
+    isOfficialChecking: false,
+  };
+}
+
+function resetValidationState() {
+  cancelSemanticValidation();
+  return {
+    officialDiagnostics: [],
+    officialValidationMessage: BROWSER_VALIDATION_MESSAGE,
+    checkNotice: "",
+    isChecking: false,
+    isOfficialChecking: false,
+    focusedNodeId: null,
   };
 }
 
@@ -760,8 +792,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   globalPanelOpen: false,
   diagnostics: computeDiagnostics(initialConfig, "stable"),
   officialDiagnostics: [],
-  officialValidationMessage:
-    "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.",
+  officialValidationMessage: BROWSER_VALIDATION_MESSAGE,
   checkNotice: "",
   isChecking: false,
   isOfficialChecking: false,
@@ -788,6 +819,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     })),
   setChannel: (channel) =>
     set((state) => ({
+      ...resetValidationState(),
       channel,
       version: channel === "stable" ? "1.13" : "1.14",
       diagnostics: computeDiagnostics(state.config, channel),
@@ -796,6 +828,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set((state) => {
       const target = targetById(id);
       return {
+        ...resetValidationState(),
         channel: target.channel,
         version: target.version,
         diagnostics: computeDiagnostics(state.config, target.channel),
@@ -808,7 +841,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       layout: { positions: {} },
       selectedId: null,
       globalPanelOpen: false,
-      checkNotice: "",
+      focusedNodeId: null,
       freshLoadToken: state.freshLoadToken + 1,
     })),
   loadTemplatePreset: (id) =>
@@ -821,7 +854,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         layout: { positions: {} },
         selectedId: null,
         globalPanelOpen: false,
-        checkNotice: "",
+        focusedNodeId: null,
         freshLoadToken: state.freshLoadToken + 1,
       };
     }),
@@ -831,7 +864,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       layout: { positions: {} },
       selectedId: null,
       globalPanelOpen: false,
-      checkNotice: "",
+      focusedNodeId: null,
       freshLoadToken: state.freshLoadToken + 1,
     })),
 
@@ -1699,9 +1732,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   applyJsonDraft: () =>
     set((state) => {
       try {
-        return sync(parseConfigJson(state.jsonDraft), state.channel);
+        return {
+          ...sync(parseConfigJson(state.jsonDraft), state.channel),
+          selectedId: null,
+          layout: { positions: {} },
+          globalPanelOpen: false,
+          focusedNodeId: null,
+          freshLoadToken: state.freshLoadToken + 1,
+        };
       } catch (error) {
         return {
+          ...resetValidationState(),
           diagnostics: [
             {
               level: "error",
@@ -1717,9 +1758,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   importJson: (value) =>
     set((state) => {
       try {
-        return { ...sync(parseConfigJson(value), state.channel), selectedId: null, layout: { positions: {} }, globalPanelOpen: false, checkNotice: "", freshLoadToken: state.freshLoadToken + 1 };
+        return {
+          ...sync(parseConfigJson(value), state.channel),
+          selectedId: null,
+          layout: { positions: {} },
+          globalPanelOpen: false,
+          focusedNodeId: null,
+          freshLoadToken: state.freshLoadToken + 1,
+        };
       } catch (error) {
         return {
+          ...resetValidationState(),
           jsonDraft: value,
           diagnostics: [
             {
@@ -1735,9 +1784,15 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }),
   refreshJson: () => set((state) => ({ jsonDraft: stringifyConfig(state.config) })),
   validateNow: () => {
+    cancelSemanticValidation();
+    const token = semanticValidationToken + 1;
+    semanticValidationToken = token;
     set({ isChecking: true, checkNotice: "" });
-    globalThis.setTimeout(() => {
+    semanticValidationTimer = globalThis.setTimeout(() => {
+      if (token !== semanticValidationToken) return;
+      semanticValidationTimer = null;
       set((state) => {
+        if (token !== semanticValidationToken) return state;
         const diagnostics = computeDiagnostics(state.config, state.channel);
         const errors = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
         const warnings = diagnostics.filter((diagnostic) => diagnostic.level === "warning").length;
@@ -1762,7 +1817,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { channel, version, config } = get();
     const target = targetFromVersion(channel, version);
 
-    set({ isOfficialChecking: true });
+    set({ isOfficialChecking: true, officialDiagnostics: [] });
 
     try {
       const res = await fetch(url, {
@@ -1818,24 +1873,30 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         return `Official validator unreachable: HTTP ${res.status}.`;
       })();
 
-      set({
-        officialDiagnostics,
-        officialValidationMessage,
-        isOfficialChecking: false,
+      set((state) => {
+        if (state.config !== config || state.channel !== channel || state.version !== version) return state;
+        return {
+          officialDiagnostics,
+          officialValidationMessage,
+          isOfficialChecking: false,
+        };
       });
     } catch (err) {
-      set({
-        officialDiagnostics: [
-          {
-            level: "warning",
-            code: "official-check-unreachable",
-            path: "",
-            message: `Official validator unreachable: ${(err as Error).message ?? "network error"}`,
-            source: "official",
-          },
-        ],
-        officialValidationMessage: "Official validator unreachable.",
-        isOfficialChecking: false,
+      set((state) => {
+        if (state.config !== config || state.channel !== channel || state.version !== version) return state;
+        return {
+          officialDiagnostics: [
+            {
+              level: "warning",
+              code: "official-check-unreachable",
+              path: "",
+              message: `Official validator unreachable: ${(err as Error).message ?? "network error"}`,
+              source: "official",
+            },
+          ],
+          officialValidationMessage: "Official validator unreachable.",
+          isOfficialChecking: false,
+        };
       });
     }
   },

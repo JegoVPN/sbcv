@@ -49,3 +49,29 @@ test("manual zoom is preserved after dragging a node", async ({ page }) => {
 
   await expect(viewport).toHaveCSS("transform", transformAfterZoom);
 });
+
+test("semantic validation refresh does not snap an active node drag", async ({ page }) => {
+  await page.goto("/");
+  const route = page.getByTestId("node-route:main");
+  const startBox = await route.boundingBox();
+  if (!startBox) throw new Error("missing route node");
+
+  await page.getByRole("button", { name: "Check", exact: true }).click();
+  await expect(page.locator(".status-pill")).toHaveText(/^(checking|parsing json|running sing-box)/i);
+
+  await page.mouse.move(startBox.x + startBox.width / 2, startBox.y + startBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(startBox.x + startBox.width / 2 + 120, startBox.y + startBox.height / 2 + 60, {
+    steps: 8,
+  });
+  await page.waitForTimeout(360);
+
+  const duringDragBox = await route.boundingBox();
+  expect(duringDragBox).toBeTruthy();
+  if (duringDragBox) {
+    expect(duringDragBox.x - startBox.x).toBeGreaterThan(40);
+    expect(duringDragBox.y - startBox.y).toBeGreaterThan(20);
+  }
+
+  await page.mouse.up();
+});
