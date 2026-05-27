@@ -155,7 +155,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | dns-server-dhcp | No diagnostic when `server.interface === ""`. |
 | dns-server-fakeip | Legacy `dns-fakeip` Palette entry has no deprecation badge — users may pick it accidentally. Canvas subtitle stays generic. Two Palette entries (`dns-fakeip` / `dns-fakeip-server`) share the same `Blocks` icon. |
 | dns-server-resolved | `service` field **has no Inspector control** — falls to AdvancedScalarFields raw text. `graph.ts:542-545` draws an edge for tailscale endpoint but not for resolved → service. No diagnostic validates `resolved` server's `service` reference. |
-| dns-server-tailscale | `accept_default_resolvers` not in `dnsServerHandledFields` — drops to Advanced. `createDnsServer` scaffold hardcodes `endpoint: "tailscale-ep"` (dangling reference users can't see). `SbcNode.tsx` always renders outbound detour port; tailscale should suppress it. `accept_search_domain` (testing 1.14) has diagnostic but no UI. |
+| dns-server-tailscale | `accept_default_resolvers` not in `dnsServerHandledFields` — drops to Advanced. ✅ ~~scaffold hardcodes `endpoint: "tailscale-ep"`~~ — fixed 2026-05-27; scaffold no longer seeds the dangling ref so the existing `dns-server-tailscale-endpoint-missing` warning now correctly fires until the user wires a real endpoint. `SbcNode.tsx` always renders outbound detour port; tailscale should suppress it. `accept_search_domain` (testing 1.14) has diagnostic but no UI. |
 
 ### Endpoint
 

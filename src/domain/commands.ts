@@ -663,7 +663,6 @@ export function createDnsServer(type: string, tag: string): DnsServerConfig {
     return {
       type,
       tag,
-      endpoint: "tailscale-ep",
       accept_default_resolvers: false,
     };
   }

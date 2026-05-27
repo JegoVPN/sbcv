@@ -258,6 +258,16 @@ describe("canonical sing-box domain model", () => {
     expect(dnsServerEdges.some((edge) => edge.id === "edge:dns-rule:1:local-dns")).toBe(false);
   });
 
+  it("does not seed a dangling tailscale endpoint reference in dns-server scaffold", () => {
+    const tailscaleServer = createDnsServer("tailscale", "tailscale-dns") as Record<string, unknown>;
+    expect(tailscaleServer).not.toHaveProperty("endpoint");
+
+    const config = createStableTunSplitConfig();
+    config.dns = { ...config.dns, servers: [...(config.dns?.servers ?? []), tailscaleServer as never] };
+    const diagnosticCodes = validateConfig(config, "stable").map((finding) => finding.code);
+    expect(diagnosticCodes).toContain("dns-server-tailscale-endpoint-missing");
+  });
+
   it("does not seed legacy DNS server address strings (1.12-A)", () => {
     const httpsServer = createDnsServer("https", "doh-test") as Record<string, unknown>;
     expect(httpsServer).not.toHaveProperty("address");
