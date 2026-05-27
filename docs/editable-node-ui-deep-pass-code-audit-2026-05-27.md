@@ -91,7 +91,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | Node | Defect |
 | --- | --- |
 | rule-set-local | ✅ ~~`SbcNode.tsx:169` returns `download-detour` port for all rule-set kinds~~ — fixed 2026-05-27; SbcNode now returns an empty output port array unless `type === "remote"`, so inline and local rule-set nodes no longer expose a dangling `download-detour` wire. ✅ Palette three entries already landed. |
-| rule-set-remote | `http_client` only exposes a string select — cannot edit the inline object form. No `missing-rule-set-format` diagnostic for non-standard URL extensions. Palette label still generic "Rule Set" instead of "Remote Rule Set". |
+| rule-set-remote | ✅ Mostly closed 2026-05-27. ~~No `missing-rule-set-format` diagnostic~~ fixed — new `rule-set-format-missing` error fires when a remote rule_set has no `format` AND the URL's path component doesn't end in `.json` or `.srs` (the only two extensions sing-box auto-infers per `rule-set/index.md`). Strips query string + fragment before extension lookup so `?v=2` doesn't fool it. Two regression tests in domain.test.ts lock positive (.txt without format) + negative (.srs / .json / format=binary). ~~Palette label still generic "Rule Set"~~ false positive — Palette.tsx:183 already reads `Remote Rule Set`. The remaining gap (`http_client` inline object form vs string select) stays: when users need the rare inline-object form, the field round-trips via AdvancedNonScalarFields, which is the documented escape hatch for sub-object editing. |
 | rule-set-inline | ✅ ~~hardcoded to remote~~ — fixed. ✅ ~~Inline node still shows `download-detour` port~~ — fixed 2026-05-27; SbcNode suppresses the port for inline/local rule-sets. Canvas subtitle still generic. |
 
 ### Inbound
