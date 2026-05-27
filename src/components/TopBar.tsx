@@ -1,5 +1,5 @@
 import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, LoaderCircle } from "lucide-react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
@@ -25,13 +25,22 @@ export function TopBar() {
   const setTarget = useProjectStore((state) => state.setTarget);
   const config = useProjectStore((state) => state.config);
   const diagnostics = useProjectStore((state) => state.diagnostics);
+  const officialDiagnostics = useProjectStore((state) => state.officialDiagnostics);
   const validateNow = useProjectStore((state) => state.validateNow);
+  const runOfficialCheck = useProjectStore((state) => state.runOfficialCheck);
   const importJson = useProjectStore((state) => state.importJson);
   const checkNotice = useProjectStore((state) => state.checkNotice);
   const isChecking = useProjectStore((state) => state.isChecking);
+  const isOfficialChecking = useProjectStore((state) => state.isOfficialChecking);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const status = summarizeDiagnostics(diagnostics);
-  const pillState = isChecking ? "checking" : status;
+
+  const allDiagnostics = useMemo(
+    () => [...diagnostics, ...officialDiagnostics],
+    [diagnostics, officialDiagnostics],
+  );
+  const status = summarizeDiagnostics(allDiagnostics);
+  const busy = isChecking || isOfficialChecking;
+  const pillState = busy ? "checking" : status;
   const target = targetFromVersion(channel, version);
   const StatusIcon =
     pillState === "checking" ? LoaderCircle : pillState === "error" ? CircleX : pillState === "warning" ? CircleAlert : CheckCircle2;
@@ -41,6 +50,11 @@ export function TopBar() {
   const pillInteractive = pillState !== "checking";
   const popoverTone: "valid" | "warning" | "error" =
     pillState === "error" ? "error" : pillState === "warning" ? "warning" : "valid";
+
+  function runCheck() {
+    validateNow();
+    void runOfficialCheck();
+  }
 
   function exportConfig() {
     const exportedConfig = createConfigExport(config);
@@ -84,15 +98,15 @@ export function TopBar() {
             ))}
           </select>
         </label>
-        <button type="button" onClick={validateNow}>
+        <button type="button" onClick={runCheck} disabled={busy}>
           <FileCheck2 size={15} />
           Check
         </button>
         <div className="status-pill-host">
           <button
-            key={isChecking ? "checking" : checkNotice || pillState}
+            key={busy ? "checking" : checkNotice || pillState}
             type="button"
-            className={`status-pill status-pill--${pillState} ${checkNotice && !isChecking && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
+            className={`status-pill status-pill--${pillState} ${checkNotice && !busy && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
             title={checkNotice || statusLabel}
             aria-label={statusLabel}
             aria-haspopup={pillInteractive ? "dialog" : undefined}
@@ -107,7 +121,7 @@ export function TopBar() {
           </button>
           {popoverOpen && pillInteractive ? (
             <DiagnosticsPopover
-              diagnostics={diagnostics}
+              diagnostics={allDiagnostics}
               tone={popoverTone}
               onClose={() => setPopoverOpen(false)}
             />

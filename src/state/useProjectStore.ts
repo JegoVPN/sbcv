@@ -79,9 +79,11 @@ type ProjectStore = {
   panelTab: PanelTab;
   globalPanelOpen: boolean;
   diagnostics: Diagnostic[];
+  officialDiagnostics: Diagnostic[];
   officialValidationMessage: string;
   checkNotice: string;
   isChecking: boolean;
+  isOfficialChecking: boolean;
   freshLoadToken: number;
   setSelectedId: (id: string | null) => void;
   setPanelTab: (tab: PanelTab) => void;
@@ -115,6 +117,7 @@ type ProjectStore = {
   importJson: (value: string) => void;
   refreshJson: () => void;
   validateNow: () => void;
+  runOfficialCheck: () => Promise<void>;
   setNodePosition: (id: string, position: { x: number; y: number }) => void;
 };
 
@@ -482,10 +485,12 @@ export const useProjectStore = create<ProjectStore>((set) => ({
   panelTab: "rules",
   globalPanelOpen: false,
   diagnostics: computeDiagnostics(initialConfig, "stable"),
+  officialDiagnostics: [],
   officialValidationMessage:
     "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.",
   checkNotice: "",
   isChecking: false,
+  isOfficialChecking: false,
   freshLoadToken: 0,
 
   setSelectedId: (id) => set({ selectedId: id }),
@@ -1324,6 +1329,91 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         };
       });
     }, 250);
+  },
+  runOfficialCheck: async () => {
+    const rawUrl = (import.meta.env.VITE_OFFICIAL_CHECK_URL ?? "").trim();
+    if (!rawUrl) return;
+    const url = `${rawUrl.replace(/\/+$/, "")}/check`;
+
+    const { channel, version, config } = get();
+    const target = targetFromVersion(channel, version);
+
+    set({ isOfficialChecking: true });
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "omit",
+        body: JSON.stringify({ target: target.label, config }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: "valid" | "warning" | "invalid";
+        warnings?: string[];
+        errors?: string[];
+        binary?: string;
+        binaryVersion?: string;
+      };
+
+      const officialDiagnostics: Diagnostic[] = [];
+      for (const warning of data.warnings ?? []) {
+        officialDiagnostics.push({
+          level: "warning",
+          code: "sing-box-warning",
+          path: "",
+          message: warning,
+          source: "official",
+        });
+      }
+      for (const error of data.errors ?? []) {
+        officialDiagnostics.push({
+          level: "error",
+          code: "sing-box-error",
+          path: "",
+          message: error,
+          source: "official",
+        });
+      }
+      if (!res.ok && officialDiagnostics.length === 0) {
+        officialDiagnostics.push({
+          level: "warning",
+          code: "official-check-http-error",
+          path: "",
+          message: `Official validator returned HTTP ${res.status}.`,
+          source: "official",
+        });
+      }
+
+      const binaryNote = data.binaryVersion ? ` (sing-box ${data.binaryVersion})` : "";
+      const officialValidationMessage = (() => {
+        if (data.status === "valid") return `Official validator${binaryNote}: valid.`;
+        if (data.status === "warning")
+          return `Official validator${binaryNote}: ${officialDiagnostics.length} warning${officialDiagnostics.length === 1 ? "" : "s"}.`;
+        if (data.status === "invalid")
+          return `Official validator${binaryNote}: ${officialDiagnostics.length} error${officialDiagnostics.length === 1 ? "" : "s"}.`;
+        return `Official validator unreachable: HTTP ${res.status}.`;
+      })();
+
+      set({
+        officialDiagnostics,
+        officialValidationMessage,
+        isOfficialChecking: false,
+      });
+    } catch (err) {
+      set({
+        officialDiagnostics: [
+          {
+            level: "warning",
+            code: "official-check-unreachable",
+            path: "",
+            message: `Official validator unreachable: ${(err as Error).message ?? "network error"}`,
+            source: "official",
+          },
+        ],
+        officialValidationMessage: "Official validator unreachable.",
+        isOfficialChecking: false,
+      });
+    }
   },
   setNodePosition: (id, position) =>
     set((state) => ({
