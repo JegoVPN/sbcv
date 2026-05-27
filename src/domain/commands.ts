@@ -500,6 +500,7 @@ export function createService(type: string, tag: string): ServiceConfig {
       verify_client_endpoint: [],
       mesh_with: [],
       stun: { enabled: false, listen: "::", listen_port: 3478 },
+      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "ssm-api") {
