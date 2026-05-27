@@ -177,7 +177,10 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: "input"
       { key: "rule-set", label: "Rule Set", nodeKind: "rule-set", icon: Layers3 },
     ];
   }
-  if (kind === "rule-set") return [{ key: "download-detour", label: "Download detour", nodeKind: "outbound", icon: Network }];
+  if (kind === "rule-set") {
+    if (type !== "remote") return [];
+    return [{ key: "download-detour", label: "Download detour", nodeKind: "outbound", icon: Network }];
+  }
   if (kind === "dns-server") {
     const ports: PortSpec[] = [{ key: "outbound", label: "Detour outbound", nodeKind: "outbound", icon: Network }];
     if (type === "tailscale") ports.push({ key: "endpoint", label: "Tailscale endpoint", nodeKind: "endpoint", nodeType: "tailscale", icon: Waypoints });

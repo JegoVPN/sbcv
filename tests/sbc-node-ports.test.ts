@@ -20,6 +20,8 @@ const cases: PortCase[] = [
   { kind: "endpoint", type: "wireguard", inputKeys: [], outputKeys: ["dial-detour"] },
   { kind: "endpoint", type: "tailscale", inputKeys: ["dns-server", "derp-service"], outputKeys: ["dial-detour"] },
   { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
+  { kind: "rule-set", type: "local", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
+  { kind: "rule-set", type: "inline", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   {
     kind: "outbound",
     type: "direct",
