@@ -91,32 +91,53 @@ fi
 expected_tag="$(printf '%s' "$latest_ver" | cut -c1-8)"
 echo "    expected container image tag: $expected_tag (from worker version $latest_ver)"
 
+# Probe once with stderr captured so we can distinguish:
+#   (a) the build token can read containers and the deployment is in flight
+#       (loop will see tags appear)
+#   (b) the build token lacks containers:read (auto-generated Workers Builds
+#       tokens can be scoped narrowly). In that case the loop would spin
+#       uselessly for 120s. Fall through to the e2e probe — that's the only
+#       real ground truth anyway.
+
+probe_out="$(npx --yes wrangler@4.95.0 containers list 2>&1 || true)"
+can_read_containers=1
+if printf '%s' "$probe_out" | grep -qiE "unauthorized|permission|forbidden|not authorized|missing.*scope|10000"; then
+  echo "    WARN: this build token cannot list containers; skipping image tag poll."
+  echo "    WARN: $(printf '%s' "$probe_out" | head -n 1)"
+  can_read_containers=0
+fi
+
 attempt=0
-max_attempts=24    # 24 * 5s = 120s
+max_attempts=12    # 12 * 5s = 60s
 actual_tag=""
-while [ "$attempt" -lt "$max_attempts" ]; do
-  attempt=$((attempt + 1))
-  actual_tag="$(npx --yes wrangler@4.95.0 containers list 2>/dev/null \
-    | grep -oE 'sbc-validator-gw-validatorcontainer:[0-9a-f]+' \
-    | head -n 1 \
-    | awk -F: '{ print $NF }')"
+if [ "$can_read_containers" = 1 ]; then
+  while [ "$attempt" -lt "$max_attempts" ]; do
+    attempt=$((attempt + 1))
+    actual_tag="$(npx --yes wrangler@4.95.0 containers list 2>/dev/null \
+      | grep -oE 'sbc-validator-gw-validatorcontainer:[0-9a-f]+' \
+      | head -n 1 \
+      | awk -F: '{ print $NF }')"
 
-  if [ "$actual_tag" = "$expected_tag" ]; then
-    echo "    container application image: $actual_tag (aligned, attempt $attempt)"
-    break
-  fi
+    if [ "$actual_tag" = "$expected_tag" ]; then
+      echo "    container application image: $actual_tag (aligned, attempt $attempt)"
+      break
+    fi
 
-  echo "    (try $attempt/$max_attempts) container at '$actual_tag', expected '$expected_tag' — waiting 5s"
-  sleep 5
-done
+    echo "    (try $attempt/$max_attempts) container at '$actual_tag', expected '$expected_tag' — waiting 5s"
+    sleep 5
+  done
+fi
 
-if [ "$actual_tag" != "$expected_tag" ]; then
-  echo "FATAL: Cloudflare Containers backend did not apply the new image within 120s." >&2
+if [ "$can_read_containers" = 1 ] && [ -n "$actual_tag" ] && [ "$actual_tag" != "$expected_tag" ]; then
+  # Token CAN read containers, saw a tag, but it stayed stale: real failure.
+  echo "FATAL: Cloudflare Containers backend did not apply the new image within 60s." >&2
   echo "       Worker version $latest_ver expects image tag $expected_tag." >&2
   echo "       Container application is still on image tag '$actual_tag'." >&2
-  echo "       This means future /check requests will spawn a stale container." >&2
-  echo "       Re-run this deploy from Cloudflare Dashboard, or push a trivial change to container/." >&2
   exit 1
+fi
+
+if [ "$can_read_containers" = 1 ] && [ -z "$actual_tag" ]; then
+  echo "    WARN: container list returned no rows for $max_attempts tries; deferring to e2e probe."
 fi
 
 # --- 4. End-to-end probe ------------------------------------------------------
