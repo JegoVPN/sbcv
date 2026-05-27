@@ -88,7 +88,7 @@ export function CanvasWorkspace() {
   }, [fitFullGraph, freshLoadToken]);
 
   return (
-    <section className="canvas-shell" aria-label="SBC visual canvas">
+    <section className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -125,6 +125,7 @@ export function CanvasWorkspace() {
         {showMiniMap ? <MiniMap pannable zoomable className="sbc-minimap" /> : null}
         <Controls position="bottom-center" showInteractive={false}>
           <ControlButton
+            className="sbc-ctrl-cursor"
             onClick={() => setInteraction("select")}
             data-active={interaction === "select"}
             title="Select"
@@ -134,6 +135,7 @@ export function CanvasWorkspace() {
             <MousePointer2 size={16} strokeWidth={1.8} />
           </ControlButton>
           <ControlButton
+            className="sbc-ctrl-hand"
             onClick={() => setInteraction("pan")}
             data-active={interaction === "pan"}
             title="Pan"
@@ -143,6 +145,7 @@ export function CanvasWorkspace() {
             <Hand size={16} strokeWidth={1.8} />
           </ControlButton>
           <ControlButton
+            className="sbc-ctrl-map"
             onClick={() => setShowMiniMap((prev) => !prev)}
             title={showMiniMap ? "Hide minimap" : "Show minimap"}
             aria-label={showMiniMap ? "Hide minimap" : "Show minimap"}

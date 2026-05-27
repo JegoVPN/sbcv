@@ -125,12 +125,15 @@ textarea {
 .brand-mark {
   width: 32px;
   height: 32px;
-  border-radius: 999px;
-  background: #c7ff00;
-  color: #111;
+  flex-shrink: 0;
   display: grid;
   place-items: center;
-  font-weight: 800;
+}
+
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .brand-title {
@@ -873,6 +876,19 @@ textarea {
 .react-flow__controls-button[data-active="true"]:hover {
   background: #ffffff;
   color: #1c1e20;
+}
+
+.react-flow__controls .sbc-ctrl-cursor { order: 1; }
+.react-flow__controls .sbc-ctrl-hand { order: 2; }
+.react-flow__controls .react-flow__controls-zoomin { order: 3; margin-left: 8px; }
+.react-flow__controls .react-flow__controls-zoomout { order: 4; }
+.react-flow__controls .react-flow__controls-fitview { order: 5; }
+.react-flow__controls .sbc-ctrl-map { order: 6; }
+
+.canvas-shell[data-interaction="select"] .react-flow__pane,
+.canvas-shell[data-interaction="select"] .react-flow__pane.draggable,
+.canvas-shell[data-interaction="select"] .react-flow__pane.dragging {
+  cursor: default;
 }
 
 .sbc-node-shell {

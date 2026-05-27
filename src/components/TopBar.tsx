@@ -102,7 +102,23 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="brand">
-        <div className="brand-mark">S</div>
+        <div className="brand-mark" aria-hidden>
+          <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <polygon
+              points="16,4 26,10 26,22 16,28 6,22 6,10"
+              fill="#0d1116"
+              stroke="#c7ff00"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+            <circle cx="16" cy="4"  r="3.5" fill="#c7ff00" />
+            <circle cx="26" cy="10" r="3.5" fill="#c7ff00" />
+            <circle cx="26" cy="22" r="3.5" fill="#c7ff00" />
+            <circle cx="16" cy="28" r="3.5" fill="#c7ff00" />
+            <circle cx="6"  cy="22" r="3.5" fill="#c7ff00" />
+            <circle cx="6"  cy="10" r="3.5" fill="#c7ff00" />
+          </svg>
+        </div>
         <div>
           <div className="brand-title">sbcv.app</div>
           <div className="brand-subtitle">sing-box visual config</div>
