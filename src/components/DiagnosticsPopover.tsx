@@ -92,7 +92,6 @@ export function DiagnosticsPopover({ diagnostics, tone, onClose }: DiagnosticsPo
         <div className="diagnostics-popover__empty">
           The current configuration parses cleanly and reports no semantic
           warnings against <strong>{tone === "valid" ? "the selected target" : "the editor"}</strong>.
-          Use <em>Official Check</em> to verify against the real sing-box binary.
         </div>
       ) : (
         <ul className="diagnostics-popover__list">
