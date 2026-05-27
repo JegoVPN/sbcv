@@ -545,6 +545,20 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         endpointTargetY.set(server.endpoint, y);
         edges.push(makeEdge(`edge:dns-server-endpoint:${tag}:${server.endpoint}`, id, `endpoint:${server.endpoint}`, "endpoint", "dns-server"));
       }
+      if (server.type === "resolved" && typeof (server as Record<string, unknown>).service === "string") {
+        const serviceTag = (server as Record<string, unknown>).service as string;
+        if (serviceTag) {
+          edges.push(
+            makeEdge(
+              `edge:dns-server-service:${tag}:${serviceTag}`,
+              id,
+              `service:${serviceTag}`,
+              "service",
+              "dns-server",
+            ),
+          );
+        }
+      }
     });
 
     if (visualizeDnsRules) {
