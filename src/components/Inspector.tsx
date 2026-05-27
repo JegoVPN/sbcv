@@ -203,6 +203,11 @@ const outboundHandledFields = new Set([
   "extra_headers",
   "server_ports",
   "hop_interval",
+  "up_mbps",
+  "down_mbps",
+  "idle_session_check_interval",
+  "idle_session_timeout",
+  "min_idle_session",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -3216,6 +3221,34 @@ export function Inspector() {
           {entityType === "hysteria2" ? (
             <>
               <label className="field">
+                <span>Up Mbps</span>
+                <input
+                  type="number"
+                  value={typeof entity.up_mbps === "number" ? entity.up_mbps : ""}
+                  placeholder="empty = let BBR pick"
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (!next) return updateField(ref, "up_mbps", undefined);
+                    const parsed = Number(next);
+                    updateField(ref, "up_mbps", Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Down Mbps</span>
+                <input
+                  type="number"
+                  value={typeof entity.down_mbps === "number" ? entity.down_mbps : ""}
+                  placeholder="empty = let BBR pick"
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (!next) return updateField(ref, "down_mbps", undefined);
+                    const parsed = Number(next);
+                    updateField(ref, "down_mbps", Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined);
+                  }}
+                />
+              </label>
+              <label className="field">
                 <span>Server Ports (port hopping)</span>
                 <input
                   value={toList(entity.server_ports)}
@@ -3235,6 +3268,45 @@ export function Inspector() {
                 />
               </label>
             </>
+          ) : null}
+          {entityType === "anytls" ? (
+            <fieldset className="field field--checklist" data-testid="anytls-idle-session">
+              <legend>Idle session</legend>
+              <label className="field">
+                <span>Check interval</span>
+                <input
+                  value={typeof entity.idle_session_check_interval === "string" ? entity.idle_session_check_interval : ""}
+                  placeholder="e.g. 30s"
+                  onChange={(event) =>
+                    updateField(ref, "idle_session_check_interval", event.target.value || undefined)
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Timeout</span>
+                <input
+                  value={typeof entity.idle_session_timeout === "string" ? entity.idle_session_timeout : ""}
+                  placeholder="e.g. 30s"
+                  onChange={(event) =>
+                    updateField(ref, "idle_session_timeout", event.target.value || undefined)
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Min idle sessions</span>
+                <input
+                  type="number"
+                  value={typeof entity.min_idle_session === "number" ? entity.min_idle_session : ""}
+                  placeholder="default 0"
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    if (!next) return updateField(ref, "min_idle_session", undefined);
+                    const parsed = Number(next);
+                    updateField(ref, "min_idle_session", Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined);
+                  }}
+                />
+              </label>
+            </fieldset>
           ) : null}
           {entityType === "hysteria2" ? (
             (() => {
