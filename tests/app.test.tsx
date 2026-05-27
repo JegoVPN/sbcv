@@ -611,6 +611,25 @@ describe("SBC editor shell", () => {
     expect(ssh?.kex_algorithm).toEqual(["curve25519-sha256"]);
   });
 
+  it("renders inbound:trojan fallback Server/Port inputs that build a structured fallback object", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-trojan");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const fallback = inspector.getByTestId("inbound-trojan-fallback");
+    const serverInput = within(fallback).getByLabelText("Server") as HTMLInputElement;
+    const portInput = within(fallback).getByLabelText("Server Port") as HTMLInputElement;
+    fireEvent.change(serverInput, { target: { value: "127.0.0.1" } });
+    fireEvent.change(portInput, { target: { value: "8443" } });
+    const trojan = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "trojan");
+    expect((trojan?.fallback as Record<string, unknown>)?.server).toBe("127.0.0.1");
+    expect((trojan?.fallback as Record<string, unknown>)?.server_port).toBe(8443);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
