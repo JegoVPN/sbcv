@@ -1200,6 +1200,30 @@ export function validateConfig(
     });
   }
 
+  const usersRequiredInboundTypes = new Set([
+    "vmess",
+    "vless",
+    "trojan",
+    "naive",
+    "hysteria",
+    "hysteria2",
+    "tuic",
+    "anytls",
+  ]);
+  listItems(config.inbounds).forEach((inbound, index) => {
+    if (!usersRequiredInboundTypes.has(inbound.type)) return;
+    const users = (inbound as Record<string, unknown>).users;
+    if (Array.isArray(users) && users.length > 0) return;
+    const tag = inbound.tag ?? `inbound-${index}`;
+    push(
+      diagnostics,
+      "error",
+      "inbound-users-required",
+      `/inbounds/${index}/users`,
+      `Inbound "${tag}" (${inbound.type}) requires at least one user; sing-box will reject the config otherwise.`,
+    );
+  });
+
   outbounds.forEach((outbound, index) => {
     if (outbound.type !== "block") return;
     const tag = outbound.tag ?? `outbound-${index}`;

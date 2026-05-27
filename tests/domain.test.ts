@@ -249,6 +249,75 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("emits inbound-users-required error when authenticating inbounds have no users", () => {
+    const config = createStableTunSplitConfig();
+    const usersRequiredTypes = [
+      "vmess",
+      "vless",
+      "trojan",
+      "naive",
+      "hysteria",
+      "hysteria2",
+      "tuic",
+      "anytls",
+    ] as const;
+    config.inbounds = usersRequiredTypes.map((type) => ({
+      type,
+      tag: `${type}-in`,
+      listen: "127.0.0.1",
+      listen_port: 1080,
+      users: [],
+      tls: { enabled: true, server_name: "" },
+    } as never));
+    const findings = validateConfig(config, "stable").filter(
+      (f) => f.code === "inbound-users-required",
+    );
+    expect(findings).toHaveLength(usersRequiredTypes.length);
+
+    config.inbounds = [
+      {
+        type: "trojan",
+        tag: "trojan-in",
+        listen: "127.0.0.1",
+        listen_port: 4443,
+        users: [{ name: "alice", password: "p" }],
+        tls: { enabled: true, server_name: "" },
+      } as never,
+    ];
+    expect(
+      validateConfig(config, "stable").filter((f) => f.code === "inbound-users-required"),
+    ).toEqual([]);
+  });
+
+  it("emits outbound-missing-tls error for every tls-required outbound type", () => {
+    const config = createStableTunSplitConfig();
+    const tlsRequiredOutbounds = [
+      "trojan",
+      "naive",
+      "hysteria",
+      "hysteria2",
+      "tuic",
+      "anytls",
+      "shadowtls",
+    ] as const;
+    config.outbounds = [
+      ...(config.outbounds ?? []),
+      ...tlsRequiredOutbounds.map((type) => ({
+        type,
+        tag: `${type}-out`,
+        server: "127.0.0.1",
+        server_port: 1080,
+      } as never)),
+    ];
+    const findings = validateConfig(config, "stable").filter(
+      (f) => f.code === "outbound-missing-tls",
+    );
+    expect(findings).toHaveLength(tlsRequiredOutbounds.length);
+    for (const type of tlsRequiredOutbounds) {
+      expect(findings.some((f) => f.message.includes(type))).toBe(true);
+    }
+  });
+
   it("warns on deprecated outbound type=block (1.11-A)", () => {
     const config = createStableTunSplitConfig();
     config.outbounds = [

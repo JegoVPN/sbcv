@@ -44,13 +44,11 @@ These appear in many nodes simultaneously. One PR per item can close 10–30 nod
 - ~~`Palette.tsx:92` still ships `dns-http3` instead of `dns-h3`.~~ Now `dns-h3`.
 - Lookup keys in `INBOUND_PALETTE_TYPES` (`protocols.ts`) and `OUTBOUND_PALETTE_TYPES` updated to match; affected test files updated.
 
-### CC-5 TLS-required / users-required diagnostics missing for several protocols
+### CC-5 TLS-required / users-required diagnostics missing for several protocols — ✅ MOSTLY CLOSED 2026-05-27
 
-- `tlsRequiredOutboundTypes` and the `users` non-empty check don't cover every protocol that needs them.
-- **Missing diagnostic coverage:**
-  - outbound `trojan`, outbound `tuic`, outbound `hysteria` (v1), outbound `hysteria2`
-  - inbound `naive` users non-empty (only vmess/vless/tuic are checked via `validateVmessLikeUsers`)
-  - service `derp` — scaffold also fails to seed `tls: { enabled: true }`
+- **Audit re-verification:** `outbound-missing-tls` already covers all 7 TLS-required outbound types (trojan / naive / hysteria / hysteria2 / tuic / anytls / shadowtls). The audit's claim that hysteria/hysteria2/tuic were uncovered was incorrect — diagnostic exists at `diagnostics.ts:396-411`. Regression test added.
+- **users-required gap fixed:** New `inbound-users-required` error covers all 8 authenticating inbound types (vmess / vless / trojan / naive / hysteria / hysteria2 / tuic / anytls) — previously only vmess/vless/tuic had per-user UUID checks via `validateVmessLikeUsers` and even those didn't error on an empty `users[]`.
+- **service derp:** `derp-service-needs-tls` warning already exists at `diagnostics.ts:211`. Scaffold still doesn't seed `tls: { enabled: true }` — see service-derp row below for that piece.
 
 ### CC-6 Canvas port action-gating not honoured
 
