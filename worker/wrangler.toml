@@ -1,3 +1,7 @@
+# Production deploys are driven by Cloudflare Workers Builds via
+# scripts/cf-deploy-validator-gw.sh, which gates on worker/+container/
+# changes and verifies the rolled-out container image tag.
+
 name = "sbc-validator-gw"
 main = "src/index.ts"
 compatibility_date = "2026-05-01"
