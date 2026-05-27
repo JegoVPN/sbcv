@@ -386,7 +386,8 @@ function connectDirectedPortReference(
     const inbound = config.inbounds?.find((item) => item.tag === outputNode.value);
     if (service?.type !== "ssm-api" || inbound?.type !== "shadowsocks") return null;
     const currentServers = service.servers && typeof service.servers === "object" ? service.servers : {};
-    return updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", { ...currentServers, "/": outputNode.value });
+    const withService = updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", { ...currentServers, "/": outputNode.value });
+    return updateEntityField(withService, { kind: "inbound", tag: outputNode.value }, "managed", true);
   }
 
   if (outputNode.kind === "route" && outputHandle === "route-rule" && inputNode.kind === "route-rule" && inputHandle === "route") {

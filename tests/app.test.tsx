@@ -796,6 +796,34 @@ describe("SBC editor shell", () => {
     expect(values).toContain("lets-encrypt-2");
   });
 
+  it("auto-sets shadowsocks inbound.managed=true when connecting to an ssm-api service", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-shadowsocks");
+    });
+    act(() => {
+      useProjectStore.getState().createFromPalette("service-ssm-api");
+    });
+    const before = useProjectStore.getState();
+    const ssInbound = before.config.inbounds?.find((i) => i.type === "shadowsocks");
+    const ssmService = before.config.services?.find((s) => s.type === "ssm-api");
+    expect(ssInbound?.tag).toBeTruthy();
+    expect(ssmService?.tag).toBeTruthy();
+    act(() => {
+      useProjectStore.getState().connectPorts({
+        source: `inbound:${ssInbound?.tag}`,
+        sourceHandle: "service",
+        target: `service:${ssmService?.tag}`,
+        targetHandle: "managed-inbound",
+      });
+    });
+    const after = useProjectStore.getState();
+    const ssAfter = after.config.inbounds?.find((i) => i.tag === ssInbound?.tag);
+    expect(ssAfter?.managed).toBe(true);
+    const ssmAfter = after.config.services?.find((s) => s.tag === ssmService?.tag);
+    expect((ssmAfter?.servers as Record<string, unknown>)?.["/"]).toBe(ssInbound?.tag);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
