@@ -77,6 +77,7 @@ After committing:
 - Push to `origin main` unless the user asks for a branch/PR.
 - Verify the pushed commit is GitHub Verified when GitHub access is available.
 - Do not treat GitHub Actions as a reliable merge or deployment gate. Prefer local required checks, local E2E/smoke verification, signed commit verification, and any provider deployment status that is directly relevant. If a GitHub Actions check is pending, flaky, or unavailable, report it but do not block progress solely on that status.
+- Run the post-merge GitHub issue gate before the next atomic PR: list open issues, resolve actionable Claude Code review issues for the active goal, and record unrelated/blocked/unavailable cases.
 
 ## Autonomous `/goal` Execution
 
@@ -94,10 +95,11 @@ The method lives here:
 4. Break the goal into 1-3 near-term atomics; do not pre-plan a long queue.
 5. Implement one atomic at a time.
 6. Run checks, commit signed, push, verify.
-7. Review the implementation against the goal doc and source-of-truth docs.
-8. Run E2E or smoke verification that proves the user-facing outcome works.
-9. Record deviations from the spec in the goal R&D doc.
-10. Continue until the goal is complete or a real blocker appears.
+7. After merge or push to `main`, run the post-merge GitHub issue gate before starting the next atomic.
+8. Review the implementation against the goal doc and source-of-truth docs.
+9. Run E2E or smoke verification that proves the user-facing outcome works.
+10. Record deviations from the spec in the goal R&D doc.
+11. Continue until the goal is complete or a real blocker appears.
 
 A goal is not complete just because code was written. It is complete only when the researched approach, implementation, review, E2E verification, docs, and signed push are all done or explicitly marked not applicable with a reason.
 
@@ -114,6 +116,7 @@ At each milestone, report:
 - what changed;
 - checks run and their result;
 - review/E2E status;
+- GitHub issue-gate result after merge/push to `main`;
 - known deviations or unresolved risks;
 - the next atomic.
 

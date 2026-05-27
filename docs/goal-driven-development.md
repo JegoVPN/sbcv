@@ -30,6 +30,7 @@ A goal is done only when all of these are true:
 - E2E or smoke verification proves the intended user-facing path works.
 - Missing checks are explicitly called out with reasons.
 - The final commit is signed, pushed, and verified on GitHub when available.
+- The post-merge issue gate has passed before the next atomic begins.
 
 For docs-only goals, E2E can be replaced by a traceability review: every claim must map to a source document or local policy. For app goals, E2E means opening/running the app path and verifying the workflow, not only passing typecheck.
 
@@ -130,6 +131,17 @@ Each atomic should have:
 - a small file scope;
 - matching tests/checks;
 - a signed commit.
+- a post-merge issue gate: list open GitHub issues after merge/push to `main`, resolve active-goal review issues, and record the result before starting the next atomic.
+
+## Post-Merge Issue Gate
+
+Claude Code review can open GitHub issues after an atomic PR is deployed. Before starting the next atomic PR:
+
+1. List current open GitHub issues for the repository.
+2. Identify issues opened by Claude Code review or issues clearly related to the just-merged PR / active goal.
+3. Resolve actionable active-goal issues before continuing. Use a small follow-up atomic if needed.
+4. If an issue is unrelated, blocked, or intentionally deferred, record that reason in the milestone report.
+5. If GitHub issue access is unavailable, report it explicitly; do not silently skip the gate.
 
 Avoid mixing these in one atomic:
 
