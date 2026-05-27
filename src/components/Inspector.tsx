@@ -138,6 +138,7 @@ const inboundHandledFields = new Set([
   "address",
   "auto_route",
   "users",
+  "method",
   "tls",
   "multiplex",
   "transport",
@@ -2450,6 +2451,41 @@ export function Inspector() {
                 );
               })()}
             </>
+          ) : null}
+          {entityType === "shadowsocks" ? (
+            <label className="field">
+              <span>Method</span>
+              <select
+                value={typeof entity.method === "string" ? entity.method : ""}
+                onChange={(event) => updateField(ref, "method", event.target.value || undefined)}
+              >
+                <option value="">(none)</option>
+                <optgroup label="Shadowsocks 2022">
+                  <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
+                  <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
+                  <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
+                </optgroup>
+                <optgroup label="AEAD">
+                  <option value="aes-128-gcm">aes-128-gcm</option>
+                  <option value="aes-192-gcm">aes-192-gcm</option>
+                  <option value="aes-256-gcm">aes-256-gcm</option>
+                  <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
+                  <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
+                </optgroup>
+                <optgroup label="Legacy / Stream cipher">
+                  <option value="none">none</option>
+                  <option value="aes-128-ctr">aes-128-ctr</option>
+                  <option value="aes-192-ctr">aes-192-ctr</option>
+                  <option value="aes-256-ctr">aes-256-ctr</option>
+                  <option value="aes-128-cfb">aes-128-cfb</option>
+                  <option value="aes-192-cfb">aes-192-cfb</option>
+                  <option value="aes-256-cfb">aes-256-cfb</option>
+                  <option value="rc4-md5">rc4-md5</option>
+                  <option value="chacha20-ietf">chacha20-ietf</option>
+                  <option value="xchacha20">xchacha20</option>
+                </optgroup>
+              </select>
+            </label>
           ) : null}
           {(() => {
             const schema = INBOUND_USER_SCHEMAS[entityType ?? ""];

@@ -380,6 +380,19 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders a Method enum select as first-class for inbound:shadowsocks", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-shadowsocks");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const method = inspector.getByLabelText("Method") as HTMLSelectElement;
+    expect(method.tagName).toBe("SELECT");
+    expect(within(method).getByRole("option", { name: "2022-blake3-aes-128-gcm" })).toBeInTheDocument();
+    expect(within(method).getByRole("option", { name: "chacha20-ietf-poly1305" })).toBeInTheDocument();
+  });
+
   it("renders Password as a first-class sensitive field for shadowsocks-like outbounds", () => {
     const shadowsocksLikeKinds = [
       "ss-out",
