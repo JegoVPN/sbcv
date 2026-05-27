@@ -23,7 +23,12 @@ import {
 } from "../domain/protocols";
 import { useProjectStore } from "../state/useProjectStore";
 import { ChipPickerPopover, type ChipPickerCandidate } from "./ChipPickerPopover";
-import { CanvasInteractionContext, EMPTY_COMPATIBLE_PORT_KEYS, interactionPortKey } from "./canvasInteractionContext";
+import {
+  CanvasInteractionContext,
+  EMPTY_COMPATIBLE_PORT_KEYS,
+  createCanvasInteractionStore,
+  interactionPortKey,
+} from "./canvasInteractionContext";
 import { SbcNode } from "./SbcNode";
 import { useViewport } from "./useViewport";
 
@@ -177,6 +182,7 @@ export function CanvasWorkspace() {
   const pendingPortRef = useRef<PendingPort | null>(null);
   const suppressNextPaneClickRef = useRef(false);
   const isNodeDraggingRef = useRef(false);
+  const interactionStoreRef = useRef(createCanvasInteractionStore());
   const config = useProjectStore((state) => state.config);
   const layout = useProjectStore((state) => state.layout);
   const diagnostics = useProjectStore((state) => state.diagnostics);
@@ -257,14 +263,17 @@ export function CanvasWorkspace() {
     const edgeId = edgeByPort.get(interactionPortKey(nodeId, handleId));
     if (edgeId) disconnectEdge(edgeId);
   }, [disconnectEdge, edgeByPort]);
-  const interactionContext = useMemo(
-    () => ({
+
+  useEffect(() => {
+    interactionStoreRef.current.setDisconnectPort(disconnectPort);
+  }, [disconnectPort]);
+
+  useEffect(() => {
+    interactionStoreRef.current.setSnapshot({
       pendingPortKey: pendingPort ? interactionPortKey(pendingPort.nodeId, pendingPort.handleId) : null,
       compatiblePortKeys,
-      disconnectPort,
-    }),
-    [compatiblePortKeys, disconnectPort, pendingPort],
-  );
+    });
+  }, [compatiblePortKeys, pendingPort]);
   const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
     if (!params.nodeId || !params.handleId) return;
     const node = nodeById.get(params.nodeId);
@@ -340,7 +349,7 @@ export function CanvasWorkspace() {
 
   return (
     <section ref={shellRef} className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
-      <CanvasInteractionContext.Provider value={interactionContext}>
+      <CanvasInteractionContext.Provider value={interactionStoreRef.current}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -619,6 +619,19 @@ Acceptance:
 - Port hover/drag does not rerender the whole canvas.
 - SbcNode render count stays bounded in an interaction smoke test.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr11-react-performance-pass`.
+
+- Moved port connected-state derivation out of `SbcNode` render and into `deriveGraph`, preserving existing aggregate/hidden-reference semantics while removing per-node `state.config` subscriptions and render-time config scans.
+- Replaced the canvas interaction React context value with a stable `useSyncExternalStore`-backed store. Pending/compatible port updates now notify all subscribers but only rerender nodes whose local pending/compatible snapshot changed; an interaction render-count test covers this.
+- Shared `useViewport` through a module-level `useSyncExternalStore` media-query subscription so multiple consumers no longer register duplicate `matchMedia` listeners.
+- Narrowed frontend store subscriptions with `useShallow` in top bars, mobile sheets, Palette, RuleTables, and `SbcNode`; export/diagnostic focus callbacks read current config only when invoked instead of subscribing broad UI chrome to full config changes.
+- Changed `BottomSheet` drag resizing to update height through refs plus `requestAnimationFrame`, keeping React state for final snap state instead of rerendering sheet contents on every pointer move.
+- Deferred optional mobile menu/template sheet imports until opened. Desktop `Inspector` lazy loading remains deferred because it would require broad async Inspector test rewrites; the existing Vite >500 kB main chunk warning remains a known larger code-splitting follow-up.
+- Added frontend performance tests for shared viewport listeners, BottomSheet drag render count, and scoped canvas interaction rerenders; added graph-data coverage for representative connected port state.
+- Frontend performance review: no new dependencies were added, no async/data waterfall was introduced, transient drag/hover state remains out of canonical config, and broad full-config subscriptions were removed from hot node/chrome paths where practical.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/frontend-performance.test.tsx tests/port-relation-registry.test.ts tests/sbc-node-ports.test.ts tests/app.test.tsx --reporter=dot`, `pnpm exec playwright test e2e/port-click-redesign.spec.ts e2e/mobile.spec.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes React render/subscription behavior, not bundled fixture/exported config files.
+
 ### PR-12: Symmetry, Fixture Sweep, And Final Audit
 
 Closes PR verification gap.

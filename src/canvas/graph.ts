@@ -1,5 +1,13 @@
 import type { Edge, Node } from "@xyflow/react";
-import { edgeIsDisconnectable, formatEdgeId, generatedEntityTag, type PortNodeKind } from "../domain/portRelationRegistry";
+import {
+  edgeIsDisconnectable,
+  formatEdgeId,
+  generatedEntityTag,
+  parseNodeId,
+  portEndpointsForNode,
+  type PortDirection,
+  type PortNodeKind,
+} from "../domain/portRelationRegistry";
 import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -14,6 +22,7 @@ export type SbcNodeData = {
   subtitle: string;
   status: "valid" | "warning" | "error";
   compatible: string[];
+  connectedPorts?: Partial<Record<PortDirection, string[]>>;
 };
 
 export type SbcFlowNode = Node<SbcNodeData, "sbc">;
@@ -146,6 +155,206 @@ function makeEdge(
     animated,
     deletable: edgeIsDisconnectable(id),
   };
+}
+
+function nodeValueFromId(id: string) {
+  return parseNodeId(id)?.value ?? "";
+}
+
+function ruleIndexFromId(id: string) {
+  const index = Number(nodeValueFromId(id));
+  return Number.isInteger(index) ? index : -1;
+}
+
+function isPortConnected(
+  config: SingBoxConfig,
+  id: string,
+  kind: SbcNodeKind,
+  type: string,
+  direction: PortDirection,
+  portKey: string,
+) {
+  const value = nodeValueFromId(id);
+
+  if (direction === "input") {
+    if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0;
+    if (kind === "route-rule" && portKey === "route") return true;
+    if (kind === "route-rule" && portKey === "inbound") {
+      const index = ruleIndexFromId(id);
+      return Boolean(config.route?.rules?.[index]?.inbound);
+    }
+    if (kind === "dns-rule" && portKey === "dns") return true;
+    if (kind === "dns-rule" && portKey === "inbound") {
+      const index = ruleIndexFromId(id);
+      return Boolean(config.dns?.rules?.[index]?.inbound);
+    }
+    if (kind === "dns-server" && portKey === "dns-rule") {
+      return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
+    }
+    if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
+    if (kind === "endpoint" && portKey === "dns-server") {
+      return config.dns?.servers?.some((server) => server.type === "tailscale" && server.endpoint === value) ?? false;
+    }
+    if (kind === "endpoint" && portKey === "derp-service") {
+      return (
+        config.services?.some((service) => {
+          const refs = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
+          return service.type === "derp" && refs.includes(value);
+        }) ?? false
+      );
+    }
+    if (kind === "outbound" && portKey === "route") return config.route?.final === value;
+    if (kind === "outbound" && portKey === "route-rule") {
+      return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "selector-group") {
+      return config.outbounds?.some((outbound) => outbound.type === "selector" && outbound.outbounds?.includes(value)) ?? false;
+    }
+    if (kind === "outbound" && portKey === "urltest-group") {
+      return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
+    }
+    if (kind === "outbound" && portKey === "dns-detour") {
+      return config.dns?.servers?.some((server) => server.detour === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "detour-target") {
+      return Boolean(
+        config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
+          config.endpoints?.some((endpoint) => endpoint.detour === value) ||
+          config.ntp?.detour === value,
+      );
+    }
+    if (kind === "outbound" && portKey === "clash-download-detour") {
+      const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
+      return clashApi?.external_ui_download_detour === value;
+    }
+    if (kind === "outbound" && portKey === "service-detour") {
+      return config.services?.some((service) => service.detour === value) ?? false;
+    }
+    if (kind === "outbound" && portKey === "rule-set-download") {
+      return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
+    }
+    if (kind === "service" && portKey === "managed-inbound") {
+      const service = config.services?.find((item) => item.tag === value);
+      return Boolean(service?.servers && Object.values(service.servers).length > 0);
+    }
+    if (kind === "service" && portKey === "dns-server") {
+      return config.dns?.servers?.some((server) => server.type === "resolved" && server.service === value) ?? false;
+    }
+    if (kind === "endpoint" && portKey === "certificate-provider") {
+      return config.certificate_providers?.some((provider) => provider.type === "tailscale" && provider.endpoint === value) ?? false;
+    }
+    if (kind === "rule-set" && portKey === "route-rule") {
+      return (
+        config.route?.rules?.some((rule) => {
+          if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
+          return rule.rule_set === value;
+        }) ?? false
+      );
+    }
+    if (kind === "rule-set" && portKey === "dns-rule") {
+      return (
+        config.dns?.rules?.some((rule) => {
+          if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
+          return rule.rule_set === value;
+        }) ?? false
+      );
+    }
+    return false;
+  }
+
+  if (kind === "inbound" && portKey === "route") return Boolean(config.route);
+  if (kind === "inbound" && portKey === "route-rule-match") {
+    return config.route?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
+  }
+  if (kind === "inbound" && portKey === "dns-rule-match") {
+    return config.dns?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
+  }
+  if (kind === "inbound" && portKey === "service") {
+    return (
+      config.services?.some(
+        (service) =>
+          service.type === "ssm-api" &&
+          service.servers &&
+          Object.values(service.servers).includes(value),
+      ) ?? false
+    );
+  }
+  if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
+  if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
+  if (kind === "route-rule" && portKey === "outbound") {
+    const index = ruleIndexFromId(id);
+    return Boolean(config.route?.rules?.[index]?.outbound);
+  }
+  if (kind === "route-rule" && portKey === "rule-set") {
+    const index = ruleIndexFromId(id);
+    return Boolean(config.route?.rules?.[index]?.rule_set);
+  }
+  if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0;
+  if (kind === "dns" && portKey === "dns-server") return Boolean(config.dns?.final);
+  if (kind === "dns-rule" && portKey === "dns-server") {
+    const index = ruleIndexFromId(id);
+    return Boolean(config.dns?.rules?.[index]?.server);
+  }
+  if (kind === "dns-rule" && portKey === "rule-set") {
+    const index = ruleIndexFromId(id);
+    return Boolean(config.dns?.rules?.[index]?.rule_set);
+  }
+  if (kind === "rule-set" && portKey === "download-detour") {
+    return Boolean(config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value)?.download_detour);
+  }
+  if (kind === "dns-server" && portKey === "outbound") {
+    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
+  }
+  if (kind === "dns-server" && portKey === "endpoint") {
+    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.endpoint);
+  }
+  if (kind === "dns-server" && portKey === "service") {
+    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.service);
+  }
+  if (kind === "endpoint" && portKey === "dial-detour") {
+    return Boolean(config.endpoints?.find((endpoint) => endpoint.tag === value)?.detour);
+  }
+  if (kind === "certificate-provider" && portKey === "endpoint") {
+    return Boolean(config.certificate_providers?.find((provider) => provider.tag === value)?.endpoint);
+  }
+  if (kind === "settings" && type === "ntp" && portKey === "dial-detour") {
+    return Boolean(config.ntp?.detour);
+  }
+  if (kind === "settings" && type === "experimental" && portKey === "clash-download-detour") {
+    const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
+    return Boolean(clashApi?.external_ui_download_detour);
+  }
+  if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
+    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
+  }
+  if (kind === "outbound" && portKey === "dial-detour") {
+    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.detour);
+  }
+  if (kind === "service" && portKey === "verify-client-endpoint") {
+    const service = config.services?.find((item) => item.tag === value);
+    return stringRefs(service?.verify_client_endpoint as string | string[] | undefined).length > 0;
+  }
+  if (kind === "service" && portKey === "detour") {
+    return Boolean(config.services?.find((service) => service.tag === value)?.detour);
+  }
+  return false;
+}
+
+function annotateConnectedPorts(config: SingBoxConfig, nodes: SbcFlowNode[]) {
+  for (const node of nodes) {
+    const input = portEndpointsForNode(node.data.kind, node.data.type, "input")
+      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "input", port.portKey))
+      .map((port) => port.portKey)
+      .sort();
+    const output = portEndpointsForNode(node.data.kind, node.data.type, "output")
+      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "output", port.portKey))
+      .map((port) => port.portKey)
+      .sort();
+
+    if (input.length || output.length) {
+      node.data.connectedPorts = { input, output };
+    }
+  }
 }
 
 export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
@@ -820,6 +1029,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
   centerColumnsVertically(nodes, layout);
 
+  annotateConnectedPorts(config, nodes);
   return { nodes, edges };
 }
 

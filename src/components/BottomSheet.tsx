@@ -25,12 +25,30 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [snap, setSnap] = useState<SheetSnap>(initialSnap);
-  const [dragHeightVh, setDragHeightVh] = useState<number | null>(null);
   const dragStartRef = useRef<{ y: number; heightVh: number } | null>(null);
+  const dragHeightVhRef = useRef<number | null>(null);
+  const frameRef = useRef<number | null>(null);
+
+  const applyDragHeight = useCallback((nextVh: number) => {
+    dragHeightVhRef.current = nextVh;
+    if (frameRef.current !== null) return;
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      if (dragHeightVhRef.current !== null && sheetRef.current) {
+        sheetRef.current.style.height = `${dragHeightVhRef.current}vh`;
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (open) setSnap(initialSnap);
   }, [open, initialSnap]);
+
+  useEffect(() => {
+    return () => {
+      if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +62,8 @@ export function BottomSheet({
   const snapTo = useCallback(
     (next: SheetSnap) => {
       setSnap(next);
-      setDragHeightVh(null);
+      dragHeightVhRef.current = null;
+      if (sheetRef.current) sheetRef.current.style.height = `${SNAP_VH[next]}vh`;
     },
     [],
   );
@@ -52,6 +71,7 @@ export function BottomSheet({
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     dragStartRef.current = { y: event.clientY, heightVh: SNAP_VH[snap] };
+    dragHeightVhRef.current = null;
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -59,12 +79,12 @@ export function BottomSheet({
     const dy = event.clientY - dragStartRef.current.y;
     const vhDelta = (dy / window.innerHeight) * 100;
     const nextVh = Math.max(10, Math.min(96, dragStartRef.current.heightVh - vhDelta));
-    setDragHeightVh(nextVh);
+    applyDragHeight(nextVh);
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!dragStartRef.current) return;
-    const finalVh = dragHeightVh ?? SNAP_VH[snap];
+    const finalVh = dragHeightVhRef.current ?? SNAP_VH[snap];
     dragStartRef.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
     if (finalVh < 18) {
@@ -81,7 +101,7 @@ export function BottomSheet({
   if (!open) return null;
   if (typeof document === "undefined") return null;
 
-  const currentVh = dragHeightVh ?? SNAP_VH[snap];
+  const currentVh = SNAP_VH[snap];
 
   // Portal to <body> so that `position: fixed` resolves against the viewport.
   // Without this, an ancestor with `backdrop-filter` / `transform` / `filter`
