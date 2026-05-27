@@ -9,9 +9,21 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUN_MJS = resolve(__dirname, "run.mjs");
+const ISSUE_BODY_REVIEW_LIMIT = 55_000;
 
-export function formatIssueBody({ reviewStdout, prNumber, prUrl, headSha, branchName }) {
-  const review = reviewStdout.trim();
+function truncateReviewOutput(reviewOutput) {
+  const review = reviewOutput.trim();
+  if (review.length <= ISSUE_BODY_REVIEW_LIMIT) return review;
+  const omitted = review.length - ISSUE_BODY_REVIEW_LIMIT;
+  return [
+    review.slice(0, ISSUE_BODY_REVIEW_LIMIT),
+    "",
+    `[review output truncated: ${omitted} character(s) omitted]`,
+  ].join("\n");
+}
+
+export function formatIssueBody({ reviewOutput, prNumber, prUrl, headSha, branchName }) {
+  const review = truncateReviewOutput(reviewOutput);
   return [
     `Automated Claude pre-push review for **PR #${prNumber}** (\`${branchName}\` @ \`${headSha.slice(0, 8)}\`).`,
     ``,
@@ -35,6 +47,26 @@ function git(args) {
 
 function trySpawn(cmd, args, options = {}) {
   return spawnSync(cmd, args, { encoding: "utf8", ...options });
+}
+
+export function existingReviewIssueUrl(prNumber) {
+  const issue = trySpawn("gh", [
+    "issue",
+    "list",
+    "--state",
+    "all",
+    "--search",
+    `"Review of PR #${prNumber}" in:title`,
+    "--json",
+    "url",
+  ]);
+  if (issue.status !== 0) return null;
+  try {
+    const issues = JSON.parse(issue.stdout);
+    return typeof issues[0]?.url === "string" ? issues[0].url : null;
+  } catch {
+    return null;
+  }
 }
 
 async function main(argv) {
@@ -86,8 +118,8 @@ async function main(argv) {
       return 1;
     }
     prUrl = create.stdout.trim().split(/\r?\n/).pop();
-    const m = prUrl.match(/\/pull\/(\d+)/);
-    if (!m) {
+    const m = prUrl?.match(/\/pull\/(\d+)/);
+    if (!prUrl || !m) {
       process.stderr.write(`submit-pr: cannot parse PR number from URL: ${prUrl}\n`);
       return 1;
     }
@@ -115,13 +147,20 @@ async function main(argv) {
   }
 
   const issueTitle = `Review of PR #${prNumber}: ${prTitle}`;
-  const issueBody = formatIssueBody({ reviewStdout: reviewOutput, prNumber, prUrl, headSha, branchName: branch });
+  const issueBody = formatIssueBody({ reviewOutput, prNumber, prUrl, headSha, branchName: branch });
 
   let issueUrl;
   if (dryRun) {
     process.stderr.write(`submit-pr: [dry-run] would: gh issue create --title "${issueTitle}"\n`);
     issueUrl = "(dry-run issue URL)";
   } else {
+    const existingIssueUrl = existingReviewIssueUrl(prNumber);
+    if (existingIssueUrl) {
+      process.stderr.write(`submit-pr: review issue already exists: ${existingIssueUrl}\n`);
+      process.stdout.write(`PR:    ${prUrl}\n`);
+      process.stdout.write(`Issue: ${existingIssueUrl}\n`);
+      return 0;
+    }
     process.stderr.write("submit-pr: opening review issue...\n");
     const issueR = trySpawn("gh", ["issue", "create", "--title", issueTitle, "--body", issueBody]);
     if (issueR.status !== 0) {

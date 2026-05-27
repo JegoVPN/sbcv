@@ -8,7 +8,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { formatIssueBody } from "./submit.mjs";
+import { existingReviewIssueUrl, formatIssueBody } from "./submit.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUN_MJS = resolve(__dirname, "run.mjs");
@@ -26,22 +26,7 @@ function trySpawn(cmd, args) {
 }
 
 export function hasReviewIssue(prNumber) {
-  const r = gh([
-    "issue",
-    "list",
-    "--state",
-    "all",
-    "--search",
-    `"Review of PR #${prNumber}" in:title`,
-    "--json",
-    "number",
-  ]);
-  if (r.status !== 0) return false;
-  try {
-    return JSON.parse(r.stdout).length > 0;
-  } catch {
-    return false;
-  }
+  return Boolean(existingReviewIssueUrl(prNumber));
 }
 
 async function reviewOnePR(pr) {
@@ -68,12 +53,18 @@ async function reviewOnePR(pr) {
 
   const issueTitle = `Review of PR #${pr.number}: ${pr.title}`;
   const issueBody = formatIssueBody({
-    reviewStdout: reviewOutput,
+    reviewOutput,
     prNumber: pr.number,
     prUrl: pr.url,
     headSha: pr.headRefOid,
     branchName: pr.headRefName,
   });
+
+  const existingIssueUrl = existingReviewIssueUrl(pr.number);
+  if (existingIssueUrl) {
+    process.stderr.write(`poll: PR #${pr.number} review issue appeared during review, skip create: ${existingIssueUrl}\n`);
+    return existingIssueUrl;
+  }
 
   const issueR = gh(["issue", "create", "--title", issueTitle, "--body", issueBody]);
   if (issueR.status !== 0) {

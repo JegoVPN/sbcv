@@ -27,6 +27,7 @@ A goal is done only when all of these are true:
 - The chosen approach is documented as the optimal path for this repo.
 - The implementation is complete for the stated scope.
 - The diff has been reviewed against the goal doc, AGENTS.md, and source-of-truth docs.
+- A PR was opened promptly after local checks, and the PR's Claude review issue was inspected or its absence was recorded.
 - E2E or smoke verification proves the intended user-facing path works.
 - Missing checks are explicitly called out with reasons.
 - The final commit is signed, pushed, and verified on GitHub when available.
@@ -135,13 +136,35 @@ Each atomic should have:
 
 ## Post-Merge Issue Gate
 
-Claude Code review can open GitHub issues after an atomic PR is deployed. Before starting the next atomic PR:
+Claude Code review can open GitHub issues after an atomic PR is opened or deployed. Do not treat GitHub Actions as a reliable review or deployment gate; do not wait on them when local checks and the relevant provider deployment signal are enough.
+
+### PR Issue Gate
+
+Immediately after opening an atomic PR:
+
+1. List open issues and search for `Review of PR #<number>` in the title.
+2. If the scheduled review poller has already opened the issue, inspect it before merging.
+3. If the review issue has actionable active-goal findings, fix them in the same PR or a small follow-up commit before merging.
+4. If the review issue only contains timeout, fail-open, or `0 critical, 0 major, 0 minor` output, comment that it is non-actionable and close it.
+5. If no review issue exists yet, record that the poller has not created it. Do not run a duplicate local `poll-and-submit.mjs` while the scheduled poller is active unless the user explicitly asks.
+
+### Main Issue Gate
+
+Before starting the next atomic PR after merge or push to `main`:
 
 1. List current open GitHub issues for the repository.
 2. Identify issues opened by Claude Code review or issues clearly related to the just-merged PR / active goal.
 3. Resolve actionable active-goal issues before continuing. Use a small follow-up atomic if needed.
 4. If an issue is unrelated, blocked, or intentionally deferred, record that reason in the milestone report.
 5. If GitHub issue access is unavailable, report it explicitly; do not silently skip the gate.
+
+### Issue Classification
+
+- Active-goal issue: title/body references the current PR, the just-merged PR, current branch, or the current goal doc.
+- Actionable issue: contains a concrete bug, regression, missing test, policy violation, or required follow-up.
+- Non-actionable issue: only records timeout/fail-open, duplicate review output, or a passing review with no findings.
+- Unrelated issue: belongs to a different PR/workstream. Record it and continue unless the user redirects the work.
+- Deferred issue: real but outside the active atomic. Link it in the milestone report and make it the next atomic only if it blocks the current goal.
 
 Avoid mixing these in one atomic:
 

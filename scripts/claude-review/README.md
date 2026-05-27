@@ -1,6 +1,19 @@
 # scripts/claude-review
 
-Local Claude Code review wired into `.githooks/pre-push` stage 2.
+Local Claude Code review wired into `.githooks/pre-push` stage 2, plus
+GitHub issue-backed PR review records.
+
+`pre-push` is still useful, but it is only the local fast gate:
+
+- Stage 1 signature verification is mandatory.
+- Stage 2 catches cheap/local blockers such as oversize commits and any
+  Claude critical/major findings that finish before timeout.
+- Stage 2 may fail open when Claude is unavailable or times out.
+
+The persistent review record is the GitHub issue opened by `submit.mjs` or
+`poll-and-submit.mjs`. Agents should inspect that issue for each PR and fix
+actionable findings before merge. Timeout/pass/no-finding issues are
+non-actionable records and may be closed with a short comment.
 
 ## One-time setup (per clone)
 
@@ -37,7 +50,12 @@ On `git push`:
      React/perf (when diff touches `src/**/*.{ts,tsx}` or `vite.config.ts`).
 
    Claude emits `SEVERITY:critical|major|minor` lines. Any **critical**
-   or **major** finding (including the size pre-check) blocks the push.
+   or **major** finding (including the size pre-check) blocks the push when
+   review finishes successfully before timeout.
+
+For a brand-new remote branch, `.githooks/pre-push` computes the review range
+from `merge-base <remote>/main HEAD` instead of the whole ancestor chain. This
+keeps historical GitHub merge commits out of the local signature/review gate.
 
 ## Bypass (when you mean it)
 
@@ -54,7 +72,7 @@ git push --no-verify
 The hook fails **open** with an explicit stderr notice (per
 AGENTS.md #9: no silent validation gaps) in these cases:
 - `claude` CLI not on PATH
-- single review subprocess exceeds 90s (killed)
+- single review subprocess exceeds 180s (killed)
 - `claude --print` exits non-zero
 
 The push proceeds; you'll see the warning in your terminal.
@@ -90,7 +108,9 @@ What it does:
 5. Comments the PR with the issue URL so the cross-link is visible from both
    directions.
 
-Result: one command per PR. Per-PR review issue policy enforced.
+Result: one command per PR. Per-PR review issue policy enforced. If the
+scheduled poller is already active, do not also run this manually unless you
+intend to create/refresh the review issue yourself.
 
 Caveats:
 - If `gh pr create --fill` fails (e.g. branch has no commits ahead of base),
@@ -125,6 +145,17 @@ Properties:
   stands until manually closed.
 - **Fail-open**: a single PR errors → loop logs it and continues.
 - **No human in the loop**: meant for an automated `/loop` cadence.
+
+Operational rule for agents:
+
+- Open the PR as soon as local checks and signed commit verification pass.
+- Pull/list the PR review issue immediately after PR creation.
+- Fix actionable active-goal findings before merge.
+- Do not wait on unreliable GitHub Actions. Use local checks, relevant
+  provider deployment status, commit verification, and the review issue gate.
+- If the PR has a review issue already, use `SBC_SKIP_CLAUDE_REVIEW=1` for the
+  final `main` push to avoid duplicate local Claude review while preserving
+  signature verification.
 
 Recommended cadence: every 30 min. Run cost = subscription quota per
 unreviewed PR commit reviewed.

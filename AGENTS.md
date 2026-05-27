@@ -74,9 +74,12 @@ Before committing:
 
 After committing:
 
-- Push to `origin main` unless the user asks for a branch/PR.
+- For PR work, push the branch and open the PR immediately after local checks and signed commit verification pass.
+- Do not wait on unreliable GitHub Actions before opening or advancing a PR. Prefer local required checks, local E2E/smoke verification, signed commit verification, and relevant provider deployment status.
+- After opening a PR, immediately check for the Claude review issue for that PR. If the scheduled poller has not created it yet, record that and continue; do not run a duplicate local poller unless the user explicitly asks.
+- Resolve actionable Claude review issues for the active goal before merging or starting another product atomic. Review issues with only timeout/pass/no-finding output may be closed as non-actionable with a short comment.
+- Push to `origin main` after merge unless the user asks otherwise. Use `SBC_SKIP_CLAUDE_REVIEW=1 git push origin main` when the PR already has a review issue; this keeps signature verification while avoiding duplicate local Claude review.
 - Verify the pushed commit is GitHub Verified when GitHub access is available.
-- Do not treat GitHub Actions as a reliable merge or deployment gate. Prefer local required checks, local E2E/smoke verification, signed commit verification, and any provider deployment status that is directly relevant. If a GitHub Actions check is pending, flaky, or unavailable, report it but do not block progress solely on that status.
 - Run the post-merge GitHub issue gate before the next atomic PR: list open issues, resolve actionable Claude Code review issues for the active goal, and record unrelated/blocked/unavailable cases.
 
 ## Autonomous `/goal` Execution
