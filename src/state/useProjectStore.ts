@@ -574,8 +574,16 @@ export const useProjectStore = create<ProjectStore>((set) => ({
       }
       if (kind === "route") config = ensureRoute(config);
       if (kind === "route-rule") config = addRouteRule(config);
-      if (kind === "rule-set") {
-        config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
+      const ruleSetType =
+        kind === "rule-set" || kind === "rule-set-remote"
+          ? "remote"
+          : kind === "rule-set-local"
+            ? "local"
+            : kind === "rule-set-inline"
+              ? "inline"
+              : null;
+      if (ruleSetType) {
+        config = addRuleSet(config, ruleSetType, preferredRuleSetTag(ruleSetType));
         const created = config.route?.rule_set?.[config.route.rule_set.length - 1];
         if (created) selectedId = `rule-set:${created.tag}`;
       }

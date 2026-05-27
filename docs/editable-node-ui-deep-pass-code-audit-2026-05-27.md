@@ -91,9 +91,9 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 
 | Node | Defect |
 | --- | --- |
-| rule-set-local | `SbcNode.tsx:169` returns `download-detour` port for **all** rule-set kinds — inline and local should suppress it. Palette only ships one generic "Rule Set" entry that creates `remote`; no direct path to inline/local creation. |
+| rule-set-local | `SbcNode.tsx:169` returns `download-detour` port for **all** rule-set kinds — inline and local should suppress it. ✅ ~~Palette only ships one generic "Rule Set" entry that creates `remote`~~ — fixed 2026-05-27; Palette now ships three explicit entries (Remote / Local / Inline Rule Set) wired through `createFromPalette → addRuleSet(<type>)`. |
 | rule-set-remote | `http_client` only exposes a string select — cannot edit the inline object form. No `missing-rule-set-format` diagnostic for non-standard URL extensions. Palette label still generic "Rule Set" instead of "Remote Rule Set". |
-| rule-set-inline | `useProjectStore.ts:578` `addRuleSet(config, "remote", ...)` hardcoded to remote — no inline creation path. Inline node still shows `download-detour` port. Canvas subtitle for inline still says generic "inline rule-set" with no rule count. |
+| rule-set-inline | ✅ ~~`useProjectStore.ts:578` `addRuleSet(config, "remote", ...)` hardcoded to remote~~ — fixed 2026-05-27; the store now reads the palette kind (`rule-set-remote/-local/-inline`) and dispatches the matching `addRuleSet(config, <type>)`. Inline node still shows `download-detour` port; canvas subtitle still generic. |
 
 ### Inbound
 
