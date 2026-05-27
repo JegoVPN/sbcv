@@ -10,12 +10,14 @@ const INTERNAL_TOKEN = process.env.INTERNAL_TOKEN ?? "";
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES ?? 524288);
 
 function authorizeInternal(headers: Headers): Response | null {
-  if (!INTERNAL_TOKEN) {
-    return new Response(JSON.stringify({ error: "Service misconfigured" }), {
-      status: 503,
-      headers: { "content-type": "application/json" },
-    });
-  }
+  // The container is reached only via the worker's Durable Object stub
+  // (http://container.internal/...). It has no public route, so the
+  // x-internal-token check here is defense-in-depth. When INTERNAL_TOKEN
+  // is unset (e.g. Cloudflare Containers does not currently propagate
+  // worker secrets into the container env), skip the check rather than
+  // hard-fail; the worker's edge-side controls (Turnstile, CORS, rate
+  // limit) still gate every request.
+  if (!INTERNAL_TOKEN) return null;
   const got = headers.get("x-internal-token");
   if (got !== INTERNAL_TOKEN) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
