@@ -380,6 +380,39 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders a per-row Generate UUID button inside vmess/vless/tuic users editor", () => {
+    const cases: Array<{ paletteKind: string; entityType: string }> = [
+      { paletteKind: "inbound-vmess", entityType: "vmess" },
+      { paletteKind: "inbound-vless", entityType: "vless" },
+      { paletteKind: "inbound-tuic", entityType: "tuic" },
+    ];
+
+    for (const { paletteKind, entityType } of cases) {
+      useProjectStore.getState().loadMinimal();
+      act(() => {
+        useProjectStore.getState().createFromPalette(paletteKind);
+      });
+      const { unmount } = render(<App />);
+      const inspector = within(screen.getByLabelText("Node inspector"));
+      let editor = inspector.getByTestId(`${entityType}-inbound-users-editor`);
+      if (within(editor).queryAllByLabelText("UUID").length === 0) {
+        fireEvent.click(within(editor).getByRole("button", { name: /Add user/ }));
+        editor = within(screen.getByLabelText("Node inspector")).getByTestId(
+          `${entityType}-inbound-users-editor`,
+        );
+      }
+      const generateButton = within(editor).getByLabelText("Generate UUID for user 1");
+      fireEvent.click(generateButton);
+      const inbound = useProjectStore
+        .getState()
+        .config.inbounds?.find((candidate) => candidate.type === entityType);
+      const users = Array.isArray(inbound?.users) ? (inbound?.users as Array<Record<string, unknown>>) : [];
+      const uuid = String(users[0]?.uuid ?? "");
+      expect(uuid.length).toBeGreaterThan(0);
+      unmount();
+    }
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
