@@ -176,6 +176,7 @@ export function CanvasWorkspace() {
   const flowRef = useRef<ReactFlowInstance<SbcFlowNode, Edge> | null>(null);
   const pendingPortRef = useRef<PendingPort | null>(null);
   const suppressNextPaneClickRef = useRef(false);
+  const isNodeDraggingRef = useRef(false);
   const config = useProjectStore((state) => state.config);
   const layout = useProjectStore((state) => state.layout);
   const diagnostics = useProjectStore((state) => state.diagnostics);
@@ -316,7 +317,7 @@ export function CanvasWorkspace() {
   }, [chipPicker, createNodeAndConnect]);
 
   useEffect(() => {
-    setNodes(graph.nodes);
+    if (!isNodeDraggingRef.current) setNodes(graph.nodes);
     setEdges(graph.edges);
   }, [graph.edges, graph.nodes, setEdges, setNodes]);
 
@@ -361,7 +362,13 @@ export function CanvasWorkspace() {
           flowRef.current = instance;
           fitFullGraph();
         }}
-        onNodeDragStop={(_, node) => setNodePosition(node.id, node.position)}
+        onNodeDragStart={() => {
+          isNodeDraggingRef.current = true;
+        }}
+        onNodeDragStop={(_, node) => {
+          isNodeDraggingRef.current = false;
+          setNodePosition(node.id, node.position);
+        }}
         onPaneClick={() => {
           if (suppressNextPaneClickRef.current) return;
           setSelectedId(null);

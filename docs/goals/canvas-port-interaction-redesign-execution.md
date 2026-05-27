@@ -574,6 +574,18 @@ Acceptance:
 - No old official validator result is shown for a newer config.
 - Dragging nodes is not interrupted by derived graph refresh.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr10-stale-validation-cleanup`.
+
+- `importJson` and `applyJsonDraft` now share whole-document load behavior: successful loads clear selection, focused node, pinned layout, global panels, stale check notices, official diagnostics, and bump the fresh-load token.
+- Channel, target, template, minimal, import, and failed JSON parse paths now reset semantic/official validation state so old validator output cannot remain attached to a newer config or target.
+- `validateNow` is debounced through a cancellable timer/token, and any canonical config load/update cancels pending semantic notices before they can write stale `checkNotice` state.
+- `runOfficialCheck` clears prior official diagnostics when it starts and discards late success/error responses if the config, channel, or version has changed since the request was sent.
+- `CanvasWorkspace` now skips derived `setNodes(graph.nodes)` refreshes while a node drag is active, using a local ref so drag-time state stays outside canonical config and avoids extra render churn.
+- Added store-level tests for import/apply validation reset, failed parse cleanup, semantic debounce cancellation, and official stale-response discard; added Playwright coverage proving a semantic validation refresh does not snap an active node drag.
+- Frontend performance review: the canvas drag gate uses a ref instead of React state/Zustand, adds no new dependency or async waterfall, and only suppresses node replacement during active drag while still allowing edge updates. The existing Vite single-bundle warning remains tracked as PR-11 performance work.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/validation-state.test.ts tests/app.test.tsx --reporter=dot`, `pnpm exec playwright test e2e/editor.spec.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor validation state handling and drag refresh behavior, not bundled fixture/exported config files.
+
 ### PR-11: React Performance Pass
 
 Fixes PR P1-8, P2-14, P2-15, P2-17.
