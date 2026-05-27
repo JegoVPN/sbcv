@@ -1253,6 +1253,22 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
       );
     }
   }
+  if (relation === "clash-api-download-detour") {
+    const detourTag = parts[0];
+    const clashApi = next.experimental?.clash_api as Record<string, unknown> | undefined;
+    if (clashApi && clashApi.external_ui_download_detour === detourTag) {
+      clashApi.external_ui_download_detour = undefined;
+    }
+  }
+  if (relation === "certificate-provider-endpoint") {
+    const providerTag = parts[0];
+    const endpointTag = parts[1];
+    next.certificate_providers = next.certificate_providers?.map((provider) =>
+      provider.tag === providerTag && provider.endpoint === endpointTag
+        ? { ...provider, endpoint: undefined }
+        : provider,
+    );
+  }
   if (relation === "settings-ntp-detour") {
     const detourTag = parts[0];
     const ntp = next.ntp as Record<string, unknown> | undefined;

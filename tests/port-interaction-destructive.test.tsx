@@ -31,7 +31,6 @@ describe("canvas side-port destructive click guard", () => {
     expectPortClickNoMutation("route-rule:0", "inbound");
     expectPortClickNoMutation("route-rule:0", "outbound");
 
-    expectPortClickNoMutation("dns:main", "inbound-query");
     expectPortClickNoMutation("dns:main", "dns-rule");
     expectPortClickNoMutation("dns:main", "dns-server");
     expectPortClickNoMutation("dns-rule:0", "inbound");

@@ -1,6 +1,7 @@
 import type { Edge, Node } from "@xyflow/react";
 import { edgeIsDisconnectable, formatEdgeId, type PortNodeKind } from "../domain/portRelationRegistry";
-import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig } from "../domain/types";
+import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
+import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
 export type SbcNodeKind = PortNodeKind;
@@ -155,6 +156,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const endpoints = listItems(config.endpoints);
   const services = listItems(config.services);
   const ruleSets = listItems(config.route?.rule_set);
+  const certificateProviders = listItems(config.certificate_providers);
   const visualizeRuleSets = ruleSets.length <= MAX_VISUAL_RULE_SET_NODES;
   let visualCandidateEdges = 0;
   const routeTargetY = new Map<string, number>();
@@ -548,7 +550,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           { x: COLUMNS.target, y },
         ),
       );
-      if (server.detour) {
+      if (server.detour && supportsDnsServerDialFields(server.type)) {
         edges.push(makeEdge(formatEdgeId("dns-server-detour", tag, server.detour), id, `outbound:${server.detour}`, "outbound", "dns-detour"));
       }
       if (server.type === "tailscale" && server.endpoint) {
@@ -620,9 +622,44 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   }
 
+  certificateProviders.forEach((provider, index) => {
+    const tag = entityTag(provider.tag, "certificate-provider", index);
+    const desiredY = DNS_LANE_MIN_Y + (dnsServers.length + dnsRules.length + index + 1) * NODE_SLOT_Y;
+    const y = columnLayout.reserve("target", desiredY);
+    nodes.push(
+      makeNode(
+        `certificate-provider:${tag}`,
+        {
+          ref: { kind: "certificate-provider", tag },
+          kind: "certificate-provider",
+          type: provider.type,
+          title: tag,
+          subtitle: certificateProviderSubtitle(provider),
+          status: diagnosticStatus(`/certificate_providers/${index}`, diagnostics),
+          compatible: provider.type === "tailscale" ? ["Tailscale Endpoint"] : [],
+        },
+        layout,
+        { x: COLUMNS.target, y },
+      ),
+    );
+
+    if (provider.type === "tailscale" && typeof provider.endpoint === "string" && provider.endpoint) {
+      endpointTargetY.set(provider.endpoint, y);
+      edges.push(
+        makeEdge(
+          formatEdgeId("certificate-provider-endpoint", tag, provider.endpoint),
+          `certificate-provider:${tag}`,
+          `endpoint:${provider.endpoint}`,
+          "endpoint",
+          "certificate-provider",
+        ),
+      );
+    }
+  });
+
   endpoints.forEach((endpoint, index) => {
     const tag = entityTag(endpoint.tag, "endpoint", index);
-    const desiredY = endpointTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + dnsServers.length + 1) * NODE_SLOT_Y;
+    const desiredY = endpointTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + dnsServers.length + certificateProviders.length + 1) * NODE_SLOT_Y;
     endpointY.set(tag, columnLayout.reserve("member", desiredY));
   });
 
@@ -708,6 +745,23 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
   }
 
+  const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
+  if (clashApi && typeof clashApi.external_ui_download_detour === "string" && clashApi.external_ui_download_detour) {
+    const experimentalNodeId = "settings:experimental";
+    const experimentalNodeExists = nodes.some((node) => node.id === experimentalNodeId);
+    if (experimentalNodeExists) {
+      edges.push(
+        makeEdge(
+          formatEdgeId("clash-api-download-detour", clashApi.external_ui_download_detour),
+          experimentalNodeId,
+          `outbound:${clashApi.external_ui_download_detour}`,
+          "clash-download-detour",
+          "clash-download-detour",
+        ),
+      );
+    }
+  }
+
   centerColumnsVertically(nodes, layout);
 
   return { nodes, edges };
@@ -781,4 +835,15 @@ function serviceSubtitle(service: ServiceConfig) {
   if (service.type === "ocm") return "OpenAI Codex multiplexer";
   if (service.type === "hysteria-realm") return "hysteria2 realm service";
   return `${service.type} service`;
+}
+
+function certificateProviderSubtitle(provider: TaggedConfig) {
+  if (provider.type === "tailscale") {
+    return typeof provider.endpoint === "string" && provider.endpoint
+      ? `tailscale endpoint ${provider.endpoint}`
+      : "tailscale certificate provider";
+  }
+  if (provider.type === "acme") return "ACME certificate provider";
+  if (provider.type === "cloudflare-origin-ca") return "Cloudflare Origin CA provider";
+  return `${provider.type} certificate provider`;
 }

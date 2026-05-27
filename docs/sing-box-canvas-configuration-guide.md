@@ -395,7 +395,7 @@ Product rule: services are runtime resources, not route targets. A writable serv
 Certificate providers:
 
 - ACME owns DNS01 Challenge and optional HTTP Client fields.
-- Tailscale provider references a Tailscale endpoint.
+- Tailscale provider references a Tailscale endpoint through `certificate_providers[].endpoint`.
 - Cloudflare Origin CA owns API/origin CA fields and optional HTTP Client fields.
 
 Product rule: Log, NTP, Certificate, and Experimental are independent settings cards. Experimental defaults must stay stable-safe; the Inspector shows Cache File, Clash API, and V2Ray API as collapsed module cards so users see the visual ownership first and only open fields when they intentionally configure a module. Testing-only fields such as cache-file `store_dns` require target-gated handling before emission.
@@ -442,15 +442,15 @@ Node side icons are not decorative and must not simply repeat the node's own typ
 | Inbound | none | Route hub, Route/DNS rule inbound matcher | `inbounds[]`, `route.rules[].inbound`, `dns.rules[].inbound` |
 | Route | Inbound traffic source | Route Rule, Route final outbound | `route.rules[]`, `route.final` |
 | Route Rule | Route ordered list, inbound matcher | Rule outbound target, Rule Set matcher | `route.rules[index].inbound`, `route.rules[index].outbound`, `route.rules[index].rule_set` |
-| Outbound leaf | Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS detour target, Dial detour target, Rule Set download detour target | Dial detour outbound when the protocol supports Dial Fields | `route.final`, `route.rules[].outbound`, `outbounds[type=selector/urltest].outbounds[]`, `dns.servers[].detour`, `outbounds[].detour`, `route.rule_set[].download_detour` |
+| Outbound leaf | Route final, Route Rule outbound, Selector candidate, URLTest candidate, DNS detour target, Dial detour target, Rule Set download detour target, NTP detour target, Clash UI download detour target | Dial detour outbound when the protocol supports Dial Fields | `route.final`, `route.rules[].outbound`, `outbounds[type=selector/urltest].outbounds[]`, `dns.servers[].detour`, `outbounds[].detour`, `route.rule_set[].download_detour`, `ntp.detour`, `experimental.clash_api.external_ui_download_detour` |
 | Selector / URLTest | Same inbound references as other outbounds | Candidate outbounds | `outbounds[].outbounds[]`, `outbounds[].default` |
-| DNS | DNS query source | DNS Rule, DNS final server | `dns.rules[]`, `dns.final` |
+| DNS | none | DNS Rule, DNS final server | `dns.rules[]`, `dns.final` |
 | DNS Rule | DNS ordered list, inbound matcher | DNS server target, Rule Set matcher | `dns.rules[index].inbound`, `dns.rules[index].server`, `dns.rules[index].rule_set` |
-| DNS Server | DNS final, DNS Rule server | Detour outbound | `dns.final`, `dns.rules[].server`, `dns.servers[].detour` |
-| Endpoint | DNS/service/provider/resource references | Dial detour outbound when supported | `endpoints[].tag`, `endpoints[].detour`, endpoint-specific reference fields |
+| DNS Server | DNS final, DNS Rule server | Detour outbound, Tailscale endpoint, resolved service | `dns.final`, `dns.rules[].server`, `dns.servers[].detour`, `dns.servers[type=tailscale].endpoint`, `dns.servers[type=resolved].service` |
+| Endpoint | DNS/service/provider/resource references | Dial detour outbound when supported | `endpoints[].tag`, `endpoints[].detour`, `dns.servers[type=tailscale].endpoint`, `services[].verify_client_endpoint`, `certificate_providers[type=tailscale].endpoint` |
 | Service | Service-specific references, not route traffic | Detour outbound or managed resource references where documented | `services[].detour`, service-specific tag fields |
 | Rule Set | Route/DNS/TUN rules that match it | Remote download detour outbound only | `route.rules[].rule_set`, `dns.rules[].rule_set`, `inbounds[type=tun].route_address_set`, `inbounds[type=tun].route_exclude_address_set`, `route.rule_set[].download_detour` |
-| Settings | none | none | Top-level `log`, `ntp`, `certificate`, `experimental` |
+| Settings | none | NTP detour, Clash UI download detour | Top-level `log`, `ntp`, `certificate`, `experimental` |
 
 When a user adds an outbound from Library without connecting it, the Inspector must still expose the full upstream path:
 

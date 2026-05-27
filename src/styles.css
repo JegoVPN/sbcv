@@ -1124,6 +1124,12 @@ textarea {
   border-color: #3c4650;
 }
 
+.sbc-port[data-editable="false"] {
+  cursor: default;
+  border-style: dashed;
+  color: #8f9aa5;
+}
+
 .sbc-port__action {
   position: absolute;
   right: -4px;

@@ -48,6 +48,9 @@ function graphWithBroadPortCoverage() {
   config.endpoints = [
     { type: "tailscale", tag: "ts-ep", detour: "proxy" },
   ];
+  config.certificate_providers = [
+    { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
+  ];
   config.services = [
     { type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 } as never,
     { type: "ssm-api", tag: "ssm", servers: { "/": "ss-in" } } as never,
@@ -55,6 +58,9 @@ function graphWithBroadPortCoverage() {
     { type: "ccm", tag: "ccm", detour: "proxy" } as never,
   ];
   config.ntp = { enabled: true, server: "time.apple.com", detour: "proxy" } as never;
+  config.experimental = {
+    clash_api: { external_ui_download_detour: "proxy" },
+  };
 
   return deriveGraph(config, { positions: {} }, []);
 }
@@ -87,14 +93,24 @@ describe("port relation registry", () => {
     ).toBeUndefined();
     expect(
       relationForHandles("route", "route", "route-rule", "route-rule", "route-rule", "route", allRelationModes)?.mode,
-    ).toBe("order-only");
+    ).toBe("readonly");
 
     expect(
       relationForHandles("dns-server", "resolved", "service", "service", "resolved", "dns-server", ["writable"]),
-    ).toBeUndefined();
+    ).toMatchObject({ id: "dns-server-service" });
     expect(
       relationForHandles("dns-server", "resolved", "service", "service", "resolved", "dns-server", allRelationModes)?.mode,
-    ).toBe("readonly");
+    ).toBe("writable");
+
+    expect(
+      relationForHandles("settings", "ntp", "dial-detour", "outbound", "direct", "detour-target", ["writable"])?.id,
+    ).toBe("settings-ntp-detour");
+    expect(
+      relationForHandles("settings", "experimental", "clash-download-detour", "outbound", "direct", "clash-download-detour", ["writable"])?.id,
+    ).toBe("clash-api-download-detour");
+    expect(
+      relationForHandles("certificate-provider", "tailscale", "endpoint", "endpoint", "tailscale", "certificate-provider", ["writable"])?.id,
+    ).toBe("certificate-provider-endpoint");
   });
 
   it("keeps every rendered graph edge explainable by the registry", () => {

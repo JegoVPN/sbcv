@@ -56,6 +56,7 @@ export function CanvasWorkspace() {
   const focusedNodeId = useProjectStore((state) => state.focusedNodeId);
   const graph = useMemo(() => deriveGraph(config, layout, diagnostics), [config, diagnostics, layout]);
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
+  const selectedTitle = selectedId ? nodeById.get(selectedId)?.data.title ?? selectedId : null;
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
   const { isMobile } = useViewport();
@@ -178,7 +179,7 @@ export function CanvasWorkspace() {
           )}
         </Controls>
       </ReactFlow>
-      {selectedId ? <div className="canvas-selection-pill">Selected {selectedId}</div> : null}
+      {selectedTitle ? <div className="canvas-selection-pill">Selected {selectedTitle}</div> : null}
     </section>
   );
 }
