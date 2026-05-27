@@ -575,6 +575,42 @@ describe("SBC editor shell", () => {
     expect(inbound?.brutal_debug).toBe(true);
   });
 
+  it("renders outbound:ssh cipher/mac/kex_algorithm CSV inputs (1.14)", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("ssh-out");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const cipherInput = within(inspector.getByTestId("outbound-ssh-cipher")).getByLabelText(
+      "Ciphers (CSV)",
+    ) as HTMLInputElement;
+    fireEvent.change(cipherInput, {
+      target: { value: "chacha20-poly1305@openssh.com, aes256-gcm@openssh.com" },
+    });
+
+    const macInput = within(inspector.getByTestId("outbound-ssh-mac")).getByLabelText(
+      "MACs (CSV)",
+    ) as HTMLInputElement;
+    fireEvent.change(macInput, { target: { value: "hmac-sha2-256" } });
+
+    const kexInput = within(inspector.getByTestId("outbound-ssh-kex")).getByLabelText(
+      "Key Exchange Algorithms (CSV)",
+    ) as HTMLInputElement;
+    fireEvent.change(kexInput, { target: { value: "curve25519-sha256" } });
+
+    const ssh = useProjectStore
+      .getState()
+      .config.outbounds?.find((outbound) => outbound.type === "ssh");
+    expect(ssh?.cipher).toEqual([
+      "chacha20-poly1305@openssh.com",
+      "aes256-gcm@openssh.com",
+    ]);
+    expect(ssh?.mac).toEqual(["hmac-sha2-256"]);
+    expect(ssh?.kex_algorithm).toEqual(["curve25519-sha256"]);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

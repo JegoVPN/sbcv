@@ -189,6 +189,9 @@ const outboundHandledFields = new Set([
   "host_key",
   "host_key_algorithms",
   "client_version",
+  "cipher",
+  "mac",
+  "kex_algorithm",
   "url",
   "interval",
   "tolerance",
@@ -3185,6 +3188,43 @@ export function Inspector() {
                 <input
                   value={String(entity.client_version ?? "")}
                   onChange={(event) => updateField(ref, "client_version", event.target.value || undefined)}
+                />
+              </label>
+              <PlatformBanner
+                kind="version"
+                text="The next three fields (Ciphers, MACs, Key Exchange Algorithms) only take effect on sing-box 1.14+ (testing channel)."
+              />
+              <label className="field" data-testid="outbound-ssh-cipher">
+                <span>Ciphers (CSV)</span>
+                <input
+                  value={Array.isArray(entity.cipher) ? (entity.cipher as string[]).join(", ") : ""}
+                  placeholder="chacha20-poly1305@openssh.com, aes256-gcm@openssh.com"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "cipher", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="outbound-ssh-mac">
+                <span>MACs (CSV)</span>
+                <input
+                  value={Array.isArray(entity.mac) ? (entity.mac as string[]).join(", ") : ""}
+                  placeholder="hmac-sha2-256, hmac-sha2-512"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "mac", next.length ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="outbound-ssh-kex">
+                <span>Key Exchange Algorithms (CSV)</span>
+                <input
+                  value={Array.isArray(entity.kex_algorithm) ? (entity.kex_algorithm as string[]).join(", ") : ""}
+                  placeholder="curve25519-sha256, diffie-hellman-group14-sha256"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(ref, "kex_algorithm", next.length ? next : undefined);
+                  }}
                 />
               </label>
             </>
