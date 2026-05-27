@@ -754,6 +754,23 @@ describe("SBC editor shell", () => {
     expect(hysteria?.obfs).toBe("shhh");
   });
 
+  it("renders prefer_go toggle on dns-server:local with a 1.13+ note", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("dns-local");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const row = inspector.getByTestId("dns-server-local-prefer-go");
+    expect(within(row).getByText(/since sing-box 1\.13/)).toBeInTheDocument();
+    const checkbox = within(row).getByRole("checkbox") as HTMLInputElement;
+    fireEvent.click(checkbox);
+    const dnsServer = useProjectStore
+      .getState()
+      .config.dns?.servers?.find((server) => server.type === "local");
+    expect(dnsServer?.prefer_go).toBe(true);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

@@ -238,6 +238,7 @@ const dnsServerHandledFields = new Set([
   "accept_default_resolvers",
   "tls",
   "neighbor_domain",
+  "prefer_go",
   "predefined",
   "inet4_range",
   "inet6_range",
@@ -3987,6 +3988,18 @@ export function Inspector() {
 
       {ref.kind === "dns-server" ? (
         <>
+          {entityType === "local" ? (
+            <label className="toggle-row" data-testid="dns-server-local-prefer-go">
+              <input
+                type="checkbox"
+                checked={Boolean(entity.prefer_go)}
+                onChange={(event) =>
+                  updateField(ref, "prefer_go", event.target.checked || undefined)
+                }
+              />
+              <span>Prefer Go resolver (since sing-box 1.13.0; bypasses platform-native DNS)</span>
+            </label>
+          ) : null}
           {entityType === "resolved" ? (
             <>
               <PlatformBanner

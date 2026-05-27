@@ -1332,6 +1332,24 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits dns-server-neighbor-domain-testing-only on stable only", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        servers: [
+          ...((base.dns?.servers as Record<string, unknown>[]) ?? []),
+          { type: "local", tag: "lo", neighbor_domain: ["home.lan"] },
+        ],
+      },
+    } as typeof base;
+    const stableCodes = validateConfig(config, "stable").map((d) => d.code);
+    expect(stableCodes).toContain("dns-server-neighbor-domain-testing-only");
+    const testingCodes = validateConfig(config, "testing").map((d) => d.code);
+    expect(testingCodes).not.toContain("dns-server-neighbor-domain-testing-only");
+  });
+
   it("emits reality + xtls-rprx-vision diagnostics", () => {
     const base = createStableTunSplitConfig();
     const config = {
