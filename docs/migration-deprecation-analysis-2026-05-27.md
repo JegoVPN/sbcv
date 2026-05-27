@@ -73,13 +73,14 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Code state today:** `sharedFieldRegistry.ts` already declares `domain_resolver` as a dial field. The hub-route shared `default_domain_resolver` exists. But the rule-dns-rule Inspector still allows `outbound:` as a matcher with no deprecation hint.
 - **Gap:** Add `dns-rule-outbound-matcher-deprecated` warning (1.12+) suggesting the migration. Provide a one-click "Move to outbound.domain_resolver" affordance.
 
-### 1.12-C — Outbound `domain_strategy` → `domain_resolver`
+### 1.12-C — Outbound `domain_strategy` → `domain_resolver` — ✅ CLOSED 2026-05-27
 
+- ~~**Code state today:** `Inspector.tsx:1375` labels the field "Domain Strategy (deprecated 1.12+)" but does not emit a diagnostic and does not block writes.~~ Now emits `dial-domain-strategy-deprecated` (warning) from `diagnostics.ts` for every dial-using surface: outbounds, dns-servers, endpoints, ntp.
 - **Deprecated:** `outbound.domain_strategy: "prefer_ipv4" | ...` in any outbound's dial fields.
 - **Replacement:** `outbound.domain_resolver: { server, strategy }`.
-- **Affected nodes:** every outbound and any dial-using surface (also dns-server with type `udp` / `tcp` / `tls` / `https` / `quic` / `h3`, endpoint-wireguard, endpoint-tailscale, settings-ntp dial).
-- **Code state today:** **`Inspector.tsx:1375` labels the field "Domain Strategy (deprecated 1.12+)" but does not emit a diagnostic and does not block writes.** Audit row [outbound-direct] previously flagged this gap explicitly. No `dns-server-domain-strategy-deprecated` diagnostic either.
-- **Gap:** Add a single shared `dial-domain-strategy-deprecated` warning (1.12+) covering every dial-host surface — the label hint isn't enough since the field still serializes silently into exports.
+- **Affected nodes (now covered by diagnostic):** every outbound and any dial-using surface (also dns-server with type `udp` / `tcp` / `tls` / `https` / `quic` / `h3`, endpoint-wireguard, endpoint-tailscale, settings-ntp dial).
+- **Regression test:** `tests/domain.test.ts` — "warns on deprecated dial.domain_strategy across outbound / dns-server / endpoint / ntp".
+- **Remaining:** UI banner inline next to the field, and a one-click migration into `domain_resolver` — both UX nice-to-haves, not blockers.
 
 ## 1.11.0 Deprecations (still affect imports / current 66 nodes)
 
