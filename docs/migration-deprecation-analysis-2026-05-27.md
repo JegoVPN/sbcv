@@ -16,13 +16,14 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 
 ## 1.14.0 Deprecations
 
-### 1.14-A — Inline ACME → certificate provider
+### 1.14-A — Inline ACME → certificate provider — ✅ DIAGNOSTIC LANDED 2026-05-27
 
 - **Deprecated:** `tls.acme { domain, email, ... }` inside any TLS-enabled inbound / outbound / service / dns-server.
 - **Replacement:** `tls.certificate_provider: { type: "acme", ... }` inline, or a tagged entry in top-level `certificate_providers[]` referenced by tag string.
 - **Affected nodes (every TLS-enabled surface):** inbound — trojan, naive, vless, vmess, anytls, hysteria, hysteria2, tuic, shadowtls; outbound — trojan, naive, vless, vmess, anytls, hysteria, hysteria2, tuic, shadowtls; service — derp, hysteria-realm; dns-server — tls, https, quic, h3; settings — certificate.
-- **Code state today:** No `tls.acme` deprecation diagnostic; no Inspector banner. The shared TLS card lets users edit `acme` fields freely.
-- **Gap:** Need a `tls-acme-deprecated` diagnostic (warning) plus Inspector banner on every node where `tls.acme` is set, suggesting `certificate_provider`. Also need an "Convert to certificate_provider" one-click migration.
+- **Code state today:** `tls-acme-deprecated` warning emitted from `diagnostics.ts` for every inbound / outbound / dns-server / service whose `tls.acme` is an object. Gated to `channel === "testing"` (1.14+); 1.12/1.13 stable still accept inline ACME silently.
+- **Regression test:** `tests/domain.test.ts` — "warns on inline tls.acme on testing channel only (1.14-A)".
+- **Remaining:** Inspector banner next to the field, plus one-click "Convert to certificate_provider" migration — both UX nice-to-haves.
 
 ### 1.14-B — Address filter fields → response matching in DNS rules
 
