@@ -3245,7 +3245,7 @@ export function Inspector() {
                 />
               </label>
               <PlatformBanner
-                kind="version"
+                kind="channel"
                 text="The next three fields (Ciphers, MACs, Key Exchange Algorithms) only take effect on sing-box 1.14+ (testing channel)."
               />
               <label className="field" data-testid="outbound-ssh-cipher">
