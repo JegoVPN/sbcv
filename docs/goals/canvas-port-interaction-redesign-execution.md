@@ -22,7 +22,7 @@ This goal is not only a UI redesign. It is blocked by data-integrity repairs bec
 - Repo instructions: `AGENTS.md`.
 - Source-of-truth docs: `docs/sbc-react-flow-rd-plan.md`, `docs/sing-box-config-doc-inventory.md`, `docs/sing-box-canvas-configuration-guide.md`, `docs/sing-box-config-capability-audit.md`, `docs/goal-driven-development.md`.
 - Frontend gate: `vercel-react-best-practices`.
-- PR #1 `JegoVPN/sbcv#1`, head `7422d55ea00c5a2b291c9a13fc75e06249dc4ff6`, `docs/goals/canvas-port-interaction-redesign.md`.
+- PR #1 `JegoVPN/sbcv#1`, head `7422d55ea00c5a2b291c9a13fc75e06249dc4ff6`; this execution plan supersedes the PR draft spec.
 - Local code audit over `src/components/CanvasWorkspace.tsx`, `src/components/SbcNode.tsx`, `src/state/useProjectStore.ts`, `src/domain/commands.ts`, `src/canvas/graph.ts`, `src/domain/diagnostics.ts`, `src/domain/types.ts`, tests and e2e specs.
 
 Count note: the PR comment says "40 findings", while the enumerated buckets are P0-1..P0-13, P1-1..P1-18, and P2-1..P2-20. Execution should track the enumerated IDs, not the prose count.
