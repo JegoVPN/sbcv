@@ -493,7 +493,7 @@ export function createService(type: string, tag: string): ServiceConfig {
     return {
       type,
       tag,
-      listen: "127.0.0.1",
+      listen: "::",
       listen_port: 8443,
       config_path: "derper.key",
       home: "",
