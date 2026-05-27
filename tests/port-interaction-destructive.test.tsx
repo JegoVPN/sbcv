@@ -38,6 +38,29 @@ describe("canvas side-port destructive click guard", () => {
     expectPortClickNoMutation("dns-rule:0", "dns-server");
   });
 
+  it("rejects command-layer connects for visual-only port relations", () => {
+    useProjectStore.getState().loadTemplate();
+    const beforeRouteOrder = useProjectStore.getState().config;
+
+    useProjectStore.getState().connectPorts({
+      source: "route:main",
+      sourceHandle: "route-rule",
+      target: "route-rule:0",
+      targetHandle: "route",
+    });
+    expect(useProjectStore.getState().config).toBe(beforeRouteOrder);
+
+    const inboundTag = useProjectStore.getState().config.inbounds?.[0]?.tag;
+    if (!inboundTag) throw new Error("missing inbound fixture");
+    useProjectStore.getState().connectPorts({
+      source: `inbound:${inboundTag}`,
+      sourceHandle: "route",
+      target: "route:main",
+      targetHandle: "inbound",
+    });
+    expect(useProjectStore.getState().config).toBe(beforeRouteOrder);
+  });
+
   it("does not remove group members or create detour targets on side-port click", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);

@@ -49,8 +49,9 @@ const inspectorIcons = {
 
 function selectedRefFromId(id: string | null): EntityRef | null {
   if (!id) return null;
-  const [kind, ...rest] = id.split(":");
-  const value = rest.join(":");
+  const separator = id.indexOf(":");
+  const kind = separator >= 0 ? id.slice(0, separator) : id;
+  const value = separator >= 0 ? id.slice(separator + 1) : "";
   if (kind === "inbound" && value) return { kind: "inbound", tag: value };
   if (kind === "outbound" && value) return { kind: "outbound", tag: value };
   if (kind === "dns-server" && value) return { kind: "dns-server", tag: value };
