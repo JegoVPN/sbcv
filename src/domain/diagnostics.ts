@@ -610,6 +610,22 @@ export function validateConfig(
         );
       }
     }
+    if (outbound.type === "ssh") {
+      const obj = outbound as Record<string, unknown>;
+      const password = typeof obj.password === "string" && obj.password.length > 0;
+      const privateKey = typeof obj.private_key === "string" && obj.private_key.length > 0;
+      const privateKeyPath = typeof obj.private_key_path === "string" && obj.private_key_path.length > 0;
+      const auths = [password, privateKey, privateKeyPath].filter(Boolean);
+      if (auths.length > 1) {
+        push(
+          diagnostics,
+          "warning",
+          "ssh-auth-mutex",
+          `/outbounds/${index}`,
+          `SSH outbound "${tag}" sets more than one of password / private_key / private_key_path. sing-box uses the highest-priority one and ignores the rest; remove the unused entries to avoid confusion.`,
+        );
+      }
+    }
     if (channel === "stable" && outbound.type === "ssh") {
       const obj = outbound as Record<string, unknown>;
       if (obj.cipher !== undefined) {
