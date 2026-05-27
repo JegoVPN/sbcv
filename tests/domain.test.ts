@@ -228,6 +228,27 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns when a hosts DNS server has no predefined or path", () => {
+    const config = createStableTunSplitConfig();
+    config.dns = {
+      ...config.dns,
+      servers: [
+        ...(config.dns?.servers ?? []),
+        { type: "hosts", tag: "empty-hosts" } as never,
+      ],
+    };
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "dns-server-hosts-empty"),
+    ).toBe(true);
+
+    (config.dns!.servers as Array<Record<string, unknown>>)[
+      (config.dns!.servers as Array<Record<string, unknown>>).length - 1
+    ].path = "/etc/hosts";
+    expect(
+      validateConfig(config, "stable").some((finding) => finding.code === "dns-server-hosts-empty"),
+    ).toBe(false);
+  });
+
   it("flags every dns-server type that requires a server address when server is missing", () => {
     const config = createStableTunSplitConfig();
     const remoteTypes = ["udp", "tcp", "tls", "https", "quic", "h3"];

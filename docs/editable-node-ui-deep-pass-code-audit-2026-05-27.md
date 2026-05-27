@@ -144,7 +144,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | Node | Defect |
 | --- | --- |
 | dns-server-local | `prefer_go` not in `dnsServerHandledFields` (line 205-221). `neighbor_domain` has no "Since 1.14.0 (testing)" annotation nor channel-gate diagnostic. |
-| dns-server-hosts | ✅ ~~`path` strongly typed as `string`~~ — fixed 2026-05-27; Inspector renders a `Path(s)` comma-separated input only for `entityType === "hosts"`, parsing single vs. multi entries back into `string` vs. `string[]`. `DnsServerConfig.path` now types as `string \| string[]`. `predefined` and `headers` added to the type. Canvas detour port still renders for hosts despite `dnsServerDialTypes` excluding it. No `predefined` non-empty diagnostic. |
+| dns-server-hosts | ✅ ~~`path` strongly typed as `string`~~ — fixed; multi-path support landed. ✅ ~~No `predefined` non-empty diagnostic~~ — fixed 2026-05-27, `dns-server-hosts-empty` warning fires when neither `predefined` (non-empty map) nor `path` (non-empty string/array) is set. Canvas detour port still renders for hosts despite `dnsServerDialTypes` excluding it. |
 | dns-server-udp | ✅ Clean. |
 | dns-server-tcp | ✅ ~~`missing-dns-server-address` diagnostic missing~~ — fixed 2026-05-27, `dns-server-missing-server` error fires for any udp/tcp/tls/https/quic/h3 DNS server that lacks a non-empty `server` string. |
 | dns-server-tls | `certificate_provider` still rendered as free text instead of select. ✅ ~~`server` field has no required indicator/diagnostic~~ — fixed 2026-05-27 (covered by the new `dns-server-missing-server` error). |
