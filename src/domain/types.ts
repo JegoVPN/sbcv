@@ -41,7 +41,9 @@ export type DnsServerConfig = TaggedConfig & {
   address?: string;
   server?: string;
   server_port?: number;
-  path?: string;
+  path?: string | string[];
+  predefined?: Record<string, string[]>;
+  headers?: Record<string, string>;
 };
 
 export type EndpointConfig = TaggedConfig & {

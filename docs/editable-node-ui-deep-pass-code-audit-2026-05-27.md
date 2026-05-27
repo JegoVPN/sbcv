@@ -144,7 +144,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | Node | Defect |
 | --- | --- |
 | dns-server-local | `prefer_go` not in `dnsServerHandledFields` (line 205-221). `neighbor_domain` has no "Since 1.14.0 (testing)" annotation nor channel-gate diagnostic. |
-| dns-server-hosts | `path` strongly typed as `string` in `Inspector.tsx:3281-3289` — `String(entity.path)` collapses arrays to `","`-joined string, violating schema. `DnsServerConfig.path` type also only `string`, missing `string \| string[]`. `predefined` not declared on `DnsServerConfig` type. Canvas detour port renders for hosts despite `dnsServerDialTypes` excluding it. No `predefined` non-empty diagnostic. |
+| dns-server-hosts | ✅ ~~`path` strongly typed as `string`~~ — fixed 2026-05-27; Inspector renders a `Path(s)` comma-separated input only for `entityType === "hosts"`, parsing single vs. multi entries back into `string` vs. `string[]`. `DnsServerConfig.path` now types as `string \| string[]`. `predefined` and `headers` added to the type. Canvas detour port still renders for hosts despite `dnsServerDialTypes` excluding it. No `predefined` non-empty diagnostic. |
 | dns-server-udp | ✅ Clean. |
 | dns-server-tcp | `missing-dns-server-address` (server required-field) diagnostic completely missing. |
 | dns-server-tls | `certificate_provider` still rendered as free text instead of select. `server` field has no required indicator/diagnostic. |
