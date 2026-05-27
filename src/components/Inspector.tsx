@@ -201,6 +201,7 @@ const outboundHandledFields = new Set([
   "extra_args",
   "torrc",
   "extra_headers",
+  "quic_congestion_control",
   "server_ports",
   "hop_interval",
   "up_mbps",
@@ -3214,6 +3215,23 @@ export function Inspector() {
               >
                 <option value="">(none)</option>
                 <option value="xtls-rprx-vision">xtls-rprx-vision</option>
+              </select>
+            </label>
+          ) : null}
+          {entityType === "naive" ? (
+            <label className="field" data-testid="naive-quic-congestion-control">
+              <span>QUIC Congestion Control</span>
+              <select
+                value={typeof entity.quic_congestion_control === "string" ? entity.quic_congestion_control : ""}
+                onChange={(event) =>
+                  updateField(ref, "quic_congestion_control", event.target.value || undefined)
+                }
+              >
+                <option value="">(default — bbr)</option>
+                <option value="bbr">bbr</option>
+                <option value="bbr2">bbr2</option>
+                <option value="cubic">cubic</option>
+                <option value="reno">reno</option>
               </select>
             </label>
           ) : null}
