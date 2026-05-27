@@ -1997,6 +1997,82 @@ export function Inspector() {
               onChange={(event) => updateField(ref, "client_subnet", event.target.value || undefined)}
             />
           </label>
+          {(() => {
+            const fakeip = objectField(entity.fakeip);
+            const writeFakeip = (next: InspectorEntity) =>
+              updateField(ref, "fakeip", Object.keys(next).length ? next : undefined);
+            return (
+              <fieldset className="field field--checklist" data-testid="dns-hub-fakeip">
+                <legend>FakeIP</legend>
+                <label className="toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(fakeip.enabled)}
+                    onChange={(event) => {
+                      if (event.target.checked) writeFakeip({ ...fakeip, enabled: true });
+                      else {
+                        const { enabled: _e, ...rest } = fakeip as Record<string, unknown>;
+                        writeFakeip(rest);
+                      }
+                    }}
+                  />
+                  <span>FakeIP enabled</span>
+                </label>
+                <label className="field">
+                  <span>IPv4 Range</span>
+                  <input
+                    value={typeof fakeip.inet4_range === "string" ? fakeip.inet4_range : ""}
+                    placeholder="198.18.0.0/15"
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) {
+                        const { inet4_range: _v, ...rest } = fakeip as Record<string, unknown>;
+                        writeFakeip(rest);
+                      } else {
+                        writeFakeip({ ...fakeip, inet4_range: value });
+                      }
+                    }}
+                  />
+                </label>
+                <label className="field">
+                  <span>IPv6 Range</span>
+                  <input
+                    value={typeof fakeip.inet6_range === "string" ? fakeip.inet6_range : ""}
+                    placeholder="fc00::/18"
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (!value) {
+                        const { inet6_range: _v, ...rest } = fakeip as Record<string, unknown>;
+                        writeFakeip(rest);
+                      } else {
+                        writeFakeip({ ...fakeip, inet6_range: value });
+                      }
+                    }}
+                  />
+                </label>
+              </fieldset>
+            );
+          })()}
+          <PlatformBanner
+            kind="channel"
+            text="The next two fields (Optimistic, Timeout) only take effect on sing-box 1.14+ (testing channel)."
+          />
+          <label className="toggle-row" data-testid="dns-hub-optimistic">
+            <input
+              type="checkbox"
+              checked={Boolean(entity.optimistic)}
+              onChange={(event) => updateField(ref, "optimistic", event.target.checked || undefined)}
+            />
+            <span>Optimistic (testing 1.14+)</span>
+          </label>
+          <label className="field" data-testid="dns-hub-timeout">
+            <span>Timeout (testing 1.14+, e.g. "5s")</span>
+            <input
+              value={typeof entity.timeout === "string" ? entity.timeout : ""}
+              placeholder="5s"
+              onChange={(event) => updateField(ref, "timeout", event.target.value || undefined)}
+            />
+          </label>
           <DnsRulesTable />
         </>
       ) : null}

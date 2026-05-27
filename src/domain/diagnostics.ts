@@ -1108,6 +1108,27 @@ export function validateConfig(
         );
       }
     });
+    const dnsObj = config.dns as Record<string, unknown> | undefined;
+    if (dnsObj && typeof dnsObj === "object") {
+      if (dnsObj.optimistic !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-optimistic-testing-only",
+          "/dns/optimistic",
+          "dns.optimistic is testing-only (sing-box 1.14+).",
+        );
+      }
+      if (dnsObj.timeout !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-timeout-testing-only",
+          "/dns/timeout",
+          "dns.timeout is testing-only (sing-box 1.14+).",
+        );
+      }
+    }
   }
 
   listItems(config.dns?.servers).forEach((server, index) => {
