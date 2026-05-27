@@ -9,15 +9,21 @@ On `git push`:
 1. **Stage 1** (existing): every commit in the push range is checked
    with `git verify-commit` (signature). Failure aborts the push.
 2. **Stage 2** (this directory): `run.mjs` reviews every commit in the
-   push range in parallel (cap 4), via `claude --print`. Each commit's
-   review applies four dimensions from `rubric.md`:
-   - correctness
-   - AGENTS.md non-negotiables (#1–#11)
-   - goal/spec drift (against the most-recently-committed `docs/goals/*.md`)
-   - React/perf (when the diff touches `src/**/*.{ts,tsx}` or `vite.config.ts`)
+   push range in parallel (cap 4). For each commit:
+   - **Size pre-check**: if the commit's `insertions + deletions` exceeds
+     **400 logical lines** (AGENTS.md #8 atomic budget), Claude is **not**
+     invoked. The script emits a synthetic `SEVERITY:major` finding asking
+     to split the commit. Rationale: large commits both signal a #8
+     violation AND don't fit Claude's per-commit timeout — short-circuit
+     catches them cheaply.
+   - **Claude review** (commits within budget): invoked via `claude --print`
+     with `rubric.md` + `AGENTS.md` + commit diff + active goal doc. Four
+     review dimensions: correctness, AGENTS.md non-negotiables (#1–#11),
+     goal/spec drift (vs the most-recently-committed `docs/goals/*.md`),
+     React/perf (when diff touches `src/**/*.{ts,tsx}` or `vite.config.ts`).
 
    Claude emits `SEVERITY:critical|major|minor` lines. Any **critical**
-   or **major** finding blocks the push.
+   or **major** finding (including the size pre-check) blocks the push.
 
 ## Bypass (when you mean it)
 

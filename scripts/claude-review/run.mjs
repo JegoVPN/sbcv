@@ -12,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "..", "..");
 const TIMEOUT_MS = 90_000;
 const CONCURRENCY = 4;
+const SIZE_BUDGET = 400; // AGENTS.md #8 small-atomic budget (logical lines)
 
 const defaultRun = (cmd) => execSync(cmd, { encoding: "utf8" });
 
@@ -180,6 +181,21 @@ async function main(args) {
   );
 
   const results = await pmap(shas, CONCURRENCY, async (sha) => {
+    const shortstat = execSync(`git show --shortstat --format='' ${sha}`, { encoding: "utf8" });
+    const size = parseShortstat(shortstat);
+    if (size > SIZE_BUDGET) {
+      const subject = execSync(`git log -1 --format=%s ${sha}`, { encoding: "utf8" }).trim();
+      const stdout = [
+        `## Review for ${sha.slice(0, 8)} — ${subject}`,
+        ``,
+        `Size pre-check: ${size} LOC exceeds AGENTS.md #8 budget (~${SIZE_BUDGET}). Short-circuiting before Claude (large commits both signal a #8 violation and exceed the per-commit review timeout).`,
+        ``,
+        `SEVERITY:major — commit size ${size} LOC exceeds AGENTS.md #8 atomic budget (~${SIZE_BUDGET}); split into smaller atomics before pushing.`,
+        `SUMMARY: 0 critical, 1 major, 0 minor.`,
+        ``,
+      ].join("\n");
+      return { sha, stdout, severities: ["major"], error: null };
+    }
     const commitMsg = execSync(`git log -1 --format=%B ${sha}`, { encoding: "utf8" });
     const commitDiff = execSync(`git show --stat -p ${sha}`, {
       encoding: "utf8",
