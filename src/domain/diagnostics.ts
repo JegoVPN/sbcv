@@ -1094,6 +1094,56 @@ export function validateConfig(
     push(diagnostics, "warning", "no-outbounds", "/outbounds", "No outbounds are configured.");
   }
 
+  const dialDomainStrategyMessage =
+    'Dial field "domain_strategy" is deprecated since sing-box 1.12.0 and scheduled for removal. Migrate to "domain_resolver" (per-entity) or route.default_domain_resolver.';
+  const hasDomainStrategy = (entity: unknown): boolean => {
+    if (!entity || typeof entity !== "object") return false;
+    const value = (entity as Record<string, unknown>).domain_strategy;
+    return typeof value === "string" && value.length > 0;
+  };
+  outbounds.forEach((outbound, index) => {
+    if (!hasDomainStrategy(outbound)) return;
+    const tag = outbound.tag ?? `outbound-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "dial-domain-strategy-deprecated",
+      `/outbounds/${index}/domain_strategy`,
+      `Outbound "${tag}" — ${dialDomainStrategyMessage}`,
+    );
+  });
+  listItems(config.dns?.servers).forEach((server, index) => {
+    if (!hasDomainStrategy(server)) return;
+    const tag = server.tag ?? `dns-server-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "dial-domain-strategy-deprecated",
+      `/dns/servers/${index}/domain_strategy`,
+      `DNS server "${tag}" — ${dialDomainStrategyMessage}`,
+    );
+  });
+  endpoints.forEach((endpoint, index) => {
+    if (!hasDomainStrategy(endpoint)) return;
+    const tag = endpoint.tag ?? `endpoint-${index}`;
+    push(
+      diagnostics,
+      "warning",
+      "dial-domain-strategy-deprecated",
+      `/endpoints/${index}/domain_strategy`,
+      `Endpoint "${tag}" — ${dialDomainStrategyMessage}`,
+    );
+  });
+  if (hasDomainStrategy(config.ntp)) {
+    push(
+      diagnostics,
+      "warning",
+      "dial-domain-strategy-deprecated",
+      "/ntp/domain_strategy",
+      `NTP — ${dialDomainStrategyMessage}`,
+    );
+  }
+
   return diagnostics;
 }
 

@@ -249,6 +249,38 @@ describe("canonical sing-box domain model", () => {
     }
   });
 
+  it("warns on deprecated dial.domain_strategy across outbound / dns-server / endpoint / ntp", () => {
+    const config = createStableTunSplitConfig();
+    const findings = (cfg: typeof config) =>
+      validateConfig(cfg, "stable").filter(
+        (diagnostic) => diagnostic.code === "dial-domain-strategy-deprecated",
+      );
+
+    expect(findings(config)).toEqual([]);
+
+    const proxyOutbound = config.outbounds?.find((item) => item.tag === "proxy") as Record<string, unknown>;
+    proxyOutbound.domain_strategy = "prefer_ipv4";
+    expect(findings(config).map((finding) => finding.path)).toContain(
+      `/outbounds/${config.outbounds?.findIndex((item) => item.tag === "proxy")}/domain_strategy`,
+    );
+
+    const remoteDns = config.dns?.servers?.find((server) => server.tag === "remote-doh") as Record<string, unknown>;
+    remoteDns.domain_strategy = "ipv4_only";
+    expect(findings(config).some((finding) => finding.path.startsWith("/dns/servers/"))).toBe(true);
+
+    config.endpoints = [
+      {
+        type: "wireguard",
+        tag: "wg-ep",
+        domain_strategy: "prefer_ipv6",
+      } as never,
+    ];
+    expect(findings(config).some((finding) => finding.path === "/endpoints/0/domain_strategy")).toBe(true);
+
+    config.ntp = { enabled: true, server: "time.apple.com", domain_strategy: "ipv4_only" } as never;
+    expect(findings(config).some((finding) => finding.path === "/ntp/domain_strategy")).toBe(true);
+  });
+
   it("changes inbound and outbound protocol type while preserving tags and references", () => {
     const config = createStableTunSplitConfig();
     const changedOutbound = changeEntityType(config, { kind: "outbound", tag: "hk" }, "http");
