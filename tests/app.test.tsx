@@ -877,6 +877,35 @@ describe("SBC editor shell", () => {
     expect((tun as Record<string, unknown>).auto_redirect).toBe(true);
   });
 
+  it("renders dns hub fakeip + optimistic + timeout controls", () => {
+    useProjectStore.getState().loadTemplate();
+    act(() => {
+      useProjectStore.getState().setSelectedId("dns:main");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const fakeip = inspector.getByTestId("dns-hub-fakeip");
+    fireEvent.click(within(fakeip).getByLabelText("FakeIP enabled"));
+    const inet4 = within(fakeip).getByLabelText("IPv4 Range") as HTMLInputElement;
+    fireEvent.change(inet4, { target: { value: "198.18.0.0/15" } });
+
+    const optimistic = within(inspector.getByTestId("dns-hub-optimistic")).getByRole(
+      "checkbox",
+    ) as HTMLInputElement;
+    fireEvent.click(optimistic);
+
+    const timeout = within(inspector.getByTestId("dns-hub-timeout")).getByLabelText(
+      /Timeout/,
+    ) as HTMLInputElement;
+    fireEvent.change(timeout, { target: { value: "7s" } });
+
+    const dns = useProjectStore.getState().config.dns as Record<string, unknown>;
+    expect((dns?.fakeip as Record<string, unknown>)?.enabled).toBe(true);
+    expect((dns?.fakeip as Record<string, unknown>)?.inet4_range).toBe("198.18.0.0/15");
+    expect(dns?.optimistic).toBe(true);
+    expect(dns?.timeout).toBe("7s");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {

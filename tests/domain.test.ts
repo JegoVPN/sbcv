@@ -1332,6 +1332,24 @@ describe("canonical sing-box domain model", () => {
     expect(testingCodes).not.toContain("dns-server-tailscale-accept-search-domain-testing-only");
   });
 
+  it("emits dns-optimistic-testing-only + dns-timeout-testing-only on stable channel", () => {
+    const base = createStableTunSplitConfig();
+    const config = {
+      ...base,
+      dns: {
+        ...(base.dns ?? {}),
+        optimistic: true,
+        timeout: "5s",
+      },
+    } as typeof base;
+    const stableCodes = validateConfig(config, "stable").map((d) => d.code);
+    expect(stableCodes).toContain("dns-optimistic-testing-only");
+    expect(stableCodes).toContain("dns-timeout-testing-only");
+    const testingCodes = validateConfig(config, "testing").map((d) => d.code);
+    expect(testingCodes).not.toContain("dns-optimistic-testing-only");
+    expect(testingCodes).not.toContain("dns-timeout-testing-only");
+  });
+
   it("emits rule-set-format-missing when remote URL extension is unknown and format is unset", () => {
     const base = createStableTunSplitConfig();
     const config = {

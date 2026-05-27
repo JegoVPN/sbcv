@@ -77,7 +77,7 @@ Grouped by family. Each row is one verified delta from running the audit; line n
 | Node | Defect |
 | --- | --- |
 | hub-route | ✅ ~~5 platform fields missing~~ — fixed 2026-05-27. ✅ ~~sharedFieldRegistry.ts:200 unconditionally pushes http-client + neighbor groups~~ — fixed 2026-05-27, `sharedGroupsForEntity` now takes a `channel` argument and hides `http-client` + `neighbor` groups on stable channel (covers route hub, route-rule, dns-rule). Inspector passes the current channel. |
-| hub-dns | No embedded `fakeip` editor in the dns hub branch. `optimistic` / `timeout` (testing 1.14) have no channel gate. |
+| hub-dns | ✅ Closed 2026-05-27. ~~No embedded `fakeip` editor in the dns hub branch~~ fixed — dns hub Inspector now renders a `FakeIP` fieldset (testid `dns-hub-fakeip`) with an `enabled` toggle plus `IPv4 Range` (placeholder `198.18.0.0/15`) and `IPv6 Range` (`fc00::/18`) inputs, all wired to the structured `dns.fakeip` object and cleaning up unset keys on round-trip. ~~`optimistic` / `timeout` (testing 1.14) have no channel gate~~ fixed — added `dns-optimistic-testing-only` and `dns-timeout-testing-only` warnings under the `channel === "stable"` block alongside an inline `channel` PlatformBanner above both new controls. Two regression tests in app.test.tsx + domain.test.ts lock the UI write-through and the channel-gate behavior on stable vs testing. |
 
 ### Rules
 
