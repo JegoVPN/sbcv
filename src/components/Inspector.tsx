@@ -4497,6 +4497,18 @@ export function Inspector() {
         </>
       ) : null}
 
+      {(() => {
+        const tls = (entity as Record<string, unknown>).tls;
+        if (!tls || typeof tls !== "object" || Array.isArray(tls)) return null;
+        const acme = (tls as Record<string, unknown>).acme;
+        if (!acme || typeof acme !== "object" || Array.isArray(acme)) return null;
+        return (
+          <PlatformBanner
+            kind="deprecated"
+            text="Inline tls.acme is deprecated since sing-box 1.14.0. Move the ACME options into tls.certificate_provider (type=acme) or a top-level certificate_providers[] entry. The current value still round-trips, but sing-box will reject it after the field is removed."
+          />
+        );
+      })()}
       <SharedFieldCards
         groups={sharedGroups}
         entity={entity}

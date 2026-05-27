@@ -21,9 +21,9 @@ This complements [editable-node-ui-deep-pass-code-audit-2026-05-27.md](editable-
 - **Deprecated:** `tls.acme { domain, email, ... }` inside any TLS-enabled inbound / outbound / service / dns-server.
 - **Replacement:** `tls.certificate_provider: { type: "acme", ... }` inline, or a tagged entry in top-level `certificate_providers[]` referenced by tag string.
 - **Affected nodes (every TLS-enabled surface):** inbound — trojan, naive, vless, vmess, anytls, hysteria, hysteria2, tuic, shadowtls; outbound — trojan, naive, vless, vmess, anytls, hysteria, hysteria2, tuic, shadowtls; service — derp, hysteria-realm; dns-server — tls, https, quic, h3; settings — certificate.
-- **Code state today:** `tls-acme-deprecated` warning emitted from `diagnostics.ts` for every inbound / outbound / dns-server / service whose `tls.acme` is an object. Gated to `channel === "testing"` (1.14+); 1.12/1.13 stable still accept inline ACME silently.
-- **Regression test:** `tests/domain.test.ts` — "warns on inline tls.acme on testing channel only (1.14-A)".
-- **Remaining:** Inspector banner next to the field, plus one-click "Convert to certificate_provider" migration — both UX nice-to-haves.
+- **Code state today:** `tls-acme-deprecated` warning emitted from `diagnostics.ts` (channel-gated to testing). Inspector now also shows an inline `PlatformBanner` with `kind="deprecated"` whenever any entity carries `tls.acme` as an object — covers every TLS-enabled surface in one place.
+- **Regression tests:** `tests/domain.test.ts` (diagnostic) + `tests/app.test.tsx` (banner — "shows an inline deprecation banner when tls.acme is set on an inbound").
+- **Remaining:** one-click "Convert to certificate_provider" migration — UX nice-to-have.
 
 ### 1.14-B — Address filter fields → response matching in DNS rules
 
