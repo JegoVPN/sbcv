@@ -5,7 +5,7 @@ import {
   replaceRegisteredTagReferences,
   type ReferenceKind,
 } from "./referenceRegistry";
-import { parseEdgeId } from "./portRelationRegistry";
+import { parseEdgeId, relationIsDisconnectable } from "./portRelationRegistry";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -1059,19 +1059,21 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
 }
 
 export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxConfig {
-  const next = cloneConfig(config);
   const parsed = parseEdgeId(edgeId);
-  if (!parsed) return next;
+  if (!parsed || !relationIsDisconnectable(parsed.relationId)) return config;
+  const next = cloneConfig(config);
   const relation = parsed.relationId;
   const parts = parsed.parts;
   if (relation === "route-final") {
-    if (next.route) next.route.final = undefined;
+    const outboundTag = parts[0];
+    const route = next.route;
+    if (route && route.final === outboundTag) route.final = undefined;
   }
   if (relation === "route-rule") {
     const index = Number(parts[0]);
-    if (Number.isInteger(index) && next.route?.rules?.[index]) {
-      next.route.rules[index].outbound = undefined;
-    }
+    const outboundTag = parts[1];
+    const rule = Number.isInteger(index) ? next.route?.rules?.[index] : undefined;
+    if (rule && rule.outbound === outboundTag) rule.outbound = undefined;
   }
   if (relation === "route-rule-inbound") {
     const index = Number(parts[0]);
@@ -1084,19 +1086,28 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     const parent = parts[0];
     const child = parts[2] ?? parts[1];
     next.outbounds = next.outbounds?.map((outbound) =>
-      outbound.tag === parent
+      outbound.tag === parent && outbound.type === relation
         ? { ...outbound, outbounds: outbound.outbounds?.filter((tag) => tag !== child) }
         : outbound,
     );
   }
+  if (relation === "outbound-detour") {
+    const outboundTag = parts[0];
+    const detourTag = parts[1];
+    next.outbounds = next.outbounds?.map((outbound) =>
+      outbound.tag === outboundTag && outbound.detour === detourTag ? { ...outbound, detour: undefined } : outbound,
+    );
+  }
   if (relation === "dns-final") {
-    if (next.dns) next.dns.final = undefined;
+    const serverTag = parts[0];
+    const dns = next.dns;
+    if (dns && dns.final === serverTag) dns.final = undefined;
   }
   if (relation === "dns-rule") {
     const index = Number(parts[0]);
-    if (Number.isInteger(index) && next.dns?.rules?.[index]) {
-      next.dns.rules[index].server = undefined;
-    }
+    const serverTag = parts[1];
+    const rule = Number.isInteger(index) ? next.dns?.rules?.[index] : undefined;
+    if (rule && rule.server === serverTag) rule.server = undefined;
   }
   if (relation === "dns-rule-inbound") {
     const index = Number(parts[0]);
@@ -1128,13 +1139,77 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
       });
     }
   }
+  if (relation === "dns-server-detour") {
+    const serverTag = parts[0];
+    const detourTag = parts[1];
+    next.dns?.servers?.forEach((server) => {
+      if (server.tag === serverTag && server.detour === detourTag) server.detour = undefined;
+    });
+  }
+  if (relation === "dns-server-service") {
+    const serverTag = parts[0];
+    const serviceTag = parts[1];
+    next.dns?.servers?.forEach((server) => {
+      const record = server as Record<string, unknown>;
+      if (server.tag === serverTag && record.service === serviceTag) record.service = undefined;
+    });
+  }
   if (relation === "endpoint-detour") {
     const endpointTag = parts[0];
+    const detourTag = parts[1];
     if (endpointTag) {
       next.endpoints = next.endpoints?.map((endpoint) =>
-        endpoint.tag === endpointTag ? { ...endpoint, detour: undefined } : endpoint,
+        endpoint.tag === endpointTag && endpoint.detour === detourTag ? { ...endpoint, detour: undefined } : endpoint,
       );
     }
+  }
+  if (relation === "service-detour") {
+    const serviceTag = parts[0];
+    const detourTag = parts[1];
+    next.services = next.services?.map((service) =>
+      service.tag === serviceTag && service.detour === detourTag ? { ...service, detour: undefined } : service,
+    );
+  }
+  if (relation === "service-verify-endpoint") {
+    const serviceTag = parts[0];
+    const endpointTag = parts[1];
+    next.services = next.services?.map((service) =>
+      service.tag === serviceTag && endpointTag
+        ? {
+            ...service,
+            verify_client_endpoint: removeTagRef(service.verify_client_endpoint as string | string[] | undefined, endpointTag),
+          }
+        : service,
+    );
+  }
+  if (relation === "service-ssm-inbound") {
+    const serviceTag = parts[0];
+    const path = parts[1];
+    const inboundTag = parts[2];
+    if (!path || !inboundTag) return next;
+    next.services = next.services?.map((service) => {
+      if (service.tag !== serviceTag || !service.servers || typeof service.servers !== "object" || Array.isArray(service.servers)) return service;
+      if (service.servers[path] !== inboundTag) return service;
+      const servers = { ...service.servers };
+      delete servers[path];
+      return { ...service, servers };
+    });
+  }
+  if (relation === "rule-set-download") {
+    const ruleSetTag = parts[0];
+    const detourTag = parts[1];
+    if (next.route?.rule_set) {
+      next.route.rule_set = next.route.rule_set.map((ruleSet) =>
+        ruleSet.tag === ruleSetTag && ruleSet.download_detour === detourTag
+          ? { ...ruleSet, download_detour: undefined }
+          : ruleSet,
+      );
+    }
+  }
+  if (relation === "settings-ntp-detour") {
+    const detourTag = parts[0];
+    const ntp = next.ntp as Record<string, unknown> | undefined;
+    if (ntp && ntp.detour === detourTag) ntp.detour = undefined;
   }
   return next;
 }

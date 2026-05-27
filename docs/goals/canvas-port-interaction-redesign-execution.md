@@ -726,6 +726,18 @@ Status: implemented on 2026-05-28 in `atomic/canvas-pr3-port-relation-registry`.
 - Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/port-relation-registry.test.ts tests/port-interaction-destructive.test.tsx tests/app.test.tsx tests/sbc-node-ports.test.ts tests/config-doc-capability.test.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
 - Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic does not change bundled fixture/exported config output.
 
+### PR-4 Complete Disconnect Coverage
+
+Status: implemented on 2026-05-28 in `atomic/canvas-pr4-disconnect-coverage`.
+
+- Added disconnectability metadata to the port relation registry, separate from connectability. Writable relations remain disconnectable by default; readonly-but-canonical visual edges such as resolved DNS service and settings NTP detour are deletable without becoming drag-connect targets.
+- Derived graph edges now set React Flow `deletable` from registry disconnectability, so route/DNS order and decorative inbound hub edges are non-deletable visual edges.
+- `disconnectEdge` now no-ops by identity for readonly/order-only/decorative relations and covers outbound detour, DNS-server detour/service, service detour, service verify endpoint, service SSM inbound, rule-set download detour, and settings NTP detour in addition to the previously covered route/DNS/rule-set/endpoint edges.
+- Added `tests/port-disconnect-symmetry.test.ts` with a broad canonical fixture that asserts every emitted deletable relation family has a working inverse and every visual-only family is non-deletable/no-op.
+- Frontend performance review: edge deletability is derived during graph construction from a small registry lookup; no hover/drag state, broad subscriptions, or async waterfall were introduced. The existing single-bundle Vite warning remains a broader PR-11/code-splitting concern.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/port-disconnect-symmetry.test.ts tests/port-relation-registry.test.ts tests/domain.test.ts tests/sbc-node-ports.test.ts`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor commands and derived graph metadata, not bundled fixture/exported config output.
+
 ## Open Decisions
 
 - Disconnect affordance: default to connected-handle small `x`; edge context menu and keyboard delete are optional additions.
