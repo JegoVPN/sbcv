@@ -824,6 +824,25 @@ describe("SBC editor shell", () => {
     expect((ssmAfter?.servers as Record<string, unknown>)?.["/"]).toBe(ssInbound?.tag);
   });
 
+  it("renders tailscale endpoint auth_key as a sensitive field + system_interface input", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("endpoint-tailscale");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    const authKeyInput = inspector.getByLabelText("Auth Key") as HTMLInputElement;
+    expect(authKeyInput.type).toBe("password");
+    fireEvent.change(authKeyInput, { target: { value: "tskey-auth-1234" } });
+    const sysIfaceInput = inspector.getByLabelText(/System Interface/) as HTMLInputElement;
+    fireEvent.change(sysIfaceInput, { target: { value: "tailscale0" } });
+    const ep = useProjectStore
+      .getState()
+      .config.endpoints?.find((e) => e.type === "tailscale");
+    expect(ep?.auth_key).toBe("tskey-auth-1234");
+    expect(ep?.system_interface).toBe("tailscale0");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
