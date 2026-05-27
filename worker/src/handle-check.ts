@@ -81,12 +81,20 @@ export async function handleCheck(req: Request, env: Env): Promise<Response> {
 
   const text = await upstream.text();
 
-  try {
-    const parsed = JSON.parse(text) as { status?: string };
-    const ttl = parsed.status === "invalid" ? 300 : 86_400;
-    await env.CHECK_CACHE.put(key, text, { expirationTtl: ttl });
-  } catch {
-    // upstream is not JSON; do not cache
+  // Only cache real validator results (anything with a status field). Error
+  // responses from the upstream — e.g. {"error":"..."} during a transient
+  // misconfiguration — must NOT be cached, otherwise a brief outage poisons
+  // the cache for hours.
+  if (upstream.status >= 200 && upstream.status < 300) {
+    try {
+      const parsed = JSON.parse(text) as { status?: string };
+      if (parsed.status === "valid" || parsed.status === "warning" || parsed.status === "invalid") {
+        const ttl = parsed.status === "invalid" ? 300 : 86_400;
+        await env.CHECK_CACHE.put(key, text, { expirationTtl: ttl });
+      }
+    } catch {
+      // upstream is not JSON; do not cache
+    }
   }
 
   return new Response(text, {
