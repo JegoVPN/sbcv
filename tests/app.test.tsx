@@ -413,6 +413,32 @@ describe("SBC editor shell", () => {
     }
   });
 
+  it("renders vless users[].flow as an enum select bound to xtls-rprx-vision", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-vless");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    let editor = inspector.getByTestId("vless-inbound-users-editor");
+    if (within(editor).queryAllByLabelText("Flow").length === 0) {
+      fireEvent.click(within(editor).getByRole("button", { name: /Add user/ }));
+      editor = within(screen.getByLabelText("Node inspector")).getByTestId(
+        "vless-inbound-users-editor",
+      );
+    }
+    const flowControl = within(editor).getByLabelText("Flow") as HTMLSelectElement;
+    expect(flowControl.tagName).toBe("SELECT");
+    const options = Array.from(flowControl.querySelectorAll("option")).map((o) => o.value);
+    expect(options).toContain("xtls-rprx-vision");
+    fireEvent.change(flowControl, { target: { value: "xtls-rprx-vision" } });
+    const inbound = useProjectStore
+      .getState()
+      .config.inbounds?.find((candidate) => candidate.type === "vless");
+    const users = Array.isArray(inbound?.users) ? (inbound?.users as Array<Record<string, unknown>>) : [];
+    expect(users[0]?.flow).toBe("xtls-rprx-vision");
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
