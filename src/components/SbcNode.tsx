@@ -1,5 +1,7 @@
 import type { NodeProps } from "@xyflow/react";
 import { Handle, Position } from "@xyflow/react";
+import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   Ban,
   Braces,
@@ -23,7 +25,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import {
-  parseNodeId,
   portEndpointsForNode,
   portRelations,
   type PortDirection,
@@ -31,9 +32,8 @@ import {
   type PortIconId,
   type PortRelationMode,
 } from "../domain/portRelationRegistry";
-import type { SingBoxConfig } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
-import { interactionPortKey, useCanvasInteraction } from "./canvasInteractionContext";
+import { useCanvasInteraction } from "./canvasInteractionContext";
 
 const iconMap = {
   inbound: RadioTower,
@@ -51,6 +51,8 @@ const iconMap = {
   settings: Braces,
   notice: CircleAlert,
 };
+
+const EMPTY_CONNECTED_PORTS: Partial<Record<PortDirection, string[]>> = {};
 
 function outboundIcon(type: string) {
   if (type === "direct") return CheckCircle2;
@@ -119,199 +121,26 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDir
   });
 }
 
-function nodeValueFromId(id: string) {
-  return parseNodeId(id)?.value ?? "";
-}
-
-function stringRefs(value: string | string[] | undefined): string[] {
-  if (Array.isArray(value)) return value;
-  return value ? [value] : [];
-}
-
-function routeRuleIndex(id: string) {
-  const index = Number(nodeValueFromId(id));
-  return Number.isInteger(index) ? index : -1;
-}
-
-function isPortConnected(
-  config: SingBoxConfig,
-  id: string,
-  kind: SbcNodeKind,
-  type: string,
-  direction: "input" | "output",
-  portKey: string,
-) {
-  const value = nodeValueFromId(id);
-
-  if (direction === "input") {
-    if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0;
-    if (kind === "route-rule" && portKey === "route") return true;
-    if (kind === "route-rule" && portKey === "inbound") {
-      const index = routeRuleIndex(id);
-      return Boolean(config.route?.rules?.[index]?.inbound);
-    }
-    if (kind === "dns-rule" && portKey === "dns") return true;
-    if (kind === "dns-rule" && portKey === "inbound") {
-      const index = routeRuleIndex(id);
-      return Boolean(config.dns?.rules?.[index]?.inbound);
-    }
-    if (kind === "dns-server" && portKey === "dns-rule") {
-      return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
-    }
-    if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
-    if (kind === "endpoint" && portKey === "dns-server") {
-      return config.dns?.servers?.some((server) => server.type === "tailscale" && server.endpoint === value) ?? false;
-    }
-    if (kind === "endpoint" && portKey === "derp-service") {
-      return (
-        config.services?.some((service) => {
-          const refs = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
-          return service.type === "derp" && refs.includes(value);
-        }) ?? false
-      );
-    }
-    if (kind === "outbound" && portKey === "route") return config.route?.final === value;
-    if (kind === "outbound" && portKey === "route-rule") {
-      return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
-    }
-    if (kind === "outbound" && portKey === "selector-group") {
-      return config.outbounds?.some((outbound) => outbound.type === "selector" && outbound.outbounds?.includes(value)) ?? false;
-    }
-    if (kind === "outbound" && portKey === "urltest-group") {
-      return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
-    }
-    if (kind === "outbound" && portKey === "dns-detour") {
-      return config.dns?.servers?.some((server) => server.detour === value) ?? false;
-    }
-    if (kind === "outbound" && portKey === "detour-target") {
-      return Boolean(
-        config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
-          config.endpoints?.some((endpoint) => endpoint.detour === value) ||
-          config.ntp?.detour === value,
-      );
-    }
-    if (kind === "outbound" && portKey === "clash-download-detour") {
-      const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
-      return clashApi?.external_ui_download_detour === value;
-    }
-    if (kind === "outbound" && portKey === "service-detour") {
-      return config.services?.some((service) => service.detour === value) ?? false;
-    }
-    if (kind === "outbound" && portKey === "rule-set-download") {
-      return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
-    }
-    if (kind === "service" && portKey === "managed-inbound") {
-      const service = config.services?.find((item) => item.tag === value);
-      return Boolean(service?.servers && Object.values(service.servers).length > 0);
-    }
-    if (kind === "service" && portKey === "dns-server") {
-      return config.dns?.servers?.some((server) => server.type === "resolved" && server.service === value) ?? false;
-    }
-    if (kind === "endpoint" && portKey === "certificate-provider") {
-      return config.certificate_providers?.some((provider) => provider.type === "tailscale" && provider.endpoint === value) ?? false;
-    }
-    if (kind === "rule-set" && portKey === "route-rule") {
-      return config.route?.rules?.some((rule) => {
-        if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
-        return rule.rule_set === value;
-      }) ?? false;
-    }
-    if (kind === "rule-set" && portKey === "dns-rule") {
-      return config.dns?.rules?.some((rule) => {
-        if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
-        return rule.rule_set === value;
-      }) ?? false;
-    }
-    return false;
-  }
-
-  if (kind === "inbound" && portKey === "route") return Boolean(config.route);
-  if (kind === "inbound" && portKey === "route-rule-match") {
-    return config.route?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
-  }
-  if (kind === "inbound" && portKey === "dns-rule-match") {
-    return config.dns?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
-  }
-  if (kind === "inbound" && portKey === "service") {
-    return (
-      config.services?.some(
-        (service) =>
-          service.type === "ssm-api" &&
-          service.servers &&
-          Object.values(service.servers).includes(value),
-      ) ?? false
-    );
-  }
-  if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
-  if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
-  if (kind === "route-rule" && portKey === "outbound") {
-    const index = routeRuleIndex(id);
-    return Boolean(config.route?.rules?.[index]?.outbound);
-  }
-  if (kind === "route-rule" && portKey === "rule-set") {
-    const index = routeRuleIndex(id);
-    return Boolean(config.route?.rules?.[index]?.rule_set);
-  }
-  if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0;
-  if (kind === "dns" && portKey === "dns-server") return Boolean(config.dns?.final);
-  if (kind === "dns-rule" && portKey === "dns-server") {
-    const index = routeRuleIndex(id);
-    return Boolean(config.dns?.rules?.[index]?.server);
-  }
-  if (kind === "dns-rule" && portKey === "rule-set") {
-    const index = routeRuleIndex(id);
-    return Boolean(config.dns?.rules?.[index]?.rule_set);
-  }
-  if (kind === "rule-set" && portKey === "download-detour") {
-    return Boolean(config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value)?.download_detour);
-  }
-  if (kind === "dns-server" && portKey === "outbound") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
-  }
-  if (kind === "dns-server" && portKey === "endpoint") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.endpoint);
-  }
-  if (kind === "dns-server" && portKey === "service") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.service);
-  }
-  if (kind === "endpoint" && portKey === "dial-detour") {
-    return Boolean(config.endpoints?.find((endpoint) => endpoint.tag === value)?.detour);
-  }
-  if (kind === "certificate-provider" && portKey === "endpoint") {
-    return Boolean(config.certificate_providers?.find((provider) => provider.tag === value)?.endpoint);
-  }
-  if (kind === "settings" && type === "ntp" && portKey === "dial-detour") {
-    return Boolean(config.ntp?.detour);
-  }
-  if (kind === "settings" && type === "experimental" && portKey === "clash-download-detour") {
-    const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
-    return Boolean(clashApi?.external_ui_download_detour);
-  }
-  if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
-    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
-  }
-  if (kind === "outbound" && portKey === "dial-detour") {
-    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.detour);
-  }
-  if (kind === "service" && portKey === "verify-client-endpoint") {
-    const service = config.services?.find((item) => item.tag === value);
-    return stringRefs(service?.verify_client_endpoint as string | string[] | undefined).length > 0;
-  }
-  if (kind === "service" && portKey === "detour") {
-    return Boolean(config.services?.find((service) => service.tag === value)?.detour);
-  }
-  return false;
-}
-
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
-  const config = useProjectStore((state) => state.config);
-  const setSelectedId = useProjectStore((state) => state.setSelectedId);
-  const createCompatible = useProjectStore((state) => state.createCompatible);
-  const deleteEntity = useProjectStore((state) => state.deleteEntity);
-  const { compatiblePortKeys, disconnectPort, pendingPortKey } = useCanvasInteraction();
   const Icon = getNodeIcon(data.kind, data.type);
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
   const outputPorts = getPortSpecs(data.kind, data.type, "output");
+  const portKeys = useMemo(
+    () => [
+      ...getPortSpecs(data.kind, data.type, "input"),
+      ...getPortSpecs(data.kind, data.type, "output"),
+    ].map((port) => port.key),
+    [data.kind, data.type],
+  );
+  const { compatiblePortKeys, disconnectPort, pendingPortKey } = useCanvasInteraction(id, portKeys);
+  const { setSelectedId, createCompatible, deleteEntity } = useProjectStore(
+    useShallow((state) => ({
+      setSelectedId: state.setSelectedId,
+      createCompatible: state.createCompatible,
+      deleteEntity: state.deleteEntity,
+    })),
+  );
+  const connectedPorts = data.connectedPorts ?? EMPTY_CONNECTED_PORTS;
   const isDeprecated = data.kind === "outbound" && data.type === "block";
   const isNotice = data.kind === "notice";
   const canDelete = !isNotice;
@@ -345,11 +174,10 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
         <div className="sbc-node__ports sbc-node__ports--left" data-testid="node-left-ports">
           {inputPorts.map((port) => {
-            const connected = isPortConnected(config, id, data.kind, data.type, "input", port.key);
+            const connected = Boolean(connectedPorts.input?.includes(port.key));
             const actionLabel = port.editable ? (connected ? "Connected" : "Start") : (connected ? "Linked" : "Readonly");
-            const key = interactionPortKey(id, port.key);
-            const isCompatible = compatiblePortKeys.has(key);
-            const isPending = pendingPortKey === key;
+            const isCompatible = compatiblePortKeys.has(port.key);
+            const isPending = pendingPortKey === port.key;
             return (
               <div
                 className={`sbc-port sbc-port--input ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}
@@ -406,11 +234,10 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
         <div className="sbc-node__ports sbc-node__ports--right" data-testid="node-right-ports">
           {outputPorts.map((port) => {
-            const connected = isPortConnected(config, id, data.kind, data.type, "output", port.key);
+            const connected = Boolean(connectedPorts.output?.includes(port.key));
             const actionLabel = port.editable ? (connected ? "Connected" : "Start") : (connected ? "Linked" : "Readonly");
-            const key = interactionPortKey(id, port.key);
-            const isCompatible = compatiblePortKeys.has(key);
-            const isPending = pendingPortKey === key;
+            const isCompatible = compatiblePortKeys.has(port.key);
+            const isPending = pendingPortKey === port.key;
             return (
               <div
                 className={`sbc-port sbc-port--output ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}

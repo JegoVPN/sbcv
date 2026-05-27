@@ -1,5 +1,6 @@
 import { Download, FolderOpen, LayoutTemplate } from "lucide-react";
 import { useRef } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
@@ -16,15 +17,18 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSheetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const channel = useProjectStore((state) => state.channel);
-  const version = useProjectStore((state) => state.version);
-  const setTarget = useProjectStore((state) => state.setTarget);
-  const config = useProjectStore((state) => state.config);
-  const importJson = useProjectStore((state) => state.importJson);
+  const { channel, version, setTarget, importJson } = useProjectStore(
+    useShallow((state) => ({
+      channel: state.channel,
+      version: state.version,
+      setTarget: state.setTarget,
+      importJson: state.importJson,
+    })),
+  );
   const target = targetFromVersion(channel, version);
 
   function exportConfig() {
-    const exportedConfig = createConfigExport(config);
+    const exportedConfig = createConfigExport(useProjectStore.getState().config);
     const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

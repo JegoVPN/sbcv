@@ -1,23 +1,44 @@
 import { CheckCircle2, CircleAlert, CircleX, FileCheck2, LoaderCircle, MoreHorizontal } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
-import { MobileMenuSheet } from "./MobileMenuSheet";
-import { MobileTemplatesSheet } from "./MobileTemplatesSheet";
+
+const MobileMenuSheet = lazy(() =>
+  import("./MobileMenuSheet").then((module) => ({ default: module.MobileMenuSheet })),
+);
+const MobileTemplatesSheet = lazy(() =>
+  import("./MobileTemplatesSheet").then((module) => ({ default: module.MobileTemplatesSheet })),
+);
 
 export function MobileTopBar() {
-  const channel = useProjectStore((state) => state.channel);
-  const version = useProjectStore((state) => state.version);
-  const diagnostics = useProjectStore((state) => state.diagnostics);
-  const officialDiagnostics = useProjectStore((state) => state.officialDiagnostics);
-  const validateNow = useProjectStore((state) => state.validateNow);
-  const runOfficialCheck = useProjectStore((state) => state.runOfficialCheck);
-  const isChecking = useProjectStore((state) => state.isChecking);
-  const isOfficialChecking = useProjectStore((state) => state.isOfficialChecking);
-  const checkNotice = useProjectStore((state) => state.checkNotice);
-  const goHome = useProjectStore((state) => state.goHome);
+  const {
+    channel,
+    version,
+    diagnostics,
+    officialDiagnostics,
+    validateNow,
+    runOfficialCheck,
+    isChecking,
+    isOfficialChecking,
+    checkNotice,
+    goHome,
+  } = useProjectStore(
+    useShallow((state) => ({
+      channel: state.channel,
+      version: state.version,
+      diagnostics: state.diagnostics,
+      officialDiagnostics: state.officialDiagnostics,
+      validateNow: state.validateNow,
+      runOfficialCheck: state.runOfficialCheck,
+      isChecking: state.isChecking,
+      isOfficialChecking: state.isOfficialChecking,
+      checkNotice: state.checkNotice,
+      goHome: state.goHome,
+    })),
+  );
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
@@ -137,12 +158,20 @@ export function MobileTopBar() {
         <MoreHorizontal size={20} />
       </button>
 
-      <MobileMenuSheet
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        onOpenTemplates={() => setTemplatesOpen(true)}
-      />
-      <MobileTemplatesSheet open={templatesOpen} onClose={() => setTemplatesOpen(false)} />
+      {menuOpen ? (
+        <Suspense fallback={null}>
+          <MobileMenuSheet
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            onOpenTemplates={() => setTemplatesOpen(true)}
+          />
+        </Suspense>
+      ) : null}
+      {templatesOpen ? (
+        <Suspense fallback={null}>
+          <MobileTemplatesSheet open={templatesOpen} onClose={() => setTemplatesOpen(false)} />
+        </Suspense>
+      ) : null}
     </header>
   );
 }

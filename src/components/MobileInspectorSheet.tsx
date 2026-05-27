@@ -1,10 +1,15 @@
+import { useShallow } from "zustand/react/shallow";
 import { useProjectStore } from "../state/useProjectStore";
 import { BottomSheet } from "./BottomSheet";
 import { Inspector } from "./Inspector";
 
 export function MobileInspectorSheet() {
-  const selectedId = useProjectStore((state) => state.selectedId);
-  const setSelectedId = useProjectStore((state) => state.setSelectedId);
+  const { selectedId, setSelectedId } = useProjectStore(
+    useShallow((state) => ({
+      selectedId: state.selectedId,
+      setSelectedId: state.setSelectedId,
+    })),
+  );
 
   return (
     <BottomSheet

@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useProjectStore } from "../state/useProjectStore";
 
 const RULE_PAGE_SIZE = 100;
@@ -66,16 +67,22 @@ function RulePager({
 
 export function RouteRulesTable() {
   const [routePage, setRoutePage] = useState(0);
-  const config = useProjectStore((state) => state.config);
-  const addRouteRule = useProjectStore((state) => state.addRouteRule);
-  const updateRouteRule = useProjectStore((state) => state.updateRouteRule);
-  const moveRouteRule = useProjectStore((state) => state.moveRouteRule);
-  const deleteRouteRule = useProjectStore((state) => state.deleteRouteRule);
-  const outbounds = listItems(config.outbounds);
-  const ruleSets = listItems(config.route?.rule_set);
-  const rules = listItems(config.route?.rules);
-  const routeBounds = pageBounds(rules.length, routePage);
-  const visibleRules = rules.slice(routeBounds.start, routeBounds.end);
+  const { outbounds, ruleSets, rules, addRouteRule, updateRouteRule, moveRouteRule, deleteRouteRule } = useProjectStore(
+    useShallow((state) => ({
+      outbounds: state.config.outbounds,
+      ruleSets: state.config.route?.rule_set,
+      rules: state.config.route?.rules,
+      addRouteRule: state.addRouteRule,
+      updateRouteRule: state.updateRouteRule,
+      moveRouteRule: state.moveRouteRule,
+      deleteRouteRule: state.deleteRouteRule,
+    })),
+  );
+  const routeOutbounds = listItems(outbounds);
+  const routeRuleSets = listItems(ruleSets);
+  const routeRules = listItems(rules);
+  const routeBounds = pageBounds(routeRules.length, routePage);
+  const visibleRules = routeRules.slice(routeBounds.start, routeBounds.end);
 
   return (
     <section className="table-panel" aria-label="Route rules">
@@ -88,7 +95,7 @@ export function RouteRulesTable() {
           <Plus size={15} /> Rule
         </button>
       </div>
-      <RulePager {...routeBounds} total={rules.length} setPage={setRoutePage} />
+      <RulePager {...routeBounds} total={routeRules.length} setPage={setRoutePage} />
       <div className="rule-list">
         {visibleRules.map((rule, index) => {
           const ruleIndex = routeBounds.start + index;
@@ -132,7 +139,7 @@ export function RouteRulesTable() {
                   onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
                 >
                   <option value="">Missing</option>
-                  {outbounds.map((outbound, outboundIndex) => (
+                  {routeOutbounds.map((outbound, outboundIndex) => (
                     <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
                       {outbound.tag ?? `untagged-${outboundIndex + 1}`}
                     </option>
@@ -156,7 +163,7 @@ export function RouteRulesTable() {
         })}
       </div>
       <datalist id="route-rule-set-tags">
-        {ruleSets.map((ruleSet, index) => (
+        {routeRuleSets.map((ruleSet, index) => (
           <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
         ))}
       </datalist>
@@ -166,16 +173,22 @@ export function RouteRulesTable() {
 
 export function DnsRulesTable() {
   const [dnsPage, setDnsPage] = useState(0);
-  const config = useProjectStore((state) => state.config);
-  const addDnsRule = useProjectStore((state) => state.addDnsRule);
-  const updateDnsRule = useProjectStore((state) => state.updateDnsRule);
-  const moveDnsRule = useProjectStore((state) => state.moveDnsRule);
-  const deleteDnsRule = useProjectStore((state) => state.deleteDnsRule);
-  const servers = listItems(config.dns?.servers);
-  const ruleSets = listItems(config.route?.rule_set);
-  const rules = listItems(config.dns?.rules);
-  const dnsBounds = pageBounds(rules.length, dnsPage);
-  const visibleRules = rules.slice(dnsBounds.start, dnsBounds.end);
+  const { servers, ruleSets, rules, addDnsRule, updateDnsRule, moveDnsRule, deleteDnsRule } = useProjectStore(
+    useShallow((state) => ({
+      servers: state.config.dns?.servers,
+      ruleSets: state.config.route?.rule_set,
+      rules: state.config.dns?.rules,
+      addDnsRule: state.addDnsRule,
+      updateDnsRule: state.updateDnsRule,
+      moveDnsRule: state.moveDnsRule,
+      deleteDnsRule: state.deleteDnsRule,
+    })),
+  );
+  const dnsServers = listItems(servers);
+  const dnsRuleSets = listItems(ruleSets);
+  const dnsRules = listItems(rules);
+  const dnsBounds = pageBounds(dnsRules.length, dnsPage);
+  const visibleRules = dnsRules.slice(dnsBounds.start, dnsBounds.end);
 
   return (
     <section className="table-panel" aria-label="DNS rules">
@@ -188,7 +201,7 @@ export function DnsRulesTable() {
           <Plus size={15} /> Rule
         </button>
       </div>
-      <RulePager {...dnsBounds} total={rules.length} setPage={setDnsPage} />
+      <RulePager {...dnsBounds} total={dnsRules.length} setPage={setDnsPage} />
       <div className="rule-list">
         {visibleRules.map((rule, index) => {
           const ruleIndex = dnsBounds.start + index;
@@ -232,7 +245,7 @@ export function DnsRulesTable() {
                   onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
                 >
                   <option value="">Missing</option>
-                  {servers.map((server, serverIndex) => (
+                  {dnsServers.map((server, serverIndex) => (
                     <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
                       {server.tag ?? `untagged-${serverIndex + 1}`}
                     </option>
@@ -256,7 +269,7 @@ export function DnsRulesTable() {
         })}
       </div>
       <datalist id="dns-rule-set-tags">
-        {ruleSets.map((ruleSet, index) => (
+        {dnsRuleSets.map((ruleSet, index) => (
           <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
         ))}
       </datalist>

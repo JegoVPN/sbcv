@@ -1,5 +1,6 @@
 import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, LoaderCircle } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
 import { createConfigExport } from "../domain/serialization";
 import { summarizeDiagnostics } from "../domain/diagnostics";
@@ -21,20 +22,37 @@ export function createSbcvFileName(now = new Date()) {
 
 export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const channel = useProjectStore((state) => state.channel);
-  const version = useProjectStore((state) => state.version);
-  const setTarget = useProjectStore((state) => state.setTarget);
-  const config = useProjectStore((state) => state.config);
-  const diagnostics = useProjectStore((state) => state.diagnostics);
-  const officialDiagnostics = useProjectStore((state) => state.officialDiagnostics);
-  const validateNow = useProjectStore((state) => state.validateNow);
-  const runOfficialCheck = useProjectStore((state) => state.runOfficialCheck);
-  const importJson = useProjectStore((state) => state.importJson);
-  const focusNode = useProjectStore((state) => state.focusNode);
-  const goHome = useProjectStore((state) => state.goHome);
-  const checkNotice = useProjectStore((state) => state.checkNotice);
-  const isChecking = useProjectStore((state) => state.isChecking);
-  const isOfficialChecking = useProjectStore((state) => state.isOfficialChecking);
+  const {
+    channel,
+    version,
+    setTarget,
+    diagnostics,
+    officialDiagnostics,
+    validateNow,
+    runOfficialCheck,
+    importJson,
+    focusNode,
+    goHome,
+    checkNotice,
+    isChecking,
+    isOfficialChecking,
+  } = useProjectStore(
+    useShallow((state) => ({
+      channel: state.channel,
+      version: state.version,
+      setTarget: state.setTarget,
+      diagnostics: state.diagnostics,
+      officialDiagnostics: state.officialDiagnostics,
+      validateNow: state.validateNow,
+      runOfficialCheck: state.runOfficialCheck,
+      importJson: state.importJson,
+      focusNode: state.focusNode,
+      goHome: state.goHome,
+      checkNotice: state.checkNotice,
+      isChecking: state.isChecking,
+      isOfficialChecking: state.isOfficialChecking,
+    })),
+  );
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const allDiagnostics = useMemo(
@@ -42,8 +60,8 @@ export function TopBar() {
     [diagnostics, officialDiagnostics],
   );
   const resolveFocusTarget = useCallback(
-    (diagnostic: Diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, config),
-    [config],
+    (diagnostic: Diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, useProjectStore.getState().config),
+    [],
   );
   const handleDiagnosticFocus = useCallback(
     (nodeId: string) => {
@@ -96,7 +114,7 @@ export function TopBar() {
   }
 
   function exportConfig() {
-    const exportedConfig = createConfigExport(config);
+    const exportedConfig = createConfigExport(useProjectStore.getState().config);
     const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import {
   Ban,
   Blocks,
@@ -292,21 +293,41 @@ export function Palette() {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [activeGroupTitle, setActiveGroupTitle] = useState<string | null>(null);
   const [loadedTemplateId, setLoadedTemplateId] = useState<TemplatePresetId | null>(null);
-  const loadTemplatePreset = useProjectStore((state) => state.loadTemplatePreset);
-  const createFromPalette = useProjectStore((state) => state.createFromPalette);
-  const setSelectedId = useProjectStore((state) => state.setSelectedId);
-  const channel = useProjectStore((state) => state.channel);
-  const config = useProjectStore((state) => state.config);
+  const {
+    loadTemplatePreset,
+    createFromPalette,
+    setSelectedId,
+    channel,
+    hasLog,
+    hasNtp,
+    hasCertificate,
+    hasExperimental,
+    hasRoute,
+    hasDns,
+  } = useProjectStore(
+    useShallow((state) => ({
+      loadTemplatePreset: state.loadTemplatePreset,
+      createFromPalette: state.createFromPalette,
+      setSelectedId: state.setSelectedId,
+      channel: state.channel,
+      hasLog: Boolean(state.config.log && Object.keys(state.config.log).length > 0),
+      hasNtp: Boolean(state.config.ntp && Object.keys(state.config.ntp).length > 0),
+      hasCertificate: Boolean(state.config.certificate && Object.keys(state.config.certificate).length > 0),
+      hasExperimental: Boolean(state.config.experimental && Object.keys(state.config.experimental).length > 0),
+      hasRoute: Boolean(state.config.route),
+      hasDns: Boolean(state.config.dns),
+    })),
+  );
   const singletonsPresent = useMemo(() => {
     const set = new Set<string>();
-    if (config.log && Object.keys(config.log).length > 0) set.add("settings-log");
-    if (config.ntp && Object.keys(config.ntp).length > 0) set.add("settings-ntp");
-    if (config.certificate && Object.keys(config.certificate).length > 0) set.add("settings-certificate");
-    if (config.experimental && Object.keys(config.experimental).length > 0) set.add("settings-experimental");
-    if (config.route) set.add("route");
-    if (config.dns) set.add("dns-hub");
+    if (hasLog) set.add("settings-log");
+    if (hasNtp) set.add("settings-ntp");
+    if (hasCertificate) set.add("settings-certificate");
+    if (hasExperimental) set.add("settings-experimental");
+    if (hasRoute) set.add("route");
+    if (hasDns) set.add("dns-hub");
     return set;
-  }, [config.log, config.ntp, config.certificate, config.experimental, config.route, config.dns]);
+  }, [hasCertificate, hasDns, hasExperimental, hasLog, hasNtp, hasRoute]);
   const filteredGroups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return [];

@@ -139,6 +139,45 @@ describe("port relation registry", () => {
     }
   });
 
+  it("precomputes connected port state in graph data for node rendering", () => {
+    const { nodes } = graphWithBroadPortCoverage();
+    const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+    expect(nodeById.get("inbound:tun-in")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["route", "route-rule-match", "dns-rule-match"]),
+    );
+    expect(nodeById.get("route:main")?.data.connectedPorts).toMatchObject({
+      input: expect.arrayContaining(["inbound"]),
+      output: expect.arrayContaining(["outbound", "route-rule"]),
+    });
+    expect(nodeById.get("route-rule:0")?.data.connectedPorts).toMatchObject({
+      input: expect.arrayContaining(["inbound", "route"]),
+      output: expect.arrayContaining(["outbound", "rule-set"]),
+    });
+    expect(nodeById.get("dns:main")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["dns-rule", "dns-server"]),
+    );
+    expect(nodeById.get("dns-server:resolved-dns")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["service"]),
+    );
+    expect(nodeById.get("endpoint:ts-ep")?.data.connectedPorts).toMatchObject({
+      input: expect.arrayContaining(["certificate-provider", "derp-service", "dns-server"]),
+      output: expect.arrayContaining(["dial-detour"]),
+    });
+    expect(nodeById.get("service:ssm")?.data.connectedPorts?.input).toEqual(
+      expect.arrayContaining(["managed-inbound"]),
+    );
+    expect(nodeById.get("certificate-provider:ts-cert")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["endpoint"]),
+    );
+    expect(nodeById.get("settings:ntp")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["dial-detour"]),
+    );
+    expect(nodeById.get("settings:experimental")?.data.connectedPorts?.output).toEqual(
+      expect.arrayContaining(["clash-download-detour"]),
+    );
+  });
+
   it("round-trips colon tags through rendered edge ids and disconnect commands", () => {
     const config: SingBoxConfig = {
       log: { level: "info" },
