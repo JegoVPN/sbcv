@@ -1,12 +1,29 @@
 import "@xyflow/react/dist/style.css";
 import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
-import type { Connection, Edge, NodeTypes, ReactFlowInstance } from "@xyflow/react";
+import type { Connection, Edge, NodeTypes, OnConnectEnd, OnConnectStart, ReactFlowInstance } from "@xyflow/react";
 import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
 import type { SbcFlowNode } from "../canvas/graph";
-import { relationForHandles } from "../domain/portRelationRegistry";
+import {
+  endpointMatchesNode,
+  portEndpointsForNode,
+  portRelations,
+  relationForHandles,
+  type PortEndpoint,
+  type PortNodeKind,
+} from "../domain/portRelationRegistry";
+import {
+  CREATABLE_DNS_SERVER_TYPES,
+  CREATABLE_ENDPOINT_TYPES,
+  CREATABLE_INBOUND_TYPES,
+  CREATABLE_OUTBOUND_TYPES,
+  CREATABLE_RULE_SET_TYPES,
+  CREATABLE_SERVICE_TYPES,
+} from "../domain/protocols";
 import { useProjectStore } from "../state/useProjectStore";
+import { ChipPickerPopover, type ChipPickerCandidate } from "./ChipPickerPopover";
+import { CanvasInteractionContext, EMPTY_COMPATIBLE_PORT_KEYS, interactionPortKey } from "./canvasInteractionContext";
 import { SbcNode } from "./SbcNode";
 import { useViewport } from "./useViewport";
 
@@ -18,6 +35,120 @@ const connectionLineStyle = {
   stroke: "#e4e9ee",
   strokeWidth: 2.4,
 };
+
+type PendingPort = {
+  nodeId: string;
+  handleId: string;
+  kind: PortNodeKind;
+  type: string;
+};
+
+type ChipPickerState = {
+  x: number;
+  y: number;
+  flowPosition: { x: number; y: number };
+  source: PendingPort;
+  candidates: ChipPickerCandidate[];
+};
+
+const candidateTypesByKind: Partial<Record<PortNodeKind, readonly string[]>> = {
+  inbound: CREATABLE_INBOUND_TYPES,
+  outbound: CREATABLE_OUTBOUND_TYPES,
+  "dns-server": CREATABLE_DNS_SERVER_TYPES,
+  endpoint: CREATABLE_ENDPOINT_TYPES,
+  service: CREATABLE_SERVICE_TYPES,
+  "rule-set": CREATABLE_RULE_SET_TYPES,
+  route: ["route"],
+  "route-rule": ["route-rule"],
+  dns: ["dns"],
+  "dns-rule": ["dns-rule"],
+};
+
+const typeLabels: Record<string, string> = {
+  direct: "Direct",
+  block: "Block",
+  socks: "SOCKS",
+  http: "HTTP",
+  shadowsocks: "Shadowsocks",
+  vmess: "VMess",
+  trojan: "Trojan",
+  naive: "Naive",
+  hysteria: "Hysteria",
+  shadowtls: "ShadowTLS",
+  vless: "VLESS",
+  tuic: "TUIC",
+  hysteria2: "Hysteria2",
+  anytls: "AnyTLS",
+  tor: "Tor",
+  ssh: "SSH",
+  selector: "Selector",
+  urltest: "URLTest",
+  local: "Local DNS",
+  hosts: "Hosts DNS",
+  tcp: "TCP DNS",
+  udp: "UDP DNS",
+  tls: "TLS DNS",
+  quic: "QUIC DNS",
+  https: "HTTPS DNS",
+  h3: "HTTP/3 DNS",
+  dhcp: "DHCP DNS",
+  fakeip: "FakeIP DNS",
+  tailscale: "Tailscale",
+  resolved: "Resolved",
+  remote: "Remote Rule Set",
+  inline: "Inline Rule Set",
+  route: "Route",
+  "route-rule": "Route Rule",
+  dns: "DNS",
+  "dns-rule": "DNS Rule",
+  "ssm-api": "SSM API",
+  derp: "DERP",
+  ccm: "CCM",
+  ocm: "OCM",
+};
+
+function candidateLabel(nodeKind: PortNodeKind, nodeType: string) {
+  return typeLabels[nodeType] ?? `${nodeType} ${nodeKind}`;
+}
+
+function eventClientPoint(event: MouseEvent | TouchEvent) {
+  if ("changedTouches" in event) {
+    const touch = event.changedTouches[0];
+    return touch ? { x: touch.clientX, y: touch.clientY } : null;
+  }
+  return { x: event.clientX, y: event.clientY };
+}
+
+function pendingMatchesEndpoint(pending: PendingPort, endpoint: PortEndpoint) {
+  return endpoint.portKey === pending.handleId && endpointMatchesNode(endpoint, pending.kind, pending.type);
+}
+
+function candidatesForEndpoint(endpoint: PortEndpoint): ChipPickerCandidate[] {
+  const types = endpoint.nodeType ? [endpoint.nodeType] : candidateTypesByKind[endpoint.nodeKind] ?? [];
+  return types
+    .filter((nodeType) => endpointMatchesNode(endpoint, endpoint.nodeKind, nodeType))
+    .map((nodeType) => ({
+      id: `${endpoint.nodeKind}:${nodeType}:${endpoint.portKey}`,
+      label: candidateLabel(endpoint.nodeKind, nodeType),
+      nodeKind: endpoint.nodeKind,
+      nodeType,
+      handleId: endpoint.portKey,
+    }));
+}
+
+function chipCandidatesForPending(pending: PendingPort): ChipPickerCandidate[] {
+  const candidates = new Map<string, ChipPickerCandidate>();
+  for (const relation of portRelations) {
+    if (relation.mode !== "writable" || !relation.createTarget?.length) continue;
+    if (pendingMatchesEndpoint(pending, relation.source) && relation.createTarget.includes(relation.target.nodeKind)) {
+      for (const candidate of candidatesForEndpoint(relation.target)) candidates.set(candidate.id, candidate);
+    }
+    if (pendingMatchesEndpoint(pending, relation.target) && relation.createTarget.includes(relation.source.nodeKind)) {
+      for (const candidate of candidatesForEndpoint(relation.source)) candidates.set(candidate.id, candidate);
+    }
+  }
+  return [...candidates.values()];
+}
 
 function matchesDirectedConnection(
   outputNode: SbcFlowNode | undefined,
@@ -41,13 +172,17 @@ function matchesDirectedConnection(
 }
 
 export function CanvasWorkspace() {
+  const shellRef = useRef<HTMLElement | null>(null);
   const flowRef = useRef<ReactFlowInstance<SbcFlowNode, Edge> | null>(null);
+  const pendingPortRef = useRef<PendingPort | null>(null);
+  const suppressNextPaneClickRef = useRef(false);
   const config = useProjectStore((state) => state.config);
   const layout = useProjectStore((state) => state.layout);
   const diagnostics = useProjectStore((state) => state.diagnostics);
   const selectedId = useProjectStore((state) => state.selectedId);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const connectPorts = useProjectStore((state) => state.connectPorts);
+  const createNodeAndConnect = useProjectStore((state) => state.createNodeAndConnect);
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
   const setNodePosition = useProjectStore((state) => state.setNodePosition);
@@ -59,6 +194,8 @@ export function CanvasWorkspace() {
   const selectedTitle = selectedId ? nodeById.get(selectedId)?.data.title ?? selectedId : null;
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
+  const [pendingPort, setPendingPortState] = useState<PendingPort | null>(null);
+  const [chipPicker, setChipPicker] = useState<ChipPickerState | null>(null);
   const { isMobile } = useViewport();
   const [showMiniMap, setShowMiniMap] = useState(true);
   const [interaction, setInteraction] = useState<"pan" | "select">("pan");
@@ -78,6 +215,105 @@ export function CanvasWorkspace() {
     },
     [nodeById],
   );
+  const setPendingPort = useCallback((next: PendingPort | null) => {
+    pendingPortRef.current = next;
+    setPendingPortState(next);
+  }, []);
+  const compatiblePortKeys = useMemo(() => {
+    if (!pendingPort) return EMPTY_COMPATIBLE_PORT_KEYS;
+    const result = new Set<string>();
+    for (const node of graph.nodes) {
+      if (node.id === pendingPort.nodeId) continue;
+      const endpoints = [
+        ...portEndpointsForNode(node.data.kind, node.data.type, "input"),
+        ...portEndpointsForNode(node.data.kind, node.data.type, "output"),
+      ];
+      for (const endpoint of endpoints) {
+        const matches =
+          relationForHandles(pendingPort.kind, pendingPort.type, pendingPort.handleId, node.data.kind, node.data.type, endpoint.portKey, ["writable"]) ||
+          relationForHandles(node.data.kind, node.data.type, endpoint.portKey, pendingPort.kind, pendingPort.type, pendingPort.handleId, ["writable"]);
+        if (matches) result.add(interactionPortKey(node.id, endpoint.portKey));
+      }
+    }
+    return result;
+  }, [graph.nodes, pendingPort]);
+  const edgeByPort = useMemo(() => {
+    const result = new Map<string, string>();
+    for (const edge of graph.edges) {
+      if (edge.deletable === false) continue;
+      if (edge.sourceHandle) {
+        const key = interactionPortKey(edge.source, edge.sourceHandle);
+        if (!result.has(key)) result.set(key, edge.id);
+      }
+      if (edge.targetHandle) {
+        const key = interactionPortKey(edge.target, edge.targetHandle);
+        if (!result.has(key)) result.set(key, edge.id);
+      }
+    }
+    return result;
+  }, [graph.edges]);
+  const disconnectPort = useCallback((nodeId: string, handleId: string) => {
+    const edgeId = edgeByPort.get(interactionPortKey(nodeId, handleId));
+    if (edgeId) disconnectEdge(edgeId);
+  }, [disconnectEdge, edgeByPort]);
+  const interactionContext = useMemo(
+    () => ({
+      pendingPortKey: pendingPort ? interactionPortKey(pendingPort.nodeId, pendingPort.handleId) : null,
+      compatiblePortKeys,
+      disconnectPort,
+    }),
+    [compatiblePortKeys, disconnectPort, pendingPort],
+  );
+  const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
+    if (!params.nodeId || !params.handleId) return;
+    const node = nodeById.get(params.nodeId);
+    if (!node) return;
+    setChipPicker(null);
+    setPendingPort({
+      nodeId: node.id,
+      handleId: params.handleId,
+      kind: node.data.kind,
+      type: node.data.type,
+    });
+  }, [nodeById, setPendingPort]);
+  const handleConnectEnd = useCallback<OnConnectEnd>((event, connectionState) => {
+    const pending = pendingPortRef.current;
+    setPendingPort(null);
+    if (!pending) return;
+    const state = connectionState as { isValid?: boolean; toNode?: unknown; toHandle?: unknown };
+    if (state.isValid || state.toNode || state.toHandle) return;
+    const point = eventClientPoint(event);
+    if (!point) return;
+    const candidates = chipCandidatesForPending(pending);
+    if (candidates.length === 0) return;
+    const rect = shellRef.current?.getBoundingClientRect();
+    const flowPosition = flowRef.current?.screenToFlowPosition(point) ?? point;
+    suppressNextPaneClickRef.current = true;
+    window.setTimeout(() => {
+      suppressNextPaneClickRef.current = false;
+    }, 0);
+    setChipPicker({
+      x: rect ? point.x - rect.left : point.x,
+      y: rect ? point.y - rect.top : point.y,
+      flowPosition,
+      source: pending,
+      candidates,
+    });
+  }, [setPendingPort]);
+  const handleConnect = useCallback((connection: Connection) => {
+    connectPorts(connection);
+    setPendingPort(null);
+    setChipPicker(null);
+  }, [connectPorts, setPendingPort]);
+  const handlePickCandidate = useCallback((candidate: ChipPickerCandidate) => {
+    if (!chipPicker) return;
+    createNodeAndConnect(chipPicker.source.nodeId, chipPicker.source.handleId, {
+      nodeKind: candidate.nodeKind,
+      nodeType: candidate.nodeType,
+      handleId: candidate.handleId,
+    }, chipPicker.flowPosition);
+    setChipPicker(null);
+  }, [chipPicker, createNodeAndConnect]);
 
   useEffect(() => {
     setNodes(graph.nodes);
@@ -102,7 +338,8 @@ export function CanvasWorkspace() {
   }, [focusToken, focusedNodeId]);
 
   return (
-    <section className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
+    <section ref={shellRef} className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
+      <CanvasInteractionContext.Provider value={interactionContext}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -113,7 +350,11 @@ export function CanvasWorkspace() {
           if (node.data.kind !== "notice") deleteEntity(node.data.ref);
         })}
         onEdgesDelete={(deleted) => deleted.forEach((edge) => disconnectEdge(edge.id))}
-        onConnect={connectPorts}
+        onConnect={handleConnect}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
+        onClickConnectStart={handleConnectStart}
+        onClickConnectEnd={handleConnectEnd}
         isValidConnection={isValidConnection}
         onNodeClick={(_, node) => setSelectedId(node.id)}
         onInit={(instance) => {
@@ -121,7 +362,11 @@ export function CanvasWorkspace() {
           fitFullGraph();
         }}
         onNodeDragStop={(_, node) => setNodePosition(node.id, node.position)}
-        onPaneClick={() => setSelectedId(null)}
+        onPaneClick={() => {
+          if (suppressNextPaneClickRef.current) return;
+          setSelectedId(null);
+          setChipPicker(null);
+        }}
         fitView
         fitViewOptions={{ padding: 0.24 }}
         minZoom={0.03}
@@ -181,6 +426,16 @@ export function CanvasWorkspace() {
           )}
         </Controls>
       </ReactFlow>
+      {chipPicker ? (
+        <ChipPickerPopover
+          x={chipPicker.x}
+          y={chipPicker.y}
+          candidates={chipPicker.candidates}
+          onPick={handlePickCandidate}
+          onClose={() => setChipPicker(null)}
+        />
+      ) : null}
+      </CanvasInteractionContext.Provider>
       {selectedTitle ? <div className="canvas-selection-pill">Selected {selectedTitle}</div> : null}
     </section>
   );

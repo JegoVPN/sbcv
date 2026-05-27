@@ -538,6 +538,19 @@ Acceptance:
 - Cancelled pending connection leaves canonical config unchanged.
 - Chip-created node and manually created+drag-connected node produce equivalent `SingBoxConfig`.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr9-pending-chip-picker`.
+
+- Added local `CanvasWorkspace` pending-port state through React Flow `onConnectStart` / `onConnectEnd` and click-connect callbacks. This state stays out of canonical config/Zustand.
+- Compatible existing handles are highlighted from `portRelationRegistry` while a line is pending; invalid targets do not highlight.
+- Empty-canvas release opens a port-scoped chip picker at the drop point. Picking a chip creates a canonical entity, connects it through the same port command path as drag-connect, pins layout at the drop point, and selects/focuses the new node.
+- Direct drop on an existing compatible node continues to call `connectPorts`; invalid drops and cancelled releases leave canonical config unchanged.
+- Connected editable ports now expose an explicit disconnect affordance that removes the first visible deletable relation for that port through the same `disconnectEdge` command path as edge deletion.
+- Added Playwright coverage for the four expected frames: pending line + compatible highlight + empty-drop picker, direct drop connect, invalid drop cancel/no mutation, and connected-handle disconnect.
+- Frontend performance review: pending/hover/picker state is local to `CanvasWorkspace` and passed through a small context; no canonical config subscriptions or async waterfalls were added. The current context update can rerender visible nodes during a pending drag, which remains an optimization target for PR-11.
+- Verification passed locally: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm exec vitest run tests/app.test.tsx tests/port-interaction-destructive.test.tsx tests/port-relation-registry.test.ts tests/sbc-node-ports.test.ts --reporter=dot`, `pnpm test`, `pnpm build`, and `pnpm e2e`.
+- `pnpm build` still reports the existing Vite >500 kB single chunk warning; this remains tracked as PR-11 performance work.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run because this atomic changes editor interaction behavior, not bundled fixture/exported config files.
+
 ### PR-10: Stale Async And Validation State Cleanup
 
 Fixes PR P1-1, P1-13, P1-14, P1-15, P1-16.
