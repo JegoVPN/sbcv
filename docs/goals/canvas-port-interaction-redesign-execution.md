@@ -655,6 +655,15 @@ Acceptance:
 - No known P1 that causes incorrect mutation or visible UX defect.
 - Any remaining P2 is documented with owner and follow-up.
 
+Status: implemented on 2026-05-28 in `atomic/canvas-pr12-symmetry-final-audit`.
+
+- Added executable chip-create versus drag-connect symmetry coverage for every writable `portRelationRegistry` relation. The test first creates and connects through the chip path, disconnects only that emitted edge from the resulting canonical config, then reconnects through `connectPorts` and asserts the final `SingBoxConfig` is identical.
+- Added a registry coverage gate so any future writable port relation must add an executable symmetry case instead of silently missing the chip/drag convergence proof.
+- Expanded bundled fixture/template graph coverage with delete, rename, and type-change sweeps over graph-managed entities. The sweep derives graph output from real stable/testing fixtures and curated template presets, asserts canonical mutations leave no missing-reference diagnostics for the touched tag, and checks store-level `selectedId`, `focusedNodeId`, and `layout.positions` are cleared or remapped for delete/rename.
+- Re-ran the PR #1 audit list against HEAD. All P0 items are closed by PR-1 through PR-9; all P1 incorrect-mutation, stale-state, visible-flow, and rerender-hot-path items are closed by PR-1 through PR-11 plus the PR-12 executable gates.
+- Remaining P2: deeper desktop code-splitting, especially lazy-loading the full `Inspector`, is still a frontend performance follow-up owned by the PR-11 performance track. The main bundle warning is not a correctness or visible port-flow blocker, and mobile optional sheets are already deferred.
+- Official `sing-box-stable` / `sing-box-testing` checks were not run for this atomic because PR-12 adds tests/docs only and does not modify bundled fixture/exported config output.
+
 ## Near-Term Atomics
 
 Only start with these three; do not pre-implement later phases until each one is reviewed.

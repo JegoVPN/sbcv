@@ -1,11 +1,17 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { deriveGraph } from "../src/canvas/graph";
+import { deriveGraph, type SbcFlowNode } from "../src/canvas/graph";
+import {
+  changeEntityType as changeConfigEntityType,
+  deleteEntity as deleteConfigEntity,
+  renameTag as renameConfigTag,
+} from "../src/domain/commands";
 import { validateConfig } from "../src/domain/diagnostics";
 import { parseConfigJson } from "../src/domain/serialization";
 import { TEMPLATE_PRESETS, cloneConfig } from "../src/domain/templates";
-import type { SingBoxChannel, SingBoxConfig } from "../src/domain/types";
+import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../src/domain/types";
+import { useProjectStore } from "../src/state/useProjectStore";
 
 const MAX_VISUAL_RULE_NODES = 24;
 const MAX_VISUAL_RULE_SET_NODES = 24;
@@ -88,6 +94,11 @@ function actualCounts(graph: ReturnType<typeof deriveGraph>): Counts {
 }
 
 type DropCheck = { key: keyof Counts; expected: number; actual: number };
+type MutationSource = {
+  name: string;
+  channel: SingBoxChannel;
+  config: SingBoxConfig;
+};
 
 function diffCounts(expected: Counts, actual: Counts): DropCheck[] {
   const drops: DropCheck[] = [];
@@ -133,6 +144,164 @@ function auditFile(file: string, channel: SingBoxChannel) {
   return { expected, actual, drops: diffCounts(expected, actual) };
 }
 
+function fixtureMutationSources() {
+  const sources: MutationSource[] = [];
+  for (const file of walkJson(path.join("fixtures", "stable"))) {
+    sources.push({
+      name: path.relative(process.cwd(), file),
+      channel: "stable",
+      config: parseConfigJson(readFileSync(file, "utf8")),
+    });
+  }
+  for (const file of walkJson(path.join("fixtures", "testing"))) {
+    sources.push({
+      name: path.relative(process.cwd(), file),
+      channel: "testing",
+      config: parseConfigJson(readFileSync(file, "utf8")),
+    });
+  }
+  for (const preset of TEMPLATE_PRESETS) {
+    sources.push({
+      name: preset.id,
+      channel: preset.channel,
+      config: cloneConfig(preset.config),
+    });
+  }
+  return sources;
+}
+
+function isTaggedRef(ref: EntityRef): ref is Extract<EntityRef, { tag: string }> {
+  return "tag" in ref;
+}
+
+function isSyntheticGraphTag(tag: string) {
+  return tag.startsWith("untagged-");
+}
+
+function canDeleteGraphNode(node: SbcFlowNode) {
+  const ref = node.data.ref;
+  if (ref.kind === "route" || ref.kind === "dns") return false;
+  return !(isTaggedRef(ref) && isSyntheticGraphTag(ref.tag));
+}
+
+function canRenameGraphNode(node: SbcFlowNode) {
+  const ref = node.data.ref;
+  return isTaggedRef(ref) && !isSyntheticGraphTag(ref.tag);
+}
+
+function alternateEntityType(node: SbcFlowNode) {
+  const choices: Partial<Record<SbcFlowNode["data"]["kind"], string[]>> = {
+    inbound: ["tun", "mixed"],
+    outbound: ["direct", "http"],
+    "dns-server": ["local", "https"],
+    endpoint: ["tailscale", "wireguard"],
+    service: ["resolved", "derp"],
+    "rule-set": ["remote", "local"],
+  };
+  return choices[node.data.kind]?.find((type) => type !== node.data.type);
+}
+
+function tagMissingDiagnostics(config: SingBoxConfig, channel: SingBoxChannel, tag: string) {
+  return validateConfig(config, channel).filter(
+    (diagnostic) => diagnostic.code.startsWith("missing") && diagnostic.message.includes(`"${tag}"`),
+  );
+}
+
+function assertNoMissingReferenceToTag(
+  source: MutationSource,
+  config: SingBoxConfig,
+  tag: string,
+  context: string,
+) {
+  expect(
+    tagMissingDiagnostics(config, source.channel, tag).map((diagnostic) => `${diagnostic.code} ${diagnostic.path}`),
+    `${source.name} ${context} left stale reference to ${tag}`,
+  ).toEqual([]);
+}
+
+function importConfigWithPinnedNode(config: SingBoxConfig, nodeId: string) {
+  useProjectStore.getState().importJson(JSON.stringify(config));
+  useProjectStore.setState({
+    selectedId: nodeId,
+    focusedNodeId: nodeId,
+    layout: { positions: { [nodeId]: { x: 111, y: 222 } } },
+  });
+}
+
+function sweepGraphEntityMutations(source: MutationSource) {
+  const graph = deriveGraph(source.config, { positions: {} }, validateConfig(source.config, source.channel));
+  for (const node of graph.nodes) {
+    if (node.data.kind === "notice") continue;
+
+    if (canDeleteGraphNode(node)) {
+      const deleted = deleteConfigEntity(source.config, node.data.ref);
+      deriveGraph(deleted, { positions: {} }, validateConfig(deleted, source.channel));
+
+      if (isTaggedRef(node.data.ref)) {
+        expect(
+          deriveGraph(deleted, { positions: {} }, validateConfig(deleted, source.channel)).nodes.some(
+            (candidate) => candidate.id === node.id,
+          ),
+          `${source.name} delete ${node.id} left the same graph node`,
+        ).toBe(false);
+        assertNoMissingReferenceToTag(source, deleted, node.data.ref.tag, `delete ${node.id}`);
+      }
+
+      importConfigWithPinnedNode(source.config, node.id);
+      useProjectStore.getState().deleteEntity(node.data.ref);
+      const state = useProjectStore.getState();
+      expect(state.selectedId, `${source.name} delete ${node.id} left stale selectedId`).not.toBe(node.id);
+      expect(state.focusedNodeId, `${source.name} delete ${node.id} left stale focusedNodeId`).not.toBe(node.id);
+      expect(state.layout.positions[node.id], `${source.name} delete ${node.id} left stale layout`).toBeUndefined();
+    }
+
+    const renameRef = node.data.ref;
+    if (isTaggedRef(renameRef) && canRenameGraphNode(node)) {
+      const oldTag = renameRef.tag;
+      const newTag = `${oldTag}-renamed-pr12`;
+      const renamed = renameConfigTag(source.config, oldTag, newTag);
+      const renamedGraph = deriveGraph(renamed, { positions: {} }, validateConfig(renamed, source.channel));
+      expect(
+        renamedGraph.nodes.some((candidate) => candidate.id === node.id),
+        `${source.name} rename ${node.id} left old graph node`,
+      ).toBe(false);
+      expect(
+        renamedGraph.nodes.some((candidate) => candidate.id === `${node.data.kind}:${newTag}`),
+        `${source.name} rename ${node.id} did not create renamed graph node`,
+      ).toBe(true);
+      assertNoMissingReferenceToTag(source, renamed, oldTag, `rename ${node.id}`);
+
+      importConfigWithPinnedNode(source.config, node.id);
+      useProjectStore.getState().renameTag(oldTag, newTag);
+      const state = useProjectStore.getState();
+      const newId = `${node.data.kind}:${newTag}`;
+      expect(state.selectedId, `${source.name} rename ${node.id} did not remap selectedId`).toBe(newId);
+      expect(state.focusedNodeId, `${source.name} rename ${node.id} did not remap focusedNodeId`).toBe(newId);
+      expect(state.layout.positions[node.id], `${source.name} rename ${node.id} left old layout`).toBeUndefined();
+      expect(state.layout.positions[newId], `${source.name} rename ${node.id} did not remap layout`).toEqual({
+        x: 111,
+        y: 222,
+      });
+    }
+
+    const nextType = alternateEntityType(node);
+    const typeChangeRef = node.data.ref;
+    if (nextType && isTaggedRef(typeChangeRef) && !isSyntheticGraphTag(typeChangeRef.tag)) {
+      const ref = typeChangeRef as Extract<
+        EntityRef,
+        { kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" }
+      >;
+      const changed = changeConfigEntityType(source.config, ref, nextType);
+      const changedGraph = deriveGraph(changed, { positions: {} }, validateConfig(changed, source.channel));
+      expect(
+        changedGraph.nodes.some((candidate) => candidate.id === node.id && candidate.data.type === nextType),
+        `${source.name} type-change ${node.id} did not keep the graph node at the new type`,
+      ).toBe(true);
+      assertNoMissingReferenceToTag(source, changed, typeChangeRef.tag, `type-change ${node.id}`);
+    }
+  }
+}
+
 function ensureNoDrops(files: string[], channel: SingBoxChannel) {
   const failures: string[] = [];
   for (const file of files) {
@@ -173,6 +342,12 @@ describe("canvas node coverage vs imported config", () => {
       failures.push(`${preset.id} :: ${details}`);
     }
     expect(failures).toEqual([]);
+  });
+
+  it("keeps graph-managed bundled entities clean across delete, rename, and type-change", () => {
+    const sources = fixtureMutationSources();
+    expect(sources.length).toBeGreaterThan(0);
+    for (const source of sources) sweepGraphEntityMutations(source);
   });
 
   it("renders every entity declared in external fixture corpus (cap-aware)", () => {
