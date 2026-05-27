@@ -1,19 +1,19 @@
-# sbcv — visual sing-box config editor
+# sbcv — sing-box configuration visualizer
 
-A visual editor for [sing-box](https://github.com/SagerNet/sing-box) configs that runs in your browser. Drag nodes, connect them, get a working config.
+A visual [sing-box](https://github.com/SagerNet/sing-box) configuration builder for editing canonical JSON configs with a React Flow canvas, route rules, DNS rules, validation, import, and export.
 
-**Live:** [sbcv.app](https://sbcv.app) · Free · Open source (MIT) · No install · No login
+[**sbcv.app**](https://sbcv.app) · Free · Open source (MIT) · No install · No login
 
 ---
 
-## What it's for
+## What it does
 
-sing-box releases move fast. Every minor version deprecates fields, renames structures, and breaks old configs. If you're not living in the migration notes, your config silently stops working.
+Build, inspect, validate, import, and export sing-box JSON configurations through a visual canvas backed by a canonical config model.
 
-sbcv solves one thing: **let anyone build and verify a sing-box config without hand-writing JSON.**
-
-- **Visual editor.** Drag inbounds, outbounds, DNS servers, route rules, and rule-sets onto a canvas. Connect them with wires. Every enum is a dropdown — typos that used to break configs are impossible.
-- **Real validation, in the browser.** Hit Check and sbcv runs the **official `sing-box check` binary** server-side against your selected target (1.12 / 1.13 / 1.14). No local install, no VPS, no guessing — you get the same verdict sing-box itself would give.
+- **Visual editor.** Drag inbounds, outbounds, endpoints, DNS servers, route rules, and rule-sets onto the canvas. Connect them with wires. Every enum is a dropdown — typos that used to break configs are impossible.
+- **Canonical JSON is the source of truth.** The canvas is a derived view; edits flow through domain commands that update the canonical config. Switching between visual and raw never loses fidelity.
+- **Official validation in the browser.** Hit Check and sbcv runs the real `sing-box check` binary server-side against your chosen target version (1.12 / 1.13 / 1.14). Same verdict sing-box itself would give — no local install, no VPS, no guessing.
+- **Import / Export.** Paste an existing config to start editing; export back to JSON when done.
 - **Open source.** MIT-licensed. Configs never persist on the server. No account, no telemetry.
 
 ---
