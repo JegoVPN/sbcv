@@ -843,6 +843,40 @@ describe("SBC editor shell", () => {
     expect(ep?.system_interface).toBe("tailscale0");
   });
 
+  it("renders tun include/exclude UID/interface/package CSV inputs + auto_redirect toggle", () => {
+    useProjectStore.getState().loadMinimal();
+    act(() => {
+      useProjectStore.getState().createFromPalette("inbound-tun");
+    });
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+
+    const inputs: Array<{ testId: string; label: string; value: string; key: string; expected: string[] }> = [
+      { testId: "tun-include-uid-range", label: "Include UID range (Linux, CSV)", value: "1000:2000, 3000:4000", key: "include_uid_range", expected: ["1000:2000", "3000:4000"] },
+      { testId: "tun-exclude-uid-range", label: "Exclude UID range (Linux, CSV)", value: "0:999", key: "exclude_uid_range", expected: ["0:999"] },
+      { testId: "tun-include-interface", label: "Include Interface (CSV)", value: "eth0, wlan0", key: "include_interface", expected: ["eth0", "wlan0"] },
+      { testId: "tun-exclude-interface", label: "Exclude Interface (CSV)", value: "lo", key: "exclude_interface", expected: ["lo"] },
+      { testId: "tun-include-package", label: "Include Package (Android, CSV)", value: "com.example.app", key: "include_package", expected: ["com.example.app"] },
+      { testId: "tun-exclude-package", label: "Exclude Package (Android, CSV)", value: "com.android.geoclient", key: "exclude_package", expected: ["com.android.geoclient"] },
+    ];
+    for (const { testId, label, value } of inputs) {
+      const input = within(inspector.getByTestId(testId)).getByLabelText(label) as HTMLInputElement;
+      fireEvent.change(input, { target: { value } });
+    }
+    const autoRedirect = within(inspector.getByTestId("tun-auto-redirect")).getByRole(
+      "checkbox",
+    ) as HTMLInputElement;
+    fireEvent.click(autoRedirect);
+
+    const tun = useProjectStore
+      .getState()
+      .config.inbounds?.find((inbound) => inbound.type === "tun");
+    for (const { key, expected } of inputs) {
+      expect((tun as Record<string, unknown>)[key]).toEqual(expected);
+    }
+    expect((tun as Record<string, unknown>).auto_redirect).toBe(true);
+  });
+
   it("renders a deprecated badge on the canvas card for outbound:block", () => {
     useProjectStore.getState().loadMinimal();
     act(() => {
