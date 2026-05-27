@@ -96,6 +96,12 @@ export function TopBar() {
   async function handleImport(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_IMPORT_BYTES) {
+      alert(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum import size is 10 MB.`);
+      event.target.value = "";
+      return;
+    }
     importJson(await file.text());
     event.target.value = "";
   }
