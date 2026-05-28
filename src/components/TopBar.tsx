@@ -7,8 +7,34 @@ import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
-import type { Diagnostic, SingBoxTargetId } from "../domain/types";
+import type { Diagnostic, SingBoxConfig, SingBoxTargetId } from "../domain/types";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
+
+// Whether the current config holds user work worth confirming before an import overwrites it (A26).
+export function configHasContent(config: SingBoxConfig): boolean {
+  const len = (value: unknown) => (Array.isArray(value) ? value.length : 0);
+  const has = (value: unknown) => value !== undefined && value !== null;
+  const c = config as Record<string, unknown>;
+  return (
+    len(config.inbounds) > 0 ||
+    len(config.outbounds) > 0 ||
+    len(config.endpoints) > 0 ||
+    len(config.services) > 0 ||
+    len(c.certificate_providers) > 0 ||
+    len(c.http_clients) > 0 ||
+    len(config.route?.rules) > 0 ||
+    len(config.route?.rule_set) > 0 ||
+    has(config.route?.final) ||
+    len(config.dns?.servers) > 0 ||
+    len(config.dns?.rules) > 0 ||
+    has(config.dns?.final) ||
+    // settings-only nodes (palette-creatable as single-node configs)
+    has(c.log) ||
+    has(c.ntp) ||
+    has(c.certificate) ||
+    has(c.experimental)
+  );
+}
 
 function padTimestampPart(value: number) {
   return String(value).padStart(2, "0");
@@ -31,6 +57,7 @@ export function TopBar() {
     validateNow,
     runOfficialCheck,
     importJson,
+    config,
     focusNode,
     goHome,
     checkNotice,
@@ -46,6 +73,7 @@ export function TopBar() {
       validateNow: state.validateNow,
       runOfficialCheck: state.runOfficialCheck,
       importJson: state.importJson,
+      config: state.config,
       focusNode: state.focusNode,
       goHome: state.goHome,
       checkNotice: state.checkNotice,
@@ -140,6 +168,11 @@ export function TopBar() {
     const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
     if (file.size > MAX_IMPORT_BYTES) {
       alert(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum import size is 10 MB.`);
+      event.target.value = "";
+      return;
+    }
+    // A26: importing replaces the whole config — confirm before clobbering existing work.
+    if (configHasContent(config) && !window.confirm("Import replaces your current configuration. Continue?")) {
       event.target.value = "";
       return;
     }

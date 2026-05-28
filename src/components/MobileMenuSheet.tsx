@@ -7,7 +7,7 @@ import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import type { SingBoxTargetId } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 import { BottomSheet } from "./BottomSheet";
-import { createSbcvFileName } from "./TopBar";
+import { configHasContent, createSbcvFileName } from "./TopBar";
 
 interface MobileMenuSheetProps {
   open: boolean;
@@ -45,6 +45,11 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
     const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
     if (file.size > MAX_IMPORT_BYTES) {
       alert(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum import size is 10 MB.`);
+      event.target.value = "";
+      return;
+    }
+    // A26: importing replaces the whole config — confirm before clobbering existing work.
+    if (configHasContent(useProjectStore.getState().config) && !window.confirm("Import replaces your current configuration. Continue?")) {
       event.target.value = "";
       return;
     }
