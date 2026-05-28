@@ -1182,3 +1182,15 @@ Status: implemented 2026-05-29 in `atomic/http-client-create`; merged in PR #75.
 
 Both former A21/A22 hard checkpoints now fully support the testing target (stable gated), per the user's
 2026-05-29 decision.
+
+### Phase 2 complete — checkpoint report (2026-05-29)
+All Phase-2 rows have landed at least their primary slice: A10 (a/b/c), A11, A12, A13, A14, A15, A16,
+A17, A18, A19, A20 (dns/inbound/outbound/rule/service/misc representative slices), A21, A22 (diag +
+create) — PRs #55–#75. Both former hard checkpoints (A7 in Phase 1, A21/A22 here) are resolved. Queued
+P1/P2 tails (not blocking phase completion): A20-{dns,inbound,outbound,rule,service,misc}-rest,
+A22-create-fields, plus the standing deferrals A2c, A4-rest, A8b-brands, A8b-ports, A10d, A11-full,
+A16-norm, A20-* rests. All work this session ran under the new one-pass expert-review gate (from A10).
+Next: Phase 3 (A23 palette usability → A24 connect/disconnect discoverability + edge legend → A25 mobile
+build path → A26 import safety + onboarding → A27 template placeholder secrets), then Phase 4 (A28–A29).
+A25 may add a build target/dependency (user-authorized); A27 uses the existing `****` placeholder-secret
+masking (user-confirmed). Proceeding to A23.
