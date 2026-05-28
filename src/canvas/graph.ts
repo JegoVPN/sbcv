@@ -795,9 +795,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         stringRefs(rule.inbound).forEach((tag) => {
           edges.push(makeEdge(formatEdgeId("dns-rule-inbound", index, tag), `inbound:${tag}`, id, "dns-rule-match", "inbound"));
         });
-        const dnsAction = typeof rule.action === "string" ? rule.action : "";
-        const dnsRuleServerAllowed = dnsAction === "" || dnsAction === "route" || dnsAction === "evaluate";
-        if (rule.server && dnsRuleServerAllowed) {
+        if (rule.server && dnsRuleAllowsServer(rule)) {
           edges.push(makeEdge(formatEdgeId("dns-rule", index, rule.server), id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
         const ruleSetRefs = stringRefs(rule.rule_set);
