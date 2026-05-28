@@ -304,6 +304,18 @@ const serviceHandledFields = new Set([
 ]);
 const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client", "rules"]);
 
+// Seeds a new kv-repeater row with a unique, non-empty key so a blank {"":""} entry can never be
+// committed to (and exported from) canonical config (W13 / C0-6). Mirrors the ccm/ocm addHeader pattern.
+export function withUniqueBlankKey<T extends Record<string, unknown>>(map: T, base: string): T {
+  let candidate = base;
+  let suffix = 2;
+  while (Object.prototype.hasOwnProperty.call(map, candidate)) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return { ...map, [candidate]: "" } as T;
+}
+
 function labelForField(field: string) {
   return field
     .split("_")
@@ -3393,7 +3405,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     <button
                       type="button"
                       className="palette-action"
-                      onClick={() => writeTorrc({ ...torrc, "": "" })}
+                      onClick={() => writeTorrc(withUniqueBlankKey(torrc, "Option"))}
                     >
                       Add torrc key
                     </button>
@@ -3835,7 +3847,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     <button
                       type="button"
                       className="palette-action"
-                      onClick={() => writeHeaders({ ...headers, "": "" })}
+                      onClick={() => writeHeaders(withUniqueBlankKey(headers, "X-Header"))}
                     >
                       Add header
                     </button>
@@ -3895,7 +3907,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   <button
                     type="button"
                     className="palette-action"
-                    onClick={() => writeHeaders({ ...headers, "": "" })}
+                    onClick={() => writeHeaders(withUniqueBlankKey(headers, "X-Header"))}
                   >
                     Add header
                   </button>
@@ -4557,7 +4569,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   <button
                     type="button"
                     className="palette-action"
-                    onClick={() => writeHeaders({ ...headers, "": "" })}
+                    onClick={() => writeHeaders(withUniqueBlankKey(headers, "X-Header"))}
                   >
                     Add header
                   </button>

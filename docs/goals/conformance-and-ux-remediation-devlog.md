@@ -28,7 +28,8 @@ work, not after.
 - [ ] A2c — deferred from A2a/A2b for per-finding upstream+fixture verification: presence diagnostics (inbound `listen` + credentials C0-16; dns-rule route/evaluate `server` C0-1, overlaps A10) **+ the paired required `aria-required`/`*` field markers**; may fold into A10/A20 (`required-presence-and-markers`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [x] A4a — type-change dial-detour scrub (C0-9 outbound + C0-8 dns-server detour), domain-only (`type-change-normalizer`) — PR #41
-- [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain), type-change confirm dialog (W7, component), kv blank-row fixes (W13/C0-6, component)
+- [x] A4c — kv blank-row fixes (W13/C0-6): seed unique keys in torrc/http/naive/dns-h3 repeaters (`kv-no-empty-rows`) — PR #42
+- [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain), type-change confirm dialog (W7, component)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
@@ -383,4 +384,24 @@ Status: implemented 2026-05-28 in `atomic/type-change-normalizer`; merged in PR 
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (620 passed | 15 expected fail | 1
   todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A4a changes a domain command, not bundled
+  fixture/exported config output.
+
+### A4c kv-no-empty-rows — seed kv-repeater rows with a unique key (component)
+Status: implemented 2026-05-28 in `atomic/kv-no-empty-rows`; merged in PR #42.
+
+- What changed (`src/components/Inspector.tsx` + `tests/kv-no-empty-rows.test.tsx`): added
+  `withUniqueBlankKey(map, base)` (returns the map plus a unique non-empty key with an empty value,
+  base/base-2/…) and replaced the four `{ ...map, "": "" }` "Add" seeds — torrc (base "Option"), HTTP
+  outbound headers, naive `extra_headers`, DNS HTTPS/H3 headers (base "X-Header"). A blank `{"":""}` key
+  can no longer be committed/exported (W13 / C0-6). hosts `predefined` + ccm/ocm headers were already safe.
+- Frontend perf review (`vercel-react-best-practices`): a pure helper + four onClick seed swaps; no new
+  subscriptions, waterfalls, or bundle deps. Pass.
+- Codex review:
+  - Round 1: clean — no remaining empty-key seeds; `withUniqueBlankKey` correct; all three `writeHeaders`
+    replacements in the right closure scope.
+  - Deferred to follow-up atomic: A4-rest (rule-action normalizers C0-3, dns-server type-change deps C0-8,
+    W7 confirm dialog).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (623 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (13 passed).
+- Official check: `sing-box-stable/testing check` not run — A4c changes editor repeater UX, not bundled
   fixture/exported config output.
