@@ -19,7 +19,7 @@ work, not after.
 ## Running TODO
 
 ### Phase 0 — Guardrails (one PR)
-- [ ] A0 — guardrail tests W1–W5 + multi-edge-disconnect stub (`phase0-guardrail-tests`)
+- [x] A0 — guardrail tests W1–W5 + multi-edge-disconnect stub (`phase0-guardrail-tests`) — PR #36
 
 ### Phase 1 — Structural root-cause
 - [ ] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`)
@@ -186,4 +186,33 @@ Status: implemented YYYY-MM-DD in `atomic/<branch>`; merged in PR #<n>.
 - Official check: `sing-box-stable/testing check` <ran on … | not run because …>.
 ```
 
-_(No atomics merged yet.)_
+### A0 phase0-guardrail-tests — Phase-0 guardrail suite (W1–W5 + multi-edge stub)
+Status: implemented 2026-05-28 in `atomic/phase0-guardrail-tests`; merged in PR #36.
+
+- What changed: tests + child goal doc only (`docs/goals/phase0-guardrail-tests.md`). Six guardrails turn
+  each Phase-1 fix into a red→green target while keeping `pnpm test` green (red targets = `it.fails`; DOM
+  guardrails = characterization that flips red on fix):
+  - W1 `referenceRegistry` completeness on delete **and** rename for 5 code-verified refs (route-rule
+    `resolve.server`, inbound `detour`, tun `route_address_set`, shadowtls `handshake.detour`, derp
+    `mesh_with[].detour`; `_RELATIONSHIPS` rows 5/23/28/29/30) → A6.
+  - W2 behavioral `createCompatible` coverage (16 dead chips: C1-9/12/15) → A8.
+  - W3 shared TLS/multiplex card role-by-direction (C0-6/C0-7) → A1.
+  - W4 `JsonField` parse safety (C0-18) → A3.
+  - W5a `detour-target` input type guard for block/selector/urltest/dns (P2-f) → A6.
+  - W5b warning-vs-valid node status glyph (T9/W10) → A9.
+  - multi-edge aggregate-port disconnect characterization + `it.todo` (C1-7/8/23) → A8.
+- Re-verify-against-HEAD: W5 dns-server-detour guard already landed in the canvas PR-7 atomic → shipped a
+  green regression lock instead of a red target. Per-member selector disconnect already works from each
+  member node's own input port; only the selector's aggregate output control is defective.
+- Frontend perf review (`vercel-react-best-practices`): n/a — no `src/components`/`src/state` change.
+- Codex review:
+  - Round 1: 1 BLOCKER (W2 was a static handled-set mirror that wouldn't flip if A8 wired rather than
+    pruned dead chips) + 3 SHOULD-FIX (W1 delete-only, W5a block-only, multi-edge brittle count assertion).
+    All addressed: W2 → behavioral probe; W1 → rename cases; W5a → all four types; multi-edge → `it.todo`
+    after discovering per-member disconnect already works.
+  - Round 2: clean — findings resolved, no W2 false-positives, no new issues, `tsc` clean.
+  - Deferred to follow-up atomic: none.
+- Verification: `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm test`
+  (602 passed | 15 expected fail | 1 todo), `pnpm build`. `pnpm e2e` not run (no interaction change).
+- Official check: `sing-box-stable/testing check` not run because A0 changes tests + docs only, not
+  bundled fixture/exported config output.

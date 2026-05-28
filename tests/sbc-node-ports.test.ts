@@ -103,3 +103,26 @@ describe("SBC node port registry", () => {
     });
   });
 });
+
+// A0 / W5 port-guard guardrail (Pass-2 T13; _RELATIONSHIPS.md P1-a + P2-f).
+describe("dial detour port type guards (W5 -> A6)", () => {
+  // Regression lock (already green). The canvas-pr7 atomic added nodeTypeExcludes to the
+  // dns-server-detour source (portRelationRegistry.ts:105), so non-dialable DNS server types no longer
+  // expose a detour outbound port. Re-verified against HEAD; this locks it against regression.
+  it.each(["fakeip", "hosts", "resolved", "tailscale"])(
+    "dns-server %s does not expose a detour outbound output port",
+    (type) => {
+      expect(getPortSpecs("dns-server", type, "output").map((port) => port.key)).not.toContain("outbound");
+    },
+  );
+
+  // Red target. The `detour-target` INPUT endpoints (portRelationRegistry.ts:106/108/117) carry no
+  // nodeTypeExcludes, so non-dialable outbounds (block/selector/urltest/dns) still expose a dial
+  // detour-target input — a dead chain (_RELATIONSHIPS.md P2-f). Flips red when A6 adds
+  // nodeTypeExcludes ["block","selector","urltest","dns"] to those endpoints; convert `it.fails` -> `it`.
+  for (const type of ["block", "selector", "urltest", "dns"]) {
+    it.fails(`outbound ${type} does not expose a dial detour-target input`, () => {
+      expect(getPortSpecs("outbound", type, "input").map((port) => port.key)).not.toContain("detour-target");
+    });
+  }
+});
