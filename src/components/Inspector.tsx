@@ -1264,7 +1264,11 @@ function DnsRuleInspector({
           onChange={(event) => {
             const nextAction = event.target.value;
             const cleared: Record<string, unknown> = { action: nextAction };
-            if (nextAction !== "route" && rule.server !== undefined) cleared.server = undefined;
+            // route and evaluate both require `server` (dns/rule_action.md); only scrub it when the
+            // next action bears no server.
+            if (nextAction !== "route" && nextAction !== "evaluate" && rule.server !== undefined) {
+              cleared.server = undefined;
+            }
             patch(cleared);
           }}
         >
@@ -1276,7 +1280,7 @@ function DnsRuleInspector({
           <option value="predefined">predefined</option>
         </select>
       </label>
-      {String(rule.action ?? "route") === "route" ? (
+      {["route", "evaluate"].includes(String(rule.action ?? "route")) ? (
         <label className="field">
           <span>Server</span>
           <select value={String(rule.server ?? "")} onChange={(event) => patch({ server: event.target.value || undefined })}>
