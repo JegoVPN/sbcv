@@ -78,7 +78,9 @@ work, not after.
   - [ ] A22-create-fields — add Advanced editing for the http_clients scalar fields engine/version/disable_version_fallback/headers (A22-create review follow-up; created config is valid + round-trips, these just lack a UI control)
 
 ### Phase 3 — UX comprehension
-- [ ] A23 — palette usability (`palette-usability`)
+- [~] A23 — palette usability (`palette-usability`) — search slice landed
+  - [x] A23-search — Add Library search covers Templates (W29) — PR #76
+  - [ ] A23-rest — empty first-run state, remove dead "Docs" rows, de-jargon badges, Add-vs-Setup labels (W29 tail)
 - [ ] A24 — canvas connect/disconnect discoverability + edge legend (`canvas-connect-discoverability`)
 - [ ] A25 — mobile build path (`mobile-build-path`)
 - [ ] A26 — import safety + onboarding (`import-safety-and-onboarding`)
@@ -1194,3 +1196,20 @@ Next: Phase 3 (A23 palette usability → A24 connect/disconnect discoverability 
 build path → A26 import safety + onboarding → A27 template placeholder secrets), then Phase 4 (A28–A29).
 A25 may add a build target/dependency (user-authorized); A27 uses the existing `****` placeholder-secret
 masking (user-confirmed). Proceeding to A23.
+
+### A23-search palette-search-templates — Add Library search covers Templates (W29)
+Status: implemented 2026-05-29 in `atomic/palette-search-templates`; merged in PR #76. First A23 slice.
+
+- What changed (W29): the Add Library search filtered only the library groups; the Templates group showed
+  only when NOT searching, so a query could never surface a template preset. Added a memoized
+  `filteredTemplateGroup` rendered as a PaletteSection above the filtered library groups when a query is
+  active (same matcher as the library; loaded-template tracking preserved).
+- Frontend perf review (`vercel-react-best-practices`): one query-keyed memo; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed correct
+  filtering, the two template-render paths are mutually exclusive (no duplicate), loaded-template tracking
+  works, memo deps complete, and no regression.
+  - Deferred to follow-up atomic: A23-rest (empty first-run state, dead "Docs" rows, jargon badges,
+    Add-vs-Setup labels).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (783 passed | 1 todo), `pnpm build`.
+- Official check: n/a — palette UI.

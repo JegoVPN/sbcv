@@ -406,6 +406,15 @@ export function Palette() {
       }))
       .filter((group) => group.items.length > 0);
   }, [libraryGroups, query]);
+  // W29: search must also cover the Templates group, not just the library.
+  const filteredTemplateGroup = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized || !templateGroup) return null;
+    const items = templateGroup.items.filter((item) =>
+      `${templateGroup.title} ${item.label}`.toLowerCase().includes(normalized),
+    );
+    return items.length > 0 ? { ...templateGroup, items } : null;
+  }, [query]);
   const activeGroup = activeGroupTitle ? libraryGroups.find((group) => group.title === activeGroupTitle) : null;
   const displayedGroups = query.trim() ? filteredGroups : libraryOpen && activeGroup ? [activeGroup] : [];
 
@@ -484,6 +493,20 @@ export function Palette() {
             </button>
           ))}
         </nav>
+      ) : null}
+      {query.trim() && filteredTemplateGroup ? (
+        <PaletteSection
+          group={filteredTemplateGroup}
+          loadTemplatePreset={(id) => {
+            loadTemplatePreset(id);
+            setLoadedTemplateId(id);
+          }}
+          createFromPalette={createFromPalette}
+          loadedTemplateId={loadedTemplateId}
+          channel={channel}
+          singletonsPresent={singletonsPresent}
+          setSelectedId={setSelectedId}
+        />
       ) : null}
       {displayedGroups.map((group) => (
         <PaletteSection
