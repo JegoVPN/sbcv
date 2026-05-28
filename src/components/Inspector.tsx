@@ -2096,33 +2096,8 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
             />
             <span>Find process (process matchers in rules)</span>
           </label>
-          <label className="field">
-            <span>Default Network Strategy (1.13+)</span>
-            <select
-              value={typeof entity.default_network_strategy === "string" ? entity.default_network_strategy : ""}
-              onChange={(event) =>
-                updateField(ref, "default_network_strategy", event.target.value || undefined)
-              }
-            >
-              <option value="">(unset)</option>
-              <option value="default">default</option>
-              <option value="hybrid">hybrid</option>
-              <option value="fallback">fallback</option>
-              <option value="wifi">wifi</option>
-              <option value="cellular">cellular</option>
-              <option value="ethernet">ethernet</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>Default Network Type (1.13+)</span>
-            <input
-              value={typeof entity.default_network_type === "string" ? entity.default_network_type : ""}
-              placeholder="wifi / cellular / ethernet (mobile only)"
-              onChange={(event) =>
-                updateField(ref, "default_network_type", event.target.value || undefined)
-              }
-            />
-          </label>
+          {/* default_network_strategy / default_network_type are rendered by the shared Dial group
+              (string[] list), so no hardcoded duplicates here (W24). */}
           <RouteRulesTable />
         </>
       ) : null}
