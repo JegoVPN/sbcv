@@ -81,7 +81,9 @@ work, not after.
 - [~] A23 — palette usability (`palette-usability`) — search slice landed
   - [x] A23-search — Add Library search covers Templates (W29) — PR #76
   - [ ] A23-rest — empty first-run state, remove dead "Docs" rows, de-jargon badges, Add-vs-Setup labels (W29 tail)
-- [ ] A24 — canvas connect/disconnect discoverability + edge legend (`canvas-connect-discoverability`)
+- [~] A24 — canvas connect/disconnect discoverability + edge legend (`canvas-connect-discoverability`) — legend slice landed
+  - [x] A24-legend — desktop edge legend (configured link / animated traffic path / hover-✕ disconnect) (W30) — PR #77
+  - [ ] A24-rest — drag affordance, invalid-drop toast, right-click disconnect (W30 tail)
 - [ ] A25 — mobile build path (`mobile-build-path`)
 - [ ] A26 — import safety + onboarding (`import-safety-and-onboarding`)
 - [ ] A27 — template placeholder secrets (`template-placeholder-secrets`)
@@ -1213,3 +1215,22 @@ Status: implemented 2026-05-29 in `atomic/palette-search-templates`; merged in P
     Add-vs-Setup labels).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (783 passed | 1 todo), `pnpm build`.
 - Official check: n/a — palette UI.
+
+### A24-legend canvas-edge-legend — desktop edge legend (W30)
+Status: implemented 2026-05-29 in `atomic/canvas-edge-legend`; merged in PR #77. First A24 slice.
+
+- What changed (W30): the canvas had no key for the edge rendering or the disconnect affordance. Added a
+  desktop-only legend (bottom-left, pointer-events:none): solid lime = a configured link/reference;
+  animated dashed lime = the traffic path (entry → route → final, the only `animated` edges); hover a
+  writable edge → ✕ to disconnect. Hidden on mobile.
+- Frontend perf review (`vercel-react-best-practices`): static desktop-only overlay; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a reviewer subagent. Verdict CHANGES REQUESTED → fixed. 1 BLOCKER: the first
+  draft invented a grey/active-vs-reference colour code the canvas does not implement (all committed
+  edges render lime; grey-dashed is only the transient drag line; route-final is animated dashed lime).
+  Rewrote the legend to describe what actually renders (solid link / animated traffic path / hover-✕),
+  per the reviewer's documented edge model. Placement/overlap, mobile-hidden, a11y all passed.
+  - Deferred to follow-up atomic: A24-rest (drag affordance, invalid-drop toast, right-click disconnect).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (784 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (editor 3 passed).
+- Official check: n/a — canvas overlay UI.
