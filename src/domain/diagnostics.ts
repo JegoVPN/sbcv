@@ -1394,6 +1394,17 @@ export function validateConfig(
         );
       }
     }
+    listItems(config.route?.rule_set).forEach((ruleSet, index) => {
+      if ((ruleSet as Record<string, unknown>).http_client !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "rule-set-http-client-testing-only",
+          `/route/rule_set/${index}/http_client`,
+          `Rule-set ${index + 1} sets \`http_client\`, which is testing-only (sing-box 1.14+). On stable, use \`download_detour\`.`,
+        );
+      }
+    });
     const dnsRules = config.dns?.rules;
     if (Array.isArray(dnsRules)) {
       const testingMatchers = [

@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
+import { validateConfig } from "../src/domain/diagnostics";
 import { sharedGroupsForEntity } from "../src/domain/sharedFieldRegistry";
+import type { SingBoxConfig } from "../src/domain/types";
 import { useProjectStore } from "../src/state/useProjectStore";
 
 // A12 (W20 / C2-5): rule-set-remote `http_client` may be a string (tag) OR an inline object
@@ -16,6 +18,15 @@ describe("A12 — rule-set http_client", () => {
     });
     it("hides it on stable (http_client is sing-box 1.14+)", () => {
       expect(sharedGroupsForEntity(ref, "remote", "stable")).not.toContain("http-client");
+    });
+    it("warns on stable when an imported rule-set still carries http_client (no silent gap)", () => {
+      const config = {
+        route: { rule_set: [{ type: "remote", tag: "rs", format: "binary", url: "https://e.x/r.srs", http_client: { detour: "out" } }] },
+      } as unknown as SingBoxConfig;
+      const codes = validateConfig(config, "stable").map((d) => d.code);
+      expect(codes).toContain("rule-set-http-client-testing-only");
+      // On testing it is valid — no warning.
+      expect(validateConfig(config, "testing").map((d) => d.code)).not.toContain("rule-set-http-client-testing-only");
     });
   });
 
