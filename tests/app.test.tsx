@@ -981,13 +981,13 @@ describe("SBC editor shell", () => {
     const authKeyInput = inspector.getByLabelText("Auth Key") as HTMLInputElement;
     expect(authKeyInput.type).toBe("password");
     fireEvent.change(authKeyInput, { target: { value: "tskey-auth-1234" } });
-    const sysIfaceInput = inspector.getByLabelText(/System Interface/) as HTMLInputElement;
-    fireEvent.change(sysIfaceInput, { target: { value: "tailscale0" } });
+    // A14: system_interface is a boolean; the interface name is system_interface_name.
+    fireEvent.change(inspector.getByLabelText("System Interface Name (since sing-box 1.13.0)"), { target: { value: "tailscale0" } });
     const ep = useProjectStore
       .getState()
       .config.endpoints?.find((e) => e.type === "tailscale");
     expect(ep?.auth_key).toBe("tskey-auth-1234");
-    expect(ep?.system_interface).toBe("tailscale0");
+    expect(ep?.system_interface_name).toBe("tailscale0");
   });
 
   it("renders tun include/exclude UID/interface/package CSV inputs + auto_redirect toggle", () => {
