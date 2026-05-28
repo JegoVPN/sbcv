@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Braces,
@@ -302,7 +302,7 @@ const serviceHandledFields = new Set([
   "max_concurrent_streams",
   ...listenSharedFields,
 ]);
-const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client"]);
+const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client", "rules"]);
 
 function labelForField(field: string) {
   return field
@@ -800,19 +800,54 @@ function JsonField({
   value: unknown;
   onChange: (value: unknown) => void;
 }) {
+  const serialized = JSON.stringify(value ?? null, null, 2);
+  const [draft, setDraft] = useState(serialized);
+  const [error, setError] = useState<string | null>(null);
+  // Tracks the serialized form this editor last emitted, so an external value change (e.g. selecting a
+  // different entity that reuses this component instance) can be told apart from our own valid edit.
+  const lastEmittedRef = useRef(serialized);
+  useEffect(() => {
+    // External change: reset the draft and clear any stale parse error so the previous entity's bad
+    // draft can never be written onto the newly selected one. Our own valid edits keep lastEmittedRef in
+    // sync, so they don't trigger a reset (and the textarea isn't reformatted mid-edit).
+    if (serialized !== lastEmittedRef.current) {
+      lastEmittedRef.current = serialized;
+      setDraft(serialized);
+      setError(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serialized]);
   return (
     <label className="field inspector-json-field">
       <span>{label}</span>
       <textarea
-        value={JSON.stringify(value ?? null, null, 2)}
+        value={draft}
         onChange={(event) => {
+          const next = event.target.value;
+          setDraft(next);
+          if (!next.trim()) {
+            // Empty input clears the field instead of erroring (mirrors InlineRuleSetEditor).
+            setError(null);
+            lastEmittedRef.current = JSON.stringify(null, null, 2);
+            onChange(undefined);
+            return;
+          }
           try {
-            onChange(JSON.parse(event.target.value));
-          } catch {
-            onChange(event.target.value);
+            const parsed = JSON.parse(next);
+            setError(null);
+            lastEmittedRef.current = JSON.stringify(parsed ?? null, null, 2);
+            onChange(parsed);
+          } catch (cause) {
+            // Never write unparseable text into canonical config; keep the last valid value.
+            setError(cause instanceof Error ? cause.message : "Invalid JSON.");
           }
         }}
       />
+      {error ? (
+        <span className="field__hint field__hint--error" role="alert">
+          {error} The previous valid value is kept — fix the JSON to apply changes.
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -830,13 +865,14 @@ function AdvancedNonScalarFields({
 }) {
   const fields = editableNonScalarFields(entity, handledFields);
   if (!fields.length) return null;
+  const refKey = JSON.stringify(entityRef);
   return (
     <details className="advanced-fields advanced-fields--non-scalar">
       <summary>Advanced JSON fields <span>{fields.length}</span></summary>
       <div className="advanced-fields__body">
         {fields.map(([field, value]) => (
           <JsonField
-            key={field}
+            key={`${refKey}:${field}`}
             label={labelForField(field)}
             value={value}
             onChange={(next) => updateField(entityRef, field, next)}
@@ -993,19 +1029,7 @@ function RouteRuleInspector({
               <option value="or">or</option>
             </select>
           </label>
-          <label className="field">
-            <span>Rules JSON</span>
-            <textarea
-              value={JSON.stringify(rule.rules ?? [], null, 2)}
-              onChange={(event) => {
-                try {
-                  patch({ rules: JSON.parse(event.target.value) });
-                } catch {
-                  patch({ rules: event.target.value });
-                }
-              }}
-            />
-          </label>
+          <InlineRuleSetEditor value={rule.rules} onChange={(value) => patch({ rules: value })} />
         </>
       ) : (
         <>
@@ -1229,19 +1253,7 @@ function DnsRuleInspector({
               <option value="or">or</option>
             </select>
           </label>
-          <label className="field">
-            <span>Rules JSON</span>
-            <textarea
-              value={JSON.stringify(rule.rules ?? [], null, 2)}
-              onChange={(event) => {
-                try {
-                  patch({ rules: JSON.parse(event.target.value) });
-                } catch {
-                  patch({ rules: event.target.value });
-                }
-              }}
-            />
-          </label>
+          <InlineRuleSetEditor value={rule.rules} onChange={(value) => patch({ rules: value })} />
         </>
       ) : (
         <>
@@ -4829,7 +4841,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   onChange={(event) => updateField(ref, "cache_path", event.target.value || undefined)}
                 />
               </label>
-              <JsonField label="Endpoint Mapping JSON (advanced multi-path)" value={entity.servers ?? {}} onChange={(value) => updateField(ref, "servers", value)} />
+              <JsonField key={`${JSON.stringify(ref)}:ssm-servers`} label="Endpoint Mapping JSON (advanced multi-path)" value={entity.servers ?? {}} onChange={(value) => updateField(ref, "servers", value)} />
             </>
           ) : null}
 

@@ -24,7 +24,7 @@ work, not after.
 ### Phase 1 — Structural root-cause
 - [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
 - [ ] A2 — required markers + pre-export gate + local rule-set `format` (`required-fields-and-export-gate`)
-- [ ] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`)
+- [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
@@ -258,3 +258,33 @@ A1 landed the role-split inside `sharedFieldDefinitions` without changing the sh
 role-aware). No re-ordering of later rows is required: A2/A3 (required+export gate, JsonField) and A6
 (referenceRegistry+detour guards) are independent of the TLS/multiplex field-list internals. v2ray-transport
 per-type work was split out as a follow-up (recorded above). Proceeding to A2 + A3 per the near-term order.
+
+### A3 jsonfield-parse-safety — JsonField never writes unparseable text
+Status: implemented 2026-05-28 in `atomic/jsonfield-parse-safety`; merged in PR #38.
+
+- What changed (C0-18 / T4 / W8): `JsonField` now keeps a local draft + parse-error state — on a parse
+  failure it keeps the last valid value and shows a `role="alert"`, only calling `onChange` on a
+  successful `JSON.parse`; empty input clears the field. A `lastEmittedRef` separates our own valid edits
+  (no reset / no mid-edit reformat) from external value changes, and each `JsonField` is keyed by entity
+  identity so an entity switch resets draft/error (no stale draft can land on the next entity even when
+  both share an identical value). The route-rule and dns-rule logical-group "rules" editors now use the
+  existing safe `InlineRuleSetEditor`; `"rules"` was added to `ruleSetHandledFields` to avoid a duplicate
+  advanced-JSON editor. Flipped the A0 W4 guardrail to assert the safe behavior.
+- Frontend perf review (`vercel-react-best-practices`): controlled-input local state (draft/error + a
+  ref); no new store subscriptions, waterfalls, or bundle deps. Pass.
+- Codex review:
+  - Round 1: keep last-valid + role="alert" (implemented); follow-up — reset draft/error on entity switch
+    (added `lastEmittedRef`).
+  - Round 2: entity switch with byte-identical values still kept the stale draft → keyed `JsonField` by
+    entity identity so React remounts on switch. Plus minors (empty-input clear, refKey hoist, key-order
+    consistency) addressed.
+  - Deferred to follow-up atomic: none.
+- Pre-push gate note: the local `claude-review` pre-push hook reviews each commit in isolation against the
+  AGENTS.md #8 atomic budget, so the intermediate round-1/round-2 fix commits (whose first commit still
+  carried the pre-fix JsonField) were **squashed into one clean signed commit** before push; the squashed
+  commit passed the gate.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (604 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (port-click-redesign 6/6 on isolated re-run; one full-suite drag test
+  was a headless flake — A3 changes no canvas code).
+- Official check: `sing-box-stable/testing check` not run — A3 changes Inspector editor behavior, not
+  bundled fixture/exported config output.
