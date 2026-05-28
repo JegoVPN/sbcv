@@ -34,7 +34,8 @@ work, not after.
 - [x] A5 — wire `version` into `validateConfig` (`version-aware-gating`) — PR #44; C2-2 (Inspector service dropdown filter) deferred; `system_interface` boolean predicate → A14
 - [x] A6a — referenceRegistry completeness: 8 upstream-real tag refs, rename + delete (`reference-registry-completeness`) — PR #45
 - [x] A6b — dial-detour port guards: exclude block/dns from `detour-target` input (W5a); selector/urltest kept as valid targets — **audit deviation** from `["block","selector","urltest","dns"]`, see note (`dial-detour-port-guards`) — PR #46
-- [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
+- [x] A7a — endpoint outbound-half (domain): endpoints join the outbound reference namespace — `getOutboundTags` + delete cascade; both WireGuard & Tailscale per migration.md (`endpoint-outbound-refs`) — PR #47
+- [ ] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations) + graph edges + connect/disconnect handlers (`endpoint-outbound-ports`)
 - [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
 - [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
@@ -492,3 +493,26 @@ Status: implemented 2026-05-28 in `atomic/dial-detour-port-guards`; merged in PR
   selector/urltest keep it.
 - Verification: `git diff --check`, `tsc -b`, `pnpm test` (646 passed | 1 expected fail | 1 todo),
   `pnpm build`, `pnpm e2e`. Codex review and `vercel-react` (domain-only, no component surface) per PR.
+
+### A7a endpoint-outbound-refs — endpoints join the outbound reference namespace (domain)
+Status: implemented 2026-05-28 in `atomic/endpoint-outbound-refs`; merged in PR #47.
+
+- What changed (A7 domain half; audit endpoint-wireguard P0-2 / _SUMMARY T14): an endpoint is "a protocol
+  with inbound and outbound behavior", so its tag is a valid `route.final` / route-rule `outbound` /
+  selector|urltest member / detour target. `getOutboundTags` (`indexes.ts`) now includes every endpoint
+  tag, so diagnostics stop false-flagging an endpoint used as an outbound target. `deleteEntity`
+  (`commands.ts`) now also runs the `outbound`-kind reference scrub for any endpoint delete, so deleting an
+  endpoint no longer leaves dangling route/selector/detour refs.
+- Re-verify-against-HEAD: rename already cascaded correctly (`replaceRegisteredTagReferences` runs every
+  reference kind), so only DELETE and DIAGNOSTICS were broken on HEAD — confirmed test-first (red → green).
+- DECISION — included BOTH WireGuard and Tailscale endpoints (no type gate). The pass-2 audit
+  (endpoint-tailscale) claimed Tailscale is "not a route target", but `migration.md:221-223` explicitly
+  says "A WireGuard or Tailscale endpoint used as an outbound" — the audit conflated Tailscale's own
+  control-plane Dial Fields (`tailscale.md:151-155`) with being a detour/route TARGET. Surfaced to the
+  user as an audit deviation (corrects the A7 question's premise); reversible.
+- Codex review (2 rounds): round 1 [major] flagged the initial WireGuard-only gate vs `migration.md`
+  (delete-scrub, rename, and callers all clean); fixed by dropping the type gate; round 2 confirmed.
+- Verification: `git diff --check`, `tsc -b`, `pnpm test` (650 passed | 1 expected fail | 1 todo),
+  `pnpm build`. Domain-only; no `vercel-react` surface, no e2e (canvas ports/edges/connect are A7b).
+- A7b (canvas, next): input ports on endpoint nodes (broaden the five outbound-target relations to accept
+  `nodeKind: endpoint`), graph edges, connect/disconnect handlers.

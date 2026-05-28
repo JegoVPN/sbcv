@@ -81,7 +81,12 @@ export function buildTagIndex(config: SingBoxConfig): Map<string, TaggedEntityRe
 }
 
 export function getOutboundTags(config: SingBoxConfig): Set<string> {
-  return new Set(listItems(config.outbounds).map((item) => item.tag));
+  const tags = new Set(listItems(config.outbounds).map((item) => item.tag));
+  // An endpoint is "a protocol with inbound and outbound behavior" (endpoint/index.md), so its tag shares
+  // the outbound namespace and is a valid route/selector/detour target. Both WireGuard and Tailscale
+  // endpoints can be "used as an outbound" (migration.md), so all endpoint tags are included.
+  listItems<EndpointConfig>(config.endpoints).forEach((endpoint) => tags.add(endpoint.tag));
+  return tags;
 }
 
 export function getInboundTags(config: SingBoxConfig): Set<string> {
