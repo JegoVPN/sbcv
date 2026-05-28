@@ -1905,6 +1905,31 @@ export function validateConfig(
     }
   });
 
+  // W33: scaffold/template placeholder secrets (REPLACE_ME…, change-me) must be replaced before use.
+  const placeholderSecret = /^(replace_me|change[-_]?me)/i;
+  const secretFields = ["password", "auth_key", "token", "private_key", "psk", "uuid", "secret_key"];
+  const scanPlaceholders = (entity: Record<string, unknown> | undefined, path: string, label: string) => {
+    if (!entity || typeof entity !== "object") return;
+    for (const field of secretFields) {
+      const value = entity[field];
+      if (typeof value === "string" && placeholderSecret.test(value.trim())) {
+        push(
+          diagnostics,
+          "warning",
+          "placeholder-secret",
+          `${path}/${field}`,
+          `${label} still uses the scaffold placeholder secret "${value}" in \`${field}\`; replace it before exporting or exposing the config.`,
+        );
+      }
+    }
+  };
+  listItems(config.outbounds).forEach((outbound, index) =>
+    scanPlaceholders(outbound as Record<string, unknown>, `/outbounds/${index}`, `Outbound "${outbound.tag ?? index}"`),
+  );
+  listItems(config.inbounds).forEach((inbound, index) =>
+    scanPlaceholders(inbound as Record<string, unknown>, `/inbounds/${index}`, `Inbound "${inbound.tag ?? index}"`),
+  );
+
   // C1-20: a string `http_client` reference must point to an existing top-level http_clients[] tag.
   // (Object-form http_client is inline and carries no tag, so it is skipped.)
   const httpClientTags = getHttpClientTags(config);
