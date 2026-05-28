@@ -35,7 +35,7 @@ work, not after.
 - [x] A6a — referenceRegistry completeness: 8 upstream-real tag refs, rename + delete (`reference-registry-completeness`) — PR #45
 - [x] A6b — dial-detour port guards: exclude block/dns from `detour-target` input (W5a); selector/urltest kept as valid targets — **audit deviation** from `["block","selector","urltest","dns"]`, see note (`dial-detour-port-guards`) — PR #46
 - [x] A7a — endpoint outbound-half (domain): endpoints join the outbound reference namespace — `getOutboundTags` + delete cascade; both WireGuard & Tailscale per migration.md (`endpoint-outbound-refs`) — PR #47
-- [ ] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations) + graph edges + connect/disconnect handlers (`endpoint-outbound-ports`)
+- [x] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations via `extraNodeKinds`) + graph edges + connect handlers (`endpoint-outbound-ports`) — PR #48
 - [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
 - [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
@@ -516,3 +516,27 @@ Status: implemented 2026-05-28 in `atomic/endpoint-outbound-refs`; merged in PR 
   `pnpm build`. Domain-only; no `vercel-react` surface, no e2e (canvas ports/edges/connect are A7b).
 - A7b (canvas, next): input ports on endpoint nodes (broaden the five outbound-target relations to accept
   `nodeKind: endpoint`), graph edges, connect/disconnect handlers.
+
+### A7b endpoint-outbound-ports — endpoint nodes are first-class outbound targets on canvas (canvas)
+Status: implemented 2026-05-28 in `atomic/endpoint-outbound-ports`; merged in PR #48.
+
+- What changed (A7 canvas half; audit endpoint-wireguard P0-2 / _SUMMARY T14): broadened the five
+  outbound-target relations (route-final, route-rule, selector, urltest, dns-server-detour) so an endpoint
+  node exposes the same input ports an outbound does. Mechanism: a new optional `extraNodeKinds` on
+  `PortEndpoint` (matched by `endpointMatchesNode`), set to `["endpoint"]` on those five input endpoints —
+  the "broaden existing relations" approach chosen at the A7 checkpoint (vs parallel endpoint relations).
+- `graph.ts`: a new `outboundTargetNodeId(tag)` helper resolves route.final / route-rule outbound /
+  selector|urltest member / dns-server detour edges to the `endpoint:<tag>` node when the tag is an
+  endpoint, instead of a phantom `outbound:<tag>`.
+- Connect handlers: the route-final / route-rule / dns-detour / selector-member branches in
+  `applyConnection` now accept `inputNode.kind === "endpoint"`, and `connectSelectorCandidate` resolves a
+  member tag against endpoints as well as outbounds. `disconnectEdge` is relation-id/path based and already
+  endpoint-agnostic. The `detour-target` branch stays outbound-only — out of the approved 5-relation scope.
+- Both WireGuard and Tailscale endpoints get the ports (consistent with A7a's namespace decision).
+- Codex review: round 1 clean except one minor — endpoint outbound-target input ports were not marked
+  connected (`isPortConnected` recognized only `kind === "outbound"`); fixed by broadening the five port
+  checks (route, route-rule, selector-group, urltest-group, dns-detour) to also accept `kind === "endpoint"`
+  so a wired endpoint reflects its connected state. `vercel-react` (touches `src/state` connect handlers):
+  mechanical condition-broadening, no new subscriptions/rerenders/waterfalls.
+- Verification: `git diff --check`, `tsc -b`, `pnpm test` (662 passed | 1 expected fail | 1 todo),
+  `pnpm build`, `pnpm e2e` (13 passed — canvas connect interaction green).

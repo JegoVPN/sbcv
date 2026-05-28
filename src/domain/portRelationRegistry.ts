@@ -38,6 +38,7 @@ export type PortEndpoint = {
   nodeKind: PortNodeKind;
   nodeType?: string;
   nodeTypeExcludes?: string[];
+  extraNodeKinds?: PortNodeKind[];
   portKey: string;
   label: string;
   icon: PortIconId;
@@ -72,8 +73,9 @@ function endpoint(
   icon: PortIconId,
   nodeType?: string,
   nodeTypeExcludes?: string[],
+  extraNodeKinds?: PortNodeKind[],
 ): PortEndpoint {
-  return { direction, nodeKind, nodeType, nodeTypeExcludes, portKey, label, icon };
+  return { direction, nodeKind, nodeType, nodeTypeExcludes, extraNodeKinds, portKey, label, icon };
 }
 
 function relation(
@@ -91,18 +93,18 @@ function relation(
 export const portRelations: PortRelation[] = [
   relation("inbound", "decorative", endpoint("output", "inbound", "route", "Route hub", "route"), endpoint("input", "route", "inbound", "Inbound traffic", "radio")),
   relation("route-rule-order", "readonly", endpoint("output", "route", "route-rule", "Route rule", "git-branch"), endpoint("input", "route-rule", "route", "Route order", "route")),
-  relation("route-final", "writable", endpoint("output", "route", "outbound", "Outbound", "network"), endpoint("input", "outbound", "route", "Upstream Route final", "route"), "/route/final", ["outbound"]),
+  relation("route-final", "writable", endpoint("output", "route", "outbound", "Outbound", "network"), endpoint("input", "outbound", "route", "Upstream Route final", "route", undefined, undefined, ["endpoint"]), "/route/final", ["outbound"]),
   relation("route-rule-inbound", "writable", endpoint("output", "inbound", "route-rule-match", "Route rule matcher", "git-branch"), endpoint("input", "route-rule", "inbound", "Inbound matcher", "radio"), "/route/rules/*/inbound", ["route-rule"]),
-  relation("route-rule", "writable", endpoint("output", "route-rule", "outbound", "Outbound", "network"), endpoint("input", "outbound", "route-rule", "Upstream Rule outbound", "git-branch"), "/route/rules/*/outbound", ["outbound"]),
+  relation("route-rule", "writable", endpoint("output", "route-rule", "outbound", "Outbound", "network"), endpoint("input", "outbound", "route-rule", "Upstream Rule outbound", "git-branch", undefined, undefined, ["endpoint"]), "/route/rules/*/outbound", ["outbound"]),
   relation("route-rule-set", "writable", endpoint("output", "route-rule", "rule-set", "Rule Set", "layers"), endpoint("input", "rule-set", "route-rule", "Upstream Route rule set", "git-branch"), "/route/rules/*/rule_set", ["rule-set"]),
   relation("dns-rule-order", "readonly", endpoint("output", "dns", "dns-rule", "DNS rule", "git-branch"), endpoint("input", "dns-rule", "dns", "DNS order", "globe")),
   relation("dns-final", "writable", endpoint("output", "dns", "dns-server", "DNS server", "server"), endpoint("input", "dns-server", "dns", "DNS final server", "globe"), "/dns/final", ["dns-server"]),
   relation("dns-rule-inbound", "writable", endpoint("output", "inbound", "dns-rule-match", "DNS rule matcher", "git-branch"), endpoint("input", "dns-rule", "inbound", "Inbound matcher", "radio"), "/dns/rules/*/inbound", ["dns-rule"]),
   relation("dns-rule", "writable", endpoint("output", "dns-rule", "dns-server", "DNS server", "server"), endpoint("input", "dns-server", "dns-rule", "DNS rule", "git-branch"), "/dns/rules/*/server", ["dns-server"]),
   relation("dns-rule-set", "writable", endpoint("output", "dns-rule", "rule-set", "Rule Set", "layers"), endpoint("input", "rule-set", "dns-rule", "Upstream DNS rule set", "git-branch"), "/dns/rules/*/rule_set", ["rule-set"]),
-  relation("selector", "writable", endpoint("output", "outbound", "outbound-member", "Downstream candidate", "network", "selector"), endpoint("input", "outbound", "selector-group", "Upstream Selector candidate", "shuffle"), "/outbounds/*/outbounds", ["outbound"]),
-  relation("urltest", "writable", endpoint("output", "outbound", "outbound-member", "Downstream candidate", "network", "urltest"), endpoint("input", "outbound", "urltest-group", "Upstream URLTest candidate", "database"), "/outbounds/*/outbounds", ["outbound"]),
-  relation("dns-server-detour", "writable", endpoint("output", "dns-server", "outbound", "Detour outbound", "network", undefined, ["hosts", "fakeip", "tailscale", "resolved"]), endpoint("input", "outbound", "dns-detour", "Upstream DNS detour target", "server"), "/dns/servers/*/detour", ["outbound"]),
+  relation("selector", "writable", endpoint("output", "outbound", "outbound-member", "Downstream candidate", "network", "selector"), endpoint("input", "outbound", "selector-group", "Upstream Selector candidate", "shuffle", undefined, undefined, ["endpoint"]), "/outbounds/*/outbounds", ["outbound"]),
+  relation("urltest", "writable", endpoint("output", "outbound", "outbound-member", "Downstream candidate", "network", "urltest"), endpoint("input", "outbound", "urltest-group", "Upstream URLTest candidate", "database", undefined, undefined, ["endpoint"]), "/outbounds/*/outbounds", ["outbound"]),
+  relation("dns-server-detour", "writable", endpoint("output", "dns-server", "outbound", "Detour outbound", "network", undefined, ["hosts", "fakeip", "tailscale", "resolved"]), endpoint("input", "outbound", "dns-detour", "Upstream DNS detour target", "server", undefined, undefined, ["endpoint"]), "/dns/servers/*/detour", ["outbound"]),
   relation("outbound-detour", "writable", endpoint("output", "outbound", "dial-detour", "Downstream dial detour", "network", undefined, ["block", "selector", "urltest", "dns"]), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network", undefined, ["block", "dns"]), "/outbounds/*/detour", ["outbound"]),
   relation("dns-server-endpoint", "writable", endpoint("output", "dns-server", "endpoint", "Tailscale endpoint", "waypoints", "tailscale"), endpoint("input", "endpoint", "dns-server", "Upstream Tailscale DNS server", "server", "tailscale"), "/dns/servers/*/endpoint", ["endpoint"]),
   relation("endpoint-detour", "writable", endpoint("output", "endpoint", "dial-detour", "Dial detour outbound", "network"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network", undefined, ["block", "dns"]), "/endpoints/*/detour", ["outbound"]),
@@ -164,7 +166,7 @@ export function parseEdgeId(edgeId: string): ParsedEdgeId | null {
 }
 
 export function endpointMatchesNode(endpoint: PortEndpoint, nodeKind: PortNodeKind, nodeType?: string) {
-  if (endpoint.nodeKind !== nodeKind) return false;
+  if (endpoint.nodeKind !== nodeKind && !endpoint.extraNodeKinds?.includes(nodeKind)) return false;
   if (nodeType && endpoint.nodeTypeExcludes?.includes(nodeType)) return false;
   return !endpoint.nodeType || endpoint.nodeType === nodeType;
 }
