@@ -2769,7 +2769,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           {entityType === "redirect" ? (
             <PlatformBanner
               kind="platform"
-              text="Platform gate: redirect inbound only works on Linux (iptables REDIRECT). Exports are produced on any host but the sing-box runtime will refuse to start on macOS/Windows/Android/iOS."
+              text="Platform gate: redirect inbound is supported on Linux and macOS only (Linux iptables REDIRECT / macOS pf). Exports are produced on any host but the sing-box runtime will refuse to start on Windows/Android/iOS."
             />
           ) : null}
           {entityType === "tproxy" ? (
@@ -3136,12 +3136,6 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               />
               <span>Set System Proxy (Linux / Android / Windows / macOS)</span>
             </label>
-          ) : null}
-          {entityType === "tproxy" || entityType === "redirect" ? (
-            <PlatformBanner
-              kind="platform"
-              text={`Linux-only inbound: \`${entityType}\` uses Linux netfilter primitives and will not bind on macOS/Windows/iOS.`}
-            />
           ) : null}
           {entityType === "tproxy" ? (
             <label className="field" data-testid="inbound-tproxy-network">
