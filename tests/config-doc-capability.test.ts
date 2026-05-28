@@ -249,7 +249,8 @@ describe("shared field docs attach only to valid parent objects", () => {
       expect(groups).toContain("tls");
     }
     if (["hysteria", "hysteria2", "tuic"].includes(type)) expect(groups).toContain("quic");
-    if (["socks", "shadowsocks", "naive", "tuic"].includes(type)) expect(groups).toContain("udp-over-tcp");
+    if (["socks", "shadowsocks", "naive"].includes(type)) expect(groups).toContain("udp-over-tcp");
+    if (type === "tuic") expect(groups).not.toContain("udp-over-tcp"); // TUIC uses udp_over_stream, not udp_over_tcp
     if (["shadowsocks", "vmess", "trojan", "vless"].includes(type)) {
       expect(groups).toEqual(expect.arrayContaining(["multiplex", "tcp-brutal"]));
     }
