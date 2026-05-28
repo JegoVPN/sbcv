@@ -75,7 +75,7 @@ Before committing:
 After committing:
 
 - For PR work, push the branch and open the PR immediately after local checks and signed commit verification pass.
-- Do not wait on unreliable GitHub Actions before opening or advancing a PR. Prefer local required checks, local E2E/smoke verification, signed commit verification, and relevant provider deployment status.
+- Do not wait on GitHub Actions before opening, advancing, or merging a PR. Deployment is Cloudflare Workers Builds via Cloudflare's own GitHub integration (see `docs/cloudflare-deployment.md`), so GitHub Actions checks such as `release-check` are neither deployment nor merge gates, and `main` has no branch protection. Rely on local required checks, local E2E/smoke verification, signed commit verification, the pre-push Claude review, and Cloudflare's build/deploy status.
 - After opening a PR, immediately check for the Claude review issue for that PR. If the scheduled poller has not created it yet, record that and continue; do not run a duplicate local poller unless the user explicitly asks.
 - Resolve actionable Claude review issues for the active goal before merging or starting another product atomic. Review issues with only timeout/pass/no-finding output may be closed as non-actionable with a short comment.
 - Push to `origin main` after merge unless the user asks otherwise. Use `SBC_SKIP_CLAUDE_REVIEW=1 git push origin main` when the PR already has a review issue; this keeps signature verification while avoiding duplicate local Claude review.
