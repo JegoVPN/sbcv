@@ -1789,6 +1789,8 @@ describe("SBC editor shell", () => {
     });
     render(<App />);
     const inspector = within(screen.getByLabelText("Node inspector"));
+    // A11: the structured editor is now default; the parse-safe JSON editor is behind the escape hatch.
+    fireEvent.click(inspector.getByRole("button", { name: "Edit rules as JSON" }));
     const textarea = inspector.getByTestId("inline-rules-json") as HTMLTextAreaElement;
     expect(textarea.value).toContain("example.com");
 
