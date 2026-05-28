@@ -24,8 +24,8 @@ work, not after.
 ### Phase 1 — Structural root-cause
 - [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
 - [x] A2a — rule-set local `format` inference + empty-group error + WireGuard/DERP-mesh required diagnostics, domain-only (`required-fields-diagnostics`) — PR #39
-- [ ] A2b — required `aria-required`/`*` markers + pre-export validation gate, components (`required-markers-and-export-gate`)
-- [ ] A2c — presence/required diagnostics deferred from A2a for per-finding upstream+fixture verification: inbound `listen` + credentials (C0-16), dns-rule route/evaluate `server` (C0-1, overlaps A10); may fold into A10/A20 (`required-presence-diagnostics`)
+- [ ] A2b — pre-export validation gate: confirm before downloading a config with error diagnostics (`required-markers-and-export-gate`)
+- [ ] A2c — deferred from A2a/A2b for per-finding upstream+fixture verification: presence diagnostics (inbound `listen` + credentials C0-16; dns-rule route/evaluate `server` C0-1, overlaps A10) **+ the paired required `aria-required`/`*` field markers**; may fold into A10/A20 (`required-presence-and-markers`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
