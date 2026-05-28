@@ -209,3 +209,17 @@ test("connected-handle disconnect removes only the relation", async ({ page }) =
   expect(config.route.final).toBeUndefined();
   expect(config.outbounds).toEqual([{ type: "direct", tag: "direct" }]);
 });
+
+test("connected edge remove button disconnects only canonical relation", async ({ page }) => {
+  await importInlineConfig(page, {
+    route: { final: "direct" },
+    outbounds: [{ type: "direct", tag: "direct" }],
+  });
+
+  await page.getByRole("button", { name: "Remove connection edge:route-final:direct" }).click();
+
+  const config = await exportedConfig(page);
+  expect(config.route.final).toBeUndefined();
+  expect(config.outbounds).toEqual([{ type: "direct", tag: "direct" }]);
+  await expect(page.getByRole("button", { name: "Remove connection edge:route-final:direct" })).toHaveCount(0);
+});
