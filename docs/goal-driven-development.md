@@ -136,7 +136,7 @@ Each atomic should have:
 
 ## Post-Merge Issue Gate
 
-Claude Code review can open GitHub issues after an atomic PR is opened or deployed. Do not treat GitHub Actions as a reliable review or deployment gate; do not wait on them when local checks and the relevant provider deployment signal are enough.
+Claude Code review can open GitHub issues after an atomic PR is opened or deployed. Do not treat GitHub Actions as a reliable review or deployment gate; do not wait on them when local checks and the relevant provider deployment signal are enough. Deployment runs on Cloudflare Workers Builds, not GitHub Actions; an `UNSTABLE` PR state caused by a pending Actions check (e.g. `release-check`) is not a reason to delay a merge.
 
 ### PR Issue Gate
 
