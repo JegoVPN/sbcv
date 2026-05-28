@@ -269,6 +269,10 @@ export function createInbound(type: string, tag: string): InboundConfig {
       listen_port: 2080,
     };
   }
+  if (type === "cloudflared") {
+    // cloudflared runs an embedded Cloudflare Tunnel client (no listen/port); token is Required.
+    return { type, tag, token: "" };
+  }
   return { type, tag };
 }
 

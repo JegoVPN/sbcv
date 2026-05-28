@@ -207,7 +207,7 @@ const groups: PaletteGroup[] = [
       { label: "TUN", kind: "inbound-tun", icon: RadioTower, docsUrl: docs("inbound/tun/"), ready: true },
       { label: "Redirect (Linux / macOS)", kind: "inbound-redirect", icon: GitBranch, docsUrl: docs("inbound/redirect/"), status: "setup" },
       { label: "TProxy (Linux only)", kind: "inbound-tproxy", icon: GitBranch, docsUrl: docs("inbound/tproxy/"), status: "setup" },
-      { label: "Cloudflared", kind: "inbound-cloudflared", icon: Globe2, docsUrl: docs("inbound/cloudflared/"), status: "gated" },
+      { label: "Cloudflared", kind: "inbound-cloudflared", icon: Globe2, docsUrl: docs("inbound/cloudflared/"), status: "setup" },
     ],
   },
   {
@@ -320,6 +320,8 @@ const deprecatedKinds = new Set<string>([
 
 function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>): PaletteStatus {
   if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
+  // cloudflared inbound is sing-box 1.14+ — creatable on testing, gated on stable.
+  if (item.kind === "inbound-cloudflared" && channel !== "testing") return "gated";
   if (deprecatedKinds.has(item.kind)) return "deprecated";
   if (singletons.has(item.kind)) return "open";
   if (item.status) return item.status;
