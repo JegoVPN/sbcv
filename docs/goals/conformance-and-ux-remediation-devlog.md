@@ -65,7 +65,8 @@ work, not after.
   - [ ] A20-inbound-rest — per-type version-gating + congestion/zero_rtt/auth_timeout + set_system_proxy leak + tun required fields (W28 inbound tail)
   - [x] A20-outbound (ssh port) — ssh server_port optional (defaults to 22), no false-positive error (W28 outbound) — PR #69
   - [ ] A20-outbound-rest — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound tail)
-  - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
+  - [x] A20-rule (bypass) — route-rule bypass exposes outbound + route-options (C1-1) — PR #72
+  - [ ] A20-rule-rest — geo deprecation + resolve sub-fields + resolve.server ref registry/edge (C1-2) (W28 rule tail)
   - [x] A20-service (ssm-api key) — canvas connect uses a distinct servers path, not a hardcoded `/` (C1-13) — PR #70
   - [ ] A20-service-rest — derp verify-client-endpoint wipe + ssm-api orphan managed on toggle-off (W28 service tail)
   - [x] A20-misc (vless flow-no-TLS C1-10) — downgrade vless-flow-requires-tls error→warning — PR #71
@@ -1083,3 +1084,26 @@ Status: implemented 2026-05-29 in `atomic/residual-vless-flow-tls`; merged in PR
     required C0-15/C1-14); inbound users[].flow checks (out of C1-10's outbound scope).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (763 passed | 1 todo), `pnpm build`.
 - Official check: n/a — semantic diagnostic severity change.
+
+### A20-rule residual-rule-bypass-options — bypass exposes outbound + route-options (Inspector, C1-1)
+Status: implemented 2026-05-29 in `atomic/residual-rule-bypass-options`; merged in PR #72.
+
+- What changed (W28 rule / C1-1): the route-rule `bypass` action supports an optional `outbound` and
+  route-options fields (rule_action.md), but the Inspector only exposed Outbound for `route` and
+  route-options for `route`/`route-options`. The Outbound select now gates on `routeRuleAllowsOutbound`
+  (route + bypass + default) and route-options renders for route/route-options/bypass — so a bypass rule
+  can set both. The Inspector now matches the canvas (which already gates the outbound edge on
+  `routeRuleAllowsOutbound`).
+- Frontend perf review (`vercel-react-best-practices`): render-time gate predicates; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no findings. Confirmed upstream bypass
+  supports outbound + route-options, the default-action route-options now-showing is correct (default IS
+  route), no behavior loss for route/default, the action-change handler preserves outbound for bypass,
+  and the Inspector/canvas are now consistent.
+  - Deferred to follow-up atomic: A20-rule-rest (geo deprecation, resolve sub-fields, resolve.server ref
+    registry/edge C1-2).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (766 passed | 1 todo), `pnpm build`.
+- Official check: n/a — Inspector control gating.
+
+This completes the A20 per-category representative slices (dns/inbound/outbound/rule/service/misc); the
+`*-rest` tails remain queued as P1/P2 follow-ups.
