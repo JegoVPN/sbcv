@@ -50,6 +50,19 @@ The review is performed in waves because the agent pool has a hard concurrency l
 | Canvas Connection UX | n/a | manual code pass | complete | confirmed findings recorded |
 | SVG/Icon Semantics | complete | complete | complete | follow-up report recorded in `icon-semantics-audit.md` |
 
+## Artifact Map
+
+| File | What |
+| --- | --- |
+| `README.md` | Aggregate Codex review with confirmed findings, rejected suspicions, and execution order. |
+| `icon-semantics-audit.md` | Focused SVG/icon semantics audit and verification plan. |
+| `<node>--codex.md` | Per-node or per-feature cross-map from confirmed aggregate findings to implementation surfaces. |
+
+Per-node cross-maps include the 66 pass-2 node surfaces plus four Codex-only surfaces:
+`certificate-provider`, `http-client`, `inbound-cloudflared`, and `canvas-connection-ux`.
+They are navigation artifacts; `README.md` and `icon-semantics-audit.md` remain the
+authoritative finding text.
+
 ## Severity
 
 - P0: Can export invalid canonical config, silently corrupt canonical config, lose user data, or break required source-of-truth reference integrity.
