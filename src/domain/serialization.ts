@@ -1,3 +1,4 @@
+import { normalizeDnsRule, normalizeRouteRule } from "./commands";
 import type { SingBoxConfig } from "./types";
 
 export type ConfigExport = {
@@ -49,7 +50,15 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
   assertNestedArrayField(root, "route", "rule_set");
   assertNestedArrayField(root, "dns", "servers");
   assertNestedArrayField(root, "dns", "rules");
-  return structuredClone(input) as SingBoxConfig;
+  const config = structuredClone(input) as SingBoxConfig;
+  // Run the rule normalizers on import too (not just in the add/update commands), so a stale `server`
+  // on a non-route/evaluate dns-rule or a stale `outbound` on a non-route route-rule is scrubbed at
+  // the boundary rather than surviving invisibly on every editor surface and re-exporting. (A10d)
+  const dns = config.dns;
+  if (dns?.rules) dns.rules = dns.rules.map(normalizeDnsRule);
+  const route = config.route;
+  if (route?.rules) route.rules = route.rules.map(normalizeRouteRule);
+  return config;
 }
 
 export function stringifyConfig(config: SingBoxConfig): string {

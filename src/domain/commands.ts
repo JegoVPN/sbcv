@@ -755,7 +755,7 @@ export function routeRuleAllowsOutbound(rule: Pick<RouteRule, "action"> | undefi
   return action === "" || action === "route" || action === "bypass";
 }
 
-function normalizeRouteRule(rule: RouteRule): RouteRule {
+export function normalizeRouteRule(rule: RouteRule): RouteRule {
   if (routeRuleAllowsOutbound(rule)) return rule;
   const { outbound: _outbound, ...rest } = rule;
   return rest;
@@ -766,7 +766,7 @@ export function dnsRuleAllowsServer(rule: Pick<DnsRule, "action"> | undefined): 
   return action === "" || action === "route" || action === "evaluate";
 }
 
-function normalizeDnsRule(rule: DnsRule): DnsRule {
+export function normalizeDnsRule(rule: DnsRule): DnsRule {
   if (dnsRuleAllowsServer(rule)) return rule;
   const { server: _server, ...rest } = rule;
   return rest;
