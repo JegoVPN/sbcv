@@ -870,7 +870,10 @@ export function connectSelectorCandidate(
 ): SingBoxConfig {
   const outbounds = config.outbounds ?? [];
   const parent = outbounds.find((outbound) => outbound.tag === selectorTag);
-  const child = outbounds.find((outbound) => outbound.tag === outboundTag);
+  // A selector/urltest member may be an outbound or an endpoint (endpoints share the outbound namespace).
+  const child =
+    outbounds.find((outbound) => outbound.tag === outboundTag) ??
+    (config.endpoints ?? []).find((endpoint) => endpoint.tag === outboundTag);
   if (!parent || !child || parent.tag === child.tag) return config;
   if (parent.type !== "selector" && parent.type !== "urltest") return config;
   const current = parent.outbounds ?? [];

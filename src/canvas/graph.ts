@@ -204,17 +204,19 @@ function isPortConnected(
         }) ?? false
       );
     }
-    if (kind === "outbound" && portKey === "route") return config.route?.final === value;
-    if (kind === "outbound" && portKey === "route-rule") {
+    // These five outbound-target ports are also exposed on endpoint nodes (A7b extraNodeKinds), so an
+    // endpoint wired as a route/selector/dns target reflects its connected state too.
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "route") return config.route?.final === value;
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "route-rule") {
       return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
     }
-    if (kind === "outbound" && portKey === "selector-group") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "selector-group") {
       return config.outbounds?.some((outbound) => outbound.type === "selector" && outbound.outbounds?.includes(value)) ?? false;
     }
-    if (kind === "outbound" && portKey === "urltest-group") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "urltest-group") {
       return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
     }
-    if (kind === "outbound" && portKey === "dns-detour") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "dns-detour") {
       return config.dns?.servers?.some((server) => server.detour === value) ?? false;
     }
     if (kind === "outbound" && portKey === "detour-target") {
@@ -372,6 +374,10 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   const ruleSets = listItems(config.route?.rule_set);
   const certificateProviders = listItems(config.certificate_providers);
   const httpClients = listItems(config.http_clients);
+  const endpointTagSet = new Set(endpoints.map((endpoint) => endpoint.tag));
+  // An endpoint shares the outbound tag namespace, so a route/selector/dns-detour edge to such a tag must
+  // target the `endpoint:<tag>` node rather than a phantom `outbound:<tag>`.
+  const outboundTargetNodeId = (tag: string) => (endpointTagSet.has(tag) ? `endpoint:${tag}` : `outbound:${tag}`);
   const visualizeRuleSets = ruleSets.length <= MAX_VISUAL_RULE_SET_NODES;
   let visualCandidateEdges = 0;
   const routeTargetY = new Map<string, number>();
@@ -519,7 +525,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         const ruleAction = typeof rule.action === "string" ? rule.action : "";
         const routeRuleOutboundAllowed = ruleAction === "" || ruleAction === "route" || ruleAction === "bypass";
         if (rule.outbound && routeRuleOutboundAllowed) {
-          edges.push(makeEdge(formatEdgeId("route-rule", index, rule.outbound), id, `outbound:${rule.outbound}`, "outbound", "route-rule"));
+          edges.push(makeEdge(formatEdgeId("route-rule", index, rule.outbound), id, outboundTargetNodeId(rule.outbound), "outbound", "route-rule"));
         }
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
@@ -555,7 +561,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             Math.max(1, Math.min(routeRules.length, MAX_VISUAL_RULE_NODES)) * NODE_SLOT_Y,
         );
       }
-      edges.push(makeEdge(formatEdgeId("route-final", config.route.final), "route:main", `outbound:${config.route.final}`, "outbound", "route", true));
+      edges.push(makeEdge(formatEdgeId("route-final", config.route.final), "route:main", outboundTargetNodeId(config.route.final), "outbound", "route", true));
     }
   }
 
@@ -674,7 +680,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           makeEdge(
             formatEdgeId(outbound.type, tag, candidateIndex, candidateTag),
             id,
-            `outbound:${candidateTag}`,
+            outboundTargetNodeId(candidateTag),
             "outbound-member",
             outbound.type === "selector" ? "selector-group" : "urltest-group",
           ),
@@ -733,7 +739,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         ),
       );
       if (server.detour && supportsDnsServerDialFields(server.type)) {
-        edges.push(makeEdge(formatEdgeId("dns-server-detour", tag, server.detour), id, `outbound:${server.detour}`, "outbound", "dns-detour"));
+        edges.push(makeEdge(formatEdgeId("dns-server-detour", tag, server.detour), id, outboundTargetNodeId(server.detour), "outbound", "dns-detour"));
       }
       if (server.type === "tailscale" && server.endpoint) {
         endpointTargetY.set(server.endpoint, y);

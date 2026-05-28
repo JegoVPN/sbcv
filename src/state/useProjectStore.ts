@@ -626,11 +626,11 @@ function connectDirectedPortReference(
     return updateEntityField(withService, { kind: "inbound", tag: outputNode.value }, "managed", true);
   }
 
-  if (outputNode.kind === "route" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "route") {
+  if (outputNode.kind === "route" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "route") {
     return setRouteFinal(config, inputNode.value);
   }
 
-  if (outputNode.kind === "route-rule" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "route-rule") {
+  if (outputNode.kind === "route-rule" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "route-rule") {
     const index = numberedNodeIndex(outputNode);
     const rule = index >= 0 ? config.route?.rules?.[index] : undefined;
     return index >= 0 && routeRuleAllowsOutbound(rule) ? updateRouteRule(config, index, { outbound: inputNode.value }) : null;
@@ -658,7 +658,7 @@ function connectDirectedPortReference(
     return index >= 0 ? updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, inputNode.value) }) : null;
   }
 
-  if (outputNode.kind === "dns-server" && outputHandle === "outbound" && inputNode.kind === "outbound" && inputHandle === "dns-detour") {
+  if (outputNode.kind === "dns-server" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "dns-detour") {
     const server = config.dns?.servers?.find((item) => item.tag === outputNode.value);
     return supportsDnsServerDialFields(server?.type)
       ? updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "detour", inputNode.value)
@@ -719,7 +719,7 @@ function connectDirectedPortReference(
       : null;
   }
 
-  if (outputNode.kind === "outbound" && inputNode.kind === "outbound") {
+  if (outputNode.kind === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint")) {
     if (outputHandle === "outbound-member" && (inputHandle === "selector-group" || inputHandle === "urltest-group")) {
       return connectSelectorCandidate(config, outputNode.value, inputNode.value);
     }
