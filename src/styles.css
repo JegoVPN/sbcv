@@ -2503,3 +2503,48 @@ button.sbc-edge-remove:focus-visible {
 .inline-rule__invert input {
   width: auto;
 }
+
+/* Canvas edge legend (A24 / W30) */
+.canvas-edge-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid #262d34;
+  border-radius: 8px;
+  background: rgba(20, 25, 29, 0.86);
+  color: #aab2bc;
+  font-size: 11px;
+  pointer-events: none;
+}
+.canvas-edge-legend__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.canvas-edge-legend__swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+.canvas-edge-legend__swatch--link {
+  border-bottom: 2.4px solid #c7ff00;
+}
+.canvas-edge-legend__swatch--flow {
+  border-bottom: 2.4px dashed #c7ff00;
+}
+.canvas-edge-legend__swatch--remove {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #c7ff00;
+  color: #151900;
+  font-size: 9px;
+  font-weight: 800;
+}
