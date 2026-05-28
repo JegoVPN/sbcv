@@ -23,9 +23,71 @@ import {
   Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getNodeIcon } from "../canvas/iconRegistry";
+import type { IconRenderer } from "../canvas/iconRegistry";
+import {
+  dnsServerTypeForPaletteKind,
+  endpointTypeForPaletteKind,
+  inboundTypeForPaletteKind,
+  outboundTypeForPaletteKind,
+  serviceTypeForPaletteKind,
+} from "../domain/protocols";
 import { TEMPLATE_PRESETS, TEMPLATE_PRESET_IDS } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
 import { useProjectStore } from "../state/useProjectStore";
+
+// Resolve a Palette item's `kind` to a node {kind, type} so its icon comes from the shared registry
+// (IC-P1-3 single source). Items that are not a creatable node (templates, shared fields, geoip,
+// rule actions, sub-features) return null and keep their own catalog icon.
+export function paletteNodeRef(kind: string): { kind: string; type: string } | null {
+  const outbound = outboundTypeForPaletteKind(kind);
+  if (outbound) return { kind: "outbound", type: outbound };
+  const inbound = inboundTypeForPaletteKind(kind);
+  if (inbound) return { kind: "inbound", type: inbound };
+  const dnsServer = dnsServerTypeForPaletteKind(kind);
+  if (dnsServer) return { kind: "dns-server", type: dnsServer };
+  const endpoint = endpointTypeForPaletteKind(kind);
+  if (endpoint) return { kind: "endpoint", type: endpoint };
+  const service = serviceTypeForPaletteKind(kind);
+  if (service) return { kind: "service", type: service };
+  switch (kind) {
+    case "route":
+      return { kind: "route", type: "route" };
+    case "route-rule":
+      return { kind: "route-rule", type: "route-rule" };
+    case "dns-hub":
+      return { kind: "dns", type: "dns" };
+    case "dns-rule":
+      return { kind: "dns-rule", type: "dns-rule" };
+    case "rule-set-remote":
+      return { kind: "rule-set", type: "remote" };
+    case "rule-set-local":
+      return { kind: "rule-set", type: "local" };
+    case "rule-set-inline":
+      return { kind: "rule-set", type: "inline" };
+    case "http-client":
+      return { kind: "http-client", type: "http-client" };
+    case "settings-log":
+      return { kind: "settings", type: "log" };
+    case "settings-ntp":
+      return { kind: "settings", type: "ntp" };
+    case "settings-certificate":
+      return { kind: "settings", type: "certificate" };
+    case "settings-experimental":
+      return { kind: "settings", type: "experimental" };
+    default:
+      break;
+  }
+  if (kind === "certificate-provider" || kind.startsWith("certificate-provider-")) {
+    return { kind: "certificate-provider", type: kind };
+  }
+  return null;
+}
+
+function paletteIcon(kind: string, fallback: LucideIcon): IconRenderer {
+  const ref = paletteNodeRef(kind);
+  return ref ? getNodeIcon(ref.kind, ref.type) : fallback;
+}
 
 type PaletteItem = {
   label: string;
@@ -458,7 +520,7 @@ function PaletteSection({
       <h2>{group.title}</h2>
       <div className="palette-list">
         {group.items.map((item) => {
-          const Icon = item.icon;
+          const Icon = paletteIcon(item.kind, item.icon);
           const status = itemStatus(item, channel, singletonsPresent);
           const actionable = canActivate(item, status);
           const templateAdded = isTemplateGroup && isTemplatePresetId(item.kind) && item.kind === loadedTemplateId;
