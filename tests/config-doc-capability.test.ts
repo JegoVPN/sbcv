@@ -178,6 +178,8 @@ const smokeCoveredDocs = new Set<string>([
   ...CREATABLE_DNS_SERVER_TYPES.map(docForDnsServerType),
   ...CREATABLE_ENDPOINT_TYPES.map((type) => `endpoint/${type}.md`),
   ...CREATABLE_SERVICE_TYPES.map((type) => `service/${type}.md`),
+  // A22: http_clients[] is now a creatable top-level node (smoke: tests/http-client-create.test.tsx).
+  "shared/http-client.md",
 ]);
 
 describe("official sing-box config docs are mapped one by one", () => {
