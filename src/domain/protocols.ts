@@ -111,6 +111,7 @@ export const CREATABLE_INBOUND_TYPES = [
   "tun",
   "redirect",
   "tproxy",
+  "cloudflared",
 ] as const;
 
 export type InboundPaletteKind = keyof typeof INBOUND_PALETTE_TYPES;

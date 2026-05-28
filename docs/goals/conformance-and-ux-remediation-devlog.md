@@ -71,7 +71,7 @@ work, not after.
   - [ ] A20-service-rest — derp verify-client-endpoint wipe + ssm-api orphan managed on toggle-off (W28 service tail)
   - [x] A20-misc (vless flow-no-TLS C1-10) — downgrade vless-flow-requires-tls error→warning — PR #71
   - [ ] A20-misc-rest — WireGuard peer schema C0-14, certificate-provider required C0-15/C1-14 (W28 cross-node tail)
-- [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
+- [x] A21 — cloudflared testing inbound: full testing support (creatable + Inspector + token/testing diagnostics; stable gated) (C1-22) (`inbound-cloudflared-testing`) — PR #73
 - [ ] A22 — HTTP Client capability (`http-client-capability`)
 
 ### Phase 3 — UX comprehension
@@ -1107,3 +1107,28 @@ Status: implemented 2026-05-29 in `atomic/residual-rule-bypass-options`; merged 
 
 This completes the A20 per-category representative slices (dns/inbound/outbound/rule/service/misc); the
 `*-rest` tails remain queued as P1/P2 follow-ups.
+
+### A21 inbound-cloudflared-testing — full testing support for the cloudflared inbound (C1-22)
+Status: implemented 2026-05-29 in `atomic/inbound-cloudflared-testing`; merged in PR #73. Resolves the
+former A21 hard checkpoint per the user's decision: fully support the testing target now; stable gated.
+
+- What changed (C1-22): the cloudflared inbound (embedded Cloudflare Tunnel client, sing-box 1.14+) was
+  Palette-listed but not creatable, with no Inspector or diagnostics. Wired end-to-end:
+  CREATABLE_INBOUND_TYPES + a `{type,tag,token:""}` scaffold; Palette creatable on testing / gated on
+  stable (itemStatus channel gate mirroring service-hysteria-realm); an Inspector branch
+  (token[sensitive,Required], ha_connections, protocol quic/http2, post_quantum, region, grace_period;
+  added to inboundHandledFields); diagnostics `inbound-cloudflared-token-missing` (error) +
+  `inbound-cloudflared-testing-only` (warning when version < 1.14). control_dialer/tunnel_dialer detour
+  refs already cascade via A6a.
+- Frontend perf review (`vercel-react-best-practices`): a render-time inbound branch + finite-guarded
+  number input; no new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers. Verified upstream
+  fidelity (token the sole Required field, correct field types, 1.14+), a created node is valid on testing
+  with no spurious errors (not in tls/users/listen-required sets), Palette/create wiring complete,
+  canvas/cascade fine, and the handledFields additions hide nothing on other inbound types (cloudflared
+  is the only inbound with those top-level keys). NIT: edge_ip_version/datagram_version omitted (fall to
+  Advanced) — acceptable.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (773 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (editor 3 passed).
+- Official check: `sing-box-testing check` not run in this env, but a created cloudflared inbound matches
+  the upstream schema (token required); no bundled fixture changed.
