@@ -1,6 +1,7 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../src/App";
+import { deriveGraph } from "../src/canvas/graph";
 import { createSbcvFileName } from "../src/components/TopBar";
 import { useProjectStore } from "../src/state/useProjectStore";
 
@@ -1076,6 +1077,44 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().selectedId).toBeNull();
     expect(useProjectStore.getState().focusedNodeId).toBeNull();
     expect(useProjectStore.getState().layout.positions["route-rule:1"]).toBeUndefined();
+  });
+
+  it("freezes the first automatic graph layout before add and delete operations", async () => {
+    useProjectStore.getState().loadMinimal();
+    render(<App />);
+
+    await waitFor(() => {
+      expect(Object.keys(useProjectStore.getState().layout.positions).length).toBeGreaterThan(0);
+    });
+
+    const beforeState = useProjectStore.getState();
+    const beforeNodes = deriveGraph(beforeState.config, beforeState.layout, beforeState.diagnostics).nodes;
+    const beforePositions = new Map(beforeNodes.map((node) => [node.id, node.position]));
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("socks");
+    });
+
+    const afterAddState = useProjectStore.getState();
+    const afterAddNodes = deriveGraph(afterAddState.config, afterAddState.layout, afterAddState.diagnostics).nodes;
+    for (const [id, position] of beforePositions) {
+      expect(afterAddNodes.find((node) => node.id === id)?.position).toEqual(position);
+    }
+
+    const createdId = afterAddState.selectedId;
+    expect(createdId).toMatch(/^outbound:/);
+    const createdTag = createdId?.slice("outbound:".length);
+    expect(createdTag).toBeTruthy();
+
+    act(() => {
+      useProjectStore.getState().deleteEntity({ kind: "outbound", tag: createdTag! });
+    });
+
+    const afterDeleteState = useProjectStore.getState();
+    const afterDeleteNodes = deriveGraph(afterDeleteState.config, afterDeleteState.layout, afterDeleteState.diagnostics).nodes;
+    for (const [id, position] of beforePositions) {
+      expect(afterDeleteNodes.find((node) => node.id === id)?.position).toEqual(position);
+    }
   });
 
   it("does not overwrite a focused tag draft while unrelated entity fields update", () => {
