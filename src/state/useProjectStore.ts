@@ -585,6 +585,18 @@ function setClashApiDownloadDetour(config: SingBoxConfig, outboundTag: string | 
   );
 }
 
+// Pick a distinct SSM-API servers path: "/" if free, else "/<tag>" (suffixed if needed).
+function uniqueServerPath(servers: Record<string, unknown>, tag: string): string {
+  if (!("/" in servers)) return "/";
+  let candidate = `/${tag}`;
+  let suffix = 2;
+  while (candidate in servers) {
+    candidate = `/${tag}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
 function connectDirectedPortReference(
   config: SingBoxConfig,
   outputNode: { kind: string; value: string },
@@ -623,7 +635,14 @@ function connectDirectedPortReference(
     const inbound = config.inbounds?.find((item) => item.tag === outputNode.value);
     if (service?.type !== "ssm-api" || inbound?.type !== "shadowsocks") return null;
     const currentServers = service.servers && typeof service.servers === "object" ? service.servers : {};
-    const withService = updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", { ...currentServers, "/": outputNode.value });
+    // servers is a path->inbound map; each managed server needs a distinct path. Don't clobber an
+    // existing "/" mapping when wiring a second inbound (C1-13); reuse the existing entry if this inbound
+    // is already mapped.
+    const alreadyMapped = Object.values(currentServers).includes(outputNode.value);
+    const servers = alreadyMapped
+      ? currentServers
+      : { ...currentServers, [uniqueServerPath(currentServers, outputNode.value)]: outputNode.value };
+    const withService = updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", servers);
     return updateEntityField(withService, { kind: "inbound", tag: outputNode.value }, "managed", true);
   }
 
@@ -1417,7 +1436,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const targetService = config.services?.find((item) => item.tag === ensured.tag);
             const currentServers = targetService?.servers && typeof targetService.servers === "object" ? targetService.servers : {};
             if (ensured.tag) {
-              config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "servers", { ...currentServers, "/": node.value });
+              // Don't clobber an existing "/" mapping to a different inbound (C1-13); reuse if already mapped.
+              const alreadyMapped = Object.values(currentServers).includes(node.value);
+              const servers = alreadyMapped
+                ? currentServers
+                : { ...currentServers, [uniqueServerPath(currentServers, node.value)]: node.value };
+              config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "servers", servers);
             }
           }
           return sync(config, state.channel, state.version);
