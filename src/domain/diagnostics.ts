@@ -135,6 +135,16 @@ export function validateConfig(
       );
     }
 
+    if ((service.type === "ccm" || service.type === "ocm") && !atLeast(version, "1.13")) {
+      push(
+        diagnostics,
+        "error",
+        "service-ccm-ocm-version",
+        `/services/${index}/type`,
+        `Service "${service.tag}" (${service.type}) requires sing-box 1.13+, but the target is ${version}. sing-box ${version} rejects it.`,
+      );
+    }
+
     if (service.type === "ssm-api") {
       const servers = service.servers && typeof service.servers === "object" && !Array.isArray(service.servers) ? service.servers : {};
       if (Object.keys(servers).length === 0) {
