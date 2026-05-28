@@ -1,7 +1,7 @@
 # sbc-ui pass-2 — phased remediation plan
 
 ## Overview
-Pass 2 produced ~38 P0s (22 node-conformance + 17 feature-UX, minus de-dup), ~232 P1s, and ~315 P2s
+Pass 2 produced ~38 P0s (21 node-conformance + 17 feature-UX, minus de-dup), ~232 P1s, and ~315 P2s
 across 66 node reviews, the relationship audit, and 6 feature reports. **Leverage thesis:** ~20 of the
 21 node P0s and a large share of P1s collapse into ~8 structural root causes (T1 shared-card role split,
 T3 type-switch confirm, T4 JsonField, T5 required+gate, T6 blank rows, T7 icon-from-relation, T8 dead
