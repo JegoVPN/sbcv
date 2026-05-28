@@ -1,4 +1,4 @@
-import { CheckCircle2, CircleAlert, CircleX, FileCheck2, LoaderCircle, MoreHorizontal } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleX, FileCheck2, LoaderCircle, MoreHorizontal, Plus } from "lucide-react";
 import { Suspense, lazy, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { summarizeDiagnostics } from "../domain/diagnostics";
@@ -8,6 +8,9 @@ import { DiagnosticsPopover } from "./DiagnosticsPopover";
 
 const MobileMenuSheet = lazy(() =>
   import("./MobileMenuSheet").then((module) => ({ default: module.MobileMenuSheet })),
+);
+const MobileNodeSheet = lazy(() =>
+  import("./MobileNodeSheet").then((module) => ({ default: module.MobileNodeSheet })),
 );
 const MobileTemplatesSheet = lazy(() =>
   import("./MobileTemplatesSheet").then((module) => ({ default: module.MobileTemplatesSheet })),
@@ -42,6 +45,7 @@ export function MobileTopBar() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [nodeSheetOpen, setNodeSheetOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const allDiagnostics = useMemo(
@@ -139,6 +143,18 @@ export function MobileTopBar() {
       <button
         type="button"
         className="mobile-topbar__icon-btn"
+        onClick={() => setNodeSheetOpen(true)}
+        aria-label="Add node"
+        aria-haspopup="dialog"
+        aria-expanded={nodeSheetOpen}
+        data-testid="mobile-add-node"
+      >
+        <Plus size={20} />
+      </button>
+
+      <button
+        type="button"
+        className="mobile-topbar__icon-btn"
         onClick={runCheck}
         disabled={busy}
         aria-label="Run check"
@@ -170,6 +186,11 @@ export function MobileTopBar() {
       {templatesOpen ? (
         <Suspense fallback={null}>
           <MobileTemplatesSheet open={templatesOpen} onClose={() => setTemplatesOpen(false)} />
+        </Suspense>
+      ) : null}
+      {nodeSheetOpen ? (
+        <Suspense fallback={null}>
+          <MobileNodeSheet open={nodeSheetOpen} onClose={() => setNodeSheetOpen(false)} />
         </Suspense>
       ) : null}
     </header>
