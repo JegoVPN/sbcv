@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Braces, Network, Route, Server, Trash2, X } from "lucide-react";
 import { getNodeIcon } from "../canvas/iconRegistry";
-import { dnsRuleAllowsServer } from "../domain/commands";
+import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import type { EntityRef, SingBoxConfig } from "../domain/types";
 import {
   CREATABLE_DNS_SERVER_TYPES,
@@ -1187,7 +1187,7 @@ function RouteRuleInspector({
           <option value="resolve">resolve</option>
         </select>
       </label>
-      {String(rule.action ?? "route") === "route" ? (
+      {routeRuleAllowsOutbound(rule) ? (
         <label className="field">
           <span>Outbound</span>
           <select value={String(rule.outbound ?? "")} onChange={(event) => patch({ outbound: event.target.value || undefined })}>
@@ -1252,7 +1252,7 @@ function RouteRuleInspector({
           </label>
         </>
       ) : null}
-      {String(rule.action) === "route-options" || String(rule.action) === "route" ? (
+      {["route", "route-options", "bypass"].includes(String(rule.action ?? "route")) ? (
         <fieldset className="field field--checklist" data-testid="route-rule-route-options">
           <legend>Route options</legend>
           <label className="field">
