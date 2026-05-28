@@ -1,0 +1,44 @@
+# inbound-tuic — pass2 review (claude)
+<!-- reviewer: senior PM + principal FE; single source of truth: sing-box testing 1.14 -->
+
+## Verdict (2-3 sentences)
+The TUIC inbound is now in good shape end-to-end: palette entry correct, structured users editor with sensitive UUID/password + Generate UUID, TLS-required and per-user-UUID-required diagnostics wired, and the default stub already ships `tls: { enabled: true }`. The remaining real defect is that the four QUIC/TUIC protocol fields (`congestion_control`, `auth_timeout`, `zero_rtt_handshake`, `heartbeat`) have NO first-class controls in the **inbound** Inspector — the polished `congestion_control` select / `heartbeat` / `zero_rtt` controls at Inspector.tsx:4005-4066 live only in the `ref.kind === "outbound"` branch, so the inbound dumps all four into the generic "Advanced fields" (free-text `congestion_control`, no enum validation, no 0-RTT replay warning). The pass-1 P0s (users invisible, no TLS diagnostic, stub missing TLS) are all now STALE/fixed.
+
+## 1. Left Palette
+Present and correct. `Palette.tsx:141` — `{ label: "TUIC", kind: "inbound-tuic", icon: Plug, docsUrl: docs("inbound/tuic/"), status: "setup" }`. Sits in the Inbounds group (correct taxonomy). `status: "setup"` → label "Setup", `canActivate` true (Palette.tsx:279-287), click → `createFromPalette("inbound-tuic")`. `protocols.ts:59` maps `inbound-tuic`→`tuic`; `tuic` is in `CREATABLE_INBOUND_TYPES` (protocols.ts:80) and `preferredInboundTag` → `tuic-in` (protocols.ts:182). docsUrl resolves to the official inbound/tuic page. `Plug` icon is shared with hysteria/hysteria2 — cosmetic only. No gating issue (TUIC is not channel-gated). Verdict: correct.
+
+## 2. Canvas Node
+Title = tag `tuic-in`, subtitle = `tuic inbound` (graph.ts:224-225); titlebar shows `inbound / tuic` (SbcNode.tsx:291). Status derives from `/inbounds/{index}` diagnostics (graph.ts:226) so missing-UUID / missing-TLS surface as an error badge — good. Ports are type-agnostic for all inbounds (no TUIC branch needed): output `route`, `route-rule-match`, `dns-rule-match` (portRelations 91/94/99) plus the SSM `service` input which is `nodeType: "shadowsocks"`-gated so it does NOT appear for TUIC (portRelations:113). This is semantically correct: a TUIC inbound has no upstream/outbound reference and no detour-out port. Minor PM nit (P2): subtitle never summarizes user count / congestion_control / TLS state (graph.ts has no tuic case in any subtitle helper) — purely informational, both pass-1 docs suggested it.
+
+## 3. Upstream/Downstream Links
+Matches the official relationship model. Inbound is referenced BY route rules and DNS rules via `*/inbound` — both registered in `referenceRegistry.ts:327-331` (`/route/rules/*/inbound`, `/dns/rules/*/inbound`, `/services/*/servers`, v2ray stats) and as port relations `route-rule-inbound` (portRelationRegistry.ts:94) and `dns-rule-inbound` (line 99). Rename/delete cleanup covered by `replaceInboundRefs`/`removeInboundRefs` (referenceRegistry.ts:123-155). The TUIC inbound emits NO outgoing tag references (no detour/server) — correct; nothing missing. `tls` is REQUIRED but is an embedded inspector object, not a node/edge — correctly NOT modeled as a link. No missing/extra/wrong links.
+
+## 4. Right Inspector (fields) — one row per official field → UI state
+Inbound entity resolved at Inspector.tsx:1761; shared groups via `sharedGroupsForEntity` (line 1798) → `listen` + `tls` + `quic` for tuic (sharedFieldRegistry.ts:170-172, sets at 144/145). Inbound TUIC body is the `ref.kind==="inbound"` branch (lines 2583-3241): only the structured Users editor (3125-3236) is TUIC-specific. The `congestion_control` select / udp / `heartbeat` / `zero_rtt` controls (4005-4066) are inside the **outbound** branch (starts 3242) and DO NOT render for the inbound.
+
+| Official field (inbound/tuic.md) | Required | UI control today | Correct? |
+| --- | --- | --- | --- |
+| Listen Fields (`listen` REQUIRED, `listen_port`, +12) | listen req | "Listen Fields" group, 14 fields incl. all 1.12/1.13 additions (Inspector.tsx:1431-1450) | OK — full 14-field surface (pass-1 "8 of 15" is STALE) |
+| `users[]` | — | Structured repeater `tuic-inbound-users-editor` (3125-3236), add/remove | OK |
+| `users[].uuid` | **req/entry** | `SensitiveTextField` + per-row "Generate UUID" (schema tuic 589-596; render 3146-3168). Diagnostic `user-missing-uuid` error + `user-invalid-uuid` warn via `validateVmessLikeUsers(...,true)` (diagnostics.ts:936-942, 640-666) | OK |
+| `users[].password` | optional | `SensitiveTextField`, masked (schema 593) | OK |
+| `users[].name` | optional | plain text (schema 591) | OK |
+| `congestion_control` (enum cubic/new_reno/bbr, def cubic) | optional | **NONE in inbound** → falls to AdvancedScalarFields as free-text `<input>` (3237). Not in `inboundHandledFields` (140-177). The enum `<select>` at 4005-4017 is outbound-only | **WRONG** — free-text, accepts invalid values, no default surfaced |
+| `auth_timeout` (duration, def 3s) | optional | **NONE** → AdvancedScalarFields free-text; absent from stub (commands.ts:217-229) and from both handled-field sets | **MISSING as first-class** |
+| `zero_rtt_handshake` (bool, replay warning) | optional | AdvancedScalarFields bare checkbox (3237) — no security warning. First-class warned toggle at 4056-4065 is outbound-only | **WRONG** — buried, no warning copy |
+| `heartbeat` (duration, def 10s) | optional | **NONE** → AdvancedScalarFields free-text. First-class field at 4048-4055 is outbound-only | **MISSING as first-class** |
+| `tls` | **REQUIRED** | Shared TLS group (Inspector.tsx:1502-1527+, sharedFieldRegistry tls). Stub ships `tls:{enabled:true}` (commands.ts:228). Diagnostic `inbound-missing-tls` error when not enabled (diagnostics.ts:523-589, tuic at 528) | OK (pass-1 "stub omits tls / no diagnostic" is STALE) |
+| QUIC Fields (`initial_packet_size`, `disable_path_mtu_discovery`) | optional | "QUIC Fields" group via `quicSharedFields` (Inspector.tsx:139; group rendered for inboundQuicTypes) | OK |
+
+Notes: invalid-JSON writes — `JsonField`/`AdvancedNonScalarFields` (794-818, 820-848) fall back to storing the raw string on parse failure (no guard); generic but not TUIC-specific. No phantom inbound fields are written by the inbound branch itself (the bogus `udp_relay_mode`/`udp_over_stream` controls at 4019-4047 are correctly scoped to outbound only).
+
+## Findings (prioritized)
+- **[P1]** `congestion_control` has no first-class control on the TUIC **inbound**; it renders as a free-text input via AdvancedScalarFields and accepts arbitrary values. The enum `<select>` exists only in the outbound branch. Fix: render the same `cubic/new_reno/bbr` select inside the inbound branch and add `"congestion_control"` to `inboundHandledFields`. `src/components/Inspector.tsx:4005-4017` (select), inbound branch `:2583-3241`, `inboundHandledFields:140-177`.
+- **[P1]** `zero_rtt_handshake` on the inbound is a bare Advanced checkbox with no replay-attack warning (the doc explicitly warns against enabling it). The warned toggle exists only for outbound. Fix: add a first-class toggle + warning hint in the inbound branch; add to `inboundHandledFields`. `src/components/Inspector.tsx:4056-4065`, inbound branch `:2583-3241`.
+- **[P1]** `auth_timeout` (default `3s`) and `heartbeat` (default `10s`) have no first-class duration inputs on the inbound; both land in Advanced fields (and `auth_timeout` is also missing from the default stub, so a new node has no visible value). Fix: add text inputs (placeholders `3s`/`10s`) in the inbound branch; add both to `inboundHandledFields`; optionally add `auth_timeout` to the stub. `src/components/Inspector.tsx` inbound branch `:2583-3241`; `src/domain/commands.ts:217-229`.
+- **[P2]** Canvas node subtitle for inbounds is the generic `"<type> inbound"`; no user-count / congestion / TLS summary for TUIC. Cosmetic. `src/canvas/graph.ts:224-225`.
+- **[P2]** `JsonField` silently stores invalid JSON as a raw string instead of rejecting/flagging (affects any unknown imported object field on TUIC, e.g. an unrecognized `tls.reality`). Generic, low risk. `src/components/Inspector.tsx:806-816`.
+
+Pass-1 staleness: `docs/ui-reviews/inbound-tuic.md` and `docs/claude/inbound-tuic.md` both assert P0s that are now FIXED — users editor exists (Inspector.tsx:589-596, 3125-3236), TLS-required diagnostic exists (diagnostics.ts:523-589), per-user UUID diagnostic exists (diagnostics.ts:936-942), and the stub already includes `tls:{enabled:true}` (commands.ts:228). The "listen panel covers 8 of 15" claim is also stale (14 listen fields render, Inspector.tsx:1431-1450). The only surviving valid pass-1 concerns are the P1 control-type/warning issues above, and even those are half-done (implemented for outbound, not inbound).
+
+SUMMARY: 0 P0, 3 P1, 2 P2.
