@@ -50,8 +50,13 @@ describe("A14 — endpoint-tailscale system_interface", () => {
       fireEvent.change(screen.getByLabelText("System Interface Name (since sing-box 1.13.0)"), { target: { value: "tailscale0" } });
       expect(useProjectStore.getState().config.endpoints?.[0]?.system_interface_name).toBe("tailscale0");
 
-      fireEvent.change(screen.getByLabelText("System Interface MTU (since sing-box 1.13.0)"), { target: { value: "1280" } });
+      const mtu = screen.getByLabelText("System Interface MTU (since sing-box 1.13.0)");
+      fireEvent.change(mtu, { target: { value: "1280" } });
       expect(useProjectStore.getState().config.endpoints?.[0]?.system_interface_mtu).toBe(1280);
+
+      // Non-finite input clears the field instead of storing NaN (which would export as null).
+      fireEvent.change(mtu, { target: { value: "" } });
+      expect(useProjectStore.getState().config.endpoints?.[0]?.system_interface_mtu).toBeUndefined();
     });
   });
 

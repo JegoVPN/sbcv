@@ -4931,9 +4931,14 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 <input
                   type="number"
                   value={typeof entity.system_interface_mtu === "number" ? entity.system_interface_mtu : ""}
-                  onChange={(event) =>
-                    updateField(ref, "system_interface_mtu", event.target.value === "" ? undefined : Number(event.target.value))
-                  }
+                  onChange={(event) => {
+                    const parsed = Number(event.target.value);
+                    updateField(
+                      ref,
+                      "system_interface_mtu",
+                      event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed,
+                    );
+                  }}
                 />
               </label>
             </>
