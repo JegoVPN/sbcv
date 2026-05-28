@@ -982,21 +982,38 @@ describe("canonical sing-box domain model", () => {
     ).toBe(false);
   });
 
-  it("warns on settings.certificate top-level block on stable channel + chrome store gate", () => {
+  it("version-gates settings.certificate block and chrome store by target version (A5)", () => {
     const config = createStableTunSplitConfig();
-    config.certificate = { store: "system" } as never;
-    const stableNoChrome = validateConfig(config, "stable").map((d) => d.code);
-    expect(stableNoChrome).toContain("settings-certificate-block-testing-only");
-    expect(stableNoChrome).not.toContain("settings-certificate-store-chrome-testing-only");
-
     config.certificate = { store: "chrome" } as never;
-    const stableChrome = validateConfig(config, "stable").map((d) => d.code);
-    expect(stableChrome).toContain("settings-certificate-block-testing-only");
-    expect(stableChrome).toContain("settings-certificate-store-chrome-testing-only");
+
+    // 1.13 stable supports both the top-level certificate block (1.12+) and store=chrome (1.13+).
+    const v113 = validateConfig(config, "stable", "1.13").map((d) => d.code);
+    expect(v113).not.toContain("settings-certificate-block-testing-only");
+    expect(v113).not.toContain("settings-certificate-store-chrome-testing-only");
+
+    // 1.12 legacy: store=chrome is 1.13+, so it is flagged; the certificate block (1.12+) is still fine.
+    const v112 = validateConfig(config, "stable", "1.12").map((d) => d.code);
+    expect(v112).not.toContain("settings-certificate-block-testing-only");
+    expect(v112).toContain("settings-certificate-store-chrome-testing-only");
 
     const testing = validateConfig(config, "testing").map((d) => d.code);
     expect(testing).not.toContain("settings-certificate-block-testing-only");
     expect(testing).not.toContain("settings-certificate-store-chrome-testing-only");
+  });
+
+  it("version-gates tailscale endpoint 1.13+ fields by target version (A5)", () => {
+    const config = createStableTunSplitConfig();
+    config.endpoints = [
+      { type: "tailscale", tag: "ts", advertise_tags: ["tag:x"], system_interface: "tailscale0" },
+    ] as never;
+
+    const v112 = validateConfig(config, "stable", "1.12").map((d) => d.code);
+    expect(v112).toContain("endpoint-tailscale-advertise-tags-1-13-only");
+    expect(v112).toContain("endpoint-tailscale-system-interface-1-13-only");
+
+    const v113 = validateConfig(config, "stable", "1.13").map((d) => d.code);
+    expect(v113).not.toContain("endpoint-tailscale-advertise-tags-1-13-only");
+    expect(v113).not.toContain("endpoint-tailscale-system-interface-1-13-only");
   });
 
   it("warns when a hosts DNS server has no predefined or path", () => {
@@ -2229,7 +2246,8 @@ describe("canonical sing-box domain model", () => {
         },
       ],
     } as typeof base;
-    const codes = validateConfig(config, "stable").map((d) => d.code);
+    // advertise_tags / system_interface are 1.13+ fields, so they are flagged on the 1.12 target.
+    const codes = validateConfig(config, "stable", "1.12").map((d) => d.code);
     expect(codes).toContain("endpoint-tailscale-advertise-tags-1-13-only");
     expect(codes).toContain("endpoint-tailscale-system-interface-1-13-only");
   });

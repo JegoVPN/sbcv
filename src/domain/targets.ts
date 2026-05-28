@@ -28,3 +28,19 @@ export function targetById(id: SingBoxTargetId): SingBoxTargetOption {
   if (!target) throw new Error(`Unknown sing-box target: ${id}`);
   return target;
 }
+
+// Dotted numeric version compare (no semver dep): compareVersions("1.13","1.12") > 0.
+export function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+// True when `version` is at least `min` (e.g. atLeast("1.13","1.13") === true).
+export function atLeast(version: string, min: string): boolean {
+  return compareVersions(version, min) >= 0;
+}

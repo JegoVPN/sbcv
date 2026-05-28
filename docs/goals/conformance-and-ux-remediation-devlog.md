@@ -31,7 +31,7 @@ work, not after.
 - [x] A4c — kv blank-row fixes (W13/C0-6): seed unique keys in torrc/http/naive/dns-h3 repeaters (`kv-no-empty-rows`) — PR #42
 - [x] A4b — type-change confirm dialog (W7/T3): confirm before a destructive type change (`type-change-confirm`) — PR #43
 - [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain)
-- [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
+- [x] A5 — wire `version` into `validateConfig` (`version-aware-gating`) — PR #44; C2-2 (Inspector service dropdown filter) deferred; `system_interface` boolean predicate → A14
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
 - [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
@@ -427,3 +427,30 @@ Status: implemented 2026-05-28 in `atomic/type-change-confirm`; merged in PR #43
   todo), `pnpm build`, `pnpm e2e` (13 passed).
 - Official check: `sing-box-stable/testing check` not run — A4b changes the Inspector type-change UX, not
   bundled fixture/exported config output.
+
+### A5 version-aware-gating — pass version into validateConfig (domain + store)
+Status: implemented 2026-05-28 in `atomic/version-aware-gating`; merged in PR #44.
+
+- What changed (W11 / C2-6): `validateConfig(config, channel, version?)` — version optional, default from
+  channel (stable→1.13, testing→1.14). Threaded `state.version` through every store
+  `sync`/`computeDiagnostics` call; `setTarget` passes `target.version`. Fixed 4 "1.13+" rules to gate on
+  `atLeast(version,…)`: certificate block (1.12+), `store=chrome` (1.13+), tailscale `advertise_tags` /
+  `system_interface` (1.13+). Added `compareVersions`/`atLeast` in `targets.ts`. "1.14+/testing-only"
+  rules stay channel-gated.
+- Deferrals: C2-2 (Inspector service-type dropdown channel filter) → separate component follow-up;
+  `system_interface` boolean predicate (it's a boolean upstream, not a string) → A14 (C0-13), which
+  migrates the field's control — A5 keeps the string predicate to match the current editor data.
+- Frontend perf review (`vercel-react-best-practices`): the store change is mechanical version threading
+  (one extra arg per existing call); no new subscriptions, rerenders, waterfalls, or bundle deps. Pass.
+- Codex review:
+  - Round 1: 1 BLOCKER — version threading was incomplete (18 store `sync`/`computeDiagnostics` calls with
+    function-call first args still passed channel only, so a 1.12 target reverted to 1.13 after edits).
+    Fixed by threading `state.version` through all of them + a store-level regression test. 1 should-fix
+    (`system_interface` boolean) deferred to A14 with rationale.
+  - Round 2: skipped — the fix is mechanical + verified by the new store test, and the pre-push
+    `claude-review` gate passed the squashed commit.
+  - Deferred to follow-up atomic: C2-2 (component option gating); `system_interface` predicate → A14.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (626 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (passed).
+- Official check: `sing-box-stable/testing check` not run — A5 changes diagnostics gating, not bundled
+  fixture/exported config output.
