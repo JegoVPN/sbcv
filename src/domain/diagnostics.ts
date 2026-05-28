@@ -1,4 +1,5 @@
 import { buildTagIndex, getDnsServerTags, getEndpointTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
 function listItems<T>(value: T[] | undefined): T[] {
@@ -18,6 +19,7 @@ function push(
 export function validateConfig(
   config: SingBoxConfig,
   channel: SingBoxChannel,
+  version: string = channel === "stable" ? "1.13" : "1.14",
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   const tagIndex = buildTagIndex(config);
@@ -1136,20 +1138,22 @@ export function validateConfig(
   if (channel === "stable") {
     const certificate = config.certificate as Record<string, unknown> | undefined;
     if (certificate && typeof certificate === "object" && !Array.isArray(certificate)) {
-      push(
-        diagnostics,
-        "warning",
-        "settings-certificate-block-testing-only",
-        "/certificate",
-        "The top-level `certificate` block is testing-only (sing-box 1.12+). Stable targets may reject it; verify with sing-box-stable.",
-      );
-      if (certificate.store === "chrome") {
+      if (!atLeast(version, "1.12")) {
+        push(
+          diagnostics,
+          "warning",
+          "settings-certificate-block-testing-only",
+          "/certificate",
+          "The top-level `certificate` block requires sing-box 1.12+; this target may reject it.",
+        );
+      }
+      if (certificate.store === "chrome" && !atLeast(version, "1.13")) {
         push(
           diagnostics,
           "warning",
           "settings-certificate-store-chrome-testing-only",
           "/certificate/store",
-          "certificate.store=chrome requires sing-box 1.13+ and may be unavailable on stable channels older than 1.13.",
+          "certificate.store=chrome requires sing-box 1.13+ and is unavailable on this target.",
         );
       }
     }
@@ -1267,7 +1271,7 @@ export function validateConfig(
       const obj = endpoint as Record<string, unknown>;
       if (obj.type !== "tailscale") return;
       const tag = (obj.tag as string | undefined) ?? `endpoint-${index}`;
-      if (Array.isArray(obj.advertise_tags) && obj.advertise_tags.length > 0) {
+      if (Array.isArray(obj.advertise_tags) && obj.advertise_tags.length > 0 && !atLeast(version, "1.13")) {
         push(
           diagnostics,
           "warning",
@@ -1276,7 +1280,7 @@ export function validateConfig(
           `Endpoint "${tag}" (tailscale) sets advertise_tags; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
         );
       }
-      if (typeof obj.system_interface === "string" && obj.system_interface.trim() !== "") {
+      if (typeof obj.system_interface === "string" && obj.system_interface.trim() !== "" && !atLeast(version, "1.13")) {
         push(
           diagnostics,
           "warning",

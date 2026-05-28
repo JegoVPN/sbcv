@@ -45,6 +45,24 @@ describe("SBC editor shell", () => {
     expect(invalid).toHaveClass("status-pill--error");
   });
 
+  it("recomputes diagnostics with the selected target version, including after edits (A5)", () => {
+    useProjectStore.getState().importJson(
+      JSON.stringify({ certificate: { store: "chrome" }, outbounds: [{ type: "direct", tag: "d" }] }),
+    );
+    const chromeFlagged = () =>
+      useProjectStore.getState().diagnostics.some((d) => d.code === "settings-certificate-store-chrome-testing-only");
+
+    // store=chrome is a 1.13+ field, so it is flagged on the 1.12 target...
+    act(() => useProjectStore.getState().setTarget("1.12-stable"));
+    expect(chromeFlagged()).toBe(true);
+    // ...and a subsequent edit keeps the 1.12 gating (version is threaded through sync).
+    act(() => useProjectStore.getState().addRouteRule());
+    expect(chromeFlagged()).toBe(true);
+    // switching to 1.13 (which supports store=chrome) clears it.
+    act(() => useProjectStore.getState().setTarget("1.13-stable"));
+    expect(chromeFlagged()).toBe(false);
+  });
+
   it("keeps side port clicks from mutating canonical references", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
