@@ -116,13 +116,22 @@ describe("dial detour port type guards (W5 -> A6)", () => {
     },
   );
 
-  // Red target. The `detour-target` INPUT endpoints (portRelationRegistry.ts:106/108/117) carry no
-  // nodeTypeExcludes, so non-dialable outbounds (block/selector/urltest/dns) still expose a dial
-  // detour-target input — a dead chain (_RELATIONSHIPS.md P2-f). Flips red when A6 adds
-  // nodeTypeExcludes ["block","selector","urltest","dns"] to those endpoints; convert `it.fails` -> `it`.
-  for (const type of ["block", "selector", "urltest", "dns"]) {
-    it.fails(`outbound ${type} does not expose a dial detour-target input`, () => {
+  // Locked. A6b (dial-detour port guards) added nodeTypeExcludes ["block","dns"] to the `detour-target`
+  // INPUT endpoints (portRelationRegistry.ts:106/108/117), so block (drops traffic) and the special dns
+  // outbound no longer expose a dial detour-target input — closing the dead chain (_RELATIONSHIPS.md P2-f).
+  // NB: the P2-f audit also listed selector/urltest, but upstream dial.md defines `detour` as "the tag of
+  // the upstream outbound" with no type restriction, and the canonical stable config detours through the
+  // "proxy" selector — so selector/urltest ARE valid detour targets and intentionally keep the port.
+  for (const type of ["block", "dns"]) {
+    it(`outbound ${type} does not expose a dial detour-target input`, () => {
       expect(getPortSpecs("outbound", type, "input").map((port) => port.key)).not.toContain("detour-target");
     });
   }
+
+  it.each(["selector", "urltest"])(
+    "outbound %s keeps the dial detour-target input (valid group detour target)",
+    (type) => {
+      expect(getPortSpecs("outbound", type, "input").map((port) => port.key)).toContain("detour-target");
+    },
+  );
 });

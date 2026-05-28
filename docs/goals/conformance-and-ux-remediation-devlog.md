@@ -32,7 +32,8 @@ work, not after.
 - [x] A4b — type-change confirm dialog (W7/T3): confirm before a destructive type change (`type-change-confirm`) — PR #43
 - [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain)
 - [x] A5 — wire `version` into `validateConfig` (`version-aware-gating`) — PR #44; C2-2 (Inspector service dropdown filter) deferred; `system_interface` boolean predicate → A14
-- [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
+- [x] A6a — referenceRegistry completeness: 8 upstream-real tag refs, rename + delete (`reference-registry-completeness`) — PR #45
+- [x] A6b — dial-detour port guards: exclude block/dns from `detour-target` input (W5a); selector/urltest kept as valid targets — **audit deviation** from `["block","selector","urltest","dns"]`, see note (`dial-detour-port-guards`) — PR #46
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
 - [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
 - [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
@@ -454,3 +455,40 @@ Status: implemented 2026-05-28 in `atomic/version-aware-gating`; merged in PR #4
   todo), `pnpm build`, `pnpm e2e` (passed).
 - Official check: `sing-box-stable/testing check` not run — A5 changes diagnostics gating, not bundled
   fixture/exported config output.
+
+### A6a reference-registry-completeness — finish the canonical tag reference registry (domain)
+Status: implemented 2026-05-28 in `atomic/reference-registry-completeness`; merged in PR #45.
+
+- What changed (W1; _RELATIONSHIPS.md rows 5/23/28/29/30): completed both rename (`replace*`) and delete
+  (`remove*`) paths for eight upstream-real refs — route-rule `resolve.server`→dns-server; inbound listen
+  `detour`→inbound; tun `route_address_set`/`route_exclude_address_set`→rule-set (`type==="tun"` guarded);
+  shadowtls `handshake.detour` + `handshake_for_server_name.*.detour`→outbound; derp `mesh_with[].detour`
+  + `verify_client_url[].detour`→outbound; cloudflared `control_dialer`/`tunnel_dialer` `detour`→outbound.
+  Flipped W1 (`it.fails`→`it`, +6 sibling cases); kept `referenceRegistry.paths` ⇄ domain
+  `referenceCoverageCases.paths` in lockstep with an extended fixture + assertions.
+- Codex review (2 rounds): round 1 found three sibling outbound-detour majors (shadowtls
+  `handshake_for_server_name`, derp `verify_client_url`, cloudflared dialers) + one paths-metadata minor;
+  all addressed in round 2 → clean. Pre-push `claude-review`: 0 critical/major, 1 accepted minor (an
+  emptied tun array is left `[]` not `undefined`, consistent with the existing `removeStringArray` helper).
+- Verification: `git diff --check`, `tsc -b`, `pnpm test` (642 passed | 5 expected fail | 1 todo),
+  `pnpm build`. Domain-only; no `vercel-react` surface and no e2e (no interaction change).
+- NOTE: this A6a note and the A6 TODO split below land in the A6b PR — #45 merged before the note was added.
+
+### A6b dial-detour-port-guards — guard non-dialable detour targets (domain)
+Status: implemented 2026-05-28 in `atomic/dial-detour-port-guards`; merged in PR #46.
+
+- What changed (W5a; _RELATIONSHIPS.md P2-f): added `nodeTypeExcludes` to the three `detour-target` INPUT
+  endpoints (`portRelationRegistry.ts:106/108/117` — outbound-detour, endpoint-detour, settings-ntp-detour),
+  so a dead-chain detour into a non-dialable outbound can no longer be created on the canvas.
+- DECISION — **narrowed the audit's exclude list** from `["block","selector","urltest","dns"]` to
+  `["block","dns"]`. Upstream `dial.md` defines `detour` as "the tag of the upstream outbound" with no type
+  restriction, and the canonical stable config (`createStableTunSplitConfig`) detours dns/endpoint/ntp
+  through the `"proxy"` **selector** — so selector/urltest ARE valid detour targets (they dial through the
+  selected member). Excluding them would break the canonical config's "every rendered edge is registry-
+  explainable" invariant (`port-relation-registry.test.ts`) and block a valid, common workflow. Only
+  `block` (drops traffic) and the special `dns` outbound are true dead chains. Flagged to the user as an
+  audit deviation; reversible if a deliberate UX restriction was intended.
+- W5a guardrail flipped: asserts block/dns drop the `detour-target` port + a positive lock that
+  selector/urltest keep it.
+- Verification: `git diff --check`, `tsc -b`, `pnpm test` (646 passed | 1 expected fail | 1 todo),
+  `pnpm build`, `pnpm e2e`. Codex review and `vercel-react` (domain-only, no component surface) per PR.
