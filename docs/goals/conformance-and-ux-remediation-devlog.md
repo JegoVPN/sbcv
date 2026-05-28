@@ -50,7 +50,7 @@ work, not after.
 - [ ] A10d — scrub a stale `server` on import for non-server dns-rule actions (run `normalizeDnsRule` in serialization, not just add/update commands); today an imported `{action:"reject",server:"x"}` is invisible on every surface but still exported (A10c review follow-up)
 - [x] A11 — rule-set-inline structured editor (MVP: per-rule list + common match fields + JSON escape hatch) (`rule-set-inline-editor`) — PR #58
 - [ ] A11-full — full headless-rule editor: all ~25 fields + logical and/or builder (deferred from A11 MVP; reachable today via JSON mode) (`rule-set-inline-editor-full`)
-- [ ] A12 — rule-set-remote http_client object form (`rule-set-http-client`)
+- [x] A12 — rule-set-remote http_client object-form preserved + testing-gated + stable diagnostic (W20/C2-5) (`rule-set-http-client`) — PR #59
 - [ ] A13 — ccm/ocm detour control (`ccm-ocm-detour`)
 - [ ] A14 — endpoint-tailscale system_interface bool (`endpoint-tailscale-system-interface`)
 - [ ] A15 — dns-server-tailscale accept_search_domain (`dns-server-tailscale-fields`)
@@ -810,3 +810,30 @@ Status: implemented 2026-05-29 in `atomic/rule-set-inline-editor`; merged in PR 
   `pnpm e2e` (14 passed).
 - Official check: `sing-box-stable/testing check` not run — A11 changes the inline-rules Inspector
   editor, not bundled fixture/exported config output.
+
+### A12 rule-set-http-client — preserve inline-object http_client + testing-gate (Inspector + domain, W20/C2-5)
+Status: implemented 2026-05-29 in `atomic/rule-set-http-client`; merged in PR #59.
+
+- What changed (W20/C2-5): a remote rule-set `http_client` may be a tag string OR an inline object
+  (shared/http-client.md). The shared tag `<select>` rendered an object as "None" and wrote a bare
+  string on any change — silently destroying the object. `SharedFieldControl` now renders the
+  parse-safe `JsonField` whenever a select-kind shared field holds a non-null object, preserving and
+  keeping the object editable (and convertible back to a tag); only http_client/default_http_client/
+  domain_resolver are ever objects, so other selects are unaffected (this also fixes the same latent
+  clobber for object `domain_resolver`). `http_client` is gated to the testing channel for remote
+  rule-sets (was unconditional), matching the route `default_http_client` gating; and a
+  `rule-set-http-client-testing-only` stable warning was added so an imported stable config carrying
+  `http_client` is surfaced, not silently invisible.
+- Frontend perf review (`vercel-react-best-practices`): reuses the existing parse-safe JsonField; no
+  new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior React + sing-box-correctness reviewer subagent. Verdict APPROVE,
+  no blockers. Verified the generic object-branch is safe for all 16 select shared fields (and is a
+  latent fix for `domain_resolver`), JsonField empty-input emits `undefined` (clean key removal, no
+  stray `null`), and the gating matches upstream (rule-set `http_client` is 1.14-only). Applied the
+  recommended follow-up this pass: the stable diagnostic (closes the silent gap the gating opened) +
+  generalized the code comment.
+  - Deferred to follow-up atomic: `download_detour`↔`http_client` migration affordance + a
+    missing-`http_client`-tag reference diagnostic (W20 tail / A28).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (730 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A12 changes Inspector field rendering +
+  diagnostics, not bundled fixture/exported config output.
