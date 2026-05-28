@@ -5,6 +5,7 @@ import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
 import type { SbcFlowNode } from "../canvas/graph";
+import { typeLabels } from "../canvas/nodeLabels";
 import {
   endpointMatchesNode,
   portEndpointsForNode,
@@ -82,49 +83,6 @@ const candidateTypesByKind: Partial<Record<PortNodeKind, readonly string[]>> = {
   "route-rule": ["route-rule"],
   dns: ["dns"],
   "dns-rule": ["dns-rule"],
-};
-
-const typeLabels: Record<string, string> = {
-  direct: "Direct",
-  block: "Block",
-  socks: "SOCKS",
-  http: "HTTP",
-  shadowsocks: "Shadowsocks",
-  vmess: "VMess",
-  trojan: "Trojan",
-  naive: "Naive",
-  hysteria: "Hysteria",
-  shadowtls: "ShadowTLS",
-  vless: "VLESS",
-  tuic: "TUIC",
-  hysteria2: "Hysteria2",
-  anytls: "AnyTLS",
-  tor: "Tor",
-  ssh: "SSH",
-  selector: "Selector",
-  urltest: "URLTest",
-  local: "Local DNS",
-  hosts: "Hosts DNS",
-  tcp: "TCP DNS",
-  udp: "UDP DNS",
-  tls: "TLS DNS",
-  quic: "QUIC DNS",
-  https: "HTTPS DNS",
-  h3: "HTTP/3 DNS",
-  dhcp: "DHCP DNS",
-  fakeip: "FakeIP DNS",
-  tailscale: "Tailscale",
-  resolved: "Resolved",
-  remote: "Remote Rule Set",
-  inline: "Inline Rule Set",
-  route: "Route",
-  "route-rule": "Route Rule",
-  dns: "DNS",
-  "dns-rule": "DNS Rule",
-  "ssm-api": "SSM API",
-  derp: "DERP",
-  ccm: "CCM",
-  ocm: "OCM",
 };
 
 function candidateLabel(nodeKind: PortNodeKind, nodeType: string) {
