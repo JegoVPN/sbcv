@@ -148,6 +148,7 @@ function makeEdge(
 ): Edge {
   return {
     id,
+    type: "sbc",
     source,
     target,
     sourceHandle,

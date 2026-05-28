@@ -1,6 +1,6 @@
 import "@xyflow/react/dist/style.css";
 import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, ViewportPortal, useEdgesState, useNodesState } from "@xyflow/react";
-import type { Connection, Edge, NodeTypes, OnConnectEnd, OnConnectStart, ReactFlowInstance } from "@xyflow/react";
+import type { Connection, Edge, EdgeTypes, NodeTypes, OnConnectEnd, OnConnectStart, ReactFlowInstance } from "@xyflow/react";
 import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
@@ -23,6 +23,7 @@ import {
 } from "../domain/protocols";
 import { useProjectStore } from "../state/useProjectStore";
 import { ChipPickerPopover, type ChipPickerCandidate } from "./ChipPickerPopover";
+import { CanvasEdge } from "./CanvasEdge";
 import {
   CanvasInteractionContext,
   EMPTY_COMPATIBLE_PORT_KEYS,
@@ -34,6 +35,10 @@ import { useViewport } from "./useViewport";
 
 const nodeTypes: NodeTypes = {
   sbc: SbcNode,
+};
+
+const edgeTypes: EdgeTypes = {
+  sbc: CanvasEdge,
 };
 
 const connectionLineStyle = {
@@ -456,6 +461,7 @@ export function CanvasWorkspace() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodesDelete={(deleted) => deleted.forEach((node) => {
