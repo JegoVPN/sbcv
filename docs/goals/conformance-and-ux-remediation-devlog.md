@@ -72,9 +72,10 @@ work, not after.
   - [x] A20-misc (vless flow-no-TLS C1-10) — downgrade vless-flow-requires-tls error→warning — PR #71
   - [ ] A20-misc-rest — WireGuard peer schema C0-14, certificate-provider required C0-15/C1-14 (W28 cross-node tail)
 - [x] A21 — cloudflared testing inbound: full testing support (creatable + Inspector + token/testing diagnostics; stable gated) (C1-22) (`inbound-cloudflared-testing`) — PR #73
-- [~] A22 — HTTP Client capability (`http-client-capability`) — in progress
+- [x] A22 — HTTP Client capability (`http-client-capability`) — diag #74 + create #75
   - [x] A22-diag — dangling http_client reference diagnostic (C1-20): missing-http-client on route.default_http_client / rule_set / certificate_providers — PR #74
-  - [ ] A22-create — make http_clients[] creatable (testing-gated palette + addHttpClient + Inspector branch + sharedGroups tls/http2/dial) (C1-18/19, C2-4)
+  - [x] A22-create — make http_clients[] creatable on testing + editable via shared TLS/HTTP2/Dial (C1-18/19, C2-4) — PR #75
+  - [ ] A22-create-fields — add Advanced editing for the http_clients scalar fields engine/version/disable_version_fallback/headers (A22-create review follow-up; created config is valid + round-trips, these just lack a UI control)
 
 ### Phase 3 — UX comprehension
 - [ ] A23 — palette usability (`palette-usability`)
@@ -1153,3 +1154,31 @@ Status: implemented 2026-05-29 in `atomic/http-client-missing-ref`; merged in PR
     gating, C1-18/19, C2-4).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (778 passed | 1 todo), `pnpm build`.
 - Official check: n/a — semantic diagnostic.
+
+### A22-create http-client-create — http_clients[] creatable + editable on testing (C1-18/19, C2-4)
+Status: implemented 2026-05-29 in `atomic/http-client-create`; merged in PR #75. Completes A22 (with #74).
+
+- What changed: the top-level http_clients[] node had a canvas node + update/rename + reference cascade
+  but was not creatable and had no editor surface. Per the resolved A22 decision (fully support testing;
+  stable gated): `addHttpClient` command; `createFromPalette` creates + selects one on testing only;
+  Palette status setup + itemStatus channel gate (creatable on testing / gated on stable);
+  `sharedGroupsForEntity` gives an http-client entity its shared TLS / HTTP2 / Dial cards;
+  shared/http-client.md is now a writable doc with smoke coverage.
+- Frontend perf review (`vercel-react-best-practices`): reuses the shared-group + add-command machinery;
+  no new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers. Verified a bare
+  `{tag}` is a valid http_clients entry (all object fields optional) with zero spurious diagnostics on
+  testing, channel gating is defense-in-depth (itemStatus + createFromPalette guard), the `dial` group
+  returns the correct generic Dial Fields for http-client (not route-only), the entity renders without a
+  type selector (header + Tag + TLS/HTTP2/Dial cards, no crash/empty), getUniqueTag dedupes, and the
+  canvas node renders. One SHOULD-FIX (non-blocking): engine/version/disable_version_fallback/headers
+  have no Advanced editing surface yet → queued as **A22-create-fields** (the created config is valid and
+  round-trips; only a UI control is missing, and composing the handled-fields to avoid double-rendering
+  the shared-group fields warrants a careful follow-up).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (781 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (editor 3 passed).
+- Official check: `sing-box-testing check` not run in this env; a created http_clients[] entry matches
+  the upstream schema (tag + optional object fields).
+
+Both former A21/A22 hard checkpoints now fully support the testing target (stable gated), per the user's
+2026-05-29 decision.
