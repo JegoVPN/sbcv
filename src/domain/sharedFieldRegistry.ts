@@ -118,7 +118,7 @@ export const SHARED_DOC_PLACEMENTS: SharedDocPlacement[] = [
   {
     doc: "shared/udp-over-tcp.md",
     group: "udp-over-tcp",
-    owners: ["outbounds[socks|shadowsocks|naive|tuic]"],
+    owners: ["outbounds[socks|shadowsocks|naive]"],
     mode: "embedded-inspector",
   },
   {
@@ -152,7 +152,7 @@ const outboundTlsTypes = new Set(["anytls", "http", "hysteria", "hysteria2", "na
 const outboundQuicTypes = new Set(["hysteria", "hysteria2", "tuic"]);
 const outboundMultiplexTypes = new Set(["shadowsocks", "trojan", "vless", "vmess"]);
 const outboundTransportTypes = new Set(["trojan", "vless", "vmess"]);
-const outboundUdpOverTcpTypes = new Set(["socks", "shadowsocks", "naive", "tuic"]);
+const outboundUdpOverTcpTypes = new Set(["socks", "shadowsocks", "naive"]);
 const dnsServerDialTypes = new Set([...CREATABLE_DNS_SERVER_TYPES, "mdns"].filter((type) => type !== "hosts" && type !== "fakeip" && type !== "tailscale" && type !== "resolved"));
 const dnsServerTlsTypes = new Set(["tls", "quic", "https", "h3"]);
 const serviceListenTypes = new Set(["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"]);

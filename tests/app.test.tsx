@@ -2009,7 +2009,7 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().config.dns?.disable_cache).toBe(true);
   });
 
-  it("renders extended TLS shared fields including server key, Reality, uTLS, ECH and fragment", () => {
+  it("renders server-role TLS fields on an inbound and hides client-only TLS fields", () => {
     useProjectStore.getState().loadMinimal();
 
     act(() => {
@@ -2021,34 +2021,59 @@ describe("SBC editor shell", () => {
     const inspector = within(screen.getByLabelText("Node inspector"));
     fireEvent.click(inspector.getByText("TLS"));
 
-    expect(inspector.getByLabelText("Key Path (server)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Key (PEM lines or list, server)")).toBeInTheDocument();
+    // server + shared fields present
+    expect(inspector.getByLabelText("Key Path")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Key (PEM lines or list)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Certificate (PEM lines or list)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Client Authentication (server)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("uTLS Enabled (client, 1.10+)")).toBeInTheDocument();
-    expect(inspector.queryByLabelText("uTLS Fingerprint")).not.toBeInTheDocument();
-    fireEvent.click(inspector.getByLabelText("uTLS Enabled (client, 1.10+)"));
-    expect(inspector.getByLabelText("uTLS Fingerprint")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Reality Enabled")).toBeInTheDocument();
-    expect(inspector.queryByLabelText("Reality Public Key (client)")).not.toBeInTheDocument();
-    fireEvent.click(inspector.getByLabelText("Reality Enabled"));
-    expect(inspector.getByLabelText("Reality Public Key (client)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Reality Short ID (client)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("ECH Enabled")).toBeInTheDocument();
-    expect(inspector.queryByLabelText("ECH Config Path")).not.toBeInTheDocument();
-    fireEvent.click(inspector.getByLabelText("ECH Enabled"));
-    expect(inspector.getByLabelText("ECH Config Path")).toBeInTheDocument();
-    expect(inspector.getByLabelText("ECH Query Server Name")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Server (Reality, server-only)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Private Key (Reality, server-only)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Fragment (client, 1.12+)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Record Fragment (client, 1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Client Authentication")).toBeInTheDocument();
     expect(inspector.getByLabelText("Curve Preferences (1.13+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reality Enabled")).toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("Reality Enabled"));
+    expect(inspector.getByLabelText("Reality Handshake Server")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reality Private Key")).toBeInTheDocument();
 
-    fireEvent.change(inspector.getByLabelText("Key Path (server)"), { target: { value: "/etc/tls/server.key" } });
+    // client-only fields absent on a server card
+    expect(inspector.queryByLabelText("Insecure")).not.toBeInTheDocument();
+    expect(inspector.queryByLabelText("uTLS Enabled (1.10+)")).not.toBeInTheDocument();
+    expect(inspector.queryByLabelText("Reality Public Key")).not.toBeInTheDocument();
+    expect(inspector.queryByLabelText("Fragment (1.12+)")).not.toBeInTheDocument();
+
+    fireEvent.change(inspector.getByLabelText("Key Path"), { target: { value: "/etc/tls/server.key" } });
     expect((useProjectStore.getState().config.inbounds?.at(-1)?.tls as Record<string, unknown> | undefined)?.key_path).toBe(
       "/etc/tls/server.key",
     );
+  });
+
+  it("renders client-role TLS fields on an outbound and hides server-only TLS fields", () => {
+    useProjectStore.getState().loadMinimal();
+
+    act(() => {
+      useProjectStore.getState().createFromPalette("http-out");
+    });
+
+    render(<App />);
+
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    fireEvent.click(inspector.getByText("TLS"));
+
+    // client + shared fields present
+    expect(inspector.getByLabelText("Insecure")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Curve Preferences (1.13+)")).toBeInTheDocument();
+    expect(inspector.queryByLabelText("uTLS Fingerprint")).not.toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("uTLS Enabled (1.10+)"));
+    expect(inspector.getByLabelText("uTLS Fingerprint")).toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("Reality Enabled"));
+    expect(inspector.getByLabelText("Reality Public Key")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Reality Short ID")).toBeInTheDocument();
+    fireEvent.click(inspector.getByLabelText("ECH Enabled"));
+    expect(inspector.getByLabelText("ECH Config Path")).toBeInTheDocument();
+    expect(inspector.getByLabelText("ECH Query Server Name")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Fragment (1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Record Fragment (1.12+)")).toBeInTheDocument();
+
+    // server-only fields absent on a client card
+    expect(inspector.queryByLabelText("Client Authentication")).not.toBeInTheDocument();
+    expect(inspector.queryByLabelText("Key Path")).not.toBeInTheDocument();
   });
 
   it("renders the full official Listen Fields set including 1.13 keep-alive, udp_fragment and inbound detour", () => {

@@ -1506,11 +1506,27 @@ function sharedFieldDefinitions(
         .map((provider) => provider.tag)
         .filter((tag): tag is string => Boolean(tag))),
     ];
-    return [
+    // TLS role split: inbound/service present a server certificate (server role); outbound/dns-server
+    // dial out and verify an upstream certificate (client role). Fields are partitioned so a server card
+    // never shows client-only options and vice versa (C0-6 / W6).
+    const isServerRole = ref.kind === "inbound" || ref.kind === "service";
+    // naive (outbound) supports only a narrow client TLS surface.
+    if (ref.kind === "outbound" && type === "naive") {
+      // naive is TLS-only (scaffold seeds tls.enabled=true), so no enable toggle; upstream supports only
+      // server_name/certificate/certificate_path/ech here (outbound/naive.md).
+      return [
+        { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
+        { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
+        { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
+        { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
+        { label: "ECH Config (PEM/lines)", path: ["tls", "ech", "config"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+        { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
+        { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
+      ];
+    }
+    const shared: SharedFieldDefinition[] = [
       { label: "Enabled", path: ["tls", "enabled"], kind: "boolean" },
       { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
-      { label: "Disable SNI (client only)", path: ["tls", "disable_sni"], kind: "boolean" },
-      { label: "Insecure (client only)", path: ["tls", "insecure"], kind: "boolean" },
       { label: "ALPN", path: ["tls", "alpn"], kind: "list" },
       { label: "Min Version", path: ["tls", "min_version"], kind: "select", options: tlsVersionOptions },
       { label: "Max Version", path: ["tls", "max_version"], kind: "select", options: tlsVersionOptions },
@@ -1518,33 +1534,39 @@ function sharedFieldDefinitions(
       { label: "Curve Preferences (1.13+)", path: ["tls", "curve_preferences"], kind: "list" },
       { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
       { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
-      { label: "Key (PEM lines or list, server)", path: ["tls", "key"], kind: "list" },
-      { label: "Key Path (server)", path: ["tls", "key_path"], kind: "text" },
-      { label: "Certificate Public Key SHA256 (client only)", path: ["tls", "certificate_public_key_sha256"], kind: "list" },
-      { label: "Client Authentication (server)", path: ["tls", "client_authentication"], kind: "select", options: ["", "request", "require", "verify-if-given", "require-and-verify"] },
-      {
-        label: "Certificate Provider",
-        path: ["tls", "certificate_provider"],
-        kind: "select",
-        options: certificateProviderOptions,
-      },
-      { label: "Fragment (client, 1.12+)", path: ["tls", "fragment"], kind: "boolean" },
+      { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
+    ];
+    const serverOnly: SharedFieldDefinition[] = [
+      { label: "Key (PEM lines or list)", path: ["tls", "key"], kind: "list" },
+      { label: "Key Path", path: ["tls", "key_path"], kind: "text" },
+      { label: "Client Authentication", path: ["tls", "client_authentication"], kind: "select", options: ["no", "request", "require-any", "verify-if-given", "require-and-verify"] },
+      { label: "Certificate Provider", path: ["tls", "certificate_provider"], kind: "select", options: certificateProviderOptions },
+      { label: "Reality Enabled", path: ["tls", "reality", "enabled"], kind: "boolean" },
+      { label: "Reality Handshake Server", path: ["tls", "reality", "handshake", "server"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Handshake Server Port", path: ["tls", "reality", "handshake", "server_port"], kind: "number", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Private Key", path: ["tls", "reality", "private_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Short ID", path: ["tls", "reality", "short_id"], kind: "list", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Max Time Difference", path: ["tls", "reality", "max_time_difference"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "ECH Key (PEM/lines)", path: ["tls", "ech", "key"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Key Path", path: ["tls", "ech", "key_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
+    ];
+    const clientOnly: SharedFieldDefinition[] = [
+      { label: "Disable SNI", path: ["tls", "disable_sni"], kind: "boolean" },
+      { label: "Insecure", path: ["tls", "insecure"], kind: "boolean" },
+      { label: "Certificate Public Key SHA256 (1.13+)", path: ["tls", "certificate_public_key_sha256"], kind: "list" },
+      { label: "Fragment (1.12+)", path: ["tls", "fragment"], kind: "boolean" },
       { label: "Fragment Fallback Delay (1.12+)", path: ["tls", "fragment_fallback_delay"], kind: "text" },
-      { label: "Record Fragment (client, 1.12+)", path: ["tls", "record_fragment"], kind: "boolean" },
-      { label: "uTLS Enabled (client, 1.10+)", path: ["tls", "utls", "enabled"], kind: "boolean" },
+      { label: "Record Fragment (1.12+)", path: ["tls", "record_fragment"], kind: "boolean" },
+      { label: "uTLS Enabled (1.10+)", path: ["tls", "utls", "enabled"], kind: "boolean" },
       { label: "uTLS Fingerprint", path: ["tls", "utls", "fingerprint"], kind: "select", options: ["", "chrome", "firefox", "edge", "safari", "360", "qq", "ios", "android", "random", "randomized"], gatedBy: ["tls", "utls", "enabled"] },
       { label: "Reality Enabled", path: ["tls", "reality", "enabled"], kind: "boolean" },
-      { label: "Reality Public Key (client)", path: ["tls", "reality", "public_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "Reality Short ID (client)", path: ["tls", "reality", "short_id"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
+      { label: "Reality Public Key", path: ["tls", "reality", "public_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Short ID", path: ["tls", "reality", "short_id"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "ECH Config (PEM/lines)", path: ["tls", "ech", "config"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
-      { label: "Server (Reality, server-only)", path: ["tls", "reality", "handshake", "server"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "Server Port (Reality, server-only)", path: ["tls", "reality", "handshake", "server_port"], kind: "number", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "Private Key (Reality, server-only)", path: ["tls", "reality", "private_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "Max Time Difference (Reality, server-only)", path: ["tls", "reality", "max_time_difference"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
     ];
+    return isServerRole ? [...shared, ...serverOnly] : [...shared, ...clientOnly];
   }
 
   if (group === "quic") {
@@ -1557,12 +1579,19 @@ function sharedFieldDefinitions(
   }
 
   if (group === "multiplex") {
+    // Inbound multiplex accepts only enabled/padding (+ brutal, its own group). protocol and the stream
+    // limits are dialed by the client, so they are outbound-only (C0-7 / W6).
+    const clientStreamFields: SharedFieldDefinition[] = ref.kind === "outbound"
+      ? [
+          { label: "Protocol", path: ["multiplex", "protocol"], kind: "select", options: ["smux", "yamux", "h2mux"] },
+          { label: "Max Connections", path: ["multiplex", "max_connections"], kind: "number" },
+          { label: "Min Streams", path: ["multiplex", "min_streams"], kind: "number" },
+          { label: "Max Streams", path: ["multiplex", "max_streams"], kind: "number" },
+        ]
+      : [];
     return [
       { label: "Enabled", path: ["multiplex", "enabled"], kind: "boolean" },
-      { label: "Protocol", path: ["multiplex", "protocol"], kind: "select", options: ["smux", "yamux", "h2mux"] },
-      { label: "Max Connections", path: ["multiplex", "max_connections"], kind: "number" },
-      { label: "Min Streams", path: ["multiplex", "min_streams"], kind: "number" },
-      { label: "Max Streams", path: ["multiplex", "max_streams"], kind: "number" },
+      ...clientStreamFields,
       { label: "Padding", path: ["multiplex", "padding"], kind: "boolean" },
     ];
   }
