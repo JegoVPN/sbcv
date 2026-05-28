@@ -68,7 +68,8 @@ work, not after.
   - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
   - [x] A20-service (ssm-api key) — canvas connect uses a distinct servers path, not a hardcoded `/` (C1-13) — PR #70
   - [ ] A20-service-rest — derp verify-client-endpoint wipe + ssm-api orphan managed on toggle-off (W28 service tail)
-  - [ ] A20-misc — WireGuard peer schema C0-14, VLESS flow-no-TLS C1-10, certificate-provider required C0-15/C1-14 (W28 cross-node)
+  - [x] A20-misc (vless flow-no-TLS C1-10) — downgrade vless-flow-requires-tls error→warning — PR #71
+  - [ ] A20-misc-rest — WireGuard peer schema C0-14, certificate-provider required C0-15/C1-14 (W28 cross-node tail)
 - [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
 - [ ] A22 — HTTP Client capability (`http-client-capability`)
 
@@ -1064,3 +1065,21 @@ Status: implemented 2026-05-29 in `atomic/residual-service-ssm-key`; merged in P
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (761 passed | 1 todo), `pnpm build`,
   `pnpm e2e` (port-click 7 passed).
 - Official check: n/a — canvas connect-handler logic, not bundled fixture/exported config output.
+
+### A20-misc residual-vless-flow-tls — vless flow-no-TLS is a warning (domain, C1-10)
+Status: implemented 2026-05-29 in `atomic/residual-vless-flow-tls`; merged in PR #71.
+
+- What changed (W28 cross-node / C1-10): SBC raised `vless-flow-requires-tls` as an ERROR for
+  flow=xtls-rprx-vision without tls.enabled, but sing-box accepts that at check-time (it just won't
+  function), so the error wrongly blocked export and flipped the node to error on a config the binary
+  accepts. Downgraded to a warning (keeps the guidance; Reality counts as TLS since reality requires
+  tls.enabled). The flow⇔multiplex mutual exclusion stays a hard error.
+- Frontend perf review: n/a — domain-only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Adjudicated the Codex (C1-10)
+  vs pass-2 divergence against upstream: sing-box does NOT reject flow-without-tls (no "refuse to start"
+  basis, unlike the genuinely-TLS-required protocols), so the blocking error was a false positive →
+  downgrade is correct. Reality coverage confirmed, multiplex error preserved, no regression.
+  - Deferred to follow-up atomic: A20-misc-rest (WireGuard peer schema C0-14, certificate-provider
+    required C0-15/C1-14); inbound users[].flow checks (out of C1-10's outbound scope).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (763 passed | 1 todo), `pnpm build`.
+- Official check: n/a — semantic diagnostic severity change.
