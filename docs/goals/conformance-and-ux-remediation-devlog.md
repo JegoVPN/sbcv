@@ -29,7 +29,8 @@ work, not after.
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [x] A4a — type-change dial-detour scrub (C0-9 outbound + C0-8 dns-server detour), domain-only (`type-change-normalizer`) — PR #41
 - [x] A4c — kv blank-row fixes (W13/C0-6): seed unique keys in torrc/http/naive/dns-h3 repeaters (`kv-no-empty-rows`) — PR #42
-- [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain), type-change confirm dialog (W7, component)
+- [x] A4b — type-change confirm dialog (W7/T3): confirm before a destructive type change (`type-change-confirm`) — PR #43
+- [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
@@ -405,3 +406,24 @@ Status: implemented 2026-05-28 in `atomic/kv-no-empty-rows`; merged in PR #42.
   todo), `pnpm build`, `pnpm e2e` (13 passed).
 - Official check: `sing-box-stable/testing check` not run — A4c changes editor repeater UX, not bundled
   fixture/exported config output.
+
+### A4b type-change-confirm — confirm before a destructive entity type change (component)
+Status: implemented 2026-05-28 in `atomic/type-change-confirm`; merged in PR #43.
+
+- What changed (`src/components/Inspector.tsx` + `tests/app.test.tsx`): a `requestTypeChange` handler now
+  wraps all six entity-type `<select>`s. It `window.confirm`s before `changeEntityType` when the entity
+  has meaningful (non-empty) own fields OR when the change would scrub references to it (endpoint leaving
+  `tailscale` / service leaving `resolved`); declining leaves the entity unchanged (W7 / T3).
+- Frontend perf review (`vercel-react-best-practices`): a local handler + six onChange rewires using the
+  existing `entity`/`ref`/`changeEntityType`; no new subscriptions, waterfalls, or bundle deps. Pass.
+- Codex review:
+  - Round 1: 1 should-fix (the initial `>2 keys` heuristic could skip the confirm for a referenced-but-
+    minimal entity whose type change scrubs references) + 1 nit (fresh scaffolds with empty defaults
+    over-prompted). Both addressed by the meaningful-fields + scrubs-refs condition.
+  - Round 2: skipped — directly implements the recommendation; verified by the UI confirm/decline tests;
+    the repo pre-push `claude-review` gate passed the squashed commit.
+  - Deferred to follow-up atomic: A4-rest (rule-action normalizers C0-3, dns-server type-change deps C0-8).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (624 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (13 passed).
+- Official check: `sing-box-stable/testing check` not run — A4b changes the Inspector type-change UX, not
+  bundled fixture/exported config output.
