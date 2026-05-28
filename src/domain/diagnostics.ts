@@ -6,6 +6,31 @@ function listItems<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+// Pragmatic CIDR validators — catch malformed ranges and wrong-family values (an IPv6 in a v4 field,
+// out-of-range octets/prefix) before sing-box rejects them at start. Not a full RFC parser.
+function isIpv4Cidr(value: string): boolean {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\/(\d{1,3})$/.exec(value.trim());
+  if (!match) return false;
+  const octets = [match[1], match[2], match[3], match[4]].map((o) => Number(o));
+  if (octets.some((o) => o > 255)) return false;
+  return Number(match[5]) <= 32;
+}
+function isIpv6Cidr(value: string): boolean {
+  const slash = value.trim().split("/");
+  if (slash.length !== 2) return false;
+  const [addr, prefixText] = slash;
+  if (addr === undefined || prefixText === undefined) return false;
+  const prefix = Number(prefixText);
+  if (!Number.isInteger(prefix) || prefix < 0 || prefix > 128) return false;
+  if (!addr.includes(":")) return false;
+  // Reject anything that isn't hex groups + at most one "::" compression.
+  if (/[^0-9a-fA-F:]/.test(addr)) return false;
+  if ((addr.match(/::/g) ?? []).length > 1) return false;
+  const groups = addr.split(":").filter((g) => g !== "");
+  if (groups.length > 8) return false;
+  return groups.every((g) => g.length <= 4);
+}
+
 function push(
   diagnostics: Diagnostic[],
   level: Diagnostic["level"],
@@ -1161,6 +1186,26 @@ export function validateConfig(
           "dns-server-fakeip-range-missing",
           `/dns/servers/${index}`,
           `Fake-IP DNS server "${server.tag}" requires at least one of inet4_range or inet6_range; sing-box refuses to start otherwise.`,
+        );
+      }
+      // CIDR-shape validation: a malformed range (or the wrong IP family) exports silently and
+      // sing-box rejects it at start (W28).
+      if (v4 && !isIpv4Cidr(obj.inet4_range as string)) {
+        push(
+          diagnostics,
+          "error",
+          "dns-server-fakeip-range-invalid",
+          `/dns/servers/${index}/inet4_range`,
+          `Fake-IP DNS server "${server.tag}" inet4_range "${obj.inet4_range}" is not a valid IPv4 CIDR (e.g. 198.18.0.0/15).`,
+        );
+      }
+      if (v6 && !isIpv6Cidr(obj.inet6_range as string)) {
+        push(
+          diagnostics,
+          "error",
+          "dns-server-fakeip-range-invalid",
+          `/dns/servers/${index}/inet6_range`,
+          `Fake-IP DNS server "${server.tag}" inet6_range "${obj.inet6_range}" is not a valid IPv6 CIDR (e.g. fc00::/18).`,
         );
       }
     }

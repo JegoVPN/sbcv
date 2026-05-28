@@ -59,7 +59,13 @@ work, not after.
 - [x] A17 — inbound-redirect platform banner (Linux + macOS) + de-duplicated (W25) (`inbound-redirect-banner`) — PR #64
 - [x] A18 — inbound-vless does not seed tls:{enabled:true} (W26) (`inbound-vless-tls-default`) — PR #65
 - [x] A19 — settings-experimental V2Ray build-tag label → `with_v2ray_api` (W27) (`settings-experimental-label`) — PR #66
-- [ ] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`)
+- [~] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`) — in progress
+  - [x] A20-dns — fakeip inet4/inet6_range CIDR-shape validation (W28 dns-server) — PR #67
+  - [ ] A20-inbound — per-type version-gating + congestion/zero_rtt/auth_timeout + set_system_proxy leak + tun required fields (W28 inbound)
+  - [ ] A20-outbound — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound)
+  - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
+  - [ ] A20-service — derp verify-client-endpoint wipe + ssm-api `/`-key collision + orphan managed (W28 service; incl C1-13)
+  - [ ] A20-misc — WireGuard peer schema C0-14, VLESS flow-no-TLS C1-10, certificate-provider required C0-15/C1-14 (W28 cross-node)
 - [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
 - [ ] A22 — HTTP Client capability (`http-client-capability`)
 
@@ -987,3 +993,21 @@ Status: implemented 2026-05-29 in `atomic/settings-experimental-label`; merged i
   correct tags.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (749 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A19 is a banner copy change.
+
+### A20-dns residual-dns-server-cidr — fakeip CIDR-shape validation (domain, W28 dns-server)
+Status: implemented 2026-05-29 in `atomic/residual-dns-server-cidr`; merged in PR #67. First slice of the
+per-category A20 batch.
+
+- What changed (W28 dns-server): the fakeip DNS server wrote inet4_range/inet6_range as raw strings;
+  diagnostics only checked presence. A malformed CIDR / out-of-range octet-or-prefix / wrong IP family
+  (IPv6 in the v4 field) was accepted and exported, and sing-box rejects it at start with no UI signal.
+  Added pragmatic `isIpv4Cidr`/`isIpv6Cidr` validators + error `dns-server-fakeip-range-invalid` on
+  `/dns/servers/{i}/inet4_range` and `/inet6_range`, disjoint from the existing range-missing error.
+- Frontend perf review: n/a — domain-only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed the validators
+  accept all genuinely-valid forms and the bundled fakeip ranges, the missing/invalid errors are
+  structurally disjoint, and the v6 validator errs toward leniency (never false-positives a real fakeip
+  pool — the only over-strict case, embedded-IPv4 v6, is irrelevant to a synthetic FakeIP range).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (754 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — adds a semantic diagnostic, not bundled
+  fixture/exported config output. Remaining A20 categories (inbound/outbound/rule/service/misc) queued.
