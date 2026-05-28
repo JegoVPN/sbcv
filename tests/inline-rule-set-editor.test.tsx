@@ -72,4 +72,36 @@ describe("A11 — inline rule-set structured editor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit rules as JSON" }));
     expect(screen.getByTestId("inline-rules-json")).toBeInTheDocument();
   });
+
+  it("does not leak JSON mode across two different inline rule-sets (keyed by entity)", () => {
+    useProjectStore.getState().importJson(
+      JSON.stringify({
+        route: {
+          rule_set: [
+            { type: "inline", tag: "rs-a", rules: [{ domain_suffix: ["a.com"] }] },
+            { type: "inline", tag: "rs-b", rules: [{ domain_suffix: ["b.com"] }] },
+          ],
+        },
+      }),
+    );
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-rule-set:rs-a"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit rules as JSON" }));
+    expect(screen.getByTestId("inline-rules-json")).toBeInTheDocument();
+
+    // Switch to the other rule-set: it must open in structured mode, not inherit A's JSON mode.
+    fireEvent.click(screen.getByTestId("node-rule-set:rs-b"));
+    expect(screen.queryByTestId("inline-rules-json")).toBeNull();
+    expect(screen.getByTestId("inline-rule-0")).toBeInTheDocument();
+  });
+
+  it("clears a numeric field (port) when the input has no numbers, instead of storing []", () => {
+    importInline([{ port: [443] }]);
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-rule-set:inline-rs"));
+
+    const row = within(screen.getByTestId("inline-rule-0"));
+    fireEvent.change(row.getByLabelText("Port"), { target: { value: "abc" } });
+    expect(ruleSet()?.rules?.[0]?.port).toBeUndefined();
+  });
 });

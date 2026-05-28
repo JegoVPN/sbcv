@@ -369,7 +369,9 @@ function textToRuleList(value: string, currentValue: unknown) {
   const items = fromList(value);
   if (!items.length) return undefined;
   if (Array.isArray(currentValue) && currentValue.every((item) => typeof item === "number")) {
-    return items.map((item) => Number(item)).filter((item) => Number.isFinite(item));
+    const nums = items.map((item) => Number(item)).filter((item) => Number.isFinite(item));
+    // All-non-numeric input must clear the field, not store an empty no-op array.
+    return nums.length ? nums : undefined;
   }
   return items;
 }
@@ -1137,7 +1139,7 @@ function RouteRuleInspector({
               <option value="or">or</option>
             </select>
           </label>
-          <InlineRuleSetEditor value={rule.rules} onChange={(value) => patch({ rules: value })} />
+          <InlineRuleSetEditor key={`logical-rules-${index}`} value={rule.rules} onChange={(value) => patch({ rules: value })} />
         </>
       ) : (
         <>
@@ -1361,7 +1363,7 @@ function DnsRuleInspector({
               <option value="or">or</option>
             </select>
           </label>
-          <InlineRuleSetEditor value={rule.rules} onChange={(value) => patch({ rules: value })} />
+          <InlineRuleSetEditor key={`logical-rules-${index}`} value={rule.rules} onChange={(value) => patch({ rules: value })} />
         </>
       ) : (
         <>
@@ -5497,6 +5499,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           ) : null}
           {entity.type === "inline" ? (
             <InlineRuleSetEditor
+              key={`${JSON.stringify(ref)}:inline-rules`}
               value={entity.rules}
               onChange={(value) => updateField(ref, "rules", value)}
             />
