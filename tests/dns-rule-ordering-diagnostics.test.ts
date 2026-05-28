@@ -68,4 +68,18 @@ describe("A10b — DNS rule evaluate/respond ordering (C0-4)", () => {
     });
     expect(errorCodes(config)).not.toContain("dns-rule-match-response-without-evaluate");
   });
+
+  it("also requires a preceding evaluate for Response Match Fields (response_rcode), not just match_response", () => {
+    const config = asConfig({
+      dns: { servers: [{ type: "local", tag: "l" }], rules: [{ domain: ["x"], response_rcode: "NXDOMAIN", action: "route", server: "l" }] },
+    });
+    expect(errorCodes(config)).toContain("dns-rule-match-response-without-evaluate");
+  });
+
+  it("does not fire the 1.14 ordering errors on the stable channel (already flagged testing-only there)", () => {
+    const config = asConfig({
+      dns: { servers: [{ type: "local", tag: "l" }], rules: [{ domain: ["x"], action: "respond" }] },
+    });
+    expect(errorCodes(config, "stable")).not.toContain("dns-rule-respond-without-evaluate");
+  });
 });

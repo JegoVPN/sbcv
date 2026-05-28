@@ -427,23 +427,34 @@ export function validateConfig(
       );
     }
     const action = typeof ruleObj.action === "string" ? ruleObj.action : "";
-    if (action === "respond" && !precedingTopLevelEvaluate) {
-      push(
-        diagnostics,
-        "error",
-        "dns-rule-respond-without-evaluate",
-        `/dns/rules/${index}/action`,
-        `DNS rule ${index + 1} uses \`action: "respond"\` but no preceding top-level rule has \`action: "evaluate"\`. \`respond\` returns the response saved by an earlier evaluate; without one the request fails at runtime.`,
-      );
-    }
-    if (matchResponse && !precedingTopLevelEvaluate) {
-      push(
-        diagnostics,
-        "error",
-        "dns-rule-match-response-without-evaluate",
-        `/dns/rules/${index}/match_response`,
-        `DNS rule ${index + 1} uses \`match_response\` but no preceding top-level rule has \`action: "evaluate"\`. Response matching requires an earlier evaluate — a rule's own evaluate runs after matching, so it does not count.`,
-      );
+    // respond/match_response + response-match fields are sing-box 1.14 features; gate the ordering
+    // errors to 1.14+ so the stable channel (which already flags them as testing-only) isn't
+    // double-reported with contradictory guidance.
+    if (atLeast(version, "1.14")) {
+      const usesResponseMatch =
+        matchResponse ||
+        ruleObj.response_rcode !== undefined ||
+        ruleObj.response_answer !== undefined ||
+        ruleObj.response_ns !== undefined ||
+        ruleObj.response_extra !== undefined;
+      if (action === "respond" && !precedingTopLevelEvaluate) {
+        push(
+          diagnostics,
+          "error",
+          "dns-rule-respond-without-evaluate",
+          `/dns/rules/${index}/action`,
+          `DNS rule ${index + 1} uses \`action: "respond"\` but no preceding top-level rule has \`action: "evaluate"\`. \`respond\` returns the response saved by an earlier evaluate; without one the request fails at runtime.`,
+        );
+      }
+      if (usesResponseMatch && !precedingTopLevelEvaluate) {
+        push(
+          diagnostics,
+          "error",
+          "dns-rule-match-response-without-evaluate",
+          `/dns/rules/${index}/match_response`,
+          `DNS rule ${index + 1} matches on a DNS response (match_response / response_* fields) but no preceding top-level rule has \`action: "evaluate"\`. Response matching requires an earlier evaluate — a rule's own evaluate runs after matching, so it does not count.`,
+        );
+      }
     }
     // Update AFTER the checks so a rule's own evaluate never satisfies its own precondition.
     if (action === "evaluate") precedingTopLevelEvaluate = true;
