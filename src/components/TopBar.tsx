@@ -114,6 +114,16 @@ export function TopBar() {
   }
 
   function exportConfig() {
+    // Gate on semantic diagnostics: they are recomputed synchronously on every config change and are
+    // never cleared mid-flight (unlike official/binary diagnostics, which runOfficialCheck clears while a
+    // check is in progress), so the gate can't be raced into letting an invalid config through.
+    const errorCount = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
+    if (errorCount > 0) {
+      const proceed = window.confirm(
+        `This config has ${errorCount} error${errorCount === 1 ? "" : "s"} that sing-box may reject. Export anyway?`,
+      );
+      if (!proceed) return;
+    }
     const exportedConfig = createConfigExport(useProjectStore.getState().config);
     const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
     const url = URL.createObjectURL(blob);
@@ -214,7 +224,7 @@ export function TopBar() {
             />
           ) : null}
         </div>
-        <button type="button" onClick={exportConfig}>
+        <button type="button" onClick={exportConfig} data-testid="export-button">
           <Download size={15} />
           Export
         </button>
