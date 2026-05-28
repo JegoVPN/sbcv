@@ -53,7 +53,7 @@ work, not after.
 - [x] A12 — rule-set-remote http_client object-form preserved + testing-gated + stable diagnostic (W20/C2-5) (`rule-set-http-client`) — PR #59
 - [x] A13 — ccm/ocm single correct (outbound) detour + 1.13 version gate (W21/C1-21/C2-1) (`ccm-ocm-detour`) — PR #60
 - [x] A14 — endpoint-tailscale system_interface bool + name/mtu, version-gated (W22/C0-13) (`endpoint-tailscale-system-interface`) — PR #61
-- [ ] A15 — dns-server-tailscale accept_search_domain (`dns-server-tailscale-fields`)
+- [x] A15 — dns-server-tailscale accept_search_domain toggle (testing-gated) (W23/C1-5) (`dns-server-tailscale-fields`) — PR #62
 - [ ] A16 — hub-route default_network_type (`hub-route-network-type`)
 - [ ] A17 — inbound-redirect platform banner (`inbound-redirect-banner`)
 - [ ] A18 — inbound-vless TLS default (`inbound-vless-tls-default`)
@@ -885,3 +885,25 @@ Status: implemented 2026-05-29 in `atomic/endpoint-tailscale-system-interface`; 
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (739 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A14 changes Inspector field controls + a
   diagnostic, not bundled fixture/exported config output.
+
+### A15 dns-server-tailscale-fields — accept_search_domain toggle (Inspector, W23/C1-5)
+Status: implemented 2026-05-29 in `atomic/dns-server-tailscale-fields`; merged in PR #62.
+
+- What changed (W23/C1-5 P0): the dns-server `tailscale` `accept_search_domain` field (bool, sing-box
+  1.14.0) had no first-class control and was never seeded, so a testing-channel user couldn't enable the
+  one new field of the 1.14 doc revision. Added a testing-gated "Accept search domain (since sing-box
+  1.14.0)" toggle next to accept_default_resolvers, and added `accept_search_domain` to
+  `dnsServerHandledFields`. Re-verified the rest of W23 is already satisfied on HEAD: the endpoint select
+  is type-gated to tailscale (C1-5) and the spurious dns-server detour port for tailscale was already
+  removed (locked by `tests/sbc-node-ports.test.ts`).
+- Frontend perf review (`vercel-react-best-practices`): one render-time gated toggle; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior sing-box + React reviewer subagent. Verdict APPROVE. Confirmed
+  upstream (bool/1.14), channel-in-scope, uncheck→undefined convention, and the re-verification claims.
+  Applied the one SHOULD-FIX in-pass (a gap this atomic introduced): adding the field to
+  `dnsServerHandledFields` unconditionally hid an imported stable value from BOTH the testing-only toggle
+  AND the Advanced fallback — so the handled set is now channel-gated (stable drops the field → it stays
+  removable via Advanced).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (742 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A15 changes an Inspector toggle, not bundled
+  fixture/exported config output.
