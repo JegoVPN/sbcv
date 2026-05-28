@@ -53,7 +53,7 @@ approximate and de-duplicated against the themes.
 | 2 | No node can export an invalid config: required markers + pre-export validation gate | W9 | T5 | export-safety class | diagnostics + export | `_FEATURE-inspector`, `_FEATURE-io-topbar` |
 | 3 | `JsonField` never writes unparseable text (parse feedback + guard) | W8 (+W4 test) | T4 | invalid-JSON class | inspector editor | `_FEATURE-inspector`, `inbound-shadowtls` |
 | 4 | Destructive edits are guarded: type-switch confirm + no blank `{"":""}` rows | W7, W13 | T3/T6 | data-loss class | inspector data-safety | `_FEATURE-inspector` |
-| 5 | Version gating actually fires: pass `version` (not just `channel`) to `validateConfig` | W10/W11 | T10 | gating false-pos + miss | diagnostics/targets | `_FEATURE-diagnostics`, `service-ccm`/`ocm` |
+| 5 | Version gating actually fires: pass `version` (not just `channel`) to `validateConfig` | W11 | T10 | gating false-pos + miss | diagnostics/targets | `_FEATURE-diagnostics`, `service-ccm`/`ocm` |
 | 6 | Reference integrity holds on rename/delete: complete `referenceRegistry` + dial-detour type guards | W12, W14 (+W1 test) | T11/T13 | dangling-ref + spurious ports | domain reference/port graph | `_RELATIONSHIPS`, `inbound-direct`, `dns-server-resolved` |
 | 7 | Endpoints are first-class dial targets (outbound-half modeled) | W17 | T14 | endpoint link gap | domain reference/ports | `_RELATIONSHIPS`, `endpoint-*` |
 | 8 | Canvas connect is legible: port icon from relation + kill dead "+" chips + previewed "+" | W15, W16 (+W2/W5 tests) | T7/T8 | icon mismatch + 16 dead chips | canvas/graph interaction | `_FEATURE-canvas`, `_RELATIONSHIPS` addendum |
