@@ -6,6 +6,7 @@ import {
   type ReferenceKind,
 } from "./referenceRegistry";
 import { parseEdgeId, relationIsDisconnectable } from "./portRelationRegistry";
+import { supportsDnsServerDialFields, supportsOutboundDialFields } from "./sharedFieldRegistry";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
 import type {
   DnsRule,
@@ -961,7 +962,9 @@ export function changeEntityType(
     next.outbounds = (next.outbounds ?? []).map((item) => {
       if (item.tag !== ref.tag) return item;
       const replacement = createOutbound(nextType, ref.tag);
-      const detour = item.detour;
+      // Preserve the dial detour only when the new outbound type actually dials (drops it for
+      // block/dns/selector/urltest, which sing-box rejects with a detour) — C0-9.
+      const detour = supportsOutboundDialFields(nextType) ? item.detour : undefined;
       return detour ? { ...replacement, detour } : replacement;
     });
   }
@@ -970,7 +973,9 @@ export function changeEntityType(
     next.dns.servers = (next.dns.servers ?? []).map((item) => {
       if (item.tag !== ref.tag) return item;
       const replacement = createDnsServer(nextType, ref.tag);
-      const detour = item.detour;
+      // Preserve the dial detour only for dialable DNS server types (drops it for
+      // hosts/fakeip/tailscale/resolved, which have no Dial Fields) — C0-8 detour scrub.
+      const detour = supportsDnsServerDialFields(nextType) ? item.detour : undefined;
       const endpoint = item.endpoint;
       return {
         ...replacement,

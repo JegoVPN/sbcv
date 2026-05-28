@@ -27,7 +27,8 @@ work, not after.
 - [x] A2b — pre-export validation gate: confirm before downloading a config with error diagnostics (`required-markers-and-export-gate`) — PR #40
 - [ ] A2c — deferred from A2a/A2b for per-finding upstream+fixture verification: presence diagnostics (inbound `listen` + credentials C0-16; dns-rule route/evaluate `server` C0-1, overlaps A10) **+ the paired required `aria-required`/`*` field markers**; may fold into A10/A20 (`required-presence-and-markers`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
-- [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
+- [x] A4a — type-change dial-detour scrub (C0-9 outbound + C0-8 dns-server detour), domain-only (`type-change-normalizer`) — PR #41
+- [ ] A4-rest — remaining type-change-safety, sub-atomic'd per don't-mix/budget when tackled: rule-action field normalizers (C0-3, domain), dns-server type-change dependency creation (C0-8, domain), type-change confirm dialog (W7, component), kv blank-row fixes (W13/C0-6, component)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
@@ -361,4 +362,25 @@ Status: implemented 2026-05-28 in `atomic/required-markers-and-export-gate`; mer
   todo), `pnpm build`, `pnpm e2e` (external-fixtures + port-click specs 8 passed; an earlier port-click
   failure was a known headless-drag flake).
 - Official check: `sing-box-stable/testing check` not run — A2b changes the export UI flow, not bundled
+  fixture/exported config output.
+
+### A4a type-change-normalizer — scrub dial detour on type change (domain)
+Status: implemented 2026-05-28 in `atomic/type-change-normalizer`; merged in PR #41.
+
+- What changed (`src/domain/commands.ts` `changeEntityType` + `tests/type-change-normalizer.test.ts`):
+  preserve an outbound/dns-server dial `detour` on type change only when the new type can dial
+  (`supportsOutboundDialFields` / `supportsDnsServerDialFields`). Drops the detour for non-dial outbound
+  types (block/dns/selector/urltest, C0-9) and non-dial dns-server types (hosts/fakeip/tailscale/resolved,
+  C0-8 detour part) instead of leaving a stale detour sing-box rejects.
+- Scope: A4 split. **A4-rest** still owns the rule-action field normalizers (C0-3), dns-server
+  type-change dependency creation (C0-8 create endpoint/service), the W7 confirm dialog, and the W13 kv
+  blank-row fixes — to be sub-atomic'd per don't-mix / pre-push size budget.
+- Frontend perf review: n/a — domain-only.
+- Codex review:
+  - Round 1: clean — dial-support gates confirmed correct against testing 1.14; no wrongful drop/keep;
+    deferrals reasonable.
+  - Deferred to follow-up atomic: A4-rest (above).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (620 passed | 15 expected fail | 1
+  todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A4a changes a domain command, not bundled
   fixture/exported config output.
