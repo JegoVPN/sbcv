@@ -210,13 +210,44 @@ test("connected-handle disconnect removes only the relation", async ({ page }) =
   expect(config.outbounds).toEqual([{ type: "direct", tag: "direct" }]);
 });
 
+// Reveal a hidden edge-remove control by moving the pointer onto the edge midpoint that sits beneath
+// it (the button is pointer-events:none until hovered/selected — C2-7), then return its locator.
+async function revealEdgeRemove(page: Page, name: string) {
+  const button = page.getByRole("button", { name });
+  const edge = page.locator(".sbc-edge").first();
+  await edge.waitFor({ state: "attached" });
+  // Hover the edge group, then settle the pointer onto the midpoint beneath the control, so the
+  // hidden (pointer-events:none) button reveals and stays revealed.
+  await edge.hover();
+  const box = await button.boundingBox();
+  if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await expect(button).toHaveCSS("pointer-events", "all");
+  return button;
+}
+
+test("hidden edge-remove control cannot intercept canvas clicks until revealed (C2-7)", async ({ page }) => {
+  await importInlineConfig(page, {
+    route: { final: "direct" },
+    outbounds: [{ type: "direct", tag: "direct" }],
+  });
+
+  const button = page.getByRole("button", { name: "Remove connection edge:route-final:direct" });
+  // Hidden by default: invisible AND non-interactive, so it does not intercept clicks on the canvas.
+  await expect(button).toHaveCSS("opacity", "0");
+  await expect(button).toHaveCSS("pointer-events", "none");
+  // Revealed once the edge under it is hovered.
+  await revealEdgeRemove(page, "Remove connection edge:route-final:direct");
+  await expect(button).toHaveCSS("opacity", "1");
+});
+
 test("connected edge remove button disconnects only canonical relation", async ({ page }) => {
   await importInlineConfig(page, {
     route: { final: "direct" },
     outbounds: [{ type: "direct", tag: "direct" }],
   });
 
-  await page.getByRole("button", { name: "Remove connection edge:route-final:direct" }).click();
+  const button = await revealEdgeRemove(page, "Remove connection edge:route-final:direct");
+  await button.click();
 
   const config = await exportedConfig(page);
   expect(config.route.final).toBeUndefined();

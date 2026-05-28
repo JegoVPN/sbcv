@@ -41,7 +41,7 @@ work, not after.
 - [x] A8b — confirmed icon set (`../ui-icon-set.md`): one shared type-aware registry across node card / Palette / chip picker / Inspector; v4 monograms + Lucide glyphs; status glyphs reserved (`node-icon-distinctness`) — PR #52
 - [ ] A8b-brands — replace the WG/TO/TS interim monograms with the confirmed brand SVGs (WireGuard/Tor/Tailscale) after a license/bundle-size review (`node-brand-svgs`)
 - [ ] A8b-ports — expand `PortIconId` + derive the v4 port-relation glyph vocabulary (IC-P2-5: ListOrdered/FlagTriangleRight/Flag/Target/Crosshair/Milestone/CornerDownRight/DownloadCloud/ShieldCheck …) (`port-relation-icons`)
-- [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
+- [x] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`) — PR #53
 
 ### Phase 2 — Residual node P0/P1
 - [ ] A10 — dns-rule server settable + evaluate/respond ordering (`dns-rule-server-and-ordering`)
@@ -630,3 +630,39 @@ Status: implemented 2026-05-29 in `atomic/node-icon-distinctness`; merged in PR 
   reservation, collision guarantee, and the chip-picker + Palette single-source paths.
 - Official check: `sing-box-stable/testing check` not run — A8b changes icon rendering, not bundled
   fixture/exported config output.
+
+### A9 validity-readability — readable node validity (warning glyph + ✓N relabel + edge pointer-events)
+Status: implemented 2026-05-29 in `atomic/validity-readability`; merged in PR #53.
+
+- What changed (Pass-2 T9/W10 + Codex C2-7): three fixes so validity reads honestly.
+  - The node status glyph was a 2-way `error ? CircleAlert : CheckCircle2`, so a `warning` node showed
+    the same green checkmark as a valid node. `statusIcon()` is now 3-way (error → CircleAlert, warning →
+    TriangleAlert, valid → CheckCircle2), applied to both the summary glyph and the status pill, with a
+    `.sbc-node--warning .sbc-node__status` amber (#f2bc4b) color override (previously only error overrode
+    the lime default). Status glyphs stay reserved (A8b).
+  - The compatible-count affordance reused the valid `CheckCircle2`, reading as a validity claim. It now
+    uses `CirclePlus` + an aria-label (`N compatible connections`) and shows the real count (0, not a
+    forced 1).
+  - C2-7: the edge-remove button was `opacity:0` + `pointer-events:all`, so the invisible 32px control
+    intercepted canvas clicks at every edge midpoint. Now `pointer-events:none` until visible (hover) or
+    focused.
+- Frontend perf review (`vercel-react-best-practices`): one derived `statusIcon` per node computed during
+  render; no new subscriptions/waterfalls/bundle deps; the pointer-events change is CSS-only. Pass.
+- Codex review:
+  - Round 1: 2 [P2] — warning status inherited the lime valid color (only error had an override) →
+    added the amber warning override; zero-compatible node displayed `1` via the `|| 1` fallback → show the
+    real count. Both fixed.
+  - Round 2: clean — no actionable correctness issues.
+  - Deferred to follow-up atomic: none.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (705 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (14 passed, incl. the new C2-7 hidden-edge-control interaction test).
+- Official check: `sing-box-stable/testing check` not run — A9 changes status iconography + an edge
+  control, not bundled fixture/exported config output.
+
+### Phase 1 complete — checkpoint report (2026-05-29)
+All Phase-1 structural rows are merged: A1, A2a/A2b, A3, A4a/A4b/A4c, A5, A6a/A6b, A7a/A7b, A8a/A8-multiedge,
+A8b, A9 (PRs #37–#53). Deferred-but-tracked sub-atomics remain queued, not dropped: **A2c** (presence
+diagnostics + required markers), **A4-rest** (rule-action normalizers C0-3, dns-server type-change deps
+C0-8), **A8b-brands** (brand SVGs), **A8b-ports** (port-relation icon vocab IC-P2-5). C2-2 (Inspector
+service-type channel filter) and `system_interface` boolean (→ A14) also remain. Next: Phase 2 (A10–A22).
+A21/A22 are a hard checkpoint (product decision) — will pause for the user there. Proceeding to A10.

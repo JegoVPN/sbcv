@@ -1386,6 +1386,10 @@ button.sbc-port__action:focus-visible {
   color: #e34b4b;
 }
 
+.sbc-node--warning .sbc-node__status {
+  color: #f2bc4b;
+}
+
 .sbc-node__title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1566,7 +1570,7 @@ button.sbc-edge-remove {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  pointer-events: all;
+  pointer-events: none;
   opacity: 0;
   color: #151900;
   background: #c7ff00;
@@ -1578,6 +1582,7 @@ button.sbc-edge-remove[data-visible="true"],
 button.sbc-edge-remove:hover,
 button.sbc-edge-remove:focus-visible {
   opacity: 1;
+  pointer-events: all;
 }
 
 button.sbc-edge-remove:hover:not(:disabled),
