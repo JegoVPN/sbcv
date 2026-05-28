@@ -1107,6 +1107,9 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
   }
   const referenceKind = referenceKindForEntity(ref);
   if (referenceKind && "tag" in ref) removeRegisteredTagReferences(next, referenceKind, ref.tag);
+  // An endpoint shares the outbound tag namespace (it can be "used as an outbound"), so also scrub its
+  // outbound-target refs (route.final, route rule outbound, selector/urltest members, detours).
+  if (ref.kind === "endpoint") removeRegisteredTagReferences(next, "outbound", ref.tag);
   return next;
 }
 
