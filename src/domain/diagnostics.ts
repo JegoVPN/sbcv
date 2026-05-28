@@ -1907,11 +1907,10 @@ export function validateConfig(
 
   // W33: scaffold/template placeholder secrets (REPLACE_ME…, change-me) must be replaced before use.
   const placeholderSecret = /^(replace_me|change[-_]?me)/i;
-  const secretFields = ["password", "auth_key", "token", "private_key", "psk", "uuid", "secret_key"];
-  const scanPlaceholders = (entity: Record<string, unknown> | undefined, path: string, label: string) => {
-    if (!entity || typeof entity !== "object") return;
+  const secretFields = ["password", "auth_key", "token", "private_key", "psk", "uuid", "secret_key", "auth_str"];
+  const scanSecretFields = (record: Record<string, unknown>, path: string, label: string) => {
     for (const field of secretFields) {
-      const value = entity[field];
+      const value = record[field];
       if (typeof value === "string" && placeholderSecret.test(value.trim())) {
         push(
           diagnostics,
@@ -1921,6 +1920,26 @@ export function validateConfig(
           `${label} still uses the scaffold placeholder secret "${value}" in \`${field}\`; replace it before exporting or exposing the config.`,
         );
       }
+    }
+  };
+  const scanPlaceholders = (entity: Record<string, unknown> | undefined, path: string, label: string) => {
+    if (!entity || typeof entity !== "object") return;
+    scanSecretFields(entity, path, label);
+    // A27-rest: most inbound protocols (trojan/vmess/vless/hysteria2/tuic) carry credentials in a
+    // per-user array, so descend into users[].password / uuid / … rather than only the entity top level.
+    const users = entity.users;
+    if (Array.isArray(users)) {
+      users.forEach((user, userIndex) => {
+        if (!user || typeof user !== "object") return;
+        const record = user as Record<string, unknown>;
+        const name =
+          typeof record.name === "string" && record.name
+            ? record.name
+            : typeof record.username === "string" && record.username
+              ? record.username
+              : userIndex + 1;
+        scanSecretFields(record, `${path}/users/${userIndex}`, `${label} user "${name}"`);
+      });
     }
   };
   listItems(config.outbounds).forEach((outbound, index) =>

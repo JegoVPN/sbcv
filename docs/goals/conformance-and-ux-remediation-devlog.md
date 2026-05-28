@@ -93,7 +93,7 @@ work, not after.
   - [x] A26-confirm — confirm before import overwrites a non-empty config (desktop + mobile) (W32) — PR #79
   - [ ] A26-rest — import undo + success/error feedback toast; empty/first-run onboarding state (W32 tail)
 - [x] A27 — template placeholder secrets: `placeholder-secret` warning on REPLACE_ME/change-me outbound/inbound secrets (W33) (`template-placeholder-secrets`) — PR #78
-  - [ ] A27-rest — extend the placeholder-secret scan to nested users[].password/uuid (review follow-up)
+  - [x] A27-rest — extend the placeholder-secret scan to nested users[].password/uuid (review follow-up) — PR #85
 
 ### Phase 4 — Polish
 - [~] A28 — diagnostics/labels polish (`diagnostics-labels-polish`) — titlebar de-jargon slice landed
@@ -1457,3 +1457,28 @@ Status: implemented 2026-05-29 in `atomic/route-network-type-import-normalize`; 
 - Deferred to follow-up atomic: A16-norm-rest — the dial-group siblings `network_type` /
   `fallback_network_type` on outbounds/endpoints share the legacy-string strand (untyped via the index
   signature, so lower type-lie risk); coerce those on import too.
+
+### A27-rest placeholder-secret-nested-users — scan per-user secrets (domain, A27 follow-up)
+Status: implemented 2026-05-29 in `atomic/placeholder-secret-nested-users`; merged in PR #85.
+
+- What changed: A27's `placeholder-secret` scan only inspected the entity top level, so an inbound's
+  `users[].password` / `users[].uuid` (where trojan/vmess/vless/hysteria2/tuic actually carry their
+  credentials) escaped the check — a scaffold `change-me` / `REPLACE_ME` could ship invisibly. The
+  A27 test even documented the gap (built a nested config but `void`-ed it). Refactored the field scan
+  into `scanSecretFields(record, path, label)` and had `scanPlaceholders` also descend into `users[]`,
+  emitting `placeholder-secret` warnings at `/<entity>/users/<i>/<field>` with the user name/index in
+  the message. Reuses the same regex + secretFields list (password/uuid/psk/…).
+- Tests: extended `tests/placeholder-secret.test.ts` — un-`void`-ed the nested case to a real assertion,
+  added a nested-uuid case, a nested-path assertion (`/inbounds/0/users/0/password`), a real-nested-secret
+  negative, plus (in-pass) a hysteria `auth_str` case and a malformed-`users`-shape guard test.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE-WITH-NITS. Confirmed the refactor
+  is byte-identical for the top level, the nested scan handles non-array/non-object/missing-field/multi-user
+  and the name→username→index label fallback, no over-scan, correct JSON-pointer paths, and type-safety.
+  Applied the SHOULD-FIX in-pass: added `auth_str` to `secretFields` — the scaffold generator literally
+  emits `auth_str: "change-me"` for hysteria (commands.ts), so without it a freshly-scaffolded hysteria
+  inbound/outbound still shipped an unflagged placeholder — the exact bug class this atomic closes. Also
+  applied the NIT (malformed-`users`-shape guard test). No false-positive risk (`auth_str` is only ever a
+  credential); full suite unaffected.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (824 passed), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: n/a — domain diagnostic.

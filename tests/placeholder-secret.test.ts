@@ -15,18 +15,48 @@ describe("A27 — placeholder-secret warning (W33)", () => {
     expect(warnCodes(config)).toContain("placeholder-secret");
   });
 
-  it("flags a change-me placeholder on an inbound secret", () => {
-    const config = { inbounds: [{ type: "trojan", tag: "tr", users: [{ name: "u", password: "change-me" }] }] } as unknown as SingBoxConfig;
-    // users[].password is nested; the top-level scan covers entity-level secret fields. A top-level
-    // placeholder (e.g. an outbound password) is the primary case; nested user secrets are covered by
-    // their own checks where they exist.
-    const top = { outbounds: [{ type: "trojan", tag: "tr", server: "e.x", server_port: 443, password: "change-me" }] } as unknown as SingBoxConfig;
-    expect(warnCodes(top)).toContain("placeholder-secret");
-    void config;
+  it("flags a change-me placeholder on a top-level inbound secret", () => {
+    const config = { inbounds: [{ type: "trojan", tag: "tr", server: "e.x", server_port: 443, password: "change-me" }] } as unknown as SingBoxConfig;
+    expect(warnCodes(config)).toContain("placeholder-secret");
   });
 
-  it("does not flag a real secret", () => {
+  // A27-rest: the scan now descends into per-user secret arrays (users[].password / uuid …), which are
+  // where most inbound protocols (trojan/vmess/vless/hysteria2/tuic) actually carry their credentials.
+  it("flags a change-me placeholder on a nested inbound user password", () => {
+    const config = { inbounds: [{ type: "trojan", tag: "tr", users: [{ name: "u", password: "change-me" }] }] } as unknown as SingBoxConfig;
+    expect(warnCodes(config)).toContain("placeholder-secret");
+  });
+
+  it("flags a REPLACE_ME placeholder uuid on a nested vless user", () => {
+    const config = { inbounds: [{ type: "vless", tag: "v", users: [{ name: "u", uuid: "REPLACE_ME_UUID" }] }] } as unknown as SingBoxConfig;
+    expect(warnCodes(config)).toContain("placeholder-secret");
+  });
+
+  it("flags a change-me hysteria auth_str (the scaffold default ships this)", () => {
+    const config = { inbounds: [{ type: "hysteria", tag: "h", users: [{ name: "u", auth_str: "change-me" }] }] } as unknown as SingBoxConfig;
+    expect(warnCodes(config)).toContain("placeholder-secret");
+  });
+
+  it("does not crash or flag on a malformed users shape", () => {
+    const stringUsers = { inbounds: [{ type: "trojan", tag: "tr", users: "nope" }] } as unknown as SingBoxConfig;
+    const nullUser = { inbounds: [{ type: "trojan", tag: "tr", users: [null] }] } as unknown as SingBoxConfig;
+    expect(warnCodes(stringUsers)).not.toContain("placeholder-secret");
+    expect(warnCodes(nullUser)).not.toContain("placeholder-secret");
+  });
+
+  it("reports the nested user path so the user can locate it", () => {
+    const config = { inbounds: [{ type: "trojan", tag: "tr", users: [{ name: "alice", password: "change-me" }] }] } as unknown as SingBoxConfig;
+    const found = validateConfig(config, "testing").find((d) => d.code === "placeholder-secret");
+    expect(found?.path).toBe("/inbounds/0/users/0/password");
+  });
+
+  it("does not flag a real top-level secret", () => {
     const config = { outbounds: [{ type: "shadowsocks", tag: "ss", server: "e.x", server_port: 443, method: "aes-128-gcm", password: "s3cr3t-actual-value" }] } as unknown as SingBoxConfig;
+    expect(warnCodes(config)).not.toContain("placeholder-secret");
+  });
+
+  it("does not flag a real nested user secret", () => {
+    const config = { inbounds: [{ type: "vless", tag: "v", users: [{ name: "u", uuid: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d" }] }] } as unknown as SingBoxConfig;
     expect(warnCodes(config)).not.toContain("placeholder-secret");
   });
 });
