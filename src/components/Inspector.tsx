@@ -1843,7 +1843,10 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
     }
     changeEntityType(ref, nextType);
   };
-  const InspectorIcon = getNodeIcon(ref.kind, entityType ?? "");
+  // Settings entities carry no canonical `type`; deriveGraph uses the ref path (log/ntp/experimental)
+  // as the node type, so match it here to keep the header icon consistent with the node card.
+  const iconType = ref.kind === "settings" ? String(ref.path) : entityType ?? "";
+  const InspectorIcon = getNodeIcon(ref.kind, iconType);
   const selectedEndpointReferences =
     ref.kind === "endpoint" && tagValue ? endpointReferences(config, tagValue) : null;
   const sharedGroups = sharedGroupsForEntity(ref, entityType, channel);
