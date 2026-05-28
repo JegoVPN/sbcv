@@ -221,6 +221,7 @@ const dnsServerHandledFields = new Set([
   "endpoint",
   "service",
   "accept_default_resolvers",
+  "accept_search_domain",
   "tls",
   "neighbor_domain",
   "prefer_go",
@@ -4570,6 +4571,18 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 />
                 <span>Accept default resolvers (forward queries to MagicDNS chain)</span>
               </label>
+              {channel === "testing" ? (
+                <label className="toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(entity.accept_search_domain)}
+                    onChange={(event) =>
+                      updateField(ref, "accept_search_domain", event.target.checked || undefined)
+                    }
+                  />
+                  <span>Accept search domain (since sing-box 1.14.0)</span>
+                </label>
+              ) : null}
             </>
           ) : null}
           {entityType === "hosts" ? (
