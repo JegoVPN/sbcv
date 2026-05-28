@@ -105,6 +105,14 @@ export function getRuleSetTags(config: SingBoxConfig): Set<string> {
   return new Set(listItems(config.route?.rule_set).map((item) => item.tag));
 }
 
+export function getHttpClientTags(config: SingBoxConfig): Set<string> {
+  return new Set(
+    listItems(config.http_clients)
+      .map((item) => item.tag)
+      .filter((tag): tag is string => Boolean(tag)),
+  );
+}
+
 export function getUniqueTag(config: SingBoxConfig, base: string): string {
   const tags = buildTagIndex(config);
   if (!tags.has(base)) return base;

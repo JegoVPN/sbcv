@@ -1,4 +1,4 @@
-import { buildTagIndex, getDnsServerTags, getEndpointTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { buildTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
 import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
@@ -1901,6 +1901,47 @@ export function validateConfig(
         "inbound-legacy-domain-strategy-deprecated",
         `/inbounds/${index}/domain_strategy`,
         `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}`,
+      );
+    }
+  });
+
+  // C1-20: a string `http_client` reference must point to an existing top-level http_clients[] tag.
+  // (Object-form http_client is inline and carries no tag, so it is skipped.)
+  const httpClientTags = getHttpClientTags(config);
+  const routeObj = config.route as Record<string, unknown> | undefined;
+  if (routeObj && typeof routeObj === "object" && !Array.isArray(routeObj)) {
+    if (typeof routeObj.default_http_client === "string" && routeObj.default_http_client && !httpClientTags.has(routeObj.default_http_client)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-http-client",
+        "/route/default_http_client",
+        `route.default_http_client references missing HTTP client "${routeObj.default_http_client}".`,
+      );
+    }
+  }
+  listItems(config.route?.rule_set).forEach((ruleSet, index) => {
+    const ref = (ruleSet as Record<string, unknown>).http_client;
+    if (typeof ref === "string" && ref && !httpClientTags.has(ref)) {
+      push(
+        diagnostics,
+        "error",
+        "missing-http-client",
+        `/route/rule_set/${index}/http_client`,
+        `Rule-set ${index + 1} references missing HTTP client "${ref}".`,
+      );
+    }
+  });
+  listItems(config.certificate_providers).forEach((provider, index) => {
+    const ref = (provider as Record<string, unknown>).http_client;
+    if (typeof ref === "string" && ref && !httpClientTags.has(ref)) {
+      const tag = (provider as Record<string, unknown>).tag;
+      push(
+        diagnostics,
+        "error",
+        "missing-http-client",
+        `/certificate_providers/${index}/http_client`,
+        `Certificate provider "${typeof tag === "string" ? tag : index}" references missing HTTP client "${ref}".`,
       );
     }
   });
