@@ -127,6 +127,7 @@ function replaceInboundRefs(config: SingBoxConfig, oldTag: string, newTag: strin
   config.dns?.rules?.forEach((rule) => {
     rule.inbound = replaceTagRefValue(rule.inbound, oldTag, newTag);
   });
+  config.inbounds?.forEach((inbound) => replaceStringField(inbound as MutableRecord, "detour", oldTag, newTag));
   config.services?.forEach((service) => {
     if (!service.servers || typeof service.servers !== "object" || Array.isArray(service.servers)) return;
     service.servers = Object.fromEntries(
@@ -145,6 +146,7 @@ function removeInboundRefs(config: SingBoxConfig, tag: string) {
   config.dns?.rules?.forEach((rule) => {
     rule.inbound = removeTagRefValue(rule.inbound, tag);
   });
+  config.inbounds?.forEach((inbound) => removeStringField(inbound as MutableRecord, "detour", tag));
   config.services?.forEach((service) => {
     if (!service.servers || typeof service.servers !== "object" || Array.isArray(service.servers)) return;
     service.servers = Object.fromEntries(Object.entries(service.servers).filter(([, ref]) => ref !== tag));
@@ -164,7 +166,21 @@ function replaceOutboundRefs(config: SingBoxConfig, oldTag: string, newTag: stri
   });
   config.dns?.servers?.forEach((server) => replaceStringField(server as MutableRecord, "detour", oldTag, newTag));
   config.endpoints?.forEach((endpoint) => replaceStringField(endpoint as MutableRecord, "detour", oldTag, newTag));
-  config.services?.forEach((service) => replaceStringField(service as MutableRecord, "detour", oldTag, newTag));
+  config.services?.forEach((service) => {
+    const obj = service as MutableRecord;
+    replaceStringField(obj, "detour", oldTag, newTag);
+    if (Array.isArray(obj.mesh_with)) obj.mesh_with.forEach((peer) => { if (isRecord(peer)) replaceStringField(peer, "detour", oldTag, newTag); });
+    if (Array.isArray(obj.verify_client_url)) obj.verify_client_url.forEach((entry) => { if (isRecord(entry)) replaceStringField(entry, "detour", oldTag, newTag); });
+  });
+  config.inbounds?.forEach((inbound) => {
+    const obj = inbound as MutableRecord;
+    if (isRecord(obj.handshake)) replaceStringField(obj.handshake, "detour", oldTag, newTag);
+    if (isRecord(obj.handshake_for_server_name)) {
+      Object.values(obj.handshake_for_server_name).forEach((entry) => { if (isRecord(entry)) replaceStringField(entry, "detour", oldTag, newTag); });
+    }
+    if (isRecord(obj.control_dialer)) replaceStringField(obj.control_dialer, "detour", oldTag, newTag);
+    if (isRecord(obj.tunnel_dialer)) replaceStringField(obj.tunnel_dialer, "detour", oldTag, newTag);
+  });
   config.route?.rule_set?.forEach((ruleSet) => replaceStringField(ruleSet as MutableRecord, "download_detour", oldTag, newTag));
   replaceStringField(config.ntp as MutableRecord | undefined, "detour", oldTag, newTag);
   const clashApi = (config.experimental as MutableRecord | undefined)?.clash_api;
@@ -185,7 +201,21 @@ function removeOutboundRefs(config: SingBoxConfig, tag: string) {
   });
   config.dns?.servers?.forEach((server) => removeStringField(server as MutableRecord, "detour", tag));
   config.endpoints?.forEach((endpoint) => removeStringField(endpoint as MutableRecord, "detour", tag));
-  config.services?.forEach((service) => removeStringField(service as MutableRecord, "detour", tag));
+  config.services?.forEach((service) => {
+    const obj = service as MutableRecord;
+    removeStringField(obj, "detour", tag);
+    if (Array.isArray(obj.mesh_with)) obj.mesh_with.forEach((peer) => { if (isRecord(peer)) removeStringField(peer, "detour", tag); });
+    if (Array.isArray(obj.verify_client_url)) obj.verify_client_url.forEach((entry) => { if (isRecord(entry)) removeStringField(entry, "detour", tag); });
+  });
+  config.inbounds?.forEach((inbound) => {
+    const obj = inbound as MutableRecord;
+    if (isRecord(obj.handshake)) removeStringField(obj.handshake, "detour", tag);
+    if (isRecord(obj.handshake_for_server_name)) {
+      Object.values(obj.handshake_for_server_name).forEach((entry) => { if (isRecord(entry)) removeStringField(entry, "detour", tag); });
+    }
+    if (isRecord(obj.control_dialer)) removeStringField(obj.control_dialer, "detour", tag);
+    if (isRecord(obj.tunnel_dialer)) removeStringField(obj.tunnel_dialer, "detour", tag);
+  });
   config.route?.rule_set?.forEach((ruleSet) => removeStringField(ruleSet as MutableRecord, "download_detour", tag));
   removeStringField(config.ntp as MutableRecord | undefined, "detour", tag);
   const clashApi = (config.experimental as MutableRecord | undefined)?.clash_api;
@@ -225,6 +255,7 @@ function removeInlineHttpClientOutboundRefs(config: SingBoxConfig, tag: string) 
 function replaceDnsServerRefs(config: SingBoxConfig, oldTag: string, newTag: string) {
   if (config.dns?.final === oldTag) config.dns.final = newTag;
   config.dns?.rules?.forEach((rule) => replaceStringField(rule as MutableRecord, "server", oldTag, newTag));
+  config.route?.rules?.forEach((rule) => replaceStringField(rule as MutableRecord, "server", oldTag, newTag));
   replaceResolverField(config.route as MutableRecord | undefined, "default_domain_resolver", oldTag, newTag);
   const dialOwners: Array<OutboundConfig | DnsServerConfig | EndpointConfig | TaggedConfig | TaggedResourceConfig | Record<string, unknown>> = [
     ...(config.outbounds ?? []),
@@ -240,6 +271,7 @@ function replaceDnsServerRefs(config: SingBoxConfig, oldTag: string, newTag: str
 function removeDnsServerRefs(config: SingBoxConfig, tag: string) {
   if (config.dns?.final === tag) config.dns.final = undefined;
   config.dns?.rules?.forEach((rule) => removeStringField(rule as MutableRecord, "server", tag));
+  config.route?.rules?.forEach((rule) => removeStringField(rule as MutableRecord, "server", tag));
   removeResolverField(config.route as MutableRecord | undefined, "default_domain_resolver", tag);
   const dialOwners: Array<OutboundConfig | DnsServerConfig | EndpointConfig | TaggedConfig | TaggedResourceConfig | Record<string, unknown>> = [
     ...(config.outbounds ?? []),
@@ -283,6 +315,12 @@ function replaceRuleSetRefs(config: SingBoxConfig, oldTag: string, newTag: strin
   config.dns?.rules?.forEach((rule) => {
     rule.rule_set = replaceTagRefValue(rule.rule_set, oldTag, newTag);
   });
+  config.inbounds?.forEach((inbound) => {
+    const obj = inbound as MutableRecord;
+    if (obj.type !== "tun") return;
+    if (obj.route_address_set !== undefined) obj.route_address_set = replaceStringArray(obj.route_address_set, oldTag, newTag);
+    if (obj.route_exclude_address_set !== undefined) obj.route_exclude_address_set = replaceStringArray(obj.route_exclude_address_set, oldTag, newTag);
+  });
 }
 
 function removeRuleSetRefs(config: SingBoxConfig, tag: string) {
@@ -291,6 +329,12 @@ function removeRuleSetRefs(config: SingBoxConfig, tag: string) {
   });
   config.dns?.rules?.forEach((rule) => {
     rule.rule_set = removeTagRefValue(rule.rule_set, tag);
+  });
+  config.inbounds?.forEach((inbound) => {
+    const obj = inbound as MutableRecord;
+    if (obj.type !== "tun") return;
+    if (obj.route_address_set !== undefined) obj.route_address_set = removeStringArray(obj.route_address_set, tag);
+    if (obj.route_exclude_address_set !== undefined) obj.route_exclude_address_set = removeStringArray(obj.route_exclude_address_set, tag);
   });
 }
 
@@ -325,19 +369,19 @@ function removeCertificateProviderRefs(config: SingBoxConfig, tag: string) {
 export const referenceRegistry: ReferenceRegistryEntry[] = [
   {
     kind: "inbound",
-    paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
+    paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/inbounds/*/detour", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
     replace: replaceInboundRefs,
     remove: removeInboundRefs,
   },
   {
     kind: "outbound",
-    paths: ["/route/final", "/route/rules/*/outbound", "/outbounds/*/outbounds", "/outbounds/*/default", "/outbounds/*/detour", "/dns/servers/*/detour", "/endpoints/*/detour", "/services/*/detour", "/route/rule_set/*/download_detour", "/ntp/detour", "/experimental/clash_api/external_ui_download_detour", "/experimental/v2ray_api/stats/outbounds"],
+    paths: ["/route/final", "/route/rules/*/outbound", "/outbounds/*/outbounds", "/outbounds/*/default", "/outbounds/*/detour", "/dns/servers/*/detour", "/endpoints/*/detour", "/services/*/detour", "/services/*/mesh_with/*/detour", "/services/*/verify_client_url/*/detour", "/inbounds/*/handshake/detour", "/inbounds/*/handshake_for_server_name/*/detour", "/inbounds/*/control_dialer/detour", "/inbounds/*/tunnel_dialer/detour", "/route/rule_set/*/download_detour", "/ntp/detour", "/experimental/clash_api/external_ui_download_detour", "/experimental/v2ray_api/stats/outbounds"],
     replace: replaceOutboundRefs,
     remove: removeOutboundRefs,
   },
   {
     kind: "dns-server",
-    paths: ["/dns/final", "/dns/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
+    paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
     replace: replaceDnsServerRefs,
     remove: removeDnsServerRefs,
   },
@@ -355,7 +399,7 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   },
   {
     kind: "rule-set",
-    paths: ["/route/rules/*/rule_set", "/dns/rules/*/rule_set"],
+    paths: ["/route/rules/*/rule_set", "/dns/rules/*/rule_set", "/inbounds/*/route_address_set", "/inbounds/*/route_exclude_address_set"],
     replace: replaceRuleSetRefs,
     remove: removeRuleSetRefs,
   },
