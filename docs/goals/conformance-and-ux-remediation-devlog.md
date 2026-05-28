@@ -47,7 +47,8 @@ work, not after.
 - [x] A10a — dns-rule `server` settable for `evaluate` (not just route), Inspector half (C0-2) (`dns-rule-server-evaluate`) — PR #55
 - [x] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`) — PR #56
 - [x] A10c — action-aware dns-server canvas port + compatible chip: advertise the server port/chip only for server-bearing actions (claude P0) (`dns-rule-action-aware-port`) — PR #57
-- [ ] A10d — scrub a stale `server` on import for non-server dns-rule actions (run `normalizeDnsRule` in serialization, not just add/update commands); today an imported `{action:"reject",server:"x"}` is invisible on every surface but still exported (A10c review follow-up)
+- [x] A10d — scrub a stale `server`/`outbound` on import for non-route rule actions (run `normalizeDnsRule`/`normalizeRouteRule` in serialization, not just add/update commands); an imported `{action:"reject",server:"x"}` was invisible on every surface but still exported (A10c review follow-up) — PR #83
+  - [ ] A10d-rest — scrub the other action-gated rule fields on import too (reject `method`/`no_drop`, dns-predefined `rcode`, route-options `override_*`, sniff fields); recurse into nested logical rules (A10d review follow-up)
 - [x] A11 — rule-set-inline structured editor (MVP: per-rule list + common match fields + JSON escape hatch) (`rule-set-inline-editor`) — PR #58
 - [ ] A11-full — full headless-rule editor: all ~25 fields + logical and/or builder (deferred from A11 MVP; reachable today via JSON mode) (`rule-set-inline-editor-full`)
 - [x] A12 — rule-set-remote http_client object-form preserved + testing-gated + stable diagnostic (W20/C2-5) (`rule-set-http-client`) — PR #59
@@ -1378,3 +1379,52 @@ Status: implemented 2026-05-29 in `atomic/per-node-p2-cleanup`; merged in PR #82
 - Official check: n/a — canvas subtitle copy.
 - Deferred to follow-up atomic: A29-rest (icon mismatches, remaining subtitle genericism for
   route/settings/notice, export empty-string/array noise, deprecation hints, per-node copy accuracy).
+
+### A0–A29 primary queue complete — checkpoint report (2026-05-29)
+Every atomic A0 through A29 now has its primary, finding-closing work landed and merged to `main`
+(A28-titlebar #81, A29-subtitle #82 close Phase 4's first slices). The five-phase backbone is fully
+exercised: Phase 0 guardrails, Phase 1 canvas correctness/legibility, Phase 2 per-kind conformance
+(incl. the cloudflared + HTTP Client testing-target capabilities), Phase 3 UX comprehension, Phase 4
+labels/subtitle polish. Both former hard checkpoints (A21 cloudflared, A22 HTTP Client) were resolved
+under the user's "fully support testing (1.14)" decision. Convergence-first ordering held end to end —
+no comprehension/polish slice ran ahead of its phase's correctness work.
+
+What remains is the explicitly-split backlog of `*-rest` / deferred tails recorded above in the Running
+TODO (each created during execution as a scope-management split, logged in the Decision Log). These are
+P1/P2 follow-ups, not part of the core A0–A29 findings. Continuing through them in value order — the
+correctness tails first (A10d stale dns-rule `server` on import; A16-norm legacy network-type
+normalize; A27-rest nested-secret scan), then UX (A26-rest, A23-rest), then the cosmetic batches
+(A29-rest, A8b-brands which is blocked on sourcing licensed brand SVGs).
+
+### A10d dns-rule-import-normalize — scrub stale rule fields on import (domain, A10c follow-up)
+Status: implemented 2026-05-29 in `atomic/dns-rule-import-normalize`; merged in PR #83.
+
+- What changed: `normalizeDnsRule` (scrub `server` when the dns-rule action isn't ``/`route`/`evaluate`)
+  and `normalizeRouteRule` (scrub `outbound` when the route-rule action isn't ``/`route`) ran only in
+  the add/update commands. An imported config carrying `{action:"reject",server:"x"}` (or
+  `{action:"reject",outbound:"x"}`) kept the stale field — invalid for that action, invisible on every
+  editor surface, yet re-exported verbatim. Root-cause fix: `normalizeConfig` (the single import
+  boundary, `src/domain/serialization.ts`) now maps both normalizers over `dns.rules` / `route.rules`
+  after the structural clone. Exported both normalizers from `commands.ts` (no import cycle —
+  serialization had no prior dependency on commands, and none of commands' deps import serialization).
+- Scope note: the ticket was dns-rule only, but the route-rule sibling is the identical latent bug with
+  the identical root cause (normalizers not run on import); a single import hook fixes both, so excluding
+  route-rule would have been artificial. Both ride this atomic.
+- Tests: `tests/dns-rule-import-normalize.test.ts` — reject-rule scrub, route/implicit-rule retention,
+  no-re-export-of-the-stale-value (export fidelity), the route-rule sibling cases, and (added in-pass)
+  the full import-path allow-list locks: `evaluate` keeps `server`, `bypass` keeps `outbound`.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers, no should-fix.
+  Confirmed no ESM cycle (serialization→commands is one-way; no transitive dep imports serialization),
+  the predicates' allow-lists are right and codebase-consistent (route allows ``/`route`/`bypass`; dns
+  allows ``/`route`/`evaluate`; `route-options`/`predefined` correctly excluded), no over-scrubbing,
+  clone-before-mutate, and type-safety under noUncheckedIndexedAccess. Applied the reviewer's two
+  optional assertions in-pass (above). Two NITS noted as known gaps, both matching existing add/update
+  command behavior (not regressions): see A10d-rest.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (812 passed), `pnpm build`,
+  `pnpm e2e` (14 passed, incl. the import→export→re-import round-trip fixture test).
+- Official check: n/a — domain import normalization.
+- Deferred to follow-up atomic: A10d-rest — the normalizers scrub only the single action-gated field
+  (`server`/`outbound`); other action-gated fields (`method`/`no_drop` on reject, `rcode` on dns
+  predefined, `override_address`/`override_port` on route-options, sniff fields) still survive import.
+  Also: nested logical-rule recursion (currently top-level only — inert today since nested rules carry
+  no action/outbound/server, but worth revisiting if logical-rule conformance becomes a goal).
