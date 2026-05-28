@@ -72,7 +72,9 @@ work, not after.
   - [x] A20-misc (vless flow-no-TLS C1-10) — downgrade vless-flow-requires-tls error→warning — PR #71
   - [ ] A20-misc-rest — WireGuard peer schema C0-14, certificate-provider required C0-15/C1-14 (W28 cross-node tail)
 - [x] A21 — cloudflared testing inbound: full testing support (creatable + Inspector + token/testing diagnostics; stable gated) (C1-22) (`inbound-cloudflared-testing`) — PR #73
-- [ ] A22 — HTTP Client capability (`http-client-capability`)
+- [~] A22 — HTTP Client capability (`http-client-capability`) — in progress
+  - [x] A22-diag — dangling http_client reference diagnostic (C1-20): missing-http-client on route.default_http_client / rule_set / certificate_providers — PR #74
+  - [ ] A22-create — make http_clients[] creatable (testing-gated palette + addHttpClient + Inspector branch + sharedGroups tls/http2/dial) (C1-18/19, C2-4)
 
 ### Phase 3 — UX comprehension
 - [ ] A23 — palette usability (`palette-usability`)
@@ -1132,3 +1134,22 @@ former A21 hard checkpoint per the user's decision: fully support the testing ta
   `pnpm e2e` (editor 3 passed).
 - Official check: `sing-box-testing check` not run in this env, but a created cloudflared inbound matches
   the upstream schema (token required); no bundled fixture changed.
+
+### A22-diag http-client-missing-ref — dangling http_client reference diagnostic (domain, C1-20)
+Status: implemented 2026-05-29 in `atomic/http-client-missing-ref`; merged in PR #74. First slice of A22.
+
+- What changed (C1-20): a string `http_client` reference must point to an existing top-level
+  http_clients[] tag, but SBC had no missing-reference check — a dangling ref exported silently.
+  Added `getHttpClientTags(config)` + error `missing-http-client` on the three string-ref sites the
+  referenceRegistry already tracks: route.default_http_client, route.rule_set[].http_client, and
+  certificate_providers[].http_client. Inline object-form (no tag) is skipped.
+- Frontend perf review: n/a — domain-only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed scope vs upstream,
+  object-vs-string gating, no false positives (bundled template's http_client:"default" resolves),
+  channel-agnostic error severity is right (a dangling ref is invalid on any channel; co-located
+  testing-only warning is orthogonal). Applied the reviewer's follow-up in-pass: added the third
+  certificate_providers site + the Array-guard NIT.
+  - Deferred to follow-up atomic: A22-create (make http_clients[] creatable + Inspector branch + Palette
+    gating, C1-18/19, C2-4).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (778 passed | 1 todo), `pnpm build`.
+- Official check: n/a — semantic diagnostic.
