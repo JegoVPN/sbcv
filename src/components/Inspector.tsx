@@ -719,6 +719,25 @@ function AdvancedScalarFields({
   );
 }
 
+// Common headless-rule match fields surfaced as structured inputs (headless-rule.md). Anything outside
+// this set (logical rules, exotic/version-gated fields) is preserved untouched and stays editable via
+// the JSON escape hatch.
+const INLINE_RULE_LIST_FIELDS: Array<{ key: string; label: string; numeric?: boolean }> = [
+  { key: "domain", label: "Domain" },
+  { key: "domain_suffix", label: "Domain suffix" },
+  { key: "domain_keyword", label: "Domain keyword" },
+  { key: "domain_regex", label: "Domain regex" },
+  { key: "ip_cidr", label: "IP CIDR" },
+  { key: "source_ip_cidr", label: "Source IP CIDR" },
+  { key: "port", label: "Port", numeric: true },
+  { key: "network", label: "Network (tcp/udp)" },
+  { key: "process_name", label: "Process name" },
+];
+
+function isLogicalRule(rule: unknown): boolean {
+  return Boolean(rule) && typeof rule === "object" && (rule as Record<string, unknown>).type === "logical";
+}
+
 function InlineRuleSetEditor({
   value,
   onChange,
@@ -726,16 +745,114 @@ function InlineRuleSetEditor({
   value: unknown;
   onChange: (value: unknown) => void;
 }) {
-  const initial = Array.isArray(value) ? value : [];
-  const [draft, setDraft] = useState(() => JSON.stringify(initial, null, 2));
+  const rules = Array.isArray(value) ? value : [];
+  const [mode, setMode] = useState<"structured" | "json">("structured");
+
+  const replaceRule = (index: number, next: Record<string, unknown>) => {
+    onChange(rules.map((rule, idx) => (idx === index ? next : rule)));
+  };
+  const patchRule = (index: number, patch: Record<string, unknown>) => {
+    const current = (rules[index] ?? {}) as Record<string, unknown>;
+    const next = { ...current, ...patch };
+    for (const key of Object.keys(next)) if (next[key] === undefined) delete next[key];
+    replaceRule(index, next);
+  };
+  const addRule = () => onChange([...rules, {}]);
+  const removeRule = (index: number) => onChange(rules.filter((_, idx) => idx !== index));
+  const moveRule = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= rules.length) return;
+    const next = [...rules];
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
+  if (mode === "json") {
+    return (
+      <div className="inline-rules">
+        <div className="inline-rules__toolbar">
+          <span>Rules ({rules.length})</span>
+          <button type="button" className="node-icon-button" onClick={() => setMode("structured")}>
+            Structured editor
+          </button>
+        </div>
+        <InlineRulesJsonField value={rules} onChange={onChange} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="inline-rules">
+      <div className="inline-rules__toolbar">
+        <span>Rules ({rules.length})</span>
+        <button type="button" className="node-icon-button" onClick={() => setMode("json")} aria-label="Edit rules as JSON">
+          Edit rules as JSON
+        </button>
+      </div>
+      {rules.map((rule, index) => {
+        const ruleObj = (rule ?? {}) as Record<string, unknown>;
+        const logical = isLogicalRule(rule);
+        return (
+          <div className="inline-rule" data-testid={`inline-rule-${index}`} key={index}>
+            <div className="inline-rule__head">
+              <span>Rule {index + 1}{logical ? " · logical" : ""}</span>
+              <span className="inline-rule__actions">
+                <button type="button" className="node-icon-button" aria-label={`Move inline rule ${index + 1} up`} disabled={index === 0} onClick={() => moveRule(index, -1)}>↑</button>
+                <button type="button" className="node-icon-button" aria-label={`Move inline rule ${index + 1} down`} disabled={index === rules.length - 1} onClick={() => moveRule(index, 1)}>↓</button>
+                <button type="button" className="node-icon-button" aria-label={`Remove inline rule ${index + 1}`} onClick={() => removeRule(index)}>✕</button>
+              </span>
+            </div>
+            {logical ? (
+              <span className="field__hint">Logical (and/or) rule — edit its nested rules in JSON mode.</span>
+            ) : (
+              INLINE_RULE_LIST_FIELDS.map((field) => (
+                <label className="field" key={field.key}>
+                  <span>{field.label}</span>
+                  <input
+                    value={listishToText(ruleObj[field.key])}
+                    onChange={(event) => {
+                      const list = textToRuleList(event.target.value, field.numeric ? [0] : ruleObj[field.key]);
+                      patchRule(index, { [field.key]: list });
+                    }}
+                  />
+                </label>
+              ))
+            )}
+            {logical ? null : (
+              <label className="field inline-rule__invert">
+                <span>Invert</span>
+                <input
+                  type="checkbox"
+                  checked={ruleObj.invert === true}
+                  onChange={(event) => patchRule(index, { invert: event.target.checked || undefined })}
+                />
+              </label>
+            )}
+          </div>
+        );
+      })}
+      <button type="button" className="palette-add palette-add--add" aria-label="Add inline rule" onClick={addRule}>
+        + Add rule
+      </button>
+    </div>
+  );
+}
+
+// The raw-JSON escape hatch for inline rules: parse-safe (keeps the last valid array on a parse error,
+// never stores unparseable text), mirroring JsonField's contract.
+function InlineRulesJsonField({ value, onChange }: { value: unknown[]; onChange: (value: unknown) => void }) {
+  const serialized = JSON.stringify(value, null, 2);
+  const [draft, setDraft] = useState(serialized);
   const [error, setError] = useState<string | null>(null);
+  const lastEmittedRef = useRef(serialized);
   useEffect(() => {
-    if (Array.isArray(value)) {
-      const serialized = JSON.stringify(value, null, 2);
-      if (serialized !== draft && !error) setDraft(serialized);
+    if (serialized !== lastEmittedRef.current) {
+      lastEmittedRef.current = serialized;
+      setDraft(serialized);
+      setError(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [serialized]);
   return (
     <label className="field">
       <span>Rules JSON</span>
@@ -746,6 +863,7 @@ function InlineRuleSetEditor({
           setDraft(next);
           if (!next.trim()) {
             setError(null);
+            lastEmittedRef.current = "[]";
             onChange([]);
             return;
           }
@@ -756,6 +874,7 @@ function InlineRuleSetEditor({
               return;
             }
             setError(null);
+            lastEmittedRef.current = JSON.stringify(parsed, null, 2);
             onChange(parsed);
           } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Invalid JSON.");

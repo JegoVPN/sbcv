@@ -2460,3 +2460,46 @@ button.sbc-edge-remove:focus-visible {
     max-width: none;
   }
 }
+
+/* Inline rule-set structured editor (A11) */
+.inline-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.inline-rules__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #aab2bc;
+  font-size: 12px;
+}
+.inline-rule {
+  border: 1px solid #262d34;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #15191d;
+}
+.inline-rule__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #cbd3da;
+  font-size: 12px;
+  font-weight: 700;
+}
+.inline-rule__actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.inline-rule__invert {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.inline-rule__invert input {
+  width: auto;
+}
