@@ -206,13 +206,14 @@ export function createInbound(type: string, tag: string): InboundConfig {
     };
   }
   if (type === "vless") {
+    // VLESS TLS is optional upstream (inbound/vless.md); do not force tls.enabled — a fresh VLESS
+    // inbound can run over a plain transport / Reality (configured separately). (W26)
     return {
       type,
       tag,
       listen: "127.0.0.1",
       listen_port: 2080,
       users: [{ name: "user", uuid: "bf000d23-0752-40b4-affe-68f7707a9661" }],
-      tls: { enabled: true, server_name: "" },
     };
   }
   if (type === "tuic") {
