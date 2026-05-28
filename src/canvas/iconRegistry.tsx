@@ -5,9 +5,11 @@ import {
   Ban,
   Bot,
   Castle,
+  Clock,
   Cog,
   Cpu,
   Earth,
+  FileBadge2,
   FileKey2,
   Filter,
   FlaskConical,
@@ -162,9 +164,11 @@ const RENDERERS: Record<string, IconRenderer> = {
   ban: Ban,
   bot: Bot,
   castle: Castle,
+  clock: Clock,
   cog: Cog,
   cpu: Cpu,
   earth: Earth,
+  "file-badge2": FileBadge2,
   "file-key2": FileKey2,
   filter: Filter,
   "flask-conical": FlaskConical,
@@ -207,7 +211,9 @@ export function nodeIconId(kind: string, type: string): string {
   // v4 ships these as brand SVGs; until the license/bundle-size review (deferred follow-up
   // A8b-brands) they fall back to a distinct monogram so they stay collision-free.
   if (kind === "outbound" && type === "tor") return "mono:TO";
-  if (kind === "endpoint" && type === "wireguard") return "mono:WG";
+  // WireGuard is normally an endpoint, but imported configs can still carry the deprecated legacy
+  // `outbound` with type "wireguard" — keep it distinct from the generic outbound default.
+  if ((kind === "endpoint" || kind === "outbound") && type === "wireguard") return "mono:WG";
   if ((kind === "endpoint" || kind === "dns-server") && type === "tailscale") return "mono:TS";
 
   if (kind === "inbound" || kind === "outbound") {
@@ -237,6 +243,8 @@ export function nodeIconId(kind: string, type: string): string {
   }
   if (kind === "settings") {
     if (type === "log") return "scroll-text";
+    if (type === "ntp") return "clock";
+    if (type === "certificate") return "file-badge2";
     if (type === "experimental") return "flask-conical";
     return "cog";
   }

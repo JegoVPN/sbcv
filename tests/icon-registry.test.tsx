@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { getNodeIcon, nodeIconId, RESERVED_STATUS_ICON_IDS } from "../src/canvas/iconRegistry";
 import { ChipPickerPopover, type ChipPickerCandidate } from "../src/components/ChipPickerPopover";
+import { paletteNodeRef } from "../src/components/Palette";
 
 // A8b / IC-P1-3: one shared, type-aware node-identity icon registry. These lock the confirmed v4 set
 // (docs/ui-icon-set.md + _icons-preview-v4.html) and the cross-surface single-source guarantee.
@@ -23,6 +24,7 @@ const V4_NODE_ICONS: Array<[kind: string, type: string, id: string]> = [
   ["outbound", "anytls", "mono:AT"],
   ["outbound", "shadowtls", "mono:ST"],
   ["outbound", "tor", "mono:TO"],
+  ["outbound", "wireguard", "mono:WG"],
   // Inbound — no longer all RadioTower; proxies reuse the protocol monogram.
   ["inbound", "direct", "log-in"],
   ["inbound", "mixed", "arrow-left-right"],
@@ -58,8 +60,9 @@ const V4_NODE_ICONS: Array<[kind: string, type: string, id: string]> = [
   ["certificate-provider", "tailscale", "file-key2"],
   ["http-client", "http-client", "webhook"],
   ["settings", "log", "scroll-text"],
+  ["settings", "ntp", "clock"],
+  ["settings", "certificate", "file-badge2"],
   ["settings", "experimental", "flask-conical"],
-  ["settings", "ntp", "cog"],
 ];
 
 describe("icon registry — confirmed v4 node identity set", () => {
@@ -126,6 +129,26 @@ describe("icon registry — single source across surfaces", () => {
       handleId: "h1",
     });
     expect(container.querySelector(".lucide-gauge")).not.toBeNull();
+  });
+
+  it("palette node-creating items resolve through the registry (urltest -> gauge, not Shuffle)", () => {
+    const cases: Array<[paletteKind: string, expectedId: string]> = [
+      ["urltest", "gauge"],
+      ["ss-out", "mono:SS"],
+      ["service-derp", "share2"],
+      ["dns-hub", "earth"],
+      ["dns-rule", "filter"],
+      ["settings-ntp", "clock"],
+      ["endpoint-wireguard", "mono:WG"],
+    ];
+    for (const [paletteKind, expectedId] of cases) {
+      const ref = paletteNodeRef(paletteKind);
+      expect(ref, paletteKind).not.toBeNull();
+      expect(nodeIconId(ref!.kind, ref!.type), paletteKind).toBe(expectedId);
+    }
+    // Non-node catalog entries keep their own icon (no registry ref).
+    expect(paletteNodeRef("route-geoip")).toBeNull();
+    expect(paletteNodeRef("shared-tls")).toBeNull();
   });
 
   it("chip picker renders the registry glyph for a service (server, not Settings)", () => {
