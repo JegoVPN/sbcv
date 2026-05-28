@@ -48,4 +48,18 @@ describe("A15 — dns-server tailscale accept_search_domain", () => {
     // accept_default_resolvers (1.12) stays available.
     expect(screen.getByLabelText(/Accept default resolvers/i)).toBeInTheDocument();
   });
+
+  it("keeps an imported accept_search_domain editable via Advanced on stable (not silently stuck)", () => {
+    useProjectStore.getState().importJson(
+      JSON.stringify({
+        endpoints: [{ type: "tailscale", tag: "ep", auth_key: "k" }],
+        dns: { servers: [{ type: "tailscale", tag: "ts-dns", endpoint: "ep", accept_search_domain: true }] },
+      }),
+    );
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-dns-server:ts-dns"));
+    // No first-class toggle on stable, but the value is reachable in the Advanced fallback
+    // (labelForField prettifies the key to "Accept Search Domain").
+    expect(screen.getByLabelText("Accept Search Domain")).toBeInTheDocument();
+  });
 });

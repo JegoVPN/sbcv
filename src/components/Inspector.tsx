@@ -232,6 +232,13 @@ const dnsServerHandledFields = new Set([
   "interface",
   ...dialSharedFields,
 ]);
+// On stable the `accept_search_domain` first-class toggle is hidden (it is 1.14+). Drop it from the
+// handled set there so an imported stable value still falls through to the Advanced fallback and can be
+// inspected/removed, rather than being invisible AND stuck.
+const dnsServerHandledFieldsStable = new Set([...dnsServerHandledFields].filter((f) => f !== "accept_search_domain"));
+function dnsServerHandledFieldsForChannel(channel: string): Set<string> {
+  return channel === "testing" ? dnsServerHandledFields : dnsServerHandledFieldsStable;
+}
 const endpointHandledFields = new Set([
   "tag",
   "type",
@@ -4752,8 +4759,8 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               </label>
             </>
           ) : null}
-          <AdvancedScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />
-          <AdvancedNonScalarFields entity={entity} handledFields={dnsServerHandledFields} entityRef={ref} updateField={updateField} />
+          <AdvancedScalarFields entity={entity} handledFields={dnsServerHandledFieldsForChannel(channel)} entityRef={ref} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={dnsServerHandledFieldsForChannel(channel)} entityRef={ref} updateField={updateField} />
         </>
       ) : null}
 
