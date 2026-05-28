@@ -898,12 +898,14 @@ export function validateConfig(
           ? Boolean((tls as Record<string, unknown>).enabled)
           : false;
       if (flow === "xtls-rprx-vision" && !tlsEnabled) {
+        // Warning, not error (C1-10): sing-box accepts flow without tls at check-time; it just won't
+        // function. Reality counts as TLS here (reality requires tls.enabled).
         push(
           diagnostics,
-          "error",
+          "warning",
           "vless-flow-requires-tls",
           `/outbounds/${index}/flow`,
-          `Outbound "${tag}" enables flow=xtls-rprx-vision but tls.enabled is not true; xtls-rprx-vision requires TLS.`,
+          `Outbound "${tag}" enables flow=xtls-rprx-vision but tls.enabled is not true; xtls-rprx-vision needs TLS (or Reality) to function.`,
         );
       }
     }
