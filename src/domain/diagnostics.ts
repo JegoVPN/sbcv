@@ -1325,13 +1325,19 @@ export function validateConfig(
           `Endpoint "${tag}" (tailscale) sets advertise_tags; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
         );
       }
-      if (typeof obj.system_interface === "string" && obj.system_interface.trim() !== "" && !atLeast(version, "1.13")) {
+      // system_interface (bool), system_interface_name (string), system_interface_mtu (number) are all
+      // 1.13+ (C0-13: system_interface is a boolean, not a string). Flag any of them set on < 1.13.
+      const usesSystemInterface =
+        obj.system_interface === true ||
+        (typeof obj.system_interface_name === "string" && obj.system_interface_name.trim() !== "") ||
+        typeof obj.system_interface_mtu === "number";
+      if (usesSystemInterface && !atLeast(version, "1.13")) {
         push(
           diagnostics,
           "warning",
           "endpoint-tailscale-system-interface-1-13-only",
           `/endpoints/${index}/system_interface`,
-          `Endpoint "${tag}" (tailscale) sets system_interface; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
+          `Endpoint "${tag}" (tailscale) uses system_interface fields; these are sing-box 1.13+. Stable 1.12 targets reject them.`,
         );
       }
     });

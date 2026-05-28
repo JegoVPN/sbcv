@@ -244,6 +244,8 @@ const endpointHandledFields = new Set([
   "advertise_tags",
   "auth_key",
   "system_interface",
+  "system_interface_name",
+  "system_interface_mtu",
   "relay_server_static_endpoints",
   ...dialSharedFields,
 ]);
@@ -4908,13 +4910,29 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   onChange={(event) => updateField(ref, "advertise_tags", fromList(event.target.value))}
                 />
               </label>
-              <label className="field">
-                <span>System Interface (since sing-box 1.13.0)</span>
+              <label className="toggle-row">
                 <input
-                  value={typeof entity.system_interface === "string" ? entity.system_interface : ""}
+                  type="checkbox"
+                  checked={entity.system_interface === true}
+                  onChange={(event) => updateField(ref, "system_interface", event.target.checked || undefined)}
+                />
+                <span>System Interface (since sing-box 1.13.0)</span>
+              </label>
+              <label className="field">
+                <span>System Interface Name (since sing-box 1.13.0)</span>
+                <input
+                  value={typeof entity.system_interface_name === "string" ? entity.system_interface_name : ""}
                   placeholder="tailscale0"
+                  onChange={(event) => updateField(ref, "system_interface_name", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>System Interface MTU (since sing-box 1.13.0)</span>
+                <input
+                  type="number"
+                  value={typeof entity.system_interface_mtu === "number" ? entity.system_interface_mtu : ""}
                   onChange={(event) =>
-                    updateField(ref, "system_interface", event.target.value || undefined)
+                    updateField(ref, "system_interface_mtu", event.target.value === "" ? undefined : Number(event.target.value))
                   }
                 />
               </label>
