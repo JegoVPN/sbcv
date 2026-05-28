@@ -2548,3 +2548,15 @@ button.sbc-edge-remove:focus-visible {
   font-size: 9px;
   font-weight: 800;
 }
+
+/* Mobile node-add sheet (A25 / W31): reuse the desktop Palette inside a bottom sheet */
+.mobile-node-sheet .palette {
+  position: static;
+  top: auto;
+  left: auto;
+  width: 100%;
+  max-height: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+}

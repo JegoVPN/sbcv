@@ -84,7 +84,9 @@ work, not after.
 - [~] A24 — canvas connect/disconnect discoverability + edge legend (`canvas-connect-discoverability`) — legend slice landed
   - [x] A24-legend — desktop edge legend (configured link / animated traffic path / hover-✕ disconnect) (W30) — PR #77
   - [ ] A24-rest — drag affordance, invalid-drop toast, right-click disconnect (W30 tail)
-- [ ] A25 — mobile build path (`mobile-build-path`)
+- [~] A25 — mobile build path (`mobile-build-path`) — node-add slice landed
+  - [x] A25-add — mobile node-add path: Palette in a bottom sheet via an "Add node" button (W31/T12) — PR #80
+  - [ ] A25-rest — touch connect affordance; sheet scroll-trap fix; truly defer the Palette chunk on mobile (W31 tail)
 - [~] A26 — import safety + onboarding (`import-safety-and-onboarding`) — import-confirm slice landed
   - [x] A26-confirm — confirm before import overwrites a non-empty config (desktop + mobile) (W32) — PR #79
   - [ ] A26-rest — import undo + success/error feedback toast; empty/first-run onboarding state (W32 tail)
@@ -1275,3 +1277,26 @@ Status: implemented 2026-05-29 in `atomic/import-safety-confirm`; merged in PR #
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (790 passed | 1 todo), `pnpm build`,
   `pnpm e2e` (14 passed).
 - Official check: n/a — import-flow UX.
+
+### A25-add mobile-build-path — mobile node-add path (W31/T12)
+Status: implemented 2026-05-29 in `atomic/mobile-build-path`; merged in PR #80. First A25 slice.
+
+- What changed (W31/T12): the mobile shell rendered no Palette, so a user could not add any node on
+  touch (P0 "mobile cannot build a config"). Added a mobile "Add node" (Plus) button in MobileTopBar
+  that opens a lazy-loaded `MobileNodeSheet` hosting the existing `<Palette/>` (which already carries
+  every node entry + `createFromPalette`) inside the shared BottomSheet; a `.mobile-node-sheet .palette`
+  CSS override flows it in the sheet. On add, the node-selection auto-closes the sheet so it doesn't
+  stack over the inspector sheet.
+- Frontend perf review (`vercel-react-best-practices`): MobileNodeSheet is lazy-loaded; one selectedId
+  subscription for the auto-close.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers. Verified end-to-end
+  that a mobile user can add a node (createFromPalette is viewport-agnostic), layout/a11y/topbar-crowding
+  are acceptable, and no regression. Applied one SHOULD-FIX in-pass: auto-close the node sheet on add
+  (the reviewer's probe found dual stacked sheets). The other SHOULD-FIX (the lazy wrapper doesn't truly
+  defer the Palette chunk because App eagerly imports Palette for desktop) is recorded accurately and
+  queued as A25-rest, not over-claimed.
+  - Deferred to follow-up atomic: A25-rest (touch connect affordance, sheet scroll-trap, real
+    Palette-chunk deferral on mobile).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (792 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (mobile passed).
+- Official check: n/a — mobile UI.
