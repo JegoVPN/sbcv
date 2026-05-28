@@ -1081,6 +1081,28 @@ export function validateConfig(
         `Inbound "${inbound.tag ?? `inbound-${index}`}" uses Hysteria v1, which is deprecated by sing-box upstream in favour of Hysteria2. Migrate to type="hysteria2" for new deployments.`,
       );
     }
+    if (inbound.type === "cloudflared") {
+      const obj = inbound as Record<string, unknown>;
+      const tag = (obj.tag as string | undefined) ?? `inbound-${index}`;
+      if (typeof obj.token !== "string" || obj.token.trim() === "") {
+        push(
+          diagnostics,
+          "error",
+          "inbound-cloudflared-token-missing",
+          `/inbounds/${index}/token`,
+          `Cloudflared inbound "${tag}" requires a base64 tunnel token (Cloudflare Zero Trust → Networks → Tunnels).`,
+        );
+      }
+      if (!atLeast(version, "1.14")) {
+        push(
+          diagnostics,
+          "warning",
+          "inbound-cloudflared-testing-only",
+          `/inbounds/${index}`,
+          `Cloudflared inbound "${tag}" is sing-box 1.14+ (testing). The current target is ${version}; stable rejects it.`,
+        );
+      }
+    }
     if (inbound.type === "vmess") {
       validateVmessLikeUsers(
         `/inbounds/${index}/users`,

@@ -138,6 +138,12 @@ const inboundHandledFields = new Set([
   "override_address",
   "override_port",
   "network",
+  "token",
+  "ha_connections",
+  "protocol",
+  "post_quantum",
+  "region",
+  "grace_period",
   "set_system_proxy",
   "include_uid_range",
   "exclude_uid_range",
@@ -3150,6 +3156,48 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 <option value="udp">udp</option>
               </select>
             </label>
+          ) : null}
+          {entityType === "cloudflared" ? (
+            <>
+              <div className="inspector-section-title">Cloudflare Tunnel</div>
+              <SensitiveTextField
+                label="Token"
+                value={String(entity.token ?? "")}
+                onChange={(next) => updateField(ref, "token", next || undefined)}
+                placeholder="base64 tunnel token"
+              />
+              <label className="field">
+                <span>HA Connections</span>
+                <input
+                  type="number"
+                  value={typeof entity.ha_connections === "number" ? entity.ha_connections : ""}
+                  onChange={(event) => {
+                    const parsed = Number(event.target.value);
+                    updateField(ref, "ha_connections", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>Protocol</span>
+                <select value={String(entity.protocol ?? "")} onChange={(event) => updateField(ref, "protocol", event.target.value || undefined)}>
+                  <option value="">(auto)</option>
+                  <option value="quic">quic</option>
+                  <option value="http2">http2</option>
+                </select>
+              </label>
+              <label className="toggle-row">
+                <input type="checkbox" checked={entity.post_quantum === true} onChange={(event) => updateField(ref, "post_quantum", event.target.checked || undefined)} />
+                <span>Post-quantum</span>
+              </label>
+              <label className="field">
+                <span>Region</span>
+                <input value={String(entity.region ?? "")} onChange={(event) => updateField(ref, "region", event.target.value || undefined)} />
+              </label>
+              <label className="field">
+                <span>Grace Period</span>
+                <input value={String(entity.grace_period ?? "")} onChange={(event) => updateField(ref, "grace_period", event.target.value || undefined)} placeholder="30s" />
+              </label>
+            </>
           ) : null}
           {entityType === "direct" ? (
             <>
