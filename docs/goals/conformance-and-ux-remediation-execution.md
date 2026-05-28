@@ -68,9 +68,12 @@ umbrella's order:
 5. **Local checks** — `git diff --check`, `pnpm exec tsc -b --pretty false`, `pnpm test`, `pnpm build`,
    and `pnpm e2e` where interaction changed. Frontend diffs → `vercel-react-best-practices` review.
 6. **Codex review gate** — `codex:setup` once to confirm readiness, then hand the diff to Codex.
-   ≤2 rounds; fix actionable findings. Unresolved after round 2 → record as a follow-up atomic, do not
-   loop a third round.
-7. **PR → `main`** — signed, squash-merge, one atomic per PR.
+   ≤2 rounds; fix actionable findings. After round 2, **defer-and-proceed** (per the umbrella): record
+   any still-open finding as a follow-up atomic and merge — do not loop a third round. A finding that
+   shows the atomic's own outcome is *not met* is a failed step 3/4 (test not green), not a deferral —
+   fix it or hit a Stop Condition; do not merge.
+7. **PR → `main`** — signed, squash-merge, one atomic per PR. After merge, confirm the squash commit
+   shows **Verified** on GitHub when GitHub access is available.
 8. **Issue gates** — PR issue gate immediately after opening; main issue gate before the next atomic
    (per `goal-driven-development.md`). UNSTABLE from a pending GitHub Actions check is **not** a merge
    blocker (deploy is Cloudflare, not Actions).
@@ -101,18 +104,23 @@ default**. Wait for the user.
 ## Stop Conditions (abort the run and report)
 
 - Local checks / build fail repeatedly and the cause is outside the current atomic's scope.
-- Codex flags a correctness issue still unresolved after two rounds.
+- The atomic's own outcome cannot be met — its red test will not go green without a queue change.
 - An atomic requires re-ordering or scope-changing the queue → update the umbrella doc + devlog first,
   then resume.
-- `sing-box-stable` / `sing-box-testing` unavailable → record it, distinguish browser semantic
-  validation from official validation, and continue (do not silently skip the official check).
+
+Codex findings do **not** abort the run: per step 6, an unresolved non-blocking finding after round 2
+is deferred to a follow-up atomic and the run proceeds. `sing-box` binary unavailability is **not** a
+stop either — it is handled in the Validation Matrix (record + degrade to browser semantic validation).
 
 ## Validation Matrix
 
 Reuse the umbrella's Validation Matrix (lint `git diff --check`, types `tsc -b`, unit/component
 `pnpm test`, build `pnpm build`, interaction `pnpm e2e`, config-doc coverage `pnpm audit:config-docs`,
-`sing-box-stable check` / `sing-box-testing check`). Per atomic, prove the specific user-facing path it
-claims (docs-only rows fall back to a traceability review).
+`sing-box-stable check` / `sing-box-testing check`). **Add round-trip fixture tests whenever an atomic
+changes config import/export or fixtures** (per `goal-driven-development.md`). Per atomic, prove the
+specific user-facing path it claims (docs-only rows fall back to a traceability review). If
+`sing-box-stable` / `sing-box-testing` are unavailable, record it and distinguish browser semantic
+validation from official validation — do not silently skip the official check.
 
 ## Definition of Done (this execution goal)
 
