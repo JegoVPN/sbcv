@@ -8,6 +8,7 @@ import {
   type PortDirection,
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
+import { dnsRuleAllowsServer } from "../domain/commands";
 import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -23,6 +24,8 @@ export type SbcNodeData = {
   status: "valid" | "warning" | "error";
   compatible: string[];
   connectedPorts?: Partial<Record<PortDirection, string[]>>;
+  // Rule action (dns-rule / route-rule), when it gates action-aware ports/affordances.
+  action?: string;
 };
 
 export type SbcFlowNode = Node<SbcNodeData, "sbc">;
@@ -771,6 +774,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               ref: { kind: "dns-rule", index },
               kind: "dns-rule",
               type: "dns-rule",
+              action: typeof rule.action === "string" ? rule.action : undefined,
               title: `DNS Rule ${index + 1}`,
               subtitle:
                 listLabel(rule.domain_suffix) ??
@@ -780,7 +784,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                 rule.action ??
                 "dns match",
               status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
-              compatible: ["DNS Server"],
+              // Only a server-bearing action (route/evaluate) can attach a DNS server.
+              compatible: dnsRuleAllowsServer(rule) ? ["DNS Server"] : [],
             },
             layout,
             { x: COLUMNS.rule, y },
