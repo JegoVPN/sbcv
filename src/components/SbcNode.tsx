@@ -334,7 +334,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 }}
               >
                 <CirclePlus size={15} />
-                {data.compatible.length || 1}
+                {data.compatible.length}
               </button>
             </div>
 

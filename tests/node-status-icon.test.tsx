@@ -50,4 +50,12 @@ describe("node status glyph distinguishes warning from valid (W5 -> A9)", () => 
     const primaryGlyph = node.querySelector(".sbc-node-primary svg")?.getAttribute("class") ?? "";
     expect(primaryGlyph).not.toContain("circle-check");
   });
+
+  it("shows the real compatible count (0, not a forced 1) for a zero-compatible node", () => {
+    renderWarningGraph();
+    // A plain direct outbound advertises no compatible "+" chips; the count must read 0, not 1.
+    const node = screen.getByTestId("node-outbound:ok-direct");
+    const primary = node.querySelector(".sbc-node-primary");
+    expect(primary?.textContent).toBe("0");
+  });
 });
