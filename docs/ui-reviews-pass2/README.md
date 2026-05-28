@@ -33,6 +33,7 @@ Entry point for the second-pass review of the sing-box visual editor. Read this,
 | `_FIX-PLAN.md` | 35 work items (W1–W35) across 5 phases; every P0 mapped. The queue below indexes these. |
 | `_RELATIONSHIPS.md` | Canvas port/edge model + reference-integrity audit + the port-icon-consistency finding. |
 | `_ICONS.md` | Icon/SVG audit: duplicates, wrong/unintuitive, palette↔canvas drift, per-node recommended icons (brand SVG where an official logo exists, else a distinct functional Lucide icon). |
+| [`_icons-preview-v4.html`](_icons-preview-v4.html) | **CONFIRMED icon set** (open in a browser): every node + port icon rendered across real sizes (port 15px / titlebar 18px) and the canvas color palette. 2-letter proxy/DNS monograms (VL/VM/TR/H2/SS · TC/UD/TL/HS/H3/QC), WireGuard/Tor/Tailscale brand marks, functional Lucide for control/structural nodes, port icons by relationship semantics. **When changing any node or port icon, conform to this set — do not invent ad-hoc icons.** |
 | `_FEATURE-palette.md` | Left "Add Library" discoverability/labels. |
 | `_FEATURE-canvas.md` | Ports/edges/chips/node cards/connect interactions. |
 | `_FEATURE-inspector.md` | Editing patterns (masking, repeaters, JSON fallback, type-switch). |
@@ -58,7 +59,7 @@ approximate and de-duplicated against the themes.
 | 6 | Reference integrity holds on rename/delete: complete `referenceRegistry` + dial-detour type guards | W12, W14 (+W1 test) | T11/T13 | dangling-ref + spurious ports | domain reference/port graph | `_RELATIONSHIPS`, `inbound-direct`, `dns-server-resolved` |
 | 7 | Endpoints are first-class dial targets (outbound-half modeled) | W17 | T14 | endpoint link gap | domain reference/ports | `_RELATIONSHIPS`, `endpoint-*` |
 | 8 | Canvas connect is legible: port icon from relation + kill dead "+" chips + previewed "+" | W15, W16 (+W2/W5 tests) | T7/T8 | icon mismatch + 16 dead chips | canvas/graph interaction | `_FEATURE-canvas`, `_RELATIONSHIPS` addendum |
-| 8b | Every node type has a distinct, correct icon: make `getNodeIcon` honour `type` (reuse the palette's per-protocol picks), fix the `CheckCircle2`/`Shield`/`Server`/`Network` clashes, add WireGuard/Tor/Shadowsocks/Tailscale brand SVGs | (new) | — | 5 P1 icon dups/wrong | canvas + palette icons | `_ICONS.md` |
+| 8b | Every node type has a distinct, correct icon: make `getNodeIcon` honour `type` (reuse the palette's per-protocol picks), fix the `CheckCircle2`/`Shield`/`Server`/`Network` clashes, add WireGuard/Tor/Shadowsocks/Tailscale brand SVGs. **Implement to match the confirmed set in `_icons-preview-v4.html`.** | (new) | — | 5 P1 icon dups/wrong | canvas + palette icons | `_ICONS.md`, `_icons-preview-v4.html` |
 | 9 | Validity is readable: distinct warning icon + relabel the "✓ N" chip | W10 (glyph) | T9 | warning-invisible | canvas visual | `_FEATURE-canvas`, `_FEATURE-diagnostics` |
 | 10 | Add Library is usable: open sections, real labels, no fake "Docs" rows, search covers templates | W29 | feature | palette comprehension | palette UX | `_FEATURE-palette` |
 | 11 | Mobile can build a config: node-add path + connect affordance | W31/W32 | feature | mobile-unusable P0s | mobile interaction | `_FEATURE-mobile-templates` |
