@@ -23,7 +23,7 @@ work, not after.
 
 ### Phase 1 — Structural root-cause
 - [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
-- [ ] A2a — rule-set local `format` inference + empty-group error + WireGuard/DERP-mesh required diagnostics, domain-only (`required-fields-diagnostics`)
+- [x] A2a — rule-set local `format` inference + empty-group error + WireGuard/DERP-mesh required diagnostics, domain-only (`required-fields-diagnostics`) — PR #39
 - [ ] A2b — required `aria-required`/`*` markers + pre-export validation gate, components (`required-markers-and-export-gate`)
 - [ ] A2c — presence/required diagnostics deferred from A2a for per-finding upstream+fixture verification: inbound `listen` + credentials (C0-16), dns-rule route/evaluate `server` (C0-1, overlaps A10); may fold into A10/A20 (`required-presence-diagnostics`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
@@ -310,3 +310,31 @@ Status: implemented 2026-05-28 in `atomic/jsonfield-parse-safety`; merged in PR 
   was a headless flake — A3 changes no canvas code).
 - Official check: `sing-box-stable/testing check` not run — A3 changes Inspector editor behavior, not
   bundled fixture/exported config output.
+
+### A2a required-fields-diagnostics — flag more invalid configs before export (domain)
+Status: implemented 2026-05-28 in `atomic/required-fields-diagnostics`; merged in PR #39.
+
+- What changed (`src/domain/diagnostics.ts` + `tests/required-fields-diagnostics.test.ts`):
+  - C0-19: local rule-set with no `format` and a non-inferable `path` (ext ≠ .json/.srs) → error
+    (`rule-set-local-format-missing`); the local path is read as a filesystem path (no URL query/fragment
+    stripping), distinct from the remote-url inference.
+  - C0-5: empty selector/urltest `outbounds[]` group upgraded warning → error (`group-outbound-empty`).
+  - C0-12: WireGuard endpoint requires `address`/`private_key`/≥1 `peers`; each peer requires
+    `public_key`/`allowed_ips`.
+  - C0-10: each DERP `mesh_with[]` peer requires `server` + numeric `server_port`.
+- Scope: A2 was split (this devlog, 2026-05-28) into A2a (this) + A2b (markers + export gate) + A2c
+  (deferred presence diagnostics). A2a shipped the low-false-positive subset; **A2c** still owns inbound
+  `listen` + credential presence (C0-16) and dns-rule route/evaluate `server` (C0-1, overlaps A10).
+- Frontend perf review: n/a — domain-only, no `src/components`/`src/state` change.
+- Codex review:
+  - Round 1: 1 should-fix (local `format` inference must not strip URL query/fragment from a filesystem
+    path — fixed) + 1 nit (devlog C0-1 scope contradiction — fixed). All four diagnostics confirmed
+    against sing-box testing 1.14 with no false positives (wireguard.md:56, selector.md:24, urltest.md:23,
+    service/derp.md:96, rule-set/index.md).
+  - Round 2: skipped — the two findings were trivial and locally verified by the passing test; the repo
+    pre-push `claude-review` gate independently passed the squashed commit.
+  - Deferred to follow-up atomic: A2c (presence diagnostics, above).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (613 passed | 15 expected fail | 1
+  todo), `pnpm build`. No bundled fixture regressed from the new/upgraded diagnostics.
+- Official check: `sing-box-stable/testing check` not run — A2a adds semantic diagnostics, not bundled
+  fixture/exported config output.
