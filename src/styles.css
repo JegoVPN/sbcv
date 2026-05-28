@@ -1555,33 +1555,38 @@ button.sbc-port__action:focus-visible {
   stroke-width: 2.2;
 }
 
-.sbc-edge-remove {
+button.sbc-edge-remove {
   position: absolute;
   z-index: 5;
   width: 32px;
   height: 32px;
+  min-height: 32px;
+  padding: 0;
   border: 1px solid rgba(199, 255, 0, 0.5);
   border-radius: 999px;
   display: grid;
   place-items: center;
   pointer-events: all;
   opacity: 0;
-  color: #101418;
+  color: #151900;
   background: #c7ff00;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.36);
-  transition: opacity 120ms ease, transform 120ms ease, background 120ms ease;
+  transition: opacity 120ms ease, filter 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
-.sbc-edge-remove[data-visible="true"],
-.sbc-edge-remove:hover,
-.sbc-edge-remove:focus-visible {
+button.sbc-edge-remove[data-visible="true"],
+button.sbc-edge-remove:hover,
+button.sbc-edge-remove:focus-visible {
   opacity: 1;
 }
 
-.sbc-edge-remove:hover,
-.sbc-edge-remove:focus-visible {
+button.sbc-edge-remove:hover:not(:disabled),
+button.sbc-edge-remove:focus-visible {
   outline: 0;
-  background: #d6ff3d;
+  border-color: rgba(199, 255, 0, 0.86);
+  background: #c7ff00;
+  filter: brightness(1.14);
+  box-shadow: 0 0 0 2px rgba(199, 255, 0, 0.34), 0 10px 30px rgba(0, 0, 0, 0.28);
 }
 
 .inspector-heading {
