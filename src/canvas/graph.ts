@@ -10,7 +10,7 @@ import {
 } from "../domain/portRelationRegistry";
 import { dnsRuleAllowsServer } from "../domain/commands";
 import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
-import type { Diagnostic, EndpointConfig, EntityRef, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
+import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
 export type SbcNodeKind = PortNodeKind;
@@ -448,7 +448,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "inbound",
           type: inbound.type,
           title: tag,
-          subtitle: `${inbound.type} inbound`,
+          subtitle: inboundSubtitle(inbound),
           status: diagnosticStatus(`/inbounds/${index}`, diagnostics),
           compatible: ["Route"],
         },
@@ -732,7 +732,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             kind: "dns-server",
             type: server.type,
             title: tag,
-            subtitle: `${server.type} dns server`,
+            subtitle: dnsServerSubtitle(server),
             status: diagnosticStatus(`/dns/servers/${index}`, diagnostics),
             compatible: [],
           },
@@ -1084,6 +1084,31 @@ function centerColumnsVertically(nodes: SbcFlowNode[], layout: ProjectLayout) {
       node.position = { x: node.position.x, y: node.position.y + shift };
     }
   }
+}
+
+function inboundSubtitle(inbound: InboundConfig) {
+  // listen / listen_port reach InboundConfig through the TaggedConfig index signature (typed `unknown`),
+  // so narrow both before interpolating — a malformed import must not render `listen :true`.
+  const host = typeof inbound.listen === "string" && inbound.listen ? inbound.listen : "";
+  const port = typeof inbound.listen_port === "number" ? inbound.listen_port : undefined;
+  if (host && port != null) return `listen ${host}:${port}`;
+  if (port != null) return `listen :${port}`;
+  if (host) return `listen ${host}`;
+  return `${inbound.type} inbound`;
+}
+
+function dnsServerSubtitle(server: DnsServerConfig) {
+  // Prefer the structured `server` host (1.12+); fall back to the legacy `address` URL string (1.11).
+  const host =
+    typeof server.server === "string" && server.server
+      ? server.server
+      : typeof server.address === "string" && server.address
+        ? server.address
+        : "";
+  if (host) return server.server_port != null ? `${host}:${server.server_port}` : host;
+  // Tailscale DNS resolves through an endpoint rather than a host:port.
+  if (typeof server.endpoint === "string" && server.endpoint) return `via ${server.endpoint}`;
+  return `${server.type} dns server`;
 }
 
 function endpointSubtitle(endpoint: EndpointConfig) {

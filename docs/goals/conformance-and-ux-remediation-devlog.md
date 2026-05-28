@@ -97,7 +97,9 @@ work, not after.
 - [~] A28 — diagnostics/labels polish (`diagnostics-labels-polish`) — titlebar de-jargon slice landed
   - [x] A28-titlebar — node titlebar reads `Outbound · Shadowsocks` (human label, shared helper, de-dups CanvasWorkspace) (W34) — PR #81
   - [ ] A28-rest — `Selected {id}` raw-id pill, goHome "return to home" mislabel, target glossary tooltip, message-over-code diagnostic hierarchy, mobile diagnostics focus, mobile 36px touch targets, round-trip-fidelity copy (W34 tail)
-- [ ] A29 — per-node P2 cleanup (`per-node-p2-cleanup`)
+- [~] A29 — per-node P2 cleanup (`per-node-p2-cleanup`) — subtitle de-genericism slice landed
+  - [x] A29-subtitle — inbound + dns-server subtitles carry real info (listen host:port / server host[:port]) instead of repeating the type (W35) — PR #82
+  - [ ] A29-rest — icon mismatches, remaining subtitle genericism (route/settings/notice), export empty-string/array noise, deprecation hints, per-node copy accuracy (W35 tail)
 
 ## Decision Log
 
@@ -1348,3 +1350,31 @@ Status: implemented 2026-05-29 in `atomic/diagnostics-labels-polish`; merged in 
 - Deferred to follow-up atomic: A28-rest (`Selected {id}` raw-id pill, goHome "return to home"
   mislabel, target glossary tooltip, message-over-code diagnostic hierarchy, mobile diagnostics focus,
   mobile 36px touch targets, round-trip-fidelity copy).
+
+### A29-subtitle per-node-p2-cleanup — informative inbound + dns-server subtitles (W35)
+Status: implemented 2026-05-29 in `atomic/per-node-p2-cleanup`; merged in PR #82. First A29 slice.
+
+- What changed (W35): two node subtitles were generic type-repeats — `socks inbound`, `tls dns server`
+  — which, now that the A28 titlebar reads "Inbound · SOCKS" / "DNS Server · TLS DNS", are pure
+  duplication. They now carry real connection info like the endpoint/outbound/service subtitles already
+  do: inbound shows `listen <host>:<port>` (or `listen :<port>` / `listen <host>`, falling back to
+  `<type> inbound` for listen-less inbounds like tun); dns-server shows the structured `server`
+  host[:port] (or the legacy `address` URL, or `via <endpoint>` for tailscale), falling back to
+  `<type> dns server` for local/fakeip/hosts which have no host. Added `inboundSubtitle` /
+  `dnsServerSubtitle` next to the existing subtitle helpers in `src/canvas/graph.ts`.
+- Tests: `tests/node-subtitle.test.tsx` — renders App and asserts the rendered `.sbc-node__subtitle`:
+  inbound host:port, port-only, the listen-less tun fallback, dns-server remote host:port, and the
+  local-server fallback.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers, no should-fix.
+  Verified both helpers across every branch and all 14 dns-server types (no `undefined`/blank/crash),
+  the `port != null` guard (correct — `listen_port: 0` is a legitimate OS-assigned ephemeral port that
+  truthiness would have dropped), preserved fallbacks (tun, local), correct call-site wiring, and
+  non-tautological tests. Applied both NITS in-pass: (1) narrowed `listen_port` with `typeof === "number"`
+  before interpolating (it reaches InboundConfig via the TaggedConfig index signature as `unknown`, so a
+  malformed import could otherwise render `listen :true`); (2) added the two missing dns-branch test
+  assertions — the legacy 1.11 `address` URL form and the tailscale `via <endpoint>` branch.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (805 passed), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: n/a — canvas subtitle copy.
+- Deferred to follow-up atomic: A29-rest (icon mismatches, remaining subtitle genericism for
+  route/settings/notice, export empty-string/array noise, deprecation hints, per-node copy accuracy).
