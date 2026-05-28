@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+// The app boots with a non-empty default config, so importing prompts an overwrite confirm (A26).
+test.beforeEach(async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    void dialog.accept();
+  });
+});
+
 test("stable-first visual editor primary path", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("sbcv.app", { exact: true })).toBeVisible();
