@@ -26,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import { getNodeIcon } from "../canvas/iconRegistry";
+import { nodeTitlebarLabel } from "../canvas/nodeLabels";
 import { dnsRuleAllowsServer } from "../domain/commands";
 import {
   portEndpointsForNode,
@@ -160,7 +161,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         <span className="sbc-node-titlebar__icon">
           <Icon size={18} strokeWidth={2.2} />
         </span>
-        <span>{`${data.kind} / ${data.type}`}</span>
+        <span>{nodeTitlebarLabel(data.kind, data.type)}</span>
         {isDeprecated ? (
           <span className="sbc-node-titlebar__badge" data-testid="node-deprecated-badge" title="Deprecated since sing-box 1.11 — use route action=reject">
             deprecated

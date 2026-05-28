@@ -143,7 +143,7 @@ async function assertSelectedNodeAndInspector(page: Page) {
   await expect(firstNode.getByTestId("node-bottom-toolbar")).toBeVisible();
   await expect(page.getByTestId("node-selection-corner")).toHaveCount(4);
   const titlebar = (await firstNode.getByTestId("node-titlebar").textContent()) ?? "";
-  if (titlebar.startsWith("route /")) {
+  if (titlebar === "Route") {
     await expect(firstNode.locator('[data-testid="node-left-ports"] [data-port-node-kind="inbound"]')).toBeVisible();
     await expect(firstNode.locator('[data-testid="node-right-ports"] [data-port-node-kind="route-rule"]')).toBeVisible();
     await expect(firstNode.locator('[data-testid="node-right-ports"] [data-port-node-kind="outbound"]')).toBeVisible();

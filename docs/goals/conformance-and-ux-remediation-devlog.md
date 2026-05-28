@@ -94,7 +94,9 @@ work, not after.
   - [ ] A27-rest — extend the placeholder-secret scan to nested users[].password/uuid (review follow-up)
 
 ### Phase 4 — Polish
-- [ ] A28 — diagnostics/labels polish (`diagnostics-labels-polish`)
+- [~] A28 — diagnostics/labels polish (`diagnostics-labels-polish`) — titlebar de-jargon slice landed
+  - [x] A28-titlebar — node titlebar reads `Outbound · Shadowsocks` (human label, shared helper, de-dups CanvasWorkspace) (W34) — PR #81
+  - [ ] A28-rest — `Selected {id}` raw-id pill, goHome "return to home" mislabel, target glossary tooltip, message-over-code diagnostic hierarchy, mobile diagnostics focus, mobile 36px touch targets, round-trip-fidelity copy (W34 tail)
 - [ ] A29 — per-node P2 cleanup (`per-node-p2-cleanup`)
 
 ## Decision Log
@@ -1300,3 +1302,49 @@ Status: implemented 2026-05-29 in `atomic/mobile-build-path`; merged in PR #80. 
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (792 passed | 1 todo), `pnpm build`,
   `pnpm e2e` (mobile passed).
 - Official check: n/a — mobile UI.
+
+### Phase 3 complete — checkpoint report (2026-05-29)
+Phase 3 (UX comprehension) primary slices are all landed: A23-search (Palette search covers Templates,
+#76), A24-legend (desktop edge legend, #77), A25-add (mobile node-add path, #80), A26-confirm (import
+overwrite confirm, #79), A27 (placeholder-secret warning, #78). The P0 in this phase — "mobile cannot
+build a config" — is closed (A25-add). Each remaining `*-rest` tail (A23/A24/A25/A26/A27) is a P1/P2
+enhancement, not a blocker, and is queued in the Running TODO. Convergence-first ordering held: every
+phase's correctness work (Phases 0–2) preceded its comprehension/polish work, so no polish slice masked
+a correctness gap. Moving to Phase 4 (polish: A28 diagnostics/labels, A29 per-node P2 cleanup).
+
+### A28-titlebar diagnostics-labels-polish — node titlebar reads a human label (W34)
+Status: implemented 2026-05-29 in `atomic/diagnostics-labels-polish`; merged in PR #81. First A28 slice.
+
+- What changed (W34): the canvas node titlebar rendered raw machine enums — `outbound / shadowsocks`,
+  `dns-server / tailscale`, and the redundant `route / route`. It now reads a human label —
+  `Outbound · Shadowsocks`, `DNS Server · Tailscale` — and collapses to a single word for singleton
+  nodes whose type duplicates their kind (route/route-rule/dns/dns-rule) so it never reads "Route ·
+  Route". Extracted a shared `src/canvas/nodeLabels.ts` (`typeLabels` + `labelForNodeKind`/
+  `labelForNodeType`/`nodeTitlebarLabel`, with a `titleCase` fallback so unknown enums still read as
+  words, e.g. `Some New Proto`). De-duplicated CanvasWorkspace by importing the shared `typeLabels`
+  (its `candidateLabel` selection helper keeps its exact prior fallback). Added `wireguard → WireGuard`
+  to the shared map (previously missing on both surfaces).
+- Tests: `tests/node-titlebar-label.test.tsx` — unit tests for the helper (known/unknown kind+type,
+  the kind·type combine, the singleton collapse) plus a component test asserting the SbcNode titlebar
+  shows `Outbound · Shadowsocks` and never the raw `outbound / shadowsocks`. Migrated the e2e route-node
+  heuristic in `external-fixtures.spec.ts` from `startsWith("route /")` to `=== "Route"` so it keeps
+  firing under the new label (it was a guard, would have silently dropped coverage otherwise).
+- Side effect (intended, called out per review): de-duping the map means the canvas WireGuard-endpoint
+  connect chip's `candidateLabel` now reads "WireGuard" instead of the old ugly fallback
+  "wireguard endpoint" (Tailscale was already mapped; this just makes the pair consistent).
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE-WITH-NITS, no blockers, no
+  should-fix. Verified the collapse logic across all 14 PORT_NODE_KINDS, the faithful candidateLabel
+  de-dup (byte-identical fallback, sole consumer), the typeLabels diff (only `wireguard` added), the
+  non-tautological test, the precise e2e `=== "Route"` migration, and noUncheckedIndexedAccess safety.
+  Applied both NITS in-pass: (1) documented the intended WireGuard-chip side effect above; (2) added
+  acronym-correct map entries `ntp → NTP`, `route-rules → Route Rules`, `dns-rules → DNS Rules` so
+  settings/notice titlebars don't read "Settings · Ntp" / "Notice · Dns Rules" (pinned by a new test
+  assertion). Did not add `acme → ACME` — cert-provider `type` is `provider.type` (e.g. "tailscale"),
+  not verified to ever be "acme", so no dead key.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (798 passed), `pnpm build`,
+  `pnpm e2e` (port-click-redesign flaked once on a drag connection-path assertion, unrelated to this
+  change — passed 7/7 on isolated re-run; titlebar touches no port-drag code).
+- Official check: n/a — canvas label copy.
+- Deferred to follow-up atomic: A28-rest (`Selected {id}` raw-id pill, goHome "return to home"
+  mislabel, target glossary tooltip, message-over-code diagnostic hierarchy, mobile diagnostics focus,
+  mobile 36px touch targets, round-trip-fidelity copy).
