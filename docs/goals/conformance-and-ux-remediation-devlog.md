@@ -44,7 +44,9 @@ work, not after.
 - [x] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`) — PR #53
 
 ### Phase 2 — Residual node P0/P1
-- [ ] A10 — dns-rule server settable + evaluate/respond ordering (`dns-rule-server-and-ordering`)
+- [x] A10a — dns-rule `server` settable for `evaluate` (not just route), Inspector half (C0-2) (`dns-rule-server-evaluate`) — PR #55
+- [ ] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`)
+- [ ] A10c — action-aware dns-server canvas port: only advertise the server port for server-bearing actions (claude P0; structural port-registry change) (`dns-rule-action-aware-port`)
 - [ ] A11 — rule-set-inline structured editor (`rule-set-inline-editor`)
 - [ ] A12 — rule-set-remote http_client object form (`rule-set-http-client`)
 - [ ] A13 — ccm/ocm detour control (`ccm-ocm-detour`)
@@ -200,6 +202,19 @@ work, not after.
   Record the reviewer used + findings + dispositions in the milestone note. Honors [[pr-over-commits]];
   supersedes [[codex-review-gate]].
 - **Affects:** every atomic's review/merge step from A10.
+
+### 2026-05-29 — Split A10 into A10a (Inspector) + A10b (diagnostics) + A10c (canvas port)
+- **Context:** A10 (`dns-rule-server-and-ordering`, W18 / C0-2, C0-4) spans three don't-mix buckets:
+  Inspector server-gating (component), evaluate/respond ordering (domain diagnostics), and an
+  action-aware dns-server port (canvas/port-registry structural change).
+- **Decision:** Split — **A10a** Inspector server settable for `evaluate` (C0-2); **A10b** evaluate/
+  respond ordering + response-match diagnostics (C0-4, domain-only); **A10c** action-aware dns-server
+  canvas port (the port registry ignores action today — broader structural change).
+- **Reason:** Same component-vs-domain-vs-canvas boundary the program split A2/A4/A8 on; keeps each
+  atomic one-outcome and within the size budget.
+- **Note:** C0-1 (required-server diagnostic for route/evaluate) stays with A2c per the A2a split, but
+  A10b is its natural home and may absorb it — decide at A10b implementation time.
+- **Affects:** A10 (now A10a + A10b + A10c).
 
 ## Open Questions / Risks
 
@@ -686,3 +701,28 @@ diagnostics + required markers), **A4-rest** (rule-action normalizers C0-3, dns-
 C0-8), **A8b-brands** (brand SVGs), **A8b-ports** (port-relation icon vocab IC-P2-5). C2-2 (Inspector
 service-type channel filter) and `system_interface` boolean (→ A14) also remain. Next: Phase 2 (A10–A22).
 A21/A22 are a hard checkpoint (product decision) — will pause for the user there. Proceeding to A10.
+
+### A10a dns-rule-server-evaluate — DNS rule server settable for evaluate (Inspector, C0-2)
+Status: implemented 2026-05-29 in `atomic/dns-rule-server-evaluate`; merged in PR #55.
+First atomic under the new one-pass expert-review gate.
+
+- What changed (C0-2): sing-box requires `server` for both `route` and `evaluate` DNS-rule actions
+  (`dns/rule_action.md:37-41`, `:110-114`); the domain model + canvas edge already allowed evaluate,
+  but the Inspector gated the Server `<select>` to `route` only and its action-change handler wiped
+  `server` for every non-route action — so evaluate could never carry a server through the UI and
+  route→evaluate silently dropped it. Fix: gate the Server control and the action-change scrub on the
+  exported `dnsRuleAllowsServer` helper (single source of truth), so server shows/persists for
+  route+evaluate and clears only for genuinely server-less actions.
+- Frontend perf review (`vercel-react-best-practices`): render-time predicate + existing patch handler;
+  no new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior frontend + sing-box-correctness reviewer subagent — chosen because
+  the change is an Inspector gate with upstream-conformance implications. Verdict APPROVE. Confirmed
+  `{route,evaluate}` is the complete server-bearing set vs upstream, the scrub logic is correct, and no
+  regression (graph edge `graph.ts:794`, drag-connect guards, and `normalizeDnsRule` already treat
+  evaluate as server-bearing). Two NITs applied this pass: reuse `dnsRuleAllowsServer` instead of two
+  inline lists; add tests for Server-hidden-on-reject and the evaluate→route direction.
+  - Deferred to follow-up atomic: A10b (ordering diagnostics C0-4), A10c (action-aware canvas port).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (708 passed | 1 todo), `pnpm build`.
+  No e2e — Inspector form-gating, covered by component tests (`tests/dns-rule-server.test.tsx`).
+- Official check: `sing-box-stable/testing check` not run — A10a changes Inspector field gating, not
+  bundled fixture/exported config output.
