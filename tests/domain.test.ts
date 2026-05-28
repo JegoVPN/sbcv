@@ -2650,7 +2650,9 @@ describe("canonical sing-box domain model", () => {
   });
 
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
-    const tlsRequiredInbounds = ["trojan", "naive", "hysteria", "hysteria2", "tuic", "anytls", "vless"];
+    // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
+    // over Reality / a plain transport). The outbound keeps a TLS-on client default below.
+    const tlsRequiredInbounds = ["trojan", "naive", "hysteria", "hysteria2", "tuic", "anytls"];
     for (const type of tlsRequiredInbounds) {
       const stub = createInbound(type, `${type}-in`) as Record<string, unknown>;
       expect(stub.tls, `inbound ${type} should seed default tls block`).toMatchObject({ enabled: true });
