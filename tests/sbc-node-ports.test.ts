@@ -120,7 +120,9 @@ describe("dial detour port type guards (W5 -> A6)", () => {
   // nodeTypeExcludes, so non-dialable outbounds (block/selector/urltest/dns) still expose a dial
   // detour-target input — a dead chain (_RELATIONSHIPS.md P2-f). Flips red when A6 adds
   // nodeTypeExcludes ["block","selector","urltest","dns"] to those endpoints; convert `it.fails` -> `it`.
-  it.fails("outbound block does not expose a dial detour-target input", () => {
-    expect(getPortSpecs("outbound", "block", "input").map((port) => port.key)).not.toContain("detour-target");
-  });
+  for (const type of ["block", "selector", "urltest", "dns"]) {
+    it.fails(`outbound ${type} does not expose a dial detour-target input`, () => {
+      expect(getPortSpecs("outbound", type, "input").map((port) => port.key)).not.toContain("detour-target");
+    });
+  }
 });

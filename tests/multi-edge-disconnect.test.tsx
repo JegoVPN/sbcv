@@ -39,7 +39,12 @@ describe("multi-edge disconnect targets a specific reference (stub -> A8; C1-7/8
     expect(screen.getAllByLabelText(MEMBER_DISCONNECT_LABEL).length).toBeGreaterThan(0);
   });
 
-  it("documents the per-port control removing only the first member today (C1-7/8/23)", () => {
+  // The C1-7/8/23 defect is specific to the AGGREGATE port: the selector's single "outbound-member"
+  // output control maps (via edgeByPort) to the FIRST member edge only, so it always removes `hk` — the
+  // user cannot target `jp` from this control. (Per-member disconnect DOES exist from each member node's
+  // own `selector-group` input port; that is not the bug.) This characterization breaks when A8 changes
+  // the aggregate-port disconnect behavior, forcing the test to be updated to the corrected contract.
+  it("documents the aggregate member control removing only the first edge today (C1-7/8/23)", () => {
     renderSelectorWithTwoMembers();
     const controls = screen.getAllByLabelText(MEMBER_DISCONNECT_LABEL);
     expect(controls).toHaveLength(1);
@@ -47,8 +52,9 @@ describe("multi-edge disconnect targets a specific reference (stub -> A8; C1-7/8
     expect(selectorMembers()).toEqual(["jp"]);
   });
 
-  it.fails("exposes a disconnect affordance per connected selector member", () => {
-    renderSelectorWithTwoMembers();
-    expect(screen.getAllByLabelText(MEMBER_DISCONNECT_LABEL)).toHaveLength(2);
-  });
+  // Stub: A8 must define and test the corrected aggregate-port multi-reference disconnect (e.g. a
+  // per-edge affordance, or removing the misleading aggregate control in favor of the member-side
+  // controls). The exact affordance is A8's design call, so this is left as an explicit TODO rather than
+  // a brittle assertion against an unknown post-fix shape.
+  it.todo("A8: aggregate-port disconnect targets the intended specific member reference");
 });

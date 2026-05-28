@@ -37,13 +37,13 @@ one of two mechanisms, chosen per guardrail for robustness:
 
 | ID | File | Encodes | Mechanism | Flips green in |
 |---|---|---|---|---|
-| W1 | `tests/reference-registry-completeness.test.ts` | `referenceRegistry` drops 5 code-verified refs on rename/delete: route-rule `resolve.server`, inbound listen `detour`, tun `route_address_set`, shadowtls `handshake.detour`, derp `mesh_with[].detour` (`_RELATIONSHIPS` rows 5/28/29/30/23) | `it.fails` behavior + 1 green sanity | A6 |
-| W2 | `tests/compatible-chip-coverage.test.ts` | every advertised `graph.ts` `compatible:[...]` chip has a `createCompatible` branch; 16 are dead (14 selector/urltest proxy types + "Shadowsocks Inbound" + "Tailscale Endpoint") | `it.fails` + green sanity | A8 |
+| W1 | `tests/reference-registry-completeness.test.ts` | `referenceRegistry` drops 5 code-verified refs on **both delete and rename**: route-rule `resolve.server`, inbound listen `detour`, tun `route_address_set`, shadowtls `handshake.detour`, derp `mesh_with[].detour` (`_RELATIONSHIPS` rows 5/28/29/30/23) | `it.fails` delete + rename + green sanity | A6 |
+| W2 | `tests/compatible-chip-coverage.test.ts` | every advertised `graph.ts` `compatible:[...]` chip mutates config via `createCompatible`; 16 are dead no-ops (14 selector/urltest proxy types + "Shadowsocks Inbound" + "Tailscale Endpoint") | `it.fails` **behavioral probe** (invokes `createCompatible`, detects no-op) + green sanity | A8 |
 | W3 | `tests/shared-field-role.test.tsx` | inbound TLS/multiplex cards must not render client/outbound-only fields (`sharedFieldDefinitions` ignores `ref.kind`) | characterization + companion | A1 |
 | W4 | `tests/json-field-parse.test.tsx` | `JsonField` must not write unparseable text into canonical config (it currently writes the raw string on parse failure) | characterization + companion | A3 |
-| W5a | `tests/sbc-node-ports.test.ts` (extend) | outbound `block` (and selector/urltest/dns) must not expose a `detour-target` input (`detour-target` endpoints lack `nodeTypeExcludes`) | `it.fails` | A6 |
+| W5a | `tests/sbc-node-ports.test.ts` (extend) | outbound `block`/`selector`/`urltest`/`dns` must not expose a `detour-target` input (`detour-target` endpoints lack `nodeTypeExcludes`) | `it.fails` per type | A6 |
 | W5b | `tests/node-status-icon.test.tsx` | a `warning` node must render a glyph distinct from a valid node (both render `CheckCircle2` today) | characterization + companion | A9 |
-| stub | `tests/multi-edge-disconnect.test.tsx` | a port shared by multiple edges must allow disconnecting a specific reference; the per-port control removes only the first edge (`CanvasWorkspace.edgeByPort` keeps the first edge per port) | characterization + `it.fails` | A8 |
+| stub | `tests/multi-edge-disconnect.test.tsx` | the AGGREGATE selector member port removes only the first edge (`CanvasWorkspace.edgeByPort` keeps the first edge per port); per-member disconnect already exists from each member's own input port | characterization + `it.todo` | A8 |
 
 ## Re-verification Against HEAD (queue step 2)
 
@@ -81,3 +81,9 @@ No fixture/export output changes, so official `sing-box` checks are not applicab
   keep `pnpm test` green (execution-plan step 5) while guaranteeing each guardrail is a faithful tripwire.
 - Date: 2026-05-28. Deviation: W5 dns-server-detour part shipped as a regression lock (already fixed by
   the canvas PR-7 atomic), per the re-verification note above.
+- Date: 2026-05-28. Codex round-1 hardening: W2 became a behavioral probe (invokes `createCompatible`,
+  detects no-op) instead of a static handled-set mirror, so it flips red whether A8 wires or prunes the
+  dead chips; W1 gained rename cases (the `replaceRegisteredTagReferences` path is separate from delete);
+  W5a covers all four non-dialable outbound types. The multi-edge stub was downgraded to `it.todo` after
+  discovering per-member disconnect already works from each member node's `selector-group` input — only
+  the selector's aggregate output control is defective, and its corrected affordance is A8's design call.
