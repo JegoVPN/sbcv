@@ -1817,6 +1817,13 @@ function SharedFieldControl({
   }
 
   if (definition.kind === "select") {
+    // Some shared fields (http_client / default_http_client / domain_resolver) may hold a tag string
+    // OR an inline object. The tag <select> can't represent an object — rendering it as "None" and
+    // writing a string would silently destroy the object. Fall back to the parse-safe JSON editor so
+    // the object form is preserved and editable.
+    if (value !== null && typeof value === "object") {
+      return <JsonField label={definition.label} value={value} onChange={applyValue} />;
+    }
     return (
       <label className="field">
         <span>{definition.label}</span>

@@ -208,7 +208,8 @@ export function sharedGroupsForEntity(
     if (entityType === "hysteria-realm") groups.push("http2");
   }
 
-  if (ref.kind === "rule-set" && entityType === "remote") groups.push("http-client");
+  // `http_client` is a sing-box 1.14 field; only surface it for the testing channel.
+  if (ref.kind === "rule-set" && entityType === "remote" && channel === "testing") groups.push("http-client");
   if (ref.kind === "route") {
     groups.push("dial");
     if (channel === "testing") groups.push("http-client", "neighbor");
