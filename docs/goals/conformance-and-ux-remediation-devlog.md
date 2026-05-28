@@ -24,7 +24,7 @@ work, not after.
 ### Phase 1 — Structural root-cause
 - [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
 - [x] A2a — rule-set local `format` inference + empty-group error + WireGuard/DERP-mesh required diagnostics, domain-only (`required-fields-diagnostics`) — PR #39
-- [ ] A2b — pre-export validation gate: confirm before downloading a config with error diagnostics (`required-markers-and-export-gate`)
+- [x] A2b — pre-export validation gate: confirm before downloading a config with error diagnostics (`required-markers-and-export-gate`) — PR #40
 - [ ] A2c — deferred from A2a/A2b for per-finding upstream+fixture verification: presence diagnostics (inbound `listen` + credentials C0-16; dns-rule route/evaluate `server` C0-1, overlaps A10) **+ the paired required `aria-required`/`*` field markers**; may fold into A10/A20 (`required-presence-and-markers`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
@@ -337,4 +337,28 @@ Status: implemented 2026-05-28 in `atomic/required-fields-diagnostics`; merged i
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (613 passed | 15 expected fail | 1
   todo), `pnpm build`. No bundled fixture regressed from the new/upgraded diagnostics.
 - Official check: `sing-box-stable/testing check` not run — A2a adds semantic diagnostics, not bundled
+  fixture/exported config output.
+
+### A2b required-markers-and-export-gate — pre-export validation gate (component)
+Status: implemented 2026-05-28 in `atomic/required-markers-and-export-gate`; merged in PR #40.
+
+- What changed (`src/components/TopBar.tsx` + `tests/export-gate.test.tsx` + `e2e/external-fixtures.spec.ts`):
+  `exportConfig()` prompts a `window.confirm` when the config has error-level diagnostics and aborts the
+  download on cancel (W9 pre-export gate). The gate reads semantic `diagnostics` (always current, never
+  cleared mid-flight), not the combined pill status — closing the in-flight official-check race. Added an
+  `export-button` testid; the external-fixtures e2e accepts the dialog so its round-trip still runs.
+- Scope: A2b is the export gate only. Required-marker `aria-required`/`*` field hints were moved to A2c
+  (they pair with the presence diagnostics A2c also owns).
+- Frontend perf review (`vercel-react-best-practices`): adds a guard to an existing handler using
+  already-subscribed `diagnostics`; no new subscriptions, waterfalls, or bundle deps. Pass.
+- Codex review:
+  - Round 1: 1 should-fix — gating on combined `status` could be raced by an in-flight official check
+    (runOfficialCheck clears official diagnostics on start). Fixed by gating on semantic `diagnostics`.
+  - Round 2: skipped — the fix directly implements the recommendation and is verified by unit + e2e; the
+    repo pre-push `claude-review` gate passed the squashed commit.
+  - Deferred to follow-up atomic: none (markers were a scope move to A2c, not a finding).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (616 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (external-fixtures + port-click specs 8 passed; an earlier port-click
+  failure was a known headless-drag flake).
+- Official check: `sing-box-stable/testing check` not run — A2b changes the export UI flow, not bundled
   fixture/exported config output.
