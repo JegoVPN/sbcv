@@ -48,7 +48,8 @@ work, not after.
 - [x] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`) — PR #56
 - [x] A10c — action-aware dns-server canvas port + compatible chip: advertise the server port/chip only for server-bearing actions (claude P0) (`dns-rule-action-aware-port`) — PR #57
 - [ ] A10d — scrub a stale `server` on import for non-server dns-rule actions (run `normalizeDnsRule` in serialization, not just add/update commands); today an imported `{action:"reject",server:"x"}` is invisible on every surface but still exported (A10c review follow-up)
-- [ ] A11 — rule-set-inline structured editor (`rule-set-inline-editor`)
+- [x] A11 — rule-set-inline structured editor (MVP: per-rule list + common match fields + JSON escape hatch) (`rule-set-inline-editor`) — PR #58
+- [ ] A11-full — full headless-rule editor: all ~25 fields + logical and/or builder (deferred from A11 MVP; reachable today via JSON mode) (`rule-set-inline-editor-full`)
 - [ ] A12 — rule-set-remote http_client object form (`rule-set-http-client`)
 - [ ] A13 — ccm/ocm detour control (`ccm-ocm-detour`)
 - [ ] A14 — endpoint-tailscale system_interface bool (`endpoint-tailscale-system-interface`)
@@ -781,3 +782,31 @@ Status: implemented 2026-05-29 in `atomic/dns-rule-action-aware-port`; merged in
   `pnpm e2e` (14 passed).
 - Official check: `sing-box-stable/testing check` not run — A10c changes canvas port/chip rendering, not
   bundled fixture/exported config output.
+
+### A11 rule-set-inline-editor — structured editor for inline rules[] (Inspector, W19)
+Status: implemented 2026-05-29 in `atomic/rule-set-inline-editor`; merged in PR #58.
+
+- What changed (W19): the inline rule-set `rules[]` — the only required inline payload — was editable
+  only as one raw JSON textarea. `InlineRuleSetEditor` now defaults to a structured per-rule list:
+  add/remove/reorder rules; structured inputs for the common headless match fields (domain,
+  domain_suffix, domain_keyword, domain_regex, ip_cidr, source_ip_cidr, port [numeric], network,
+  process_name) + an invert checkbox; a per-rule patch-merge that preserves non-surfaced keys (logical/
+  exotic rules are never clobbered — a logical rule shows a hint and is edited in JSON mode); and a
+  parse-safe "Edit rules as JSON" escape hatch (`InlineRulesJsonField`). The component is shared by the
+  inline rule-set inspector AND the route/dns-rule logical sub-rule groups, so all three gained it.
+- DECISION (user-approved MVP scope): ship the common-field structured list + JSON fallback, not all
+  ~25 headless fields or a visual and/or builder. The full editor is queued as **A11-full**; everything
+  it would cover stays reachable via JSON mode, so there is no regression vs the old all-JSON editor.
+- Frontend perf review (`vercel-react-best-practices`): local `mode` state; pure list transforms on
+  edit; reuses `listishToText`/`textToRuleList`; no new store subscriptions/waterfalls/bundle deps.
+- Expert review (one pass): a senior React/frontend + sing-box reviewer subagent. Verdict CHANGES
+  REQUESTED → fixed this pass. 1 BLOCKER: the editor's local `mode`/JSON-draft leaked across entities
+  (reconciled not remounted) — keyed it by entity identity at all three call sites (the A3 JsonField
+  precedent). 1 SHOULD-FIX: a numeric field given all-non-numeric text stored `[]` — `textToRuleList`
+  now clears it. Verified clean: clear-field key removal, no sibling mutation, logical round-trip
+  preserved, port number[] parsing, JSON parse-safety, index-key acceptable (controlled inputs).
+  - Deferred to follow-up atomic: A11-full (complete headless-rule editor).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (725 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: `sing-box-stable/testing check` not run — A11 changes the inline-rules Inspector
+  editor, not bundled fixture/exported config output.
