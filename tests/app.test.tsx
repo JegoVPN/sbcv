@@ -265,6 +265,21 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().config.route?.final).toBe("jp");
   });
 
+  it("connects route and selector ports into a WireGuard endpoint target (A7b)", () => {
+    useProjectStore.getState().importJson(JSON.stringify({
+      inbounds: [{ type: "socks", tag: "in" }],
+      outbounds: [{ type: "selector", tag: "auto", outbounds: [] }],
+      endpoints: [{ type: "wireguard", tag: "wg", address: ["10.0.0.2/32"], private_key: "k", peers: [] }],
+      route: {},
+    }));
+
+    useProjectStore.getState().connectPorts({ source: "route:main", sourceHandle: "outbound", target: "endpoint:wg", targetHandle: "route" });
+    expect(useProjectStore.getState().config.route?.final).toBe("wg");
+
+    useProjectStore.getState().connectPorts({ source: "outbound:auto", sourceHandle: "outbound-member", target: "endpoint:wg", targetHandle: "selector-group" });
+    expect(useProjectStore.getState().config.outbounds?.find((item) => item.tag === "auto")?.outbounds).toContain("wg");
+  });
+
   it("connects PR-7 writable resource ports through canonical JSON commands", () => {
     useProjectStore.getState().importJson(JSON.stringify({
       outbounds: [{ type: "direct", tag: "direct" }],
