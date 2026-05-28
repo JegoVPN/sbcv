@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Braces, Network, Route, Server, Trash2, X } from "lucide-react";
 import { getNodeIcon } from "../canvas/iconRegistry";
+import { dnsRuleAllowsServer } from "../domain/commands";
 import type { EntityRef, SingBoxConfig } from "../domain/types";
 import {
   CREATABLE_DNS_SERVER_TYPES,
@@ -1265,8 +1266,8 @@ function DnsRuleInspector({
             const nextAction = event.target.value;
             const cleared: Record<string, unknown> = { action: nextAction };
             // route and evaluate both require `server` (dns/rule_action.md); only scrub it when the
-            // next action bears no server.
-            if (nextAction !== "route" && nextAction !== "evaluate" && rule.server !== undefined) {
+            // next action bears no server. Single source of truth via the domain helper.
+            if (!dnsRuleAllowsServer({ action: nextAction }) && rule.server !== undefined) {
               cleared.server = undefined;
             }
             patch(cleared);
@@ -1280,7 +1281,7 @@ function DnsRuleInspector({
           <option value="predefined">predefined</option>
         </select>
       </label>
-      {["route", "evaluate"].includes(String(rule.action ?? "route")) ? (
+      {dnsRuleAllowsServer(rule) ? (
         <label className="field">
           <span>Server</span>
           <select value={String(rule.server ?? "")} onChange={(event) => patch({ server: event.target.value || undefined })}>

@@ -43,7 +43,7 @@ describe("A10a — DNS rule server is settable for route and evaluate", () => {
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBe("local-dns");
   });
 
-  it("keeps the server when switching route -> evaluate (both require it)", () => {
+  it("keeps the server across route <-> evaluate (both require it)", () => {
     importDnsRule("route");
     render(<App />);
     fireEvent.click(screen.getByTestId("node-dns-rule:0"));
@@ -51,9 +51,13 @@ describe("A10a — DNS rule server is settable for route and evaluate", () => {
     fireEvent.change(screen.getByLabelText("Action"), { target: { value: "evaluate" } });
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.action).toBe("evaluate");
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBe("remote-doh");
+
+    fireEvent.change(screen.getByLabelText("Action"), { target: { value: "route" } });
+    expect(useProjectStore.getState().config.dns?.rules?.[0]?.action).toBe("route");
+    expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBe("remote-doh");
   });
 
-  it("clears the server when switching to a non-server action (reject)", () => {
+  it("clears the server and hides the control for a non-server action (reject)", () => {
     importDnsRule("evaluate");
     render(<App />);
     fireEvent.click(screen.getByTestId("node-dns-rule:0"));
@@ -61,5 +65,6 @@ describe("A10a — DNS rule server is settable for route and evaluate", () => {
     fireEvent.change(screen.getByLabelText("Action"), { target: { value: "reject" } });
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.action).toBe("reject");
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBeUndefined();
+    expect(screen.queryByLabelText("Server")).toBeNull();
   });
 });
