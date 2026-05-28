@@ -63,7 +63,8 @@ work, not after.
   - [x] A20-dns — fakeip inet4/inet6_range CIDR-shape validation (W28 dns-server) — PR #67
   - [x] A20-inbound (network de-dup) — add `network` to inboundHandledFields so it isn't rendered twice (W28 inbound) — PR #68
   - [ ] A20-inbound-rest — per-type version-gating + congestion/zero_rtt/auth_timeout + set_system_proxy leak + tun required fields (W28 inbound tail)
-  - [ ] A20-outbound — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound)
+  - [x] A20-outbound (ssh port) — ssh server_port optional (defaults to 22), no false-positive error (W28 outbound) — PR #69
+  - [ ] A20-outbound-rest — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound tail)
   - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
   - [ ] A20-service — derp verify-client-endpoint wipe + ssm-api `/`-key collision + orphan managed (W28 service; incl C1-13)
   - [ ] A20-misc — WireGuard peer schema C0-14, VLESS flow-no-TLS C1-10, certificate-provider required C0-15/C1-14 (W28 cross-node)
@@ -1027,3 +1028,17 @@ Status: implemented 2026-05-29 in `atomic/residual-inbound-network-dedup`; merge
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (756 passed | 1 todo), `pnpm build`.
 - Official check: n/a — Inspector de-dup. Remaining inbound W28 items (version-gating, set_system_proxy
   leak, tun required fields) are queued as A20-inbound-rest.
+
+### A20-outbound residual-outbound-ssh-port — ssh server_port optional (domain, W28 outbound)
+Status: implemented 2026-05-29 in `atomic/residual-outbound-ssh-port`; merged in PR #69.
+
+- What changed (W28 outbound): SSH defaults server_port to 22 when empty (ssh.md), so it is optional —
+  but the mandatory-port check treated ssh like every other proxy type and raised a spurious BLOCKING
+  `outbound-invalid-server-port` error when the port was cleared, flipping the canvas node to error on a
+  legal config. For ssh, an absent port is now legal; only a present-but-out-of-range value is flagged.
+- Frontend perf review: n/a — domain-only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed upstream (ssh
+  "22 if empty"), the ternary handles all cases (incl. string port still flagged), server still required,
+  and ssh is the SOLE default-port proxy type (all others are `==Required==`, so no analogous bug).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (759 passed | 1 todo), `pnpm build`.
+- Official check: n/a — semantic diagnostic. Remaining outbound W28 items queued as A20-outbound-rest.
