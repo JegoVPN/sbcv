@@ -54,7 +54,8 @@ work, not after.
 - [x] A13 — ccm/ocm single correct (outbound) detour + 1.13 version gate (W21/C1-21/C2-1) (`ccm-ocm-detour`) — PR #60
 - [x] A14 — endpoint-tailscale system_interface bool + name/mtu, version-gated (W22/C0-13) (`endpoint-tailscale-system-interface`) — PR #61
 - [x] A15 — dns-server-tailscale accept_search_domain toggle (testing-gated) (W23/C1-5) (`dns-server-tailscale-fields`) — PR #62
-- [ ] A16 — hub-route default_network_type (`hub-route-network-type`)
+- [x] A16 — hub-route default_network_type array shape + de-duplicated controls (W24) (`hub-route-network-type`) — PR #63
+- [ ] A16-norm — one-time normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (or make the shared list read path string-tolerant); ~2-day pre-release shape, strands silently in the list control (A16 review follow-up)
 - [ ] A17 — inbound-redirect platform banner (`inbound-redirect-banner`)
 - [ ] A18 — inbound-vless TLS default (`inbound-vless-tls-default`)
 - [ ] A19 — settings-experimental label (`settings-experimental-label`)
@@ -907,3 +908,28 @@ Status: implemented 2026-05-29 in `atomic/dns-server-tailscale-fields`; merged i
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (742 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A15 changes an Inspector toggle, not bundled
   fixture/exported config output.
+
+### A16 hub-route-network-type — de-duplicate default_network_* + array shape (Inspector + types, W24)
+Status: implemented 2026-05-29 in `atomic/hub-route-network-type`; merged in PR #63.
+
+- What changed (W24): the route hub rendered `default_network_strategy` (select) and
+  `default_network_type` TWICE — a hardcoded block plus the shared Dial-group controls. The hardcoded
+  `default_network_type` was a text input writing a raw STRING into a `string[]` field (invalid JSON),
+  and the hardcoded strategy select wrongly mixed network_type values (wifi/cellular/ethernet) into the
+  strategy enum. Removed both hardcoded controls; the Dial-group controls (strategy select with the
+  correct `default|hybrid|fallback` enum + a `list`→string[] type control) are the single source.
+  `RouteConfig.default_network_type` is now `string[]` (+ added `default_fallback_network_type: string[]`
+  and `default_fallback_delay: string`, previously only in the index signature).
+- Frontend perf review (`vercel-react-best-practices`): removes two controls; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior React + sing-box reviewer subagent. Verdict APPROVE, no blockers.
+  Confirmed the Dial group renders these on all channels (not channel-gated), the list writes string[],
+  the kept strategy enum is the CORRECT upstream set (the removed hardcoded one was a latent bug), the
+  type additions match upstream, and the dropped "(1.13+)" label was inaccurate (these are 1.11+ fields)
+  so no real version signal was lost.
+  - Deferred to follow-up atomic: A16-norm — a legacy raw-string `default_network_type` (the ~2-day
+    pre-release buggy shape, ≈no real configs) strands silently in the list control; one-time import
+    normalization or a string-tolerant list read path.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (744 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A16 removes duplicate Inspector controls +
+  a type, not bundled fixture/exported config output.

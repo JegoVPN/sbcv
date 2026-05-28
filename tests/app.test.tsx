@@ -1295,8 +1295,9 @@ describe("SBC editor shell", () => {
     expect(inspector.getByLabelText("Default Interface")).toBeInTheDocument();
     expect(inspector.getByLabelText("Default Routing Mark (Linux)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Find process (process matchers in rules)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Default Network Strategy (1.13+)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Default Network Type (1.13+)")).toBeInTheDocument();
+    // A16: network_strategy/type are now the shared Dial-group controls (no hardcoded "(1.13+)" dupes).
+    expect(inspector.getByLabelText("Default Network Strategy")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Default Network Type")).toBeInTheDocument();
 
     fireEvent.change(inspector.getByLabelText("Default Interface"), { target: { value: "eth0" } });
     fireEvent.change(inspector.getByLabelText("Default Routing Mark (Linux)"), { target: { value: "100" } });

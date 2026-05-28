@@ -92,7 +92,9 @@ export type RouteConfig = {
   default_mark?: number;
   find_process?: boolean;
   default_network_strategy?: string;
-  default_network_type?: string;
+  default_network_type?: string[];
+  default_fallback_network_type?: string[];
+  default_fallback_delay?: string;
   default_domain_resolver?: string | Record<string, unknown>;
   [key: string]: unknown;
 };
