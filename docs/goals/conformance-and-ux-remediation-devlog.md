@@ -23,7 +23,9 @@ work, not after.
 
 ### Phase 1 — Structural root-cause
 - [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
-- [ ] A2 — required markers + pre-export gate + local rule-set `format` (`required-fields-and-export-gate`)
+- [ ] A2a — rule-set local `format` inference + empty-group error + WireGuard/DERP-mesh required diagnostics, domain-only (`required-fields-diagnostics`)
+- [ ] A2b — required `aria-required`/`*` markers + pre-export validation gate, components (`required-markers-and-export-gate`)
+- [ ] A2c — presence/required diagnostics deferred from A2a for per-finding upstream+fixture verification: inbound `listen` + credentials (C0-16), dns-rule route/evaluate `server` (C0-1, overlaps A10); may fold into A10/A20 (`required-presence-diagnostics`)
 - [x] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`) — PR #38
 - [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
 - [ ] A5 — wire `version` into `validateConfig` (`version-aware-gating`)
@@ -150,6 +152,26 @@ work, not after.
 - **How to apply:** Every Codex `C-` id is now greppable to exactly one atomic row. With `C2-2` homed,
   all `C2-*` ids are individually placed, so A28's "C2-* tail" was narrowed to "C2 label/copy residue."
 - **Affects:** A4, A5, A8, A20, A28.
+
+### 2026-05-28 — Split A2 into A2a (diagnostics) + A2b (markers + export gate)
+- **Context:** A2 (`required-fields-and-export-gate`) is "Effort: L" and spans three concerns: domain
+  diagnostics, component required-markers, and the export-UI gate.
+- **Decision:** Split into **A2a** (diagnostics additions/upgrades + rule-set local `format` inference,
+  `src/domain/diagnostics.ts` only) and **A2b** (`SharedFieldDefinition.required` + `aria-required`/`*`
+  markers in `Inspector.tsx` + pre-export confirm gate in `TopBar.tsx`). Land A2a first so A2b's export gate
+  has real error diagnostics to block on.
+- **Reason:** (1) don't-mix bucket — domain/diagnostics vs component-render vs export-UI; (2) the
+  `claude-review` pre-push gate budgets ~400 non-Markdown LOC per commit (AGENTS.md #8), and A2-as-one-commit
+  would exceed it. Splitting keeps each atomic one-outcome and within the size budget.
+- **Also:** A2a (as implemented) covers C0-19 (local rule-set `format`), C0-5 (empty selector/urltest
+  group → error), C0-12 (WireGuard endpoint required fields), and C0-10 (DERP `mesh_with` server/port).
+  The dns-rule route/evaluate `server` presence (C0-1) is deferred to A2c (overlaps A10's "evaluate hides
+  server" C0-2 and the type-change scrub C0-3). The SSM-managed severity (C0-17) is left to A20, which
+  owns the SSM mapping. The last-candidate-removal UI guard stays in A8.
+- **Affects:** A2 (now A2a + A2b, + A2c for presence diagnostics deferred from A2a after implementation —
+  inbound `listen`/credentials C0-16 and dns-rule route/evaluate `server` C0-1 need per-finding upstream +
+  fixture verification; A2a shipped the low-false-positive subset: C0-19/C0-5/C0-12/C0-10); the umbrella A2
+  row notes the split.
 
 ## Open Questions / Risks
 
