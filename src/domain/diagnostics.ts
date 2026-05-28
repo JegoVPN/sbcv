@@ -641,7 +641,11 @@ export function validateConfig(
         );
       }
       const port = outbound.server_port;
-      if (typeof port !== "number" || !Number.isFinite(port) || port <= 0 || port > 65535) {
+      // SSH defaults server_port to 22 when empty (ssh.md), so an absent port is legal — only flag a
+      // present-but-out-of-range value. Every other proxy type requires an explicit port.
+      const portMissing = port === undefined || port === null;
+      const portOutOfRange = typeof port !== "number" || !Number.isFinite(port) || port <= 0 || port > 65535;
+      if (outbound.type === "ssh" ? !portMissing && portOutOfRange : portOutOfRange) {
         push(
           diagnostics,
           "error",
