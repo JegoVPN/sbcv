@@ -56,6 +56,108 @@ test("desktop empty-drop opens chip picker and chip creates canonical route fina
   expect(config.route.final).toBe("proxy-out");
 });
 
+test("desktop empty-drop chip picker is bounded and clears the pending connection line", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1200 });
+  await importInlineConfig(page, {
+    dns: {
+      rules: [{}],
+      servers: [{ type: "https", tag: "remote-doh", server: "1.1.1.1" }],
+    },
+  });
+
+  const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
+  if (!canvasBox) throw new Error("missing canvas");
+  await dragHandle(
+    page,
+    '[data-testid="node-dns:main"] [data-port-type="dns-server"] .sbc-handle--source',
+    { x: canvasBox.x + canvasBox.width - 48, y: canvasBox.y + canvasBox.height - 24 },
+  );
+  await page.mouse.up();
+
+  const picker = page.getByRole("dialog", { name: "Compatible nodes" });
+  await expect(picker).toBeVisible();
+  const metrics = await page.evaluate(() => {
+    const canvas = document.querySelector('[aria-label="SBC visual canvas"]');
+    const picker = document.querySelector(".chip-picker");
+    const search = document.querySelector(".chip-picker__search");
+    const list = document.querySelector(".chip-picker__list");
+    const chipLine = document.querySelector(".chip-picker-link__path");
+    const visibleConnectionLines = [...document.querySelectorAll(".react-flow__connection-path")].filter((path) => {
+      const style = getComputedStyle(path);
+      return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity || 1) !== 0;
+    }).length;
+    const canvasRect = canvas?.getBoundingClientRect();
+    const pickerRect = picker?.getBoundingClientRect();
+    const searchRect = search?.getBoundingClientRect();
+    return {
+      visibleConnectionLines,
+      canvas: canvasRect ? { right: canvasRect.right, bottom: canvasRect.bottom } : null,
+      picker: pickerRect ? { width: pickerRect.width, right: pickerRect.right, bottom: pickerRect.bottom } : null,
+      search: searchRect ? { width: searchRect.width, height: searchRect.height } : null,
+      list: list ? { clientHeight: list.clientHeight, scrollHeight: list.scrollHeight } : null,
+      chipLine: chipLine ? {
+        visible: getComputedStyle(chipLine).display !== "none",
+        dash: getComputedStyle(chipLine).strokeDasharray,
+      } : null,
+    };
+  });
+
+  expect(metrics.visibleConnectionLines).toBe(0);
+  expect(metrics.chipLine).toMatchObject({ visible: true });
+  expect(metrics.chipLine?.dash).not.toBe("none");
+  expect(metrics.canvas).toBeTruthy();
+  expect(metrics.picker).toBeTruthy();
+  expect(metrics.search?.height ?? 0).toBeGreaterThan(24);
+  expect(metrics.search?.width ?? 0).toBeGreaterThan(160);
+  expect(metrics.list?.scrollHeight ?? 0).toBeGreaterThan(metrics.list?.clientHeight ?? 0);
+  expect(metrics.picker!.right).toBeLessThanOrEqual(metrics.canvas!.right - 8);
+  expect(metrics.picker!.bottom).toBeLessThanOrEqual(metrics.canvas!.bottom - 8);
+
+  const beforeZoomPath = await page.locator(".chip-picker-link__path").getAttribute("d");
+  const beforeZoomPickerWidth = metrics.picker!.width;
+  const beforeZoomSearchWidth = metrics.search!.width;
+  await page.locator(".react-flow__controls-zoomout").click();
+  await page.waitForTimeout(180);
+  const afterZoom = await page.evaluate(() => {
+    const path = document.querySelector(".chip-picker-link__path");
+    const handle = document.querySelector(
+      '[data-testid="node-dns:main"] [data-port-type="dns-server"] .sbc-handle--source',
+    );
+    const picker = document.querySelector(".chip-picker");
+    const search = document.querySelector(".chip-picker__search");
+    const d = path?.getAttribute("d") ?? "";
+    const start = d.match(/^M ([\d.-]+) ([\d.-]+)/);
+    const matrix = path instanceof SVGGraphicsElement ? path.getScreenCTM() : null;
+    const handleRect = handle?.getBoundingClientRect();
+    const pickerRect = picker?.getBoundingClientRect();
+    const searchRect = search?.getBoundingClientRect();
+    const lineStart = start && matrix
+      ? new DOMPoint(Number(start[1]), Number(start[2])).matrixTransform(matrix)
+      : null;
+    return {
+      d,
+      pickerWidth: pickerRect?.width ?? 0,
+      searchWidth: searchRect?.width ?? 0,
+      lineStart: lineStart ? { x: lineStart.x, y: lineStart.y } : null,
+      source: handleRect
+        ? {
+            x: handleRect.left + handleRect.width / 2,
+            y: handleRect.top + handleRect.height / 2,
+          }
+        : null,
+    };
+  });
+  expect(afterZoom.d).toBe(beforeZoomPath);
+  expect(afterZoom.pickerWidth).toBeLessThan(beforeZoomPickerWidth);
+  expect(afterZoom.searchWidth).toBeLessThan(beforeZoomSearchWidth);
+  expect(afterZoom.lineStart).toBeTruthy();
+  expect(afterZoom.source).toBeTruthy();
+  expect(Math.abs(afterZoom.lineStart!.x - afterZoom.source!.x)).toBeLessThan(8);
+  expect(Math.abs(afterZoom.lineStart!.y - afterZoom.source!.y)).toBeLessThan(8);
+  await picker.getByRole("button", { name: "Local DNS", exact: true }).click();
+  await expect(page.getByTestId("node-dns-server:local-dns")).toBeVisible();
+});
+
 test("desktop direct drop connects existing target without picker", async ({ page }) => {
   await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
 

@@ -113,6 +113,7 @@ type ProjectStore = {
   checkNotice: string;
   isChecking: boolean;
   isOfficialChecking: boolean;
+  layoutCaptureToken: number;
   freshLoadToken: number;
   focusToken: number;
   focusedNodeId: string | null;
@@ -157,6 +158,7 @@ type ProjectStore = {
   refreshJson: () => void;
   validateNow: () => void;
   runOfficialCheck: () => Promise<void>;
+  captureGraphPositions: (token: number, nodes: Array<{ id: string; position: { x: number; y: number } }>) => void;
   setNodePosition: (id: string, position: { x: number; y: number }) => void;
 };
 
@@ -187,6 +189,14 @@ function resetValidationState() {
     isChecking: false,
     isOfficialChecking: false,
     focusedNodeId: null,
+  };
+}
+
+function freshLayoutState(state: Pick<ProjectStore, "layoutCaptureToken" | "freshLoadToken">) {
+  return {
+    layout: { positions: {} },
+    layoutCaptureToken: state.layoutCaptureToken + 1,
+    freshLoadToken: state.freshLoadToken + 1,
   };
 }
 
@@ -796,6 +806,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   checkNotice: "",
   isChecking: false,
   isOfficialChecking: false,
+  layoutCaptureToken: 1,
   freshLoadToken: 0,
   focusToken: 0,
   focusedNodeId: null,
@@ -838,11 +849,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   loadTemplate: () =>
     set((state) => ({
       ...sync(createStableTunSplitConfig(), state.channel),
-      layout: { positions: {} },
+      ...freshLayoutState(state),
       selectedId: null,
       globalPanelOpen: false,
       focusedNodeId: null,
-      freshLoadToken: state.freshLoadToken + 1,
     })),
   loadTemplatePreset: (id) =>
     set((state) => {
@@ -851,21 +861,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         ...sync(preset.config, preset.channel),
         channel: preset.channel,
         version: preset.version,
-        layout: { positions: {} },
+        ...freshLayoutState(state),
         selectedId: null,
         globalPanelOpen: false,
         focusedNodeId: null,
-        freshLoadToken: state.freshLoadToken + 1,
       };
     }),
   loadMinimal: () =>
     set((state) => ({
       ...sync(createMinimalConfig(), state.channel),
-      layout: { positions: {} },
+      ...freshLayoutState(state),
       selectedId: null,
       globalPanelOpen: false,
       focusedNodeId: null,
-      freshLoadToken: state.freshLoadToken + 1,
     })),
 
   createFromPalette: (kind) =>
@@ -1735,10 +1743,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         return {
           ...sync(parseConfigJson(state.jsonDraft), state.channel),
           selectedId: null,
-          layout: { positions: {} },
+          ...freshLayoutState(state),
           globalPanelOpen: false,
           focusedNodeId: null,
-          freshLoadToken: state.freshLoadToken + 1,
         };
       } catch (error) {
         return {
@@ -1761,10 +1768,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         return {
           ...sync(parseConfigJson(value), state.channel),
           selectedId: null,
-          layout: { positions: {} },
+          ...freshLayoutState(state),
           globalPanelOpen: false,
           focusedNodeId: null,
-          freshLoadToken: state.freshLoadToken + 1,
         };
       } catch (error) {
         return {
@@ -1900,6 +1906,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       });
     }
   },
+  captureGraphPositions: (token, nodes) =>
+    set((state) => {
+      if (token !== state.layoutCaptureToken || token === 0) return state;
+      let positions = state.layout.positions;
+      let changed = false;
+      for (const node of nodes) {
+        if (positions[node.id]) continue;
+        if (!changed) {
+          positions = { ...positions };
+          changed = true;
+        }
+        positions[node.id] = { x: node.position.x, y: node.position.y };
+      }
+      return {
+        layoutCaptureToken: 0,
+        ...(changed ? { layout: { positions } } : null),
+      };
+    }),
   setNodePosition: (id, position) =>
     set((state) => ({
       layout: {

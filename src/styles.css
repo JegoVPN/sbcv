@@ -1241,20 +1241,53 @@ button.sbc-port__action:focus-visible {
 .react-flow__connection-path {
   stroke: #e4e9ee;
   stroke-width: 2.4;
+  stroke-dasharray: 10 14;
+  stroke-linecap: round;
 }
 
 .react-flow__connection.valid .react-flow__connection-path {
   stroke: #c7ff00;
 }
 
+.canvas-shell[data-chip-picker-open="true"] .react-flow__connection,
+.canvas-shell[data-chip-picker-open="true"] .react-flow__connection-path {
+  display: none !important;
+}
+
+.react-flow__viewport-portal {
+  z-index: 1002;
+  pointer-events: none;
+}
+
+.chip-picker-link {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.chip-picker-link__path {
+  fill: none;
+  stroke: #e4e9ee;
+  stroke-width: 2.4;
+  stroke-dasharray: 10 14;
+  stroke-linecap: round;
+  opacity: 0.92;
+}
+
 .chip-picker {
   position: absolute;
   z-index: 30;
+  pointer-events: auto;
   width: min(320px, calc(100vw - 32px));
   max-height: 360px;
   padding: 10px;
   border: 1px solid #2f3944;
   border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: rgba(18, 22, 27, 0.98);
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46);
 }
@@ -1267,37 +1300,64 @@ button.sbc-port__action:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 auto;
   background: #101418;
   color: #97a3ae;
 }
 
+.chip-picker__search svg {
+  flex: 0 0 auto;
+}
+
 .chip-picker__search input {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
   min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
   color: #eef2f4;
   font: inherit;
+  font-size: 16px;
 }
 
 .chip-picker__list {
   display: grid;
   gap: 4px;
+  min-height: 0;
   margin-top: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
 }
 
 .chip-picker__item {
+  width: 100%;
   min-height: 40px;
   padding: 0 12px;
   border: 0;
   border-radius: 10px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   background: transparent;
   color: #eef2f4;
-  font: inherit;
+  font-size: 14px;
   font-weight: 760;
   text-align: left;
+}
+
+.chip-picker__item-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  background: #202832;
+  color: #c7ff00;
 }
 
 .chip-picker__item:hover,

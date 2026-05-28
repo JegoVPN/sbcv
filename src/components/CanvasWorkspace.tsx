@@ -1,5 +1,5 @@
 import "@xyflow/react/dist/style.css";
-import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, useEdgesState, useNodesState } from "@xyflow/react";
+import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, ViewportPortal, useEdgesState, useNodesState } from "@xyflow/react";
 import type { Connection, Edge, NodeTypes, OnConnectEnd, OnConnectStart, ReactFlowInstance } from "@xyflow/react";
 import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -39,18 +39,28 @@ const nodeTypes: NodeTypes = {
 const connectionLineStyle = {
   stroke: "#e4e9ee",
   strokeWidth: 2.4,
-};
+  strokeDasharray: "10 14",
+  strokeLinecap: "round",
+} as const;
+const CHIP_PICKER_WIDTH = 320;
+const CHIP_PICKER_MAX_HEIGHT = 360;
+const CHIP_PICKER_MARGIN = 16;
 
 type PendingPort = {
   nodeId: string;
   handleId: string;
   kind: PortNodeKind;
   type: string;
+  sourceFlowPosition: { x: number; y: number } | null;
 };
 
 type ChipPickerState = {
   x: number;
   y: number;
+  width: number;
+  maxHeight: number;
+  lineStart: { x: number; y: number };
+  lineEnd: { x: number; y: number };
   flowPosition: { x: number; y: number };
   source: PendingPort;
   candidates: ChipPickerCandidate[];
@@ -124,6 +134,71 @@ function eventClientPoint(event: MouseEvent | TouchEvent) {
   return { x: event.clientX, y: event.clientY };
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), Math.max(min, max));
+}
+
+function visibleFlowBounds(
+  shellRect: DOMRect | undefined,
+  flow: ReactFlowInstance<SbcFlowNode, Edge> | null,
+) {
+  if (!shellRect || !flow) return undefined;
+  const topLeft = flow.screenToFlowPosition({ x: shellRect.left, y: shellRect.top });
+  const bottomRight = flow.screenToFlowPosition({ x: shellRect.right, y: shellRect.bottom });
+  const x = Math.min(topLeft.x, bottomRight.x);
+  const y = Math.min(topLeft.y, bottomRight.y);
+  return {
+    x,
+    y,
+    width: Math.abs(bottomRight.x - topLeft.x),
+    height: Math.abs(bottomRight.y - topLeft.y),
+  };
+}
+
+function boundedPickerPlacement(
+  point: { x: number; y: number },
+  bounds: ReturnType<typeof visibleFlowBounds>,
+) {
+  if (!bounds) {
+    return {
+      x: point.x,
+      y: point.y,
+      width: CHIP_PICKER_WIDTH,
+      maxHeight: CHIP_PICKER_MAX_HEIGHT,
+    };
+  }
+  const margin = Math.min(CHIP_PICKER_MARGIN, Math.floor(Math.min(bounds.width, bounds.height) / 4));
+  const width = Math.max(120, Math.min(CHIP_PICKER_WIDTH, bounds.width - margin * 2));
+  const maxHeight = Math.max(140, Math.min(CHIP_PICKER_MAX_HEIGHT, bounds.height - margin * 2));
+  return {
+    x: clamp(point.x, bounds.x + margin, bounds.x + bounds.width - width - margin),
+    y: clamp(point.y, bounds.y + margin, bounds.y + bounds.height - maxHeight - margin),
+    width,
+    maxHeight,
+  };
+}
+
+function lineEndForPicker(
+  lineStart: { x: number; y: number },
+  picker: Pick<ChipPickerState, "x" | "y" | "width">,
+) {
+  return {
+    x: lineStart.x <= picker.x + picker.width / 2 ? picker.x : picker.x + picker.width,
+    y: picker.y + 32,
+  };
+}
+
+function chipPickerConnectorPath(start: { x: number; y: number }, end: { x: number; y: number }) {
+  const direction = end.x >= start.x ? 1 : -1;
+  const controlDistance = Math.max(96, Math.min(260, Math.abs(end.x - start.x) * 0.45));
+  return [
+    `M ${start.x.toFixed(1)} ${start.y.toFixed(1)}`,
+    `C ${(start.x + controlDistance * direction).toFixed(1)} ${start.y.toFixed(1)}`,
+    `${(end.x - controlDistance * direction).toFixed(1)} ${end.y.toFixed(1)}`,
+    `${end.x.toFixed(1)} ${end.y.toFixed(1)}`,
+  ].join(" ");
+}
+
 function pendingMatchesEndpoint(pending: PendingPort, endpoint: PortEndpoint) {
   return endpoint.portKey === pending.handleId && endpointMatchesNode(endpoint, pending.kind, pending.type);
 }
@@ -192,11 +267,17 @@ export function CanvasWorkspace() {
   const createNodeAndConnect = useProjectStore((state) => state.createNodeAndConnect);
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const deleteEntity = useProjectStore((state) => state.deleteEntity);
+  const captureGraphPositions = useProjectStore((state) => state.captureGraphPositions);
   const setNodePosition = useProjectStore((state) => state.setNodePosition);
   const freshLoadToken = useProjectStore((state) => state.freshLoadToken);
+  const layoutCaptureToken = useProjectStore((state) => state.layoutCaptureToken);
   const focusToken = useProjectStore((state) => state.focusToken);
   const focusedNodeId = useProjectStore((state) => state.focusedNodeId);
   const graph = useMemo(() => deriveGraph(config, layout, diagnostics), [config, diagnostics, layout]);
+  const graphPositions = useMemo(
+    () => graph.nodes.map((node) => ({ id: node.id, position: node.position })),
+    [graph.nodes],
+  );
   const nodeById = useMemo(() => new Map(graph.nodes.map((node) => [node.id, node])), [graph.nodes]);
   const selectedTitle = selectedId ? nodeById.get(selectedId)?.data.title ?? selectedId : null;
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
@@ -274,16 +355,24 @@ export function CanvasWorkspace() {
       compatiblePortKeys,
     });
   }, [compatiblePortKeys, pendingPort]);
-  const handleConnectStart = useCallback<OnConnectStart>((_, params) => {
+
+  useEffect(() => {
+    if (layoutCaptureToken === 0) return;
+    captureGraphPositions(layoutCaptureToken, graphPositions);
+  }, [captureGraphPositions, graphPositions, layoutCaptureToken]);
+
+  const handleConnectStart = useCallback<OnConnectStart>((event, params) => {
     if (!params.nodeId || !params.handleId) return;
     const node = nodeById.get(params.nodeId);
     if (!node) return;
+    const point = eventClientPoint(event);
     setChipPicker(null);
     setPendingPort({
       nodeId: node.id,
       handleId: params.handleId,
       kind: node.data.kind,
       type: node.data.type,
+      sourceFlowPosition: point && flowRef.current ? flowRef.current.screenToFlowPosition(point) : null,
     });
   }, [nodeById, setPendingPort]);
   const handleConnectEnd = useCallback<OnConnectEnd>((event, connectionState) => {
@@ -296,15 +385,22 @@ export function CanvasWorkspace() {
     if (!point) return;
     const candidates = chipCandidatesForPending(pending);
     if (candidates.length === 0) return;
-    const rect = shellRef.current?.getBoundingClientRect();
+    const sourceFlowPosition = pending.sourceFlowPosition ?? flowRef.current?.screenToFlowPosition(point) ?? null;
     const flowPosition = flowRef.current?.screenToFlowPosition(point) ?? point;
+    const pickerPlacement = boundedPickerPlacement(
+      flowPosition,
+      visibleFlowBounds(shellRef.current?.getBoundingClientRect(), flowRef.current),
+    );
+    const lineStart = sourceFlowPosition ?? flowPosition;
+    const lineEnd = lineEndForPicker(lineStart, pickerPlacement);
     suppressNextPaneClickRef.current = true;
     window.setTimeout(() => {
       suppressNextPaneClickRef.current = false;
     }, 0);
     setChipPicker({
-      x: rect ? point.x - rect.left : point.x,
-      y: rect ? point.y - rect.top : point.y,
+      ...pickerPlacement,
+      lineStart,
+      lineEnd,
       flowPosition,
       source: pending,
       candidates,
@@ -348,7 +444,13 @@ export function CanvasWorkspace() {
   }, [focusToken, focusedNodeId]);
 
   return (
-    <section ref={shellRef} className="canvas-shell" data-interaction={interaction} aria-label="SBC visual canvas">
+    <section
+      ref={shellRef}
+      className="canvas-shell"
+      data-interaction={interaction}
+      data-chip-picker-open={chipPicker ? "true" : "false"}
+      aria-label="SBC visual canvas"
+    >
       <CanvasInteractionContext.Provider value={interactionStoreRef.current}>
       <ReactFlow
         nodes={nodes}
@@ -400,6 +502,25 @@ export function CanvasWorkspace() {
         deleteKeyCode={isMobile ? null : ["Backspace", "Delete"]}
       >
         <Background color="#1f2730" gap={18} size={1} />
+        {chipPicker ? (
+          <ViewportPortal>
+            <svg className="chip-picker-link" aria-hidden="true">
+              <path
+                className="chip-picker-link__path"
+                d={chipPickerConnectorPath(chipPicker.lineStart, chipPicker.lineEnd)}
+              />
+            </svg>
+            <ChipPickerPopover
+              x={chipPicker.x}
+              y={chipPicker.y}
+              width={chipPicker.width}
+              maxHeight={chipPicker.maxHeight}
+              candidates={chipPicker.candidates}
+              onPick={handlePickCandidate}
+              onClose={() => setChipPicker(null)}
+            />
+          </ViewportPortal>
+        ) : null}
         {!isMobile && showMiniMap ? <MiniMap pannable zoomable className="sbc-minimap" /> : null}
         <Controls
           position="bottom-center"
@@ -442,15 +563,6 @@ export function CanvasWorkspace() {
           )}
         </Controls>
       </ReactFlow>
-      {chipPicker ? (
-        <ChipPickerPopover
-          x={chipPicker.x}
-          y={chipPicker.y}
-          candidates={chipPicker.candidates}
-          onPick={handlePickCandidate}
-          onClose={() => setChipPicker(null)}
-        />
-      ) : null}
       </CanvasInteractionContext.Provider>
       {selectedTitle ? <div className="canvas-selection-pill">Selected {selectedTitle}</div> : null}
     </section>
