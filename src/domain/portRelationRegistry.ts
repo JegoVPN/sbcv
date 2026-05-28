@@ -190,6 +190,25 @@ export function relationForHandles(
   );
 }
 
+// One-to-many writable relations: a single port handle fans out to several reference edges (array-valued
+// canonical paths). The per-port disconnect control is ambiguous for these (it can only target the first
+// edge), so it is suppressed; disconnect a specific reference via the per-edge remove (rendered edges) or
+// the Inspector's list editor (complete list, immune to the canvas edge cap). See C1-7/8/23 (A8-multiedge).
+export const AGGREGATE_RELATION_IDS: ReadonlySet<string> = new Set([
+  "selector",
+  "urltest",
+  "route-rule-inbound",
+  "route-rule-set",
+  "dns-rule-inbound",
+  "dns-rule-set",
+  "service-verify-endpoint",
+  "service-ssm-inbound",
+]);
+
+export function relationIsAggregate(relationId: string) {
+  return AGGREGATE_RELATION_IDS.has(relationId);
+}
+
 export function relationForId(relationId: string) {
   return portRelations.find((entry) => entry.id === relationId);
 }

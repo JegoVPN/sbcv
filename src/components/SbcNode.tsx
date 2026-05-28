@@ -27,6 +27,7 @@ import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import {
   portEndpointsForNode,
   portRelations,
+  relationIsAggregate,
   type PortDirection,
   type PortEndpoint,
   type PortIconId,
@@ -70,6 +71,7 @@ export type PortSpec = {
   icon: LucideIcon;
   mode: PortRelationMode;
   editable: boolean;
+  aggregate: boolean;
 };
 
 const portIconMap: Record<PortIconId, LucideIcon> = {
@@ -116,6 +118,7 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDir
         icon: portIconMap[endpoint.icon],
         mode: relation.mode,
         editable: relation.mode === "writable",
+        aggregate: relationIsAggregate(relation.id),
       },
     ];
   });
@@ -212,7 +215,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 />
                 <port.icon size={15} />
                 <span className="sbc-port__label">{port.label}</span>
-                {port.editable && connected ? (
+                {port.editable && connected && !port.aggregate ? (
                   <button
                     className="sbc-port__action nodrag"
                     type="button"
@@ -224,7 +227,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   >
                     <Trash2 size={10} />
                   </button>
-                ) : port.editable ? (
+                ) : port.editable && !connected ? (
                   <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
                 ) : null}
               </div>
@@ -272,7 +275,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 />
                 <port.icon size={15} />
                 <span className="sbc-port__label">{port.label}</span>
-                {port.editable && connected ? (
+                {port.editable && connected && !port.aggregate ? (
                   <button
                     className="sbc-port__action nodrag"
                     type="button"
@@ -284,7 +287,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                   >
                     <Trash2 size={10} />
                   </button>
-                ) : port.editable ? (
+                ) : port.editable && !connected ? (
                   <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
                 ) : null}
               </div>
