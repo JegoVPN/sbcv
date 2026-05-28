@@ -46,7 +46,8 @@ work, not after.
 ### Phase 2 — Residual node P0/P1
 - [x] A10a — dns-rule `server` settable for `evaluate` (not just route), Inspector half (C0-2) (`dns-rule-server-evaluate`) — PR #55
 - [x] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`) — PR #56
-- [ ] A10c — action-aware dns-server canvas port: only advertise the server port for server-bearing actions (claude P0; structural port-registry change) (`dns-rule-action-aware-port`)
+- [x] A10c — action-aware dns-server canvas port + compatible chip: advertise the server port/chip only for server-bearing actions (claude P0) (`dns-rule-action-aware-port`) — PR #57
+- [ ] A10d — scrub a stale `server` on import for non-server dns-rule actions (run `normalizeDnsRule` in serialization, not just add/update commands); today an imported `{action:"reject",server:"x"}` is invisible on every surface but still exported (A10c review follow-up)
 - [ ] A11 — rule-set-inline structured editor (`rule-set-inline-editor`)
 - [ ] A12 — rule-set-remote http_client object form (`rule-set-http-client`)
 - [ ] A13 — ccm/ocm detour control (`ccm-ocm-detour`)
@@ -752,3 +753,31 @@ Status: implemented 2026-05-29 in `atomic/dns-rule-ordering-diagnostics`; merged
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (715 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A10b adds semantic diagnostics, not bundled
   fixture/exported config output.
+
+### A10c dns-rule-action-aware-port — dns-server port + chip gated by action (canvas)
+Status: implemented 2026-05-29 in `atomic/dns-rule-action-aware-port`; merged in PR #57. Completes A10.
+
+- What changed (claude P0): the dns-rule "DNS server" output port and the "DNS Server" compatible chip
+  were advertised for every action, though the graph edge only emits for server-bearing actions — so a
+  reject/respond/predefined/route-options rule showed a clickable server port that could never make a
+  valid edge (and dragging it wrote a no-op `server`). `getPortSpecs` gained an optional `action` and
+  drops the dns-rule `dns-server` output port when `!dnsRuleAllowsServer({action})`; `SbcNodeData.action`
+  is threaded through SbcNode (+ portKeys memo dep) and the dns-rule node; the hardcoded
+  `compatible: ["DNS Server"]` chip is gated the same way. `action` undefined keeps all ports
+  (action-agnostic callers + the existing port test unchanged). All four dns-rule server surfaces
+  (Inspector, port, chip, edge) now key off the one `dnsRuleAllowsServer` helper.
+- Frontend perf review (`vercel-react-best-practices`): `getPortSpecs` stays pure; one added memo dep
+  (`data.action`); no new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior React-canvas + sing-box-correctness reviewer subagent — chosen for
+  the canvas-port + domain-consistency surface. Verdict APPROVE, no blockers. Confirmed all three
+  canvas surfaces (edge, port, isPortConnected) agree for every action incl. the stale-server case (no
+  orphan edge/port), connect/disconnect handlers already early-return on `!dnsRuleAllowsServer`, and the
+  undefined-action keep-all is correct for every caller. Applied the one NIT this pass: collapse the
+  last inlined edge-gate predicate to `dnsRuleAllowsServer(rule)`.
+  - Deferred to follow-up atomic: A10d — imported stale `server` on a non-server action is now invisible
+    on every surface but still exported; scrub it via `normalizeDnsRule` in serialization (out of scope
+    for a port-visibility atomic).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (718 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: `sing-box-stable/testing check` not run — A10c changes canvas port/chip rendering, not
+  bundled fixture/exported config output.

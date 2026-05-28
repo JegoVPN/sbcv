@@ -26,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import { getNodeIcon } from "../canvas/iconRegistry";
+import { dnsRuleAllowsServer } from "../domain/commands";
 import {
   portEndpointsForNode,
   portRelations,
@@ -87,11 +88,28 @@ function otherEndpoint(endpoint: PortEndpoint) {
   return relation.source === endpoint ? relation.target : relation.source;
 }
 
-export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDirection): PortSpec[] {
+export function getPortSpecs(
+  kind: SbcNodeKind,
+  type: string,
+  direction: PortDirection,
+  action?: string,
+): PortSpec[] {
   return portEndpointsForNode(kind, type, direction).flatMap((endpoint) => {
     const relation = relationForEndpoint(endpoint);
     const compatible = otherEndpoint(endpoint);
     if (!relation || !compatible) return [];
+    // A10c: a dns-rule only dials a DNS server for server-bearing actions (route/evaluate). For other
+    // actions the graph edge is already suppressed, so hide the dead output port too. `action`
+    // undefined keeps every port (action-agnostic callers / pre-action contexts).
+    if (
+      kind === "dns-rule" &&
+      direction === "output" &&
+      endpoint.portKey === "dns-server" &&
+      action !== undefined &&
+      !dnsRuleAllowsServer({ action })
+    ) {
+      return [];
+    }
     return [
       {
         key: endpoint.portKey,
@@ -110,14 +128,14 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDir
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const Icon = getNodeIcon(data.kind, data.type);
   const StatusIcon = statusIcon(data.status);
-  const inputPorts = getPortSpecs(data.kind, data.type, "input");
-  const outputPorts = getPortSpecs(data.kind, data.type, "output");
+  const inputPorts = getPortSpecs(data.kind, data.type, "input", data.action);
+  const outputPorts = getPortSpecs(data.kind, data.type, "output", data.action);
   const portKeys = useMemo(
     () => [
-      ...getPortSpecs(data.kind, data.type, "input"),
-      ...getPortSpecs(data.kind, data.type, "output"),
+      ...getPortSpecs(data.kind, data.type, "input", data.action),
+      ...getPortSpecs(data.kind, data.type, "output", data.action),
     ].map((port) => port.key),
-    [data.kind, data.type],
+    [data.kind, data.type, data.action],
   );
   const { compatiblePortKeys, disconnectPort, pendingPortKey } = useCanvasInteraction(id, portKeys);
   const { setSelectedId, createCompatible, deleteEntity } = useProjectStore(
