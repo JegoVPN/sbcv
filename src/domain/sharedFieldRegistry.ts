@@ -223,6 +223,8 @@ export function sharedGroupsForEntity(
     if (channel === "testing") groups.push("neighbor");
   }
   if (ref.kind === "settings" && ref.path === "ntp") groups.push("dial");
+  // A top-level http_clients[] entry carries the shared HTTP-client object: tls + http2 + dial (1.14).
+  if (ref.kind === "http-client") groups.push("tls", "http2", "dial");
 
   return groups.filter((group, index) => groups.indexOf(group) === index);
 }

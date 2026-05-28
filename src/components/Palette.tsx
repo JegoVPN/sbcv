@@ -178,7 +178,7 @@ const groups: PaletteGroup[] = [
   },
   {
     title: "HTTP Clients",
-    items: [{ label: "HTTP Client", kind: "http-client", icon: Globe2, docsUrl: docs("shared/http-client/"), status: "gated" }],
+    items: [{ label: "HTTP Client", kind: "http-client", icon: Globe2, docsUrl: docs("shared/http-client/"), status: "setup" }],
   },
   {
     title: "Endpoints",
@@ -322,6 +322,8 @@ function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>)
   if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
   // cloudflared inbound is sing-box 1.14+ — creatable on testing, gated on stable.
   if (item.kind === "inbound-cloudflared" && channel !== "testing") return "gated";
+  // http_clients[] is sing-box 1.14+ — creatable on testing, gated on stable.
+  if (item.kind === "http-client" && channel !== "testing") return "gated";
   if (deprecatedKinds.has(item.kind)) return "deprecated";
   if (singletons.has(item.kind)) return "open";
   if (item.status) return item.status;
