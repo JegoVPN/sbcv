@@ -58,7 +58,7 @@ work, not after.
 - [ ] A16-norm — one-time normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (or make the shared list read path string-tolerant); ~2-day pre-release shape, strands silently in the list control (A16 review follow-up)
 - [x] A17 — inbound-redirect platform banner (Linux + macOS) + de-duplicated (W25) (`inbound-redirect-banner`) — PR #64
 - [x] A18 — inbound-vless does not seed tls:{enabled:true} (W26) (`inbound-vless-tls-default`) — PR #65
-- [ ] A19 — settings-experimental label (`settings-experimental-label`)
+- [x] A19 — settings-experimental V2Ray build-tag label → `with_v2ray_api` (W27) (`settings-experimental-label`) — PR #66
 - [ ] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`)
 - [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
 - [ ] A22 — HTTP Client capability (`http-client-capability`)
@@ -972,3 +972,18 @@ Status: implemented 2026-05-29 in `atomic/inbound-vless-tls-default`; merged in 
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (748 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A18 changes a domain scaffold; the full
   suite (incl. fixture round-trips) stays green.
+
+### A19 settings-experimental-label — correct V2Ray API build-tag (Inspector copy, W27)
+Status: implemented 2026-05-29 in `atomic/settings-experimental-label`; merged in PR #66.
+
+- What changed (W27): the V2Ray API build-tag banner told users to compile sing-box "with the
+  `v2rayapi` tag", but the upstream build tag is `with_v2ray_api`
+  (installation/build-from-source.md:57) — following the wrong copy yields a binary that still lacks
+  V2Ray API. Fixed the banner text.
+- Frontend perf review: n/a — banner copy only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Verified the upstream tag
+  is `with_v2ray_api` (both channels), no other stale `v2rayapi` copy exists, and the other build-tag
+  banners (tor/tailscale/derp; clash_api correctly has none since `with_clash_api` is default-on) name
+  correct tags.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (749 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A19 is a banner copy change.
