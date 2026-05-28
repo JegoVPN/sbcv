@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
 import { deriveGraph } from "../src/canvas/graph";
 import { createSbcvFileName } from "../src/components/TopBar";
@@ -406,16 +406,33 @@ describe("SBC editor shell", () => {
     expect(inlineCreated).toMatchObject({ type: "inline" });
   });
 
-  it("changes an outbound protocol type from the node Inspector", () => {
+  it("changes an outbound protocol type from the node Inspector (after the confirm)", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     fireEvent.click(screen.getByTestId("node-outbound:jp"));
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "http" } });
 
+    expect(confirmSpy).toHaveBeenCalled();
     const jp = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "jp");
     expect(jp).toMatchObject({ type: "http", tag: "jp", server: "127.0.0.1" });
     expect(useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "auto")?.outbounds).toContain("jp");
+    confirmSpy.mockRestore();
+  });
+
+  it("keeps the entity type unchanged when the type-change confirm is declined (A4b)", () => {
+    useProjectStore.getState().loadTemplate();
+    render(<App />);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    fireEvent.click(screen.getByTestId("node-outbound:jp"));
+    const before = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "jp")?.type;
+    fireEvent.change(screen.getByLabelText("Type"), { target: { value: "http" } });
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "jp")?.type).toBe(before);
+    confirmSpy.mockRestore();
   });
 
   it("adds endpoint setup resources without implicit Tailscale DNS port creation", () => {
