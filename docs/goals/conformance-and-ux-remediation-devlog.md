@@ -51,7 +51,7 @@ work, not after.
 - [x] A11 — rule-set-inline structured editor (MVP: per-rule list + common match fields + JSON escape hatch) (`rule-set-inline-editor`) — PR #58
 - [ ] A11-full — full headless-rule editor: all ~25 fields + logical and/or builder (deferred from A11 MVP; reachable today via JSON mode) (`rule-set-inline-editor-full`)
 - [x] A12 — rule-set-remote http_client object-form preserved + testing-gated + stable diagnostic (W20/C2-5) (`rule-set-http-client`) — PR #59
-- [ ] A13 — ccm/ocm detour control (`ccm-ocm-detour`)
+- [x] A13 — ccm/ocm single correct (outbound) detour + 1.13 version gate (W21/C1-21/C2-1) (`ccm-ocm-detour`) — PR #60
 - [ ] A14 — endpoint-tailscale system_interface bool (`endpoint-tailscale-system-interface`)
 - [ ] A15 — dns-server-tailscale accept_search_domain (`dns-server-tailscale-fields`)
 - [ ] A16 — hub-route default_network_type (`hub-route-network-type`)
@@ -837,3 +837,26 @@ Status: implemented 2026-05-29 in `atomic/rule-set-http-client`; merged in PR #5
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (730 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A12 changes Inspector field rendering +
   diagnostics, not bundled fixture/exported config output.
+
+### A13 ccm-ocm-detour — single correct (outbound) detour + 1.13 gate (Inspector + domain, W21/C1-21/C2-1)
+Status: implemented 2026-05-29 in `atomic/ccm-ocm-detour`; merged in PR #60.
+
+- What changed (W21/C1-21/C2-1): ccm/ocm redefine `detour` as an OUTBOUND tag (the Claude/OpenAI API
+  target, edited by the dedicated "API Detour" control), but they are in `serviceListenTypes`, so they
+  also got the shared Listen group's "Inbound Detour" select — which writes the SAME `/services/*/detour`
+  key with an inbound tag, silently stomping the outbound detour. The listen group now omits "Inbound
+  Detour" for ccm/ocm (other listen services keep it — derp/resolved/ssm-api/hysteria-realm genuinely use
+  an inbound detour per upstream). Added `service-ccm-ocm-version` (error) when a ccm/ocm service is
+  present and version < 1.13 (ccm/ocm are "Since 1.13.0"); fires only on the 1.12 target, not default
+  stable 1.13 / testing 1.14.
+- Frontend perf review (`vercel-react-best-practices`): a render-time conditional in the shared field
+  list; no new subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior sing-box + React reviewer subagent. Verdict APPROVE, no blockers,
+  no follow-ups. Confirmed `detour` is outbound-only for ccm AND ocm and inbound for the other listen
+  services (so the targeted omission is exactly right), no value-stranding (the API Detour control can
+  clear/repoint), 1.13 is the correct floor for both, `error` severity matches the type-level-rejection
+  pattern, and no false positive on the bundled `fixtures/stable/service-ocm-ccm.json` (validated at the
+  default 1.13).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (734 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A13 changes Inspector field gating +
+  a diagnostic; the bundled ccm/ocm fixture is unchanged and still validates.
