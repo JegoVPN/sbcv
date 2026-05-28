@@ -181,6 +181,26 @@ work, not after.
   fixture verification; A2a shipped the low-false-positive subset: C0-19/C0-5/C0-12/C0-10); the umbrella A2
   row notes the split.
 
+### 2026-05-29 — Replace the 2-round Codex gate with a single best-suited expert review (from A10)
+- **Context:** The 2026-05-28 "Claude + Codex, ≤2 rounds" gate (above) is too slow per atomic — two
+  Codex CLI passes plus the round-2 turnaround dominate each atomic's wall-clock. User directive.
+- **Decision:** Supersede it. The review gate is now **one pass by the best-suited senior Claude Code
+  reviewer subagent** (dispatched via the Agent tool, expertise matched to the atomic — React /
+  frontend-performance for `src/components|state` diffs applying `vercel-react-best-practices`;
+  domain-correctness vs sing-box upstream for schema/diagnostics/commands; etc.). Fix the actionable
+  findings from that one pass, then merge — no second round.
+- **Reason:** Keep an independent second-set-of-eyes review on every atomic (and matched to the change's
+  domain, which a generic gate is not) while removing the round-2 latency. A finding that shows the
+  atomic's outcome is not met is still a failed step (fix or Stop Condition), not a deferral; non-blocking
+  findings still become follow-up atomics.
+- **Placement:** Goal-scoped — execution-plan Non-Negotiables + atomic-loop step 6 only. AGENTS.md stays
+  model/tool-neutral about review (it never named Codex), so the repo-wide guide is unchanged.
+- **How to apply:** From **A10** onward (A0–A9 already landed under the old Codex gate). Per atomic:
+  local checks → one expert-review subagent pass (fix actionable findings) → squash PR → issue gates.
+  Record the reviewer used + findings + dispositions in the milestone note. Honors [[pr-over-commits]];
+  supersedes [[codex-review-gate]].
+- **Affects:** every atomic's review/merge step from A10.
+
 ## Open Questions / Risks
 
 - **Re-verify against HEAD.** Both reports and the `canvas-port-interaction-redesign-execution`
@@ -208,9 +228,9 @@ Status: implemented YYYY-MM-DD in `atomic/<branch>`; merged in PR #<n>.
 
 - What changed: <bullet summary tied to the C-/T-/W- ids closed>.
 - Frontend perf review (`vercel-react-best-practices`): <findings or "n/a — no src/components|state change">.
-- Codex review:
-  - Round 1: <findings → dispositions>.
-  - Round 2 (if needed): <findings → dispositions, or "skipped — round 1 clean">.
+- Expert review (one pass; A0–A9 used the legacy 2-round Codex gate):
+  - Reviewer: <which senior subagent + why it fit this atomic>.
+  - Findings → dispositions: <fixed … | clean>.
   - Deferred to follow-up atomic: <none | A<x> tracking ...>.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test`, `pnpm build`, `pnpm e2e` (as applicable).
 - Official check: `sing-box-stable/testing check` <ran on … | not run because …>.
