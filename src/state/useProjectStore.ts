@@ -162,16 +162,20 @@ type ProjectStore = {
   setNodePosition: (id: string, position: { x: number; y: number }) => void;
 };
 
-function computeDiagnostics(config: SingBoxConfig, channel: SingBoxChannel) {
-  return validateConfig(config, channel);
+function defaultVersionForChannel(channel: SingBoxChannel) {
+  return channel === "stable" ? "1.13" : "1.14";
 }
 
-function sync(config: SingBoxConfig, channel: SingBoxChannel) {
+function computeDiagnostics(config: SingBoxConfig, channel: SingBoxChannel, version: string = defaultVersionForChannel(channel)) {
+  return validateConfig(config, channel, version);
+}
+
+function sync(config: SingBoxConfig, channel: SingBoxChannel, version: string = defaultVersionForChannel(channel)) {
   cancelSemanticValidation();
   return {
     config,
     jsonDraft: stringifyConfig(config),
-    diagnostics: computeDiagnostics(config, channel),
+    diagnostics: computeDiagnostics(config, channel, version),
     officialDiagnostics: [],
     officialValidationMessage: BROWSER_VALIDATION_MESSAGE,
     checkNotice: "",
@@ -842,13 +846,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         ...resetValidationState(),
         channel: target.channel,
         version: target.version,
-        diagnostics: computeDiagnostics(state.config, target.channel),
+        diagnostics: computeDiagnostics(state.config, target.channel, target.version),
       };
     }),
 
   loadTemplate: () =>
     set((state) => ({
-      ...sync(createStableTunSplitConfig(), state.channel),
+      ...sync(createStableTunSplitConfig(), state.channel, state.version),
       ...freshLayoutState(state),
       selectedId: null,
       globalPanelOpen: false,
@@ -858,7 +862,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set((state) => {
       const preset = createTemplatePreset(id);
       return {
-        ...sync(preset.config, preset.channel),
+        ...sync(preset.config, preset.channel, preset.version),
         channel: preset.channel,
         version: preset.version,
         ...freshLayoutState(state),
@@ -869,7 +873,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }),
   loadMinimal: () =>
     set((state) => ({
-      ...sync(createMinimalConfig(), state.channel),
+      ...sync(createMinimalConfig(), state.channel, state.version),
       ...freshLayoutState(state),
       selectedId: null,
       globalPanelOpen: false,
@@ -963,7 +967,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
       }
       if (kind === "dns-rule") config = addDnsRule(config);
-      return { ...sync(config, state.channel), layout, selectedId };
+      return { ...sync(config, state.channel, state.version), layout, selectedId };
     }),
 
   createCompatible: (sourceId, kind) =>
@@ -1030,7 +1034,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (createdDnsServerTag) {
         layout = nextLayout(layout, `dns-server:${createdDnsServerTag}`, 850, 560 + (config.dns?.servers?.length ?? 1) * 100);
       }
-      return { ...sync(config, state.channel), layout };
+      return { ...sync(config, state.channel, state.version), layout };
     }),
 
   connectOutboundReference: (outboundTag, reference, parentTag) =>
@@ -1099,7 +1103,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
       }
 
-      return { ...sync(config, state.channel), layout, selectedId: `outbound:${outboundTag}` };
+      return { ...sync(config, state.channel, state.version), layout, selectedId: `outbound:${outboundTag}` };
     }),
 
   connectPorts: (connection) =>
@@ -1110,7 +1114,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const connected =
         connectDirectedPortReference(state.config, source, connection.sourceHandle, target, connection.targetHandle) ??
         connectDirectedPortReference(state.config, target, connection.targetHandle, source, connection.sourceHandle);
-      return connected ? sync(connected, state.channel) : state;
+      return connected ? sync(connected, state.channel, state.version) : state;
     }),
 
   createNodeAndConnect: (sourceId, sourceHandle, candidate, position) =>
@@ -1124,7 +1128,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         connectDirectedPortReference(created.config, target, candidate.handleId, source, sourceHandle);
       if (!connected) return state;
       return {
-        ...sync(connected, state.channel),
+        ...sync(connected, state.channel, state.version),
         layout: pinLayout(state.layout, created.nodeId, position.x, position.y),
         selectedId: created.nodeId,
         focusedNodeId: created.nodeId,
@@ -1141,12 +1145,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (direction === "input") {
         if (node.kind === "route" && port.key === "inbound") {
           config = addInbound(config, "tun");
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route-rule" && port.key === "route") {
           config = ensureRoute(config);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route-rule" && port.key === "inbound") {
@@ -1163,12 +1167,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (inboundTag) config = updateRouteRule(config, index, { inbound: inboundTag });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-rule" && port.key === "dns") {
           config = addDnsServer(config, "local");
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-rule" && port.key === "inbound") {
@@ -1185,29 +1189,29 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (inboundTag) config = updateDnsRule(config, index, { inbound: inboundTag });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-server" && port.key === "dns-rule") {
           const index = firstDnsRuleIndex(config, node.value);
           config = index >= 0 ? disconnectEdge(config, formatEdgeId("dns-rule", index, node.value)) : addDnsRule(config, { domain_suffix: ["example"], server: node.value });
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-server" && port.key === "dns") {
           config = config.dns?.final === node.value ? disconnectEdge(config, formatEdgeId("dns-final", node.value)) : setDnsFinal(config, node.value);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "route") {
           config = config.route?.final === node.value ? disconnectEdge(config, formatEdgeId("route-final", node.value)) : setRouteFinal(config, node.value);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "route-rule") {
           const index = firstRouteRuleIndex(config, node.value);
           config = index >= 0 ? disconnectEdge(config, formatEdgeId("route-rule", index, node.value)) : addRouteRule(config, { domain_suffix: ["example"], outbound: node.value });
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && (port.key === "selector-group" || port.key === "urltest-group")) {
@@ -1220,7 +1224,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = connectSelectorCandidate(config, created.tag, node.value);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "dns-detour") {
@@ -1237,7 +1241,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
               if (created) config = updateEntityField(config, { kind: "dns-server", tag: created.tag }, "detour", node.value);
             }
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "detour-target") {
@@ -1252,7 +1256,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = updateEntityField(config, { kind: "outbound", tag: created.tag }, "detour", node.value);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "service-detour") {
@@ -1264,7 +1268,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             config = ensured.config;
             if (ensured.tag) config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "detour", node.value);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "endpoint" && port.key === "dns-server") {
@@ -1283,7 +1287,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
               if (created) config = updateEntityField(config, { kind: "dns-server", tag: created.tag }, "endpoint", node.value);
             }
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "endpoint" && port.key === "derp-service") {
@@ -1310,7 +1314,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
               );
             }
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "rule-set-download") {
@@ -1325,7 +1329,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (ruleSetTag) config = updateEntityField(config, { kind: "rule-set", tag: ruleSetTag }, "download_detour", node.value);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "service" && port.key === "managed-inbound") {
@@ -1339,7 +1343,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             config = ensured.config;
             if (ensured.tag) config = updateEntityField(config, { kind: "service", tag: node.value }, "servers", { "/": ensured.tag });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "rule-set" && port.key === "route-rule") {
@@ -1349,7 +1353,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           } else {
             config = addRouteRule(config, { domain_suffix: ["example"], rule_set: node.value, outbound: config.route?.final });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "rule-set" && port.key === "dns-rule") {
@@ -1359,14 +1363,14 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           } else {
             config = addDnsRule(config, { domain_suffix: ["example"], rule_set: node.value, server: config.dns?.final });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
       }
 
       if (direction === "output") {
         if (node.kind === "inbound" && port.key === "route") {
           config = ensureRoute(config);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "inbound" && port.key === "route-rule-match") {
@@ -1377,7 +1381,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           } else {
             config = addRouteRule(config, { inbound: node.value, outbound: config.route?.final });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "inbound" && port.key === "dns-rule-match") {
@@ -1388,7 +1392,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           } else {
             config = addDnsRule(config, { inbound: node.value, server: config.dns?.final });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "inbound" && port.key === "service") {
@@ -1409,13 +1413,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
               config = updateEntityField(config, { kind: "service", tag: ensured.tag }, "servers", { ...currentServers, "/": node.value });
             }
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route" && port.key === "route-rule") {
           const lastRuleIndex = (config.route?.rules?.length ?? 0) - 1;
           config = lastRuleIndex >= 0 ? deleteRouteRule(config, lastRuleIndex) : addRouteRule(config);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route" && port.key === "outbound") {
@@ -1426,7 +1430,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = setRouteFinal(config, created.tag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route-rule" && port.key === "outbound") {
@@ -1440,7 +1444,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created && Number.isInteger(index)) config = updateRouteRule(config, index, { outbound: created.tag });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "route-rule" && port.key === "rule-set") {
@@ -1457,7 +1461,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (ruleSetTag) config = updateRouteRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "outbound-member") {
@@ -1470,7 +1474,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = connectSelectorCandidate(config, parent.tag, created.tag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "outbound" && port.key === "dial-detour") {
@@ -1486,19 +1490,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (targetTag) config = updateEntityField(config, { kind: "outbound", tag: node.value }, "detour", targetTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns" && port.key === "dns-rule") {
           const lastRuleIndex = (config.dns?.rules?.length ?? 0) - 1;
           config = lastRuleIndex >= 0 ? deleteDnsRule(config, lastRuleIndex) : addDnsRule(config);
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns" && port.key === "dns-server") {
           if (config.dns?.final) config = disconnectEdge(config, formatEdgeId("dns-final", config.dns.final));
           else config = addDnsServer(config, "local");
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-rule" && port.key === "dns-server") {
@@ -1512,7 +1516,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.dns?.servers?.[config.dns.servers.length - 1];
             if (created && Number.isInteger(index)) config = updateDnsRule(config, index, { server: created.tag });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-rule" && port.key === "rule-set") {
@@ -1529,7 +1533,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (ruleSetTag) config = updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "rule-set" && port.key === "download-detour") {
@@ -1545,7 +1549,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (targetTag) config = updateEntityField(config, { kind: "rule-set", tag: node.value }, "download_detour", targetTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-server" && port.key === "outbound") {
@@ -1557,7 +1561,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             const created = config.outbounds?.[config.outbounds.length - 1];
             if (created) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "detour", created.tag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "dns-server" && port.key === "endpoint") {
@@ -1572,7 +1576,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (endpointTag) config = updateEntityField(config, { kind: "dns-server", tag: node.value }, "endpoint", endpointTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "endpoint" && port.key === "dial-detour") {
@@ -1587,7 +1591,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (targetTag) config = updateEntityField(config, { kind: "endpoint", tag: node.value }, "detour", targetTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "service" && port.key === "verify-client-endpoint") {
@@ -1604,7 +1608,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (endpointTag) config = updateEntityField(config, { kind: "service", tag: node.value }, "verify_client_endpoint", endpointTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
 
         if (node.kind === "service" && port.key === "detour") {
@@ -1620,7 +1624,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             }
             if (targetTag) config = updateEntityField(config, { kind: "service", tag: node.value }, "detour", targetTag);
           }
-          return sync(config, state.channel);
+          return sync(config, state.channel, state.version);
         }
       }
 
@@ -1628,7 +1632,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }),
 
   updateField: (ref, field, value) =>
-    set((state) => sync(updateEntityField(state.config, ref, field, value), state.channel)),
+    set((state) => sync(updateEntityField(state.config, ref, field, value), state.channel, state.version)),
   changeEntityType: (ref, nextType) =>
     set((state) => {
       if (
@@ -1641,14 +1645,14 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       ) {
         return state;
       }
-      return sync(changeEntityType(state.config, ref, nextType), state.channel);
+      return sync(changeEntityType(state.config, ref, nextType), state.channel, state.version);
     }),
   renameTag: (oldTag, newTag) =>
     set((state) => {
       const config = renameTag(state.config, oldTag, newTag);
       if (config === state.config) return state;
       return {
-        ...sync(config, state.channel),
+        ...sync(config, state.channel, state.version),
         selectedId: remapTaggedNodeId(state.selectedId, oldTag, newTag),
         focusedNodeId: remapTaggedNodeId(state.focusedNodeId, oldTag, newTag),
         layout: remapTaggedLayout(state.layout, oldTag, newTag),
@@ -1660,7 +1664,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         const rules = state.config.route?.rules ?? [];
         if (!rules[ref.index]) return state;
         return {
-          ...sync(deleteEntity(state.config, ref), state.channel),
+          ...sync(deleteEntity(state.config, ref), state.channel, state.version),
           selectedId: remapRuleDeleteId(state.selectedId, "route-rule", ref.index),
           focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "route-rule", ref.index),
           layout: remapRuleDeleteLayout(state.layout, "route-rule", ref.index),
@@ -1670,7 +1674,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         const rules = state.config.dns?.rules ?? [];
         if (!rules[ref.index]) return state;
         return {
-          ...sync(deleteEntity(state.config, ref), state.channel),
+          ...sync(deleteEntity(state.config, ref), state.channel, state.version),
           selectedId: remapRuleDeleteId(state.selectedId, "dns-rule", ref.index),
           focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "dns-rule", ref.index),
           layout: remapRuleDeleteLayout(state.layout, "dns-rule", ref.index),
@@ -1678,23 +1682,23 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
       const deletedId = nodeIdForRef(ref);
       return {
-        ...sync(deleteEntity(state.config, ref), state.channel),
+        ...sync(deleteEntity(state.config, ref), state.channel, state.version),
         selectedId: clearNodeId(state.selectedId, deletedId),
         focusedNodeId: clearNodeId(state.focusedNodeId, deletedId),
         layout: removeLayoutPosition(state.layout, deletedId),
       };
     }),
-  disconnectEdge: (edgeId) => set((state) => sync(disconnectEdge(state.config, edgeId), state.channel)),
-  addRouteRule: () => set((state) => sync(addRouteRule(state.config), state.channel)),
+  disconnectEdge: (edgeId) => set((state) => sync(disconnectEdge(state.config, edgeId), state.channel, state.version)),
+  addRouteRule: () => set((state) => sync(addRouteRule(state.config), state.channel, state.version)),
   updateRouteRule: (index, patch) =>
-    set((state) => sync(updateRouteRule(state.config, index, patch), state.channel)),
+    set((state) => sync(updateRouteRule(state.config, index, patch), state.channel, state.version)),
   moveRouteRule: (index, direction) =>
     set((state) => {
       const rules = state.config.route?.rules ?? [];
       const target = index + direction;
       if (target < 0 || target >= rules.length || !rules[index] || !rules[target]) return state;
       return {
-        ...sync(moveRouteRule(state.config, index, direction), state.channel),
+        ...sync(moveRouteRule(state.config, index, direction), state.channel, state.version),
         selectedId: remapRuleMoveId(state.selectedId, "route-rule", index, target),
         focusedNodeId: remapRuleMoveId(state.focusedNodeId, "route-rule", index, target),
         layout: remapRuleMoveLayout(state.layout, "route-rule", index, target),
@@ -1705,21 +1709,21 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const rules = state.config.route?.rules ?? [];
       if (!rules[index]) return state;
       return {
-        ...sync(deleteRouteRule(state.config, index), state.channel),
+        ...sync(deleteRouteRule(state.config, index), state.channel, state.version),
         selectedId: remapRuleDeleteId(state.selectedId, "route-rule", index),
         focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "route-rule", index),
         layout: remapRuleDeleteLayout(state.layout, "route-rule", index),
       };
     }),
-  addDnsRule: () => set((state) => sync(addDnsRule(state.config), state.channel)),
-  updateDnsRule: (index, patch) => set((state) => sync(updateDnsRule(state.config, index, patch), state.channel)),
+  addDnsRule: () => set((state) => sync(addDnsRule(state.config), state.channel, state.version)),
+  updateDnsRule: (index, patch) => set((state) => sync(updateDnsRule(state.config, index, patch), state.channel, state.version)),
   moveDnsRule: (index, direction) =>
     set((state) => {
       const rules = state.config.dns?.rules ?? [];
       const target = index + direction;
       if (target < 0 || target >= rules.length || !rules[index] || !rules[target]) return state;
       return {
-        ...sync(moveDnsRule(state.config, index, direction), state.channel),
+        ...sync(moveDnsRule(state.config, index, direction), state.channel, state.version),
         selectedId: remapRuleMoveId(state.selectedId, "dns-rule", index, target),
         focusedNodeId: remapRuleMoveId(state.focusedNodeId, "dns-rule", index, target),
         layout: remapRuleMoveLayout(state.layout, "dns-rule", index, target),
@@ -1730,7 +1734,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const rules = state.config.dns?.rules ?? [];
       if (!rules[index]) return state;
       return {
-        ...sync(deleteDnsRule(state.config, index), state.channel),
+        ...sync(deleteDnsRule(state.config, index), state.channel, state.version),
         selectedId: remapRuleDeleteId(state.selectedId, "dns-rule", index),
         focusedNodeId: remapRuleDeleteId(state.focusedNodeId, "dns-rule", index),
         layout: remapRuleDeleteLayout(state.layout, "dns-rule", index),
@@ -1741,7 +1745,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set((state) => {
       try {
         return {
-          ...sync(parseConfigJson(state.jsonDraft), state.channel),
+          ...sync(parseConfigJson(state.jsonDraft), state.channel, state.version),
           selectedId: null,
           ...freshLayoutState(state),
           globalPanelOpen: false,
@@ -1766,7 +1770,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set((state) => {
       try {
         return {
-          ...sync(parseConfigJson(value), state.channel),
+          ...sync(parseConfigJson(value), state.channel, state.version),
           selectedId: null,
           ...freshLayoutState(state),
           globalPanelOpen: false,
@@ -1799,7 +1803,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       semanticValidationTimer = null;
       set((state) => {
         if (token !== semanticValidationToken) return state;
-        const diagnostics = computeDiagnostics(state.config, state.channel);
+        const diagnostics = computeDiagnostics(state.config, state.channel, state.version);
         const errors = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
         const warnings = diagnostics.filter((diagnostic) => diagnostic.level === "warning").length;
         const checkedAt = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
