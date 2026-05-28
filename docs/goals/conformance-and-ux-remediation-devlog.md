@@ -22,7 +22,7 @@ work, not after.
 - [x] A0 — guardrail tests W1–W5 + multi-edge-disconnect stub (`phase0-guardrail-tests`) — PR #36
 
 ### Phase 1 — Structural root-cause
-- [ ] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`)
+- [x] A1 — shared TLS/multiplex/transport by direction (`shared-cards-by-direction`) — PR #37
 - [ ] A2 — required markers + pre-export gate + local rule-set `format` (`required-fields-and-export-gate`)
 - [ ] A3 — JsonField parse safety + `rules` handled (`jsonfield-parse-safety`)
 - [ ] A4 — type-change normalizers + confirm + no blank kv rows (`type-change-safety`)
@@ -216,3 +216,45 @@ Status: implemented 2026-05-28 in `atomic/phase0-guardrail-tests`; merged in PR 
   (602 passed | 15 expected fail | 1 todo), `pnpm build`. `pnpm e2e` not run (no interaction change).
 - Official check: `sing-box-stable/testing check` not run because A0 changes tests + docs only, not
   bundled fixture/exported config output.
+
+### A1 shared-cards-by-direction — Split shared TLS/multiplex cards by role
+Status: implemented 2026-05-28 in `atomic/shared-cards-by-direction`; merged in PR #37.
+
+- What changed (C0-6 / C0-7 / W6 / T1-T2): `sharedFieldDefinitions` now partitions the TLS and multiplex
+  shared cards by role.
+  - TLS server role = inbound + service; client role = outbound + **dns-server** (dns-server[tls/https/
+    quic/h3] dials a DoT/DoH upstream as a client — verified against `dns/server/{tls,https,quic,http3}.md`).
+    Server-only: key/key_path/client_authentication/certificate_provider/reality server handshake/
+    private_key/short_id(list)/max_time_difference/ech.key/ech.key_path. Client-only: disable_sni/insecure/
+    certificate_public_key_sha256/fragment*/record_fragment/utls/reality public_key+short_id(text)/ech
+    client config.
+  - Fixed `client_authentication` enum to `no/request/require-any/verify-if-given/require-and-verify`.
+  - Multiplex protocol/max_connections/min_streams/max_streams gated to outbound; inbound keeps
+    enabled/padding (+brutal).
+  - naive (outbound) TLS narrowed (no enable toggle; scaffold seeds enabled:true); dropped `tuic` from
+    `outboundUdpOverTcpTypes` (uses `udp_over_stream`).
+  - Flipped the A0 W3 guardrail to assert by-direction; rewrote the app.test single-card test into
+    server/client cases; updated the config-doc tuic line.
+- Scope deferrals (don't-mix): v2ray-transport per-type gating + a `headers` map control is by-TYPE not
+  by-direction and needs a new `SharedFieldKind` → follow-up atomic; additive missing TLS fields
+  (kernel_tx/rx, handshake_timeout, client mTLS client_certificate/client_key, engine/spoof) → A20/W28.
+- Frontend perf review (`vercel-react-best-practices`): pure derived-during-render data
+  (`rerender-derived-state-no-effect`); no new subscriptions, hooks, waterfalls, or bundle deps; returns
+  fresh arrays as before (stable keys, no added rerender). Pass.
+- Codex review:
+  - Round 1: 1 BLOCKER (server `reality.short_id` dropped — regression; restored as a `list`) + 3
+    SHOULD-FIX (server `ech.key`/`ech.key_path` added to avoid a dead ECH toggle; redundant naive
+    `tls.enabled` toggle removed; `tuic` removed from the udp-over-tcp owners string). All addressed.
+  - Round 2: clean.
+  - Deferred to follow-up atomic: none from review (scope deferrals above are queue items, not findings).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (602 passed | 15 expected fail | 1
+  todo), `pnpm build`, `pnpm e2e` (13 passed, Chromium).
+- Official check: `sing-box-stable/testing check` not run — A1 changes Inspector field-list logic, not
+  bundled fixture/exported config output.
+
+### Soft checkpoint after A1 (queue re-evaluation)
+A1 landed the role-split inside `sharedFieldDefinitions` without changing the shared-group registry shape
+(`sharedFieldRegistry.ts` group membership is unchanged; only the per-group field lists became
+role-aware). No re-ordering of later rows is required: A2/A3 (required+export gate, JsonField) and A6
+(referenceRegistry+detour guards) are independent of the TLS/multiplex field-list internals. v2ray-transport
+per-type work was split out as a follow-up (recorded above). Proceeding to A2 + A3 per the near-term order.
