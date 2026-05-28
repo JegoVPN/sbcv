@@ -16,21 +16,24 @@ The running TODO and decision log for executing this program live in
 
 ## Before You Start
 
-Read both review reports end-to-end before touching code. They are the source of every atomic
-below and carry the per-finding evidence (`file:line`) this index omits:
+Read both review reports before touching code. They carry the per-finding evidence (`file:line`)
+this index omits, each split per node/feature:
 
-1. `docs/ui-reviews-codex/README.md` — independent Codex upstream→code pass (`C0/C1/C2` ids).
-2. `docs/ui-reviews-pass2/README.md` — 3-pass review (`T1–T14` themes, `W1–W35` work items, 14 atomics).
+1. **Codex** — `docs/ui-reviews-codex/README.md` (summary + `C0/C1/C2` matrix) plus 70 per-node/
+   per-feature `docs/ui-reviews-codex/<node>--codex.md` files.
+2. **Pass-2** — `docs/ui-reviews-pass2/README.md` (`T1–T14` themes, `W1–W35` work items, 14 atomics);
+   start at `_SUMMARY.md`, then `_FIX-PLAN.md`; per node, `docs/ui-reviews-pass2/<node>--claude.md`.
 
-Then re-read `docs/ui-reviews-pass2/_SUMMARY.md` (de-duplicated themes), `_FIX-PLAN.md` (phased
-W-items), and the two icon audits (`docs/ui-reviews-codex/icon-semantics-audit.md`,
-`docs/ui-reviews-pass2/_ICONS.md`).
+**Per atomic, read both per-node files** for the node it touches — e.g. for A14, read
+`docs/ui-reviews-pass2/endpoint-tailscale--claude.md` and
+`docs/ui-reviews-codex/endpoint-tailscale--codex.md`. The icon work (A8b) follows the confirmed set
+in [`../ui-icon-set.md`](../ui-icon-set.md), built from both icon audits
+(`docs/ui-reviews-codex/icon-semantics-audit.md`, `docs/ui-reviews-pass2/_ICONS.md`) and the v4 preview.
 
-**Re-verify against HEAD.** Both reports are dated 2026-05-28, the same day the
+**Re-verify against HEAD.** Both reviews are dated 2026-05-28, the same day the
 `canvas-port-interaction-redesign-execution` atomics (PR-1..PR-12) landed. Some findings may already
-be fully or partly addressed (reference registry, port relation registry, disconnect groundwork).
-When you open each child goal, confirm the finding still reproduces on current `main` before
-implementing.
+be partly addressed (reference registry, port relation registry, disconnect groundwork). When you
+open each child goal, confirm the finding still reproduces on current `main` before implementing.
 
 ## Target Outcome
 
@@ -168,7 +171,7 @@ grafted into the phase that matches their don't-mix bucket. Each row becomes one
 | A6 | Reference integrity holds on rename/delete: complete `referenceRegistry` + dial-detour type guards | W12, W14 (+W1) / C1-2/4/11/16/17/20/21, C0-9, C2-1 / T11,T13 / atomic-6 | domain reference/port graph | `reference-and-detour-guards` |
 | A7 | Endpoints are first-class dial targets (outbound-half modeled) | W17 / C0-11 / T14 / atomic-7 (high risk; after A6) | domain reference/ports | `endpoint-outbound-half` |
 | A8 | Canvas connect is legible & correct: port icon from relation, kill/preview dead "+" chips, edge-specific multi-reference disconnect | W15, W16 (+W2/W5) / C1-9/12/15, C1-7/8/23 / T7,T8 / atomic-8 | canvas/graph interaction | `canvas-connect-legibility` |
-| A8b | Every node type has a distinct, correct icon: `getNodeIcon` honours `type`; fix `CheckCircle2`/`Shield`/`Server`/`Network` clashes; add WireGuard/Tor/Shadowsocks/Tailscale brand SVGs | icon audits / IC-* / atomic-8b | canvas + palette icons | `node-icon-distinctness` |
+| A8b | Implement the confirmed icon set in [`../ui-icon-set.md`](../ui-icon-set.md): shared icon registry across node card/palette/picker/Inspector, `getNodeIcon` honours `type`, fix `CheckCircle2`/`Shield`/`Server`/`Network`/`GitBranch` clashes, add WireGuard/Tailscale/Tor/Shadowsocks/TUIC/Hysteria brand SVGs behind a license/bundle gate | `../ui-icon-set.md` / `_ICONS.md` / IC-* / atomic-8b | canvas + palette + inspector icons | `node-icon-distinctness` |
 | A9 | Validity is readable: distinct warning glyph (not the green check) + relabel `✓ N`; edge-remove pointer-events fix | W10 / C2-7 / T9 / atomic-9 | canvas visual | `validity-readability` |
 
 ### Phase 2 — Residual node P0/P1 (one atomic per node/tight cluster; do not batch across categories)

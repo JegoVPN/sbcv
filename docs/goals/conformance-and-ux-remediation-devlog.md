@@ -30,7 +30,7 @@ work, not after.
 - [ ] A6 — referenceRegistry completeness + dial-detour guards (`reference-and-detour-guards`)
 - [ ] A7 — endpoint outbound-half (`endpoint-outbound-half`) — high risk, after A6
 - [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
-- [ ] A8b — distinct node icons + brand SVGs (`node-icon-distinctness`)
+- [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
 
 ### Phase 2 — Residual node P0/P1
@@ -113,6 +113,20 @@ work, not after.
   PR + merge → existing PR/main issue gates. Record the rounds in the milestone note below. Run
   `codex:setup` once to confirm the Codex CLI is ready.
 - **Affects:** every atomic's review/merge step.
+
+### 2026-05-28 — Codex split landed; created the confirmed icon-set doc; retargeted the goal
+- **Context:** Codex split its review into 70 per-node/feature `<node>--codex.md` files; PR #32 carries
+  the goal docs + the full codex review. The two icon audits + the confirmed v4 preview were ready.
+- **Decision:** Created `docs/ui-icon-set.md` (final confirmed icon set, v4) as the A8b spec; retargeted
+  the goal's "Before You Start" so each atomic reads both per-node files (`<node>--claude.md` +
+  `<node>--codex.md`); A8b now points at the icon-set doc. Bundle goal docs + codex review + icon-set
+  doc into PR #32 and **squash-merge** to `main`.
+- **Reason:** Per-node codex files make per-atomic prep symmetric with pass-2; one confirmed icon doc
+  feeds A8b; a single squash keeps `main` history clean.
+- **How to apply:** `_icons-preview-v4.html` is the authoritative visual for exact glyphs — lift the
+  proxy-protocol glyphs from there during A8b. Record any brand-SVG rejection or glyph change against
+  `docs/ui-icon-set.md` here. Honor [[codex-review-gate]] and [[pr-over-commits]] for child atomics.
+- **Affects:** A8b; the per-atomic reading workflow; the PR #32 merge.
 
 ## Open Questions / Risks
 
