@@ -57,7 +57,7 @@ work, not after.
 - [x] A16 — hub-route default_network_type array shape + de-duplicated controls (W24) (`hub-route-network-type`) — PR #63
 - [ ] A16-norm — one-time normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (or make the shared list read path string-tolerant); ~2-day pre-release shape, strands silently in the list control (A16 review follow-up)
 - [x] A17 — inbound-redirect platform banner (Linux + macOS) + de-duplicated (W25) (`inbound-redirect-banner`) — PR #64
-- [ ] A18 — inbound-vless TLS default (`inbound-vless-tls-default`)
+- [x] A18 — inbound-vless does not seed tls:{enabled:true} (W26) (`inbound-vless-tls-default`) — PR #65
 - [ ] A19 — settings-experimental label (`settings-experimental-label`)
 - [ ] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`)
 - [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
@@ -953,3 +953,22 @@ Status: implemented 2026-05-29 in `atomic/inbound-redirect-banner`; merged in PR
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (746 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A17 changes banner copy + a Palette label,
   not bundled fixture/exported config output.
+
+### A18 inbound-vless-tls-default — VLESS inbound TLS is optional (domain, W26)
+Status: implemented 2026-05-29 in `atomic/inbound-vless-tls-default`; merged in PR #65.
+
+- What changed (W26): VLESS TLS is optional upstream (inbound/vless.md — `tls` has no `==Required==`
+  marker), but the scaffold seeded `tls: { enabled: true, server_name: "" }`, forcing a server-cert
+  setup on every new VLESS inbound. Dropped the tls seed from the VLESS inbound scaffold. Scope is
+  inbound-only (per W26): the VLESS outbound keeps its TLS-on client default (connecting to a TLS server
+  is the common client case, and `tlsRequiredOutboundTypes` doesn't enforce it for vless either way).
+- Frontend perf review: n/a — domain-only scaffold change.
+- Expert review (one pass): a senior sing-box domain-correctness reviewer subagent. Verdict APPROVE, no
+  blockers. Confirmed vless inbound tls is optional upstream (vs tuic/hysteria* which are Required), the
+  scaffold/diagnostic lists are aligned (`tlsRequiredInboundTypes` excludes vless, so nothing fires), a
+  fresh VLESS inbound is valid + round-trips losslessly, and the inbound/outbound asymmetry is
+  internally consistent. Two NITs were pre-existing/out-of-scope (a stale test comment; a doc-marker
+  reconciliation for trojan/naive/anytls).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (748 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A18 changes a domain scaffold; the full
+  suite (incl. fixture round-trips) stays green.
