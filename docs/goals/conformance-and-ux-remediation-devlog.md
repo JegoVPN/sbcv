@@ -38,7 +38,7 @@ work, not after.
 - [x] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations via `extraNodeKinds`) + graph edges + connect handlers (`endpoint-outbound-ports`) — PR #48
 - [x] A8a — canvas-connect-legibility: W2 dead-chips — implement selector/urltest proxy chips via `outboundTypeForChipLabel` + attach as member, prune WireGuard/cert/service chips; port-icon (T7) already satisfied (`canvas-connect-legibility`) — PR #49
 - [x] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): mark the 8 writable array relations aggregate + suppress their ambiguous per-port disconnect (both ends); disconnect via per-edge remove / Inspector list (`multi-edge-disconnect`) — PR #50
-- [x] A8b — confirmed icon set (`../ui-icon-set.md`): one shared type-aware registry across node card / Palette / chip picker / Inspector; v4 monograms + Lucide glyphs; status glyphs reserved (`node-icon-distinctness`) — PR #51
+- [x] A8b — confirmed icon set (`../ui-icon-set.md`): one shared type-aware registry across node card / Palette / chip picker / Inspector; v4 monograms + Lucide glyphs; status glyphs reserved (`node-icon-distinctness`) — PR #52
 - [ ] A8b-brands — replace the WG/TO/TS interim monograms with the confirmed brand SVGs (WireGuard/Tor/Tailscale) after a license/bundle-size review (`node-brand-svgs`)
 - [ ] A8b-ports — expand `PortIconId` + derive the v4 port-relation glyph vocabulary (IC-P2-5: ListOrdered/FlagTriangleRight/Flag/Target/Crosshair/Milestone/CornerDownRight/DownloadCloud/ShieldCheck …) (`port-relation-icons`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
@@ -592,7 +592,7 @@ Status: implemented 2026-05-29 in `atomic/multi-edge-disconnect`; merged in PR #
   `pnpm build`, `pnpm e2e` (13 passed).
 
 ### A8b node-icon-distinctness — one shared type-aware node-icon registry
-Status: implemented 2026-05-29 in `atomic/node-icon-distinctness`; merged in PR #51.
+Status: implemented 2026-05-29 in `atomic/node-icon-distinctness`; merged in PR #52.
 
 - What changed (IC-P1-3 / `ui-icon-set.md` v4): the node card, Palette, chip picker, and Inspector each
   kept a separate icon map, so the same `{kind,type}` drifted (Radio vs RadioTower, Settings vs Server,
