@@ -6,6 +6,7 @@ import {
   Ban,
   CheckCircle2,
   CircleAlert,
+  CirclePlus,
   Database,
   GitBranch,
   Globe2,
@@ -19,6 +20,7 @@ import {
   Shield,
   Shuffle,
   Trash2,
+  TriangleAlert,
   Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -39,6 +41,14 @@ import { useCanvasInteraction } from "./canvasInteractionContext";
 const EMPTY_CONNECTED_PORTS: Partial<Record<PortDirection, string[]>> = {};
 
 export { getNodeIcon };
+
+// Validity readability (A9 / T9-W10): error and warning each get a distinct glyph so a warning node
+// is never visually identical to a valid one. Status glyphs are reserved for status only.
+function statusIcon(status: string): LucideIcon {
+  if (status === "error") return CircleAlert;
+  if (status === "warning") return TriangleAlert;
+  return CheckCircle2;
+}
 
 export type PortSpec = {
   key: string;
@@ -99,6 +109,7 @@ export function getPortSpecs(kind: SbcNodeKind, type: string, direction: PortDir
 
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const Icon = getNodeIcon(data.kind, data.type);
+  const StatusIcon = statusIcon(data.status);
   const inputPorts = getPortSpecs(data.kind, data.type, "input");
   const outputPorts = getPortSpecs(data.kind, data.type, "output");
   const portKeys = useMemo(
@@ -270,7 +281,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
         <div className="sbc-node__summary">
           <div className="sbc-node__status">
-            {data.status === "error" ? <CircleAlert size={16} /> : <CheckCircle2 size={16} />}
+            <StatusIcon size={16} />
           </div>
           <div className="sbc-node__title">{data.title}</div>
           <div className="sbc-node__subtitle">{data.subtitle}</div>
@@ -299,7 +310,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 {data.type}
               </span>
               <span className={`sbc-node-pill sbc-node-pill--${data.status}`}>
-                {data.status === "error" ? <CircleAlert size={14} /> : <CheckCircle2 size={14} />}
+                <StatusIcon size={14} />
                 {data.status}
               </span>
               <button
@@ -316,12 +327,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               <button
                 className="sbc-node-primary"
                 type="button"
+                aria-label={`${data.compatible.length} compatible connections for ${data.title}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   setSelectedId(id);
                 }}
               >
-                <CheckCircle2 size={15} />
+                <CirclePlus size={15} />
                 {data.compatible.length || 1}
               </button>
             </div>
