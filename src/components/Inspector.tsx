@@ -1845,6 +1845,28 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
   if (!ref || !entity) return null;
 
   const entityType = typeof entity.type === "string" ? entity.type : null;
+  const requestTypeChange = (nextType: string) => {
+    if (!ref || nextType === entityType) return;
+    // Confirm before a type change discards type-specific fields the new type won't keep (W7 / T3).
+    // "Meaningful" = own fields with a non-empty value (ignore tag/type and empty scaffold defaults).
+    const hasMeaningfulFields = Object.entries(entity as Record<string, unknown>).some(([key, value]) => {
+      if (key === "tag" || key === "type" || value == null || value === "") return false;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+      return true;
+    });
+    // Leaving tailscale (endpoint) / resolved (service) scrubs references to this entity elsewhere.
+    const scrubsRefs = (ref.kind === "endpoint" && nextType !== "tailscale") || (ref.kind === "service" && nextType !== "resolved");
+    if (
+      (hasMeaningfulFields || scrubsRefs) &&
+      !window.confirm(
+        `Change this ${ref.kind} to "${nextType}"? Fields specific to the current type are discarded${scrubsRefs ? ", and references to it elsewhere are removed" : ""}.`,
+      )
+    ) {
+      return;
+    }
+    changeEntityType(ref, nextType);
+  };
   const InspectorIcon = inspectorIcons[ref.kind];
   const selectedEndpointReferences =
     ref.kind === "endpoint" && tagValue ? endpointReferences(config, tagValue) : null;
@@ -2163,7 +2185,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
         <label className="field">
           <span>Type</span>
           {ref.kind === "inbound" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_INBOUND_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -2171,7 +2193,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               ))}
             </select>
           ) : ref.kind === "outbound" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_OUTBOUND_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -2179,7 +2201,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               ))}
             </select>
           ) : ref.kind === "dns-server" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_DNS_SERVER_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -2187,7 +2209,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               ))}
             </select>
           ) : ref.kind === "endpoint" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_ENDPOINT_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -2195,7 +2217,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               ))}
             </select>
           ) : ref.kind === "service" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_SERVICE_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
@@ -2203,7 +2225,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               ))}
             </select>
           ) : ref.kind === "rule-set" ? (
-            <select value={entityType} onChange={(event) => changeEntityType(ref, event.target.value)}>
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
               {CREATABLE_RULE_SET_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
