@@ -3,6 +3,7 @@ import {
   addDnsRule,
   addDnsServer,
   addEndpoint,
+  addHttpClient,
   addInbound,
   addOutbound,
   addRouteRule,
@@ -963,6 +964,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         config = addService(config, serviceType, preferredServiceTag(serviceType));
         const created = config.services?.[config.services.length - 1];
         if (created) selectedId = `service:${created.tag}`;
+      }
+      // http_clients[] is sing-box 1.14+ — creatable on testing only (C1-18/19).
+      if (kind === "http-client" && state.channel === "testing") {
+        config = addHttpClient(config);
+        const created = config.http_clients?.[config.http_clients.length - 1];
+        if (created?.tag) selectedId = `http-client:${created.tag}`;
       }
       const outboundType = outboundTypeForPaletteKind(kind);
       if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {

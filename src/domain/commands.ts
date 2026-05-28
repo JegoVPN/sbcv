@@ -714,6 +714,14 @@ export function addRuleSet(config: SingBoxConfig, type = "remote", preferredTag?
   return next;
 }
 
+export function addHttpClient(config: SingBoxConfig, preferredTag?: string): SingBoxConfig {
+  const next: SingBoxConfig = { ...config };
+  const tag = getUniqueTag(next, preferredTag ?? "http-client");
+  // A top-level http_clients[] entry is a tag + the shared HTTP-client object (engine/tls/dial…).
+  next.http_clients = [...(next.http_clients ?? []), { tag }];
+  return next;
+}
+
 export function createRuleSet(type: string, tag: string): TaggedConfig {
   if (type === "inline") {
     return {
