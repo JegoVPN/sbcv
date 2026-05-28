@@ -86,7 +86,8 @@ work, not after.
   - [ ] A24-rest — drag affordance, invalid-drop toast, right-click disconnect (W30 tail)
 - [ ] A25 — mobile build path (`mobile-build-path`)
 - [ ] A26 — import safety + onboarding (`import-safety-and-onboarding`)
-- [ ] A27 — template placeholder secrets (`template-placeholder-secrets`)
+- [x] A27 — template placeholder secrets: `placeholder-secret` warning on REPLACE_ME/change-me outbound/inbound secrets (W33) (`template-placeholder-secrets`) — PR #78
+  - [ ] A27-rest — extend the placeholder-secret scan to nested users[].password/uuid (review follow-up)
 
 ### Phase 4 — Polish
 - [ ] A28 — diagnostics/labels polish (`diagnostics-labels-polish`)
@@ -1234,3 +1235,21 @@ Status: implemented 2026-05-29 in `atomic/canvas-edge-legend`; merged in PR #77.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (784 passed | 1 todo), `pnpm build`,
   `pnpm e2e` (editor 3 passed).
 - Official check: n/a — canvas overlay UI.
+
+### A27 template-placeholder-secrets — placeholder-secret warning (domain, W33)
+Status: implemented 2026-05-29 in `atomic/template-placeholder-secrets`; merged in PR #78.
+
+- What changed (W33): templates/scaffolds ship dummy secrets like REPLACE_ME_PASSWORD (templates.ts) /
+  change-me with no guidance, so a user could export/expose a config still carrying a placeholder
+  credential. Per the user's confirmed approach (the masked `****` display already exists), added the
+  missing `placeholder-secret` WARNING: scans outbound/inbound entity-level secret fields (password,
+  auth_key, token, private_key, psk, uuid, secret_key) for `^REPLACE_ME…` / `^change[-_]?me…`.
+- Frontend perf review: n/a — domain-only.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Verified the
+  start-anchored regex has no realistic false positives (real random/base64 secrets + real UUIDs never
+  match), the now-warning bundled templates break no preset-validity test (it counts errors, not
+  warnings), and there's no double-report with the existing hysteria-realm change-me check (disjoint
+  paths). Two NITs (nested users[] secrets not scanned → A27-rest; cosmetic trim).
+  - Deferred to follow-up atomic: A27-rest (nested users[].password/uuid placeholder scan).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (787 passed | 1 todo), `pnpm build`.
+- Official check: n/a — semantic diagnostic.
