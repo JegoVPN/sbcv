@@ -61,7 +61,8 @@ work, not after.
 - [x] A19 — settings-experimental V2Ray build-tag label → `with_v2ray_api` (W27) (`settings-experimental-label`) — PR #66
 - [~] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`) — in progress
   - [x] A20-dns — fakeip inet4/inet6_range CIDR-shape validation (W28 dns-server) — PR #67
-  - [ ] A20-inbound — per-type version-gating + congestion/zero_rtt/auth_timeout + set_system_proxy leak + tun required fields (W28 inbound)
+  - [x] A20-inbound (network de-dup) — add `network` to inboundHandledFields so it isn't rendered twice (W28 inbound) — PR #68
+  - [ ] A20-inbound-rest — per-type version-gating + congestion/zero_rtt/auth_timeout + set_system_proxy leak + tun required fields (W28 inbound tail)
   - [ ] A20-outbound — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound)
   - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
   - [ ] A20-service — derp verify-client-endpoint wipe + ssm-api `/`-key collision + orphan managed (W28 service; incl C1-13)
@@ -1011,3 +1012,18 @@ per-category A20 batch.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (754 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — adds a semantic diagnostic, not bundled
   fixture/exported config output. Remaining A20 categories (inbound/outbound/rule/service/misc) queued.
+
+### A20-inbound residual-inbound-network-dedup — de-duplicate the network control (Inspector, W28 inbound)
+Status: implemented 2026-05-29 in `atomic/residual-inbound-network-dedup`; merged in PR #68.
+
+- What changed (W28 inbound): `network` rendered TWICE for tproxy/direct (and naive/shadowsocks) — the
+  dedicated tcp/udp select PLUS the Advanced-fields fallback, because `"network"` was missing from
+  `inboundHandledFields`. Added it so the dedicated selects are the single source. The reviewer confirmed
+  all four inbound types that have a `network` field (tproxy/direct/naive/shadowsocks) have a dedicated
+  select, so none loses its editor.
+- Frontend perf review: n/a — removes a duplicate control.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no findings. Verified coverage (4
+  dedicated selects), single-source semantics, red-then-green test, no regression.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (756 passed | 1 todo), `pnpm build`.
+- Official check: n/a — Inspector de-dup. Remaining inbound W28 items (version-gating, set_system_proxy
+  leak, tun required fields) are queued as A20-inbound-rest.

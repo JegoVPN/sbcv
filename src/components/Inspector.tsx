@@ -137,6 +137,7 @@ const inboundHandledFields = new Set([
   "fallback",
   "override_address",
   "override_port",
+  "network",
   "set_system_proxy",
   "include_uid_range",
   "exclude_uid_range",
