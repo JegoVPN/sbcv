@@ -52,7 +52,7 @@ work, not after.
 - [ ] A11-full — full headless-rule editor: all ~25 fields + logical and/or builder (deferred from A11 MVP; reachable today via JSON mode) (`rule-set-inline-editor-full`)
 - [x] A12 — rule-set-remote http_client object-form preserved + testing-gated + stable diagnostic (W20/C2-5) (`rule-set-http-client`) — PR #59
 - [x] A13 — ccm/ocm single correct (outbound) detour + 1.13 version gate (W21/C1-21/C2-1) (`ccm-ocm-detour`) — PR #60
-- [ ] A14 — endpoint-tailscale system_interface bool (`endpoint-tailscale-system-interface`)
+- [x] A14 — endpoint-tailscale system_interface bool + name/mtu, version-gated (W22/C0-13) (`endpoint-tailscale-system-interface`) — PR #61
 - [ ] A15 — dns-server-tailscale accept_search_domain (`dns-server-tailscale-fields`)
 - [ ] A16 — hub-route default_network_type (`hub-route-network-type`)
 - [ ] A17 — inbound-redirect platform banner (`inbound-redirect-banner`)
@@ -860,3 +860,28 @@ Status: implemented 2026-05-29 in `atomic/ccm-ocm-detour`; merged in PR #60.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (734 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A13 changes Inspector field gating +
   a diagnostic; the bundled ccm/ocm fixture is unchanged and still validates.
+
+### A14 endpoint-tailscale-system-interface — system_interface boolean + name/mtu (Inspector + domain, W22/C0-13)
+Status: implemented 2026-05-29 in `atomic/endpoint-tailscale-system-interface`; merged in PR #61.
+
+- What changed (W22/C0-13): upstream models the tailscale endpoint `system_interface` as a BOOLEAN
+  ("create a system TUN interface"), with the custom name in `system_interface_name` (string) and MTU
+  in `system_interface_mtu` (number) — all 1.13+. SBC rendered `system_interface` as a text input
+  (placeholder "tailscale0", really the name field) and stored a string into the boolean; name and mtu
+  were unreachable; and the A5-deferred diagnostic predicate keyed on `typeof === "string"`, so it never
+  fired for the real boolean. Now: `system_interface` is a checkbox; `system_interface_name` (text) +
+  `system_interface_mtu` (number, finite-guarded) added; all three in `endpointHandledFields`; the
+  `endpoint-tailscale-system-interface-1-13-only` warning fires on bool-true / name / mtu for version <
+  1.13 (not on `system_interface:false`).
+- Frontend perf review (`vercel-react-best-practices`): three render-time controls; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior sing-box + React reviewer subagent. Verdict APPROVE, no blockers.
+  Confirmed the bool/string/number mapping vs upstream, the scaffold (`system_interface:false`) round-
+  trips and doesn't trip the gate on default stable 1.13, uncheck→undefined matches the codebase
+  convention, and severity (warning) matches the sibling advertise_tags gate. Applied the one SHOULD-FIX
+  this pass: guard the MTU input with `Number.isFinite` (it was the only numeric field missing it, NaN
+  would export as null). Left the `mtu:0`-flagged NIT as-is (the field key itself is 1.13+; reviewer
+  concurred). Migrated 2 domain.test + 1 app.test case off the old string model.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (739 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A14 changes Inspector field controls + a
+  diagnostic, not bundled fixture/exported config output.
