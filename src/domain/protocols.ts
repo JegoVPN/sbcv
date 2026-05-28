@@ -44,6 +44,34 @@ export const CREATABLE_OUTBOUND_TYPES = [
 
 export type OutboundPaletteKind = keyof typeof OUTBOUND_PALETTE_TYPES;
 
+// Canvas "+" compatible-chip label -> creatable outbound type. Covers exactly the creatable outbound
+// kinds (no WireGuard — that is an endpoint, not a creatable outbound; no DNS). Used by createCompatible
+// so every advertised selector/urltest proxy chip actually creates and attaches a member.
+const OUTBOUND_CHIP_TYPES: Record<string, string> = {
+  Direct: "direct",
+  Block: "block",
+  SOCKS: "socks",
+  HTTP: "http",
+  Shadowsocks: "shadowsocks",
+  VMess: "vmess",
+  Trojan: "trojan",
+  Naive: "naive",
+  Hysteria: "hysteria",
+  Hysteria2: "hysteria2",
+  ShadowTLS: "shadowtls",
+  VLESS: "vless",
+  TUIC: "tuic",
+  AnyTLS: "anytls",
+  Tor: "tor",
+  SSH: "ssh",
+  Selector: "selector",
+  URLTest: "urltest",
+};
+
+export function outboundTypeForChipLabel(label: string): string | undefined {
+  return OUTBOUND_CHIP_TYPES[label];
+}
+
 export const INBOUND_PALETTE_TYPES = {
   "inbound-direct": "direct",
   "inbound-mixed": "mixed",

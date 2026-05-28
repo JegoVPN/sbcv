@@ -36,7 +36,8 @@ work, not after.
 - [x] A6b — dial-detour port guards: exclude block/dns from `detour-target` input (W5a); selector/urltest kept as valid targets — **audit deviation** from `["block","selector","urltest","dns"]`, see note (`dial-detour-port-guards`) — PR #46
 - [x] A7a — endpoint outbound-half (domain): endpoints join the outbound reference namespace — `getOutboundTags` + delete cascade; both WireGuard & Tailscale per migration.md (`endpoint-outbound-refs`) — PR #47
 - [x] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations via `extraNodeKinds`) + graph edges + connect handlers (`endpoint-outbound-ports`) — PR #48
-- [ ] A8 — port icon from relation + dead-chip fix + multi-edge disconnect (`canvas-connect-legibility`)
+- [x] A8a — canvas-connect-legibility: W2 dead-chips — implement selector/urltest proxy chips via `outboundTypeForChipLabel` + attach as member, prune WireGuard/cert/service chips; port-icon (T7) already satisfied (`canvas-connect-legibility`) — PR #49
+- [ ] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): disconnect targets the specific member reference (`multi-edge-disconnect`)
 - [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
 
@@ -540,3 +541,23 @@ Status: implemented 2026-05-28 in `atomic/endpoint-outbound-ports`; merged in PR
   mechanical condition-broadening, no new subscriptions/rerenders/waterfalls.
 - Verification: `git diff --check`, `tsc -b`, `pnpm test` (662 passed | 1 expected fail | 1 todo),
   `pnpm build`, `pnpm e2e` (13 passed — canvas connect interaction green).
+
+### A8a canvas-connect-legibility — every advertised "+" chip creates something (W2 dead-chips)
+Status: implemented 2026-05-28 in `atomic/canvas-connect-legibility`; merged in PR #49.
+
+- What changed (W2; Pass-2 T8 / Codex C1-9/12/15): graph.ts advertised compatible "+" chips with no
+  `createCompatible` branch, so clicking them was a silent no-op. Per the A8 checkpoint decision: the 14
+  selector/urltest proxy chips are now IMPLEMENTED — `outboundTypeForChipLabel` (protocols.ts) maps the chip
+  label to a creatable outbound type, `createCompatible`'s fallback creates it, and the existing
+  outbound-source branch attaches it as a selector/urltest member. The chips needing a heavier creator are
+  PRUNED: "WireGuard" (an endpoint, not a creatable outbound), "Tailscale Endpoint" (cert-provider/derp),
+  "Shadowsocks Inbound" (ssm-api).
+- W2 guardrail flipped `it.fails` -> `it`; sanity test updated (VMess now handled; the three pruned labels
+  no longer advertised).
+- A8 SPLIT: this is A8a (W2 dead-chips). A8's multi-edge aggregate-port disconnect (C1-7/8/23, still
+  `it.todo` in `multi-edge-disconnect.test.tsx`) is a separate sub-atomic. Port-icons-from-relation (T7) was
+  already satisfied (getPortSpecs derives the icon from the relation endpoint).
+- Codex review: clean (see PR). `vercel-react` (touches `createCompatible` in `src/state`): mechanical
+  label->type fallback, no new subscriptions/rerenders.
+- Verification: `git diff --check`, `tsc -b`, `pnpm test` (663 passed | 1 todo), `pnpm build`. createCompatible
+  is covered behaviorally by the W2 suite; no drag-interaction change beyond it.

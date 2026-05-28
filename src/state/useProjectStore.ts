@@ -43,6 +43,7 @@ import {
   endpointTypeForPaletteKind,
   inboundTypeForPaletteKind,
   outboundTypeForPaletteKind,
+  outboundTypeForChipLabel,
   preferredDnsServerTag,
   preferredEndpointTag,
   preferredInboundTag,
@@ -995,6 +996,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (kind === "SOCKS") createOutboundForKind("socks", "proxy-out");
       if (kind === "DNS Server") createDnsServerForKind("local");
       if (kind === "DNS Tailscale Server") createDnsServerForKind("tailscale");
+      // Proxy-type chips advertised on selector/urltest map through the creatable-outbound registry, so
+      // each one creates the outbound (and is attached as a member below via the outbound source branch).
+      if (!createdOutboundTag && !createdDnsServerTag && kind !== "Route") {
+        const chipType = outboundTypeForChipLabel(kind);
+        if (chipType) createOutboundForKind(chipType, preferredOutboundTag(chipType));
+      }
 
       const source = parseNodeId(sourceId);
       if (createdOutboundTag && source.kind === "route") {
