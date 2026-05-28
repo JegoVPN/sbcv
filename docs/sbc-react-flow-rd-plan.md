@@ -667,7 +667,6 @@ Selector
 
 ## 14. 开发约束
 
-- 所有提交必须签名，并通过本地 `pre-push` 的 `git verify-commit` 检查。
 - 导出的配置不能包含 SBC 私有 layout/meta 字段。
 - 默认导出配置必须以 stable schema 为准，并通过 stable binary 校验。
 - testing-only 配置必须显式标记 `singBoxChannel: "testing"`。

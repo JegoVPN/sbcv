@@ -23,11 +23,10 @@ The canvas is never the config source file. `SingBoxConfig` / domain model is th
 4. **Document traceability**: every schema field, node type, Inspector field, and fixture must map to an entry in `docs/sing-box-config-doc-inventory.md`.
 5. **Rules are ordered tables**: `route.rules` and `dns.rules` are ordered lists. The canvas may visualize references, but it must not be the ordering source.
 6. **Tag references are explicit**: tag rename, delete, connect, and disconnect must update references through tested domain commands.
-7. **Signed commits only**: commits must be signed and pass this repo's `pre-push` signature verification.
-8. **Small atomics**: one concern per commit. Prefer changes under 400 logical lines; split larger work.
-9. **No silent validation gaps**: if `sing-box check` cannot run, state that clearly in the final answer and keep schema/semantic validation separate from official validation.
-10. **No unrelated cleanup**: do not refactor unrelated files while implementing a goal.
-11. **React performance discipline**: frontend implementation and review must apply the `vercel-react-best-practices` skill, especially bundle size, rerender control, and async/data waterfall avoidance.
+7. **Small atomics**: one concern per commit. Prefer changes under 400 logical lines; split larger work.
+8. **No silent validation gaps**: if `sing-box check` cannot run, state that clearly in the final answer and keep schema/semantic validation separate from official validation.
+9. **No unrelated cleanup**: do not refactor unrelated files while implementing a goal.
+10. **React performance discipline**: frontend implementation and review must apply the `vercel-react-best-practices` skill, especially bundle size, rerender control, and async/data waterfall avoidance.
 
 ## Frontend Skill Gate
 
@@ -74,13 +73,10 @@ Before committing:
 
 After committing:
 
-- For PR work, push the branch and open the PR immediately after local checks and signed commit verification pass.
-- Do not wait on GitHub Actions before opening, advancing, or merging a PR. Deployment is Cloudflare Workers Builds via Cloudflare's own GitHub integration (see `docs/cloudflare-deployment.md`), so GitHub Actions checks such as `release-check` are neither deployment nor merge gates, and `main` has no branch protection. Rely on local required checks, local E2E/smoke verification, signed commit verification, the pre-push Claude review, and Cloudflare's build/deploy status.
-- After opening a PR, immediately check for the Claude review issue for that PR. If the scheduled poller has not created it yet, record that and continue; do not run a duplicate local poller unless the user explicitly asks.
-- Resolve actionable Claude review issues for the active goal before merging or starting another product atomic. Review issues with only timeout/pass/no-finding output may be closed as non-actionable with a short comment.
-- Push to `origin main` after merge unless the user asks otherwise. Use `SBC_SKIP_CLAUDE_REVIEW=1 git push origin main` when the PR already has a review issue; this keeps signature verification while avoiding duplicate local Claude review.
-- Verify the pushed commit is GitHub Verified when GitHub access is available.
-- Run the post-merge GitHub issue gate before the next atomic PR: list open issues, resolve actionable Claude Code review issues for the active goal, and record unrelated/blocked/unavailable cases.
+- For PR work, push the branch and open the PR immediately after local checks pass.
+- Do not wait on GitHub Actions before opening, advancing, or merging a PR. Deployment is Cloudflare Workers Builds via Cloudflare's own GitHub integration (see `docs/cloudflare-deployment.md`), so GitHub Actions checks such as `release-check` are neither deployment nor merge gates, and `main` has no branch protection. Rely on local required checks, local E2E/smoke verification, and Cloudflare's build/deploy status.
+- Push to `origin main` after merge unless the user asks otherwise.
+- Run the post-merge GitHub issue gate before the next atomic PR: list open issues, resolve actionable review issues for the active goal, and record unrelated/blocked/unavailable cases.
 
 ## Autonomous `/goal` Execution
 
@@ -97,14 +93,14 @@ The method lives here:
 3. Define the optimal path: architecture choice, implementation order, review gate, E2E gate, and done definition.
 4. Break the goal into 1-3 near-term atomics; do not pre-plan a long queue.
 5. Implement one atomic at a time.
-6. Run checks, commit signed, push, verify.
+6. Run checks, commit, push, verify.
 7. After merge or push to `main`, run the post-merge GitHub issue gate before starting the next atomic.
 8. Review the implementation against the goal doc and source-of-truth docs.
 9. Run E2E or smoke verification that proves the user-facing outcome works.
 10. Record deviations from the spec in the goal R&D doc.
 11. Continue until the goal is complete or a real blocker appears.
 
-A goal is not complete just because code was written. It is complete only when the researched approach, implementation, review, E2E verification, docs, and signed push are all done or explicitly marked not applicable with a reason.
+A goal is not complete just because code was written. It is complete only when the researched approach, implementation, review, E2E verification, docs, and push are all done or explicitly marked not applicable with a reason.
 
 Stop and ask the user before:
 
@@ -127,5 +123,4 @@ At each milestone, report:
 
 - Current repo: `JegoVPN/SBC`.
 - Default branch: `main`.
-- Commit author/signing identity: `JegoVPN`.
-- Local `pre-push` hook verifies every pushed commit signature.
+- Commit author identity: `JegoVPN`.
