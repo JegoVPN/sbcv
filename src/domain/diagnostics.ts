@@ -215,6 +215,31 @@ export function validateConfig(
           "DERP service requires TLS for official sing-box checks.",
         );
       }
+      const meshWith = Array.isArray((service as Record<string, unknown>).mesh_with)
+        ? ((service as Record<string, unknown>).mesh_with as Record<string, unknown>[])
+        : [];
+      meshWith.forEach((peer, meshIndex) => {
+        if (!peer || typeof peer !== "object") return;
+        if (typeof peer.server !== "string" || !peer.server.trim()) {
+          push(
+            diagnostics,
+            "error",
+            "derp-mesh-server-missing",
+            `/services/${index}/mesh_with/${meshIndex}/server`,
+            `DERP service "${service.tag}" mesh peer #${meshIndex + 1} requires a server address.`,
+          );
+        }
+        const meshPort = peer.server_port;
+        if (typeof meshPort !== "number" || !Number.isFinite(meshPort) || meshPort <= 0 || meshPort > 65535) {
+          push(
+            diagnostics,
+            "error",
+            "derp-mesh-server-port-missing",
+            `/services/${index}/mesh_with/${meshIndex}/server_port`,
+            `DERP service "${service.tag}" mesh peer #${meshIndex + 1} requires a numeric server_port between 1 and 65535.`,
+          );
+        }
+      });
     }
 
     if (service.type === "resolved") {
@@ -591,6 +616,65 @@ export function validateConfig(
     }
   });
 
+  endpoints.forEach((endpoint, index) => {
+    const ep = endpoint as Record<string, unknown>;
+    if (ep.type !== "wireguard") return;
+    const tag = (typeof ep.tag === "string" ? ep.tag : undefined) ?? `endpoint-${index}`;
+    const address = ep.address;
+    const hasAddress = Array.isArray(address) ? address.length > 0 : Boolean(address);
+    if (!hasAddress) {
+      push(
+        diagnostics,
+        "error",
+        "endpoint-wireguard-address-missing",
+        `/endpoints/${index}/address`,
+        `WireGuard endpoint "${tag}" requires at least one local address.`,
+      );
+    }
+    if (typeof ep.private_key !== "string" || !ep.private_key.trim()) {
+      push(
+        diagnostics,
+        "error",
+        "endpoint-wireguard-private-key-missing",
+        `/endpoints/${index}/private_key`,
+        `WireGuard endpoint "${tag}" requires a private_key.`,
+      );
+    }
+    const peers = Array.isArray(ep.peers) ? (ep.peers as Record<string, unknown>[]) : [];
+    if (peers.length === 0) {
+      push(
+        diagnostics,
+        "error",
+        "endpoint-wireguard-peers-missing",
+        `/endpoints/${index}/peers`,
+        `WireGuard endpoint "${tag}" requires at least one peer.`,
+      );
+    }
+    peers.forEach((peer, peerIndex) => {
+      if (!peer || typeof peer !== "object") return;
+      if (typeof peer.public_key !== "string" || !peer.public_key.trim()) {
+        push(
+          diagnostics,
+          "error",
+          "endpoint-wireguard-peer-public-key-missing",
+          `/endpoints/${index}/peers/${peerIndex}/public_key`,
+          `WireGuard endpoint "${tag}" peer #${peerIndex + 1} requires a public_key.`,
+        );
+      }
+      const allowed = peer.allowed_ips;
+      const hasAllowed = Array.isArray(allowed) ? allowed.length > 0 : Boolean(allowed);
+      if (!hasAllowed) {
+        push(
+          diagnostics,
+          "error",
+          "endpoint-wireguard-peer-allowed-ips-missing",
+          `/endpoints/${index}/peers/${peerIndex}/allowed_ips`,
+          `WireGuard endpoint "${tag}" peer #${peerIndex + 1} requires allowed_ips.`,
+        );
+      }
+    });
+  });
+
   outbounds.forEach((outbound, index) => {
     if (outbound.type !== "selector" && outbound.type !== "urltest") return;
     const candidates = Array.isArray(outbound.outbounds) ? outbound.outbounds : [];
@@ -598,7 +682,7 @@ export function validateConfig(
     if (candidates.length === 0) {
       push(
         diagnostics,
-        "warning",
+        "error",
         "group-outbound-empty",
         `/outbounds/${index}/outbounds`,
         `${outbound.type} group "${tag}" has no candidates; sing-box will reject it.`,
@@ -1476,6 +1560,20 @@ export function validateConfig(
           `/route/rule_set/${index}/path`,
           `Local rule-set "${tag}" has no path; sing-box will refuse to load it.`,
         );
+      }
+      const localFormat = typeof ruleSet.format === "string" ? ruleSet.format : "";
+      if (!localFormat && path) {
+        // Local `path` is a filesystem path, not a URL, so the extension is read as-is (no ?/# stripping).
+        const ext = path.split(".").pop()?.toLowerCase() ?? "";
+        if (ext !== "json" && ext !== "srs") {
+          push(
+            diagnostics,
+            "error",
+            "rule-set-local-format-missing",
+            `/route/rule_set/${index}/format`,
+            `Local rule-set "${tag}" has no format and path "${path}" does not end in .json or .srs; sing-box cannot infer the format.`,
+          );
+        }
       }
     }
     if (type === "inline") {

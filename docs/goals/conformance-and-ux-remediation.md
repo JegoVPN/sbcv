@@ -164,7 +164,7 @@ grafted into the phase that matches their don't-mix bucket. Each row becomes one
 | ID | Outcome | W / cross-ref | Don't-mix bucket | Child-goal slug |
 |---|---|---|---|---|
 | A1 | Shared TLS/multiplex/transport cards render correct fields per direction (`ref.kind`/role) | W6 (+W3) / C0-6, C0-7 / T1,T2 / atomic-1 | inspector field logic | `shared-cards-by-direction` |
-| A2 | No node exports invalid config: required markers + pre-export validation gate; rule-set local `format` inference | W9 / C0-1/5/10/12/16/17, C0-19 / T5 / atomic-2 | diagnostics + export | `required-fields-and-export-gate` |
+| A2 | No node exports invalid config: required markers + pre-export validation gate; rule-set local `format` inference | W9 / C0-1/5/10/12/16/17, C0-19 / T5 / atomic-2 | diagnostics + export | split → `required-fields-diagnostics` (A2a) + `required-markers-and-export-gate` (A2b); see devlog 2026-05-28 |
 | A3 | `JsonField` never writes unparseable text (parse feedback + guard); `rules` becomes a handled field | W8 (+W4) / C0-18 / T4 / atomic-3 | inspector editor | `jsonfield-parse-safety` |
 | A4 | Type-change is safe: central action-schema normalizers (scrub stale fields) + confirm dialog; kv repeaters never seed blank `{"":""}` rows (incl. hosts `predefined` + HTTPS/H3 header maps) | W7, W13 / C0-3, C0-8, C0-9, C1-6 / T3, T6 / atomic-4 | inspector data-safety | `type-change-safety` |
 | A5 | Version gating fires: pass `version` (not just `channel`) into `validateConfig`; type-change/creatable options are channel-aware (no testing-only type offered on stable) | W11 / C2-6, C2-2 / T10 / atomic-5 | diagnostics/targets | `version-aware-gating` |
