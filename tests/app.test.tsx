@@ -848,7 +848,7 @@ describe("SBC editor shell", () => {
     expect(urltest?.interrupt_exist_connections).toBe(false);
   });
 
-  it("renders Linux-only banner on tproxy + redirect inbounds and a network enum on tproxy", () => {
+  it("renders a platform banner on tproxy + redirect inbounds and a network enum on tproxy", () => {
     for (const paletteKind of ["inbound-tproxy", "inbound-redirect"]) {
       useProjectStore.getState().loadMinimal();
       act(() => {
@@ -856,7 +856,10 @@ describe("SBC editor shell", () => {
       });
       const { unmount } = render(<App />);
       const inspector = within(screen.getByLabelText("Node inspector"));
-      expect(inspector.getByText(/Linux-only inbound/)).toBeInTheDocument();
+      // A17: redirect is Linux+macOS; tproxy is Linux-only. Both show a single platform banner.
+      const banner = inspector.getByText(/Platform gate:/);
+      expect(banner).toBeInTheDocument();
+      expect(banner.textContent).toMatch(paletteKind === "inbound-redirect" ? /macOS/ : /Linux/);
       if (paletteKind === "inbound-tproxy") {
         const networkSelect = within(inspector.getByTestId("inbound-tproxy-network")).getByLabelText(
           "Network",
@@ -1935,7 +1938,7 @@ describe("SBC editor shell", () => {
     render(<App />);
 
     let inspector = within(screen.getByLabelText("Node inspector"));
-    expect(inspector.getByText(/Platform gate: redirect inbound only works on Linux/)).toBeInTheDocument();
+    expect(inspector.getByText(/Platform gate: redirect inbound is supported on Linux and macOS/)).toBeInTheDocument();
 
     act(() => {
       useProjectStore.getState().createFromPalette("inbound-tproxy");
