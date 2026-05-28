@@ -1558,6 +1558,10 @@ function sharedFieldDefinitions(
     const inboundOptions = (config.inbounds ?? [])
       .map((inbound) => inbound.tag)
       .filter((tag): tag is string => Boolean(tag && (ref.kind !== "inbound" || tag !== ref.tag)));
+    // ccm/ocm redefine `detour` as an OUTBOUND tag (the Claude/OpenAI API target), edited by the
+    // dedicated "API Detour" control. The listen-group inbound `detour` writes the same key, so omit it
+    // here to avoid silently stomping the outbound detour with an inbound tag (C1-21 / C2-1).
+    const detourIsOutbound = ref.kind === "service" && (type === "ccm" || type === "ocm");
     return [
       { label: "Listen", path: ["listen"], kind: "text" },
       { label: "Listen Port", path: ["listen_port"], kind: "number" },
@@ -1572,7 +1576,9 @@ function sharedFieldDefinitions(
       { label: "TCP Keep Alive Interval", path: ["tcp_keep_alive_interval"], kind: "text" },
       { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
       { label: "UDP Timeout", path: ["udp_timeout"], kind: "text" },
-      { label: "Inbound Detour", path: ["detour"], kind: "select", options: inboundOptions },
+      ...(detourIsOutbound
+        ? []
+        : [{ label: "Inbound Detour", path: ["detour"], kind: "select" as const, options: inboundOptions }]),
     ];
   }
 
