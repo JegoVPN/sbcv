@@ -40,8 +40,16 @@ type ReferenceCoverageCase = {
 function createReferenceCoverageConfig(): SingBoxConfig {
   return {
     inbounds: [
-      { type: "tun", tag: "tun-in", tls: { certificate_provider: "cert" } },
+      { type: "tun", tag: "tun-in", route_address_set: ["rs"], tls: { certificate_provider: "cert" } },
       { type: "shadowsocks", tag: "managed-ss", managed: true },
+      { type: "socks", tag: "socks-in", detour: "tun-in" },
+      {
+        type: "shadowtls",
+        tag: "stls-in",
+        handshake: { server: "h", server_port: 443, detour: "proxy" },
+        handshake_for_server_name: { "example.com": { server: "e", server_port: 443, detour: "proxy" } },
+      },
+      { type: "cloudflared", tag: "cf-in", token: "cf-token", control_dialer: { detour: "proxy" }, tunnel_dialer: { detour: "proxy" } },
     ],
     outbounds: [
       { type: "direct", tag: "proxy", tls: { certificate_provider: "cert" } },
@@ -65,14 +73,22 @@ function createReferenceCoverageConfig(): SingBoxConfig {
     ],
     services: [
       { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in", "/managed": "managed-ss" }, detour: "proxy" },
-      { type: "derp", tag: "derp", detour: "proxy", verify_client_endpoint: ["ts-ep"], tls: { certificate_provider: "cert" } },
+      {
+        type: "derp",
+        tag: "derp",
+        detour: "proxy",
+        mesh_with: [{ server: "m", server_port: 443, detour: "proxy" }],
+        verify_client_url: [{ url: "https://verify.example", detour: "proxy" }],
+        verify_client_endpoint: ["ts-ep"],
+        tls: { certificate_provider: "cert" },
+      },
       { type: "resolved", tag: "resolved-svc" },
     ],
     route: {
       final: "proxy",
       default_domain_resolver: { server: "local-dns", strategy: "ipv4_only" },
       default_http_client: "client",
-      rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"] }],
+      rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"] }, { action: "resolve", server: "local-dns" }],
       rule_set: [
         {
           type: "remote",
@@ -100,7 +116,7 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "inbound",
     tag: "tun-in",
     nextTag: "tun-renamed",
-    paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
+    paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/inbounds/*/detour", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
     staleDiagnosticCodes: [
       "missing-route-rule-inbound",
       "missing-dns-rule-inbound",
@@ -112,12 +128,14 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.dns?.rules?.[0]?.inbound).toEqual(["tun-renamed"]);
       expect(config.services?.find((item) => item.tag === "ssm")?.servers).toMatchObject({ "/": "tun-renamed" });
       expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ inbounds: ["tun-renamed"] });
+      expect((config.inbounds?.find((item) => item.tag === "socks-in") as Record<string, unknown> | undefined)?.detour).toBe("tun-renamed");
     },
     assertDeleted: (config) => {
       expect(config.route?.rules?.[0]?.inbound).toBeUndefined();
       expect(config.dns?.rules?.[0]?.inbound).toBeUndefined();
       expect(config.services?.find((item) => item.tag === "ssm")?.servers).toEqual({ "/managed": "managed-ss" });
       expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ inbounds: [] });
+      expect((config.inbounds?.find((item) => item.tag === "socks-in") as Record<string, unknown> | undefined)?.detour).toBeUndefined();
     },
   },
   {
@@ -133,6 +151,12 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       "/dns/servers/*/detour",
       "/endpoints/*/detour",
       "/services/*/detour",
+      "/services/*/mesh_with/*/detour",
+      "/services/*/verify_client_url/*/detour",
+      "/inbounds/*/handshake/detour",
+      "/inbounds/*/handshake_for_server_name/*/detour",
+      "/inbounds/*/control_dialer/detour",
+      "/inbounds/*/tunnel_dialer/detour",
       "/route/rule_set/*/download_detour",
       "/ntp/detour",
       "/experimental/clash_api/external_ui_download_detour",
@@ -163,6 +187,15 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.ntp?.detour).toBe("proxy-renamed");
       expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: "proxy-renamed" });
       expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ outbounds: ["proxy-renamed"] });
+      const stls = config.inbounds?.find((item) => item.tag === "stls-in") as Record<string, unknown> | undefined;
+      expect((stls?.handshake as Record<string, unknown>)?.detour).toBe("proxy-renamed");
+      expect(((stls?.handshake_for_server_name as Record<string, Record<string, unknown>> | undefined)?.["example.com"])?.detour).toBe("proxy-renamed");
+      const cf = config.inbounds?.find((item) => item.tag === "cf-in") as Record<string, unknown> | undefined;
+      expect((cf?.control_dialer as Record<string, unknown>)?.detour).toBe("proxy-renamed");
+      expect((cf?.tunnel_dialer as Record<string, unknown>)?.detour).toBe("proxy-renamed");
+      const derp = config.services?.find((item) => item.tag === "derp") as Record<string, unknown> | undefined;
+      expect((derp?.mesh_with as Array<Record<string, unknown>> | undefined)?.[0]?.detour).toBe("proxy-renamed");
+      expect((derp?.verify_client_url as Array<Record<string, unknown>> | undefined)?.[0]?.detour).toBe("proxy-renamed");
     },
     assertDeleted: (config) => {
       expect(config.route?.final).toBeUndefined();
@@ -177,13 +210,22 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.ntp?.detour).toBeUndefined();
       expect(config.experimental?.clash_api).toMatchObject({ external_ui_download_detour: undefined });
       expect((config.experimental?.v2ray_api as Record<string, unknown>)?.stats).toMatchObject({ outbounds: [] });
+      const stls = config.inbounds?.find((item) => item.tag === "stls-in") as Record<string, unknown> | undefined;
+      expect((stls?.handshake as Record<string, unknown>)?.detour).toBeUndefined();
+      expect(((stls?.handshake_for_server_name as Record<string, Record<string, unknown>> | undefined)?.["example.com"])?.detour).toBeUndefined();
+      const cf = config.inbounds?.find((item) => item.tag === "cf-in") as Record<string, unknown> | undefined;
+      expect((cf?.control_dialer as Record<string, unknown>)?.detour).toBeUndefined();
+      expect((cf?.tunnel_dialer as Record<string, unknown>)?.detour).toBeUndefined();
+      const derp = config.services?.find((item) => item.tag === "derp") as Record<string, unknown> | undefined;
+      expect((derp?.mesh_with as Array<Record<string, unknown>> | undefined)?.[0]?.detour).toBeUndefined();
+      expect((derp?.verify_client_url as Array<Record<string, unknown>> | undefined)?.[0]?.detour).toBeUndefined();
     },
   },
   {
     kind: "dns-server",
     tag: "local-dns",
     nextTag: "dns-renamed",
-    paths: ["/dns/final", "/dns/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
+    paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
     staleDiagnosticCodes: ["missing-dns-final", "missing-dns-rule-server"],
     assertRenamed: (config) => {
       expect(config.dns?.final).toBe("dns-renamed");
@@ -195,6 +237,7 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.route?.rule_set?.[0]?.domain_resolver).toMatchObject({ server: "dns-renamed" });
       expect(config.http_clients?.[0]?.domain_resolver).toBe("dns-renamed");
       expect(config.ntp?.domain_resolver).toMatchObject({ server: "dns-renamed" });
+      expect((config.route?.rules?.[1] as Record<string, unknown> | undefined)?.server).toBe("dns-renamed");
     },
     assertDeleted: (config) => {
       expect(config.dns?.final).toBeUndefined();
@@ -206,6 +249,7 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.route?.rule_set?.[0]?.domain_resolver).toBeUndefined();
       expect(config.http_clients?.[0]?.domain_resolver).toBeUndefined();
       expect(config.ntp?.domain_resolver).toBeUndefined();
+      expect((config.route?.rules?.[1] as Record<string, unknown> | undefined)?.server).toBeUndefined();
     },
   },
   {
@@ -242,15 +286,17 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "rule-set",
     tag: "rs",
     nextTag: "rs-renamed",
-    paths: ["/route/rules/*/rule_set", "/dns/rules/*/rule_set"],
+    paths: ["/route/rules/*/rule_set", "/dns/rules/*/rule_set", "/inbounds/*/route_address_set", "/inbounds/*/route_exclude_address_set"],
     staleDiagnosticCodes: ["missing-route-rule-set", "missing-dns-rule-set"],
     assertRenamed: (config) => {
       expect(config.route?.rules?.[0]?.rule_set).toEqual(["rs-renamed"]);
       expect(config.dns?.rules?.[0]?.rule_set).toEqual(["rs-renamed"]);
+      expect((config.inbounds?.find((item) => item.tag === "tun-in") as Record<string, unknown> | undefined)?.route_address_set).toEqual(["rs-renamed"]);
     },
     assertDeleted: (config) => {
       expect(config.route?.rules?.[0]?.rule_set).toBeUndefined();
       expect(config.dns?.rules?.[0]?.rule_set).toBeUndefined();
+      expect((config.inbounds?.find((item) => item.tag === "tun-in") as Record<string, unknown> | undefined)?.route_address_set ?? []).not.toContain("rs");
     },
   },
   {
