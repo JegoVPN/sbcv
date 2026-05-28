@@ -2688,7 +2688,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               <ModuleCard title="V2Ray API" active={v2rayEnabled}>
                 <PlatformBanner
                   kind="build-tag"
-                  text="Build-tag gate: V2Ray API requires sing-box compiled with the v2rayapi tag. Standard releases do not include it; enabling listen+stats on a stock binary fails at runtime."
+                  text="Build-tag gate: V2Ray API requires sing-box compiled with the with_v2ray_api tag. Standard releases do not include it; enabling listen+stats on a stock binary fails at runtime."
                 />
                 <label className="field">
                   <span>Listen</span>
