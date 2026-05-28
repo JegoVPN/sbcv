@@ -66,7 +66,8 @@ work, not after.
   - [x] A20-outbound (ssh port) — ssh server_port optional (defaults to 22), no false-positive error (W28 outbound) — PR #69
   - [ ] A20-outbound-rest — ssh private_key multiline + tor build-tag diag + hysteria server_ports + ss udp_over_tcp⇔multiplex (W28 outbound tail)
   - [ ] A20-rule — route-rule bypass outbound/route-options select + geo deprecation + resolve sub-fields (W28 rule; incl C1-1)
-  - [ ] A20-service — derp verify-client-endpoint wipe + ssm-api `/`-key collision + orphan managed (W28 service; incl C1-13)
+  - [x] A20-service (ssm-api key) — canvas connect uses a distinct servers path, not a hardcoded `/` (C1-13) — PR #70
+  - [ ] A20-service-rest — derp verify-client-endpoint wipe + ssm-api orphan managed on toggle-off (W28 service tail)
   - [ ] A20-misc — WireGuard peer schema C0-14, VLESS flow-no-TLS C1-10, certificate-provider required C0-15/C1-14 (W28 cross-node)
 - [ ] A21 — cloudflared testing inbound (`inbound-cloudflared-testing`)
 - [ ] A22 — HTTP Client capability (`http-client-capability`)
@@ -1042,3 +1043,24 @@ Status: implemented 2026-05-29 in `atomic/residual-outbound-ssh-port`; merged in
   and ssh is the SOLE default-port proxy type (all others are `==Required==`, so no analogous bug).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (759 passed | 1 todo), `pnpm build`.
 - Official check: n/a — semantic diagnostic. Remaining outbound W28 items queued as A20-outbound-rest.
+
+### A20-service residual-service-ssm-key — ssm-api connect distinct path (state, C1-13)
+Status: implemented 2026-05-29 in `atomic/residual-service-ssm-key`; merged in PR #70.
+
+- What changed (W28 service / C1-13): connecting a shadowsocks inbound to an SSM-API service on the
+  canvas hardcoded `servers["/"]`, so wiring a SECOND inbound silently overwrote the first's root
+  mapping. `servers` is a path→inbound map needing distinct paths. Added `uniqueServerPath` ("/" if free,
+  else "/<tag>" suffixed) and used it in both the drag-connect handler and the inbound-side toggle path;
+  reuses the existing entry if the inbound is already mapped (no duplicate on reconnect).
+- Frontend perf review (`vercel-react-best-practices`): connect-handler logic only; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed the bug was real,
+  the fix is correct (first→"/", second→distinct, reconnect→no-op), "/<tag>" is a valid SSM path, no
+  infinite loop, and the disconnect side is already path-aware (per-edge remove encodes the path).
+  Applied the reviewer's NIT in-pass: the sibling inbound-side toggle path (line ~1439) had the same
+  hardcoded-"/" clobber risk → now uses `uniqueServerPath` too.
+  - Deferred to follow-up atomic: A20-service-rest (derp verify-client-endpoint wipe, ssm-api orphan
+    managed on toggle-off).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (761 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (port-click 7 passed).
+- Official check: n/a — canvas connect-handler logic, not bundled fixture/exported config output.

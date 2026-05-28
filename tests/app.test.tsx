@@ -971,7 +971,9 @@ describe("SBC editor shell", () => {
     const ssAfter = after.config.inbounds?.find((i) => i.tag === ssInbound?.tag);
     expect(ssAfter?.managed).toBe(true);
     const ssmAfter = after.config.services?.find((s) => s.tag === ssmService?.tag);
-    expect((ssmAfter?.servers as Record<string, unknown>)?.["/"]).toBe(ssInbound?.tag);
+    // C1-13: the connected inbound is mapped under a distinct path (it must not clobber the auto-managed
+    // inbound already at "/").
+    expect(Object.values((ssmAfter?.servers as Record<string, string>) ?? {})).toContain(ssInbound?.tag);
   });
 
   it("renders tailscale endpoint auth_key as a sensitive field + system_interface input", () => {
