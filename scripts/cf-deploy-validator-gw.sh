@@ -12,9 +12,10 @@
 #      is a warning since the deploy itself already succeeded.
 #
 # Configure in Dashboard -> sbc-validator-gw -> Settings -> Build:
-#   Root directory:  /  (so git diff sees both worker/ and container/)
-#   Build command:   pnpm install
-#   Deploy command:  bash scripts/cf-deploy-validator-gw.sh
+#   Root directory:  worker
+#   Build command:   pnpm install --frozen-lockfile
+#   Deploy command:  bash ../scripts/cf-deploy-validator-gw.sh
+#   Preview command: npx --yes wrangler@4.95.0 versions upload --env=""
 #   Build watch paths:  worker/**, container/**, scripts/cf-deploy-validator-gw.sh
 
 set -eu
