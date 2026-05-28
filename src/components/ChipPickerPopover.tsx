@@ -1,18 +1,6 @@
-import {
-  GitBranch,
-  Globe2,
-  Layers,
-  Network,
-  Radio,
-  Route,
-  Search,
-  Server,
-  Settings,
-  Shield,
-  Waypoints,
-  type LucideIcon,
-} from "lucide-react";
+import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { getNodeIcon } from "../canvas/iconRegistry";
 import type { PortNodeKind } from "../domain/portRelationRegistry";
 
 export type ChipPickerCandidate = {
@@ -33,24 +21,8 @@ type ChipPickerPopoverProps = {
   onClose: () => void;
 };
 
-const iconByKind: Partial<Record<PortNodeKind, LucideIcon>> = {
-  inbound: Radio,
-  route: Route,
-  "route-rule": GitBranch,
-  dns: Globe2,
-  "dns-server": Server,
-  "dns-rule": GitBranch,
-  endpoint: Waypoints,
-  service: Settings,
-  outbound: Network,
-  "rule-set": Layers,
-  "certificate-provider": Shield,
-  "http-client": Network,
-  settings: Settings,
-};
-
-function CandidateIcon({ kind }: { kind: PortNodeKind }) {
-  const Icon = iconByKind[kind] ?? Server;
+function CandidateIcon({ kind, type }: { kind: PortNodeKind; type: string }) {
+  const Icon = getNodeIcon(kind, type);
   return <Icon size={15} strokeWidth={2} />;
 }
 
@@ -86,7 +58,7 @@ export function ChipPickerPopover({ x, y, width, maxHeight, candidates, onPick, 
         {filtered.map((candidate) => (
           <button className="chip-picker__item" key={candidate.id} type="button" onClick={() => onPick(candidate)}>
             <span className="chip-picker__item-icon" aria-hidden="true">
-              <CandidateIcon kind={candidate.nodeKind} />
+              <CandidateIcon kind={candidate.nodeKind} type={candidate.nodeType} />
             </span>
             <span>{candidate.label}</span>
           </button>

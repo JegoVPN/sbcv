@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
   Ban,
-  Braces,
   CheckCircle2,
   CircleAlert,
   Database,
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
+import { getNodeIcon } from "../canvas/iconRegistry";
 import {
   portEndpointsForNode,
   portRelations,
@@ -36,32 +36,9 @@ import {
 import { useProjectStore } from "../state/useProjectStore";
 import { useCanvasInteraction } from "./canvasInteractionContext";
 
-const iconMap = {
-  inbound: RadioTower,
-  route: Route,
-  "route-rule": GitBranch,
-  dns: Globe2,
-  "dns-server": Server,
-  "dns-rule": GitBranch,
-  endpoint: Waypoints,
-  service: Server,
-  outbound: Network,
-  "rule-set": Layers3,
-  "certificate-provider": Shield,
-  "http-client": Network,
-  settings: Braces,
-  notice: CircleAlert,
-};
-
 const EMPTY_CONNECTED_PORTS: Partial<Record<PortDirection, string[]>> = {};
 
-function outboundIcon(type: string) {
-  if (type === "direct") return CheckCircle2;
-  if (type === "block") return Ban;
-  if (type === "selector") return Shuffle;
-  if (type === "urltest") return Database;
-  return Shield;
-}
+export { getNodeIcon };
 
 export type PortSpec = {
   key: string;
@@ -89,10 +66,6 @@ const portIconMap: Record<PortIconId, LucideIcon> = {
   shuffle: Shuffle,
   waypoints: Waypoints,
 };
-
-export function getNodeIcon(kind: SbcNodeKind, type: string): LucideIcon {
-  return kind === "outbound" ? outboundIcon(type) : iconMap[kind];
-}
 
 function relationForEndpoint(endpoint: PortEndpoint) {
   return portRelations.find((entry) => entry.source === endpoint || entry.target === endpoint);
