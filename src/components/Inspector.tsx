@@ -1512,8 +1512,9 @@ function sharedFieldDefinitions(
     const isServerRole = ref.kind === "inbound" || ref.kind === "service";
     // naive (outbound) supports only a narrow client TLS surface.
     if (ref.kind === "outbound" && type === "naive") {
+      // naive is TLS-only (scaffold seeds tls.enabled=true), so no enable toggle; upstream supports only
+      // server_name/certificate/certificate_path/ech here (outbound/naive.md).
       return [
-        { label: "Enabled", path: ["tls", "enabled"], kind: "boolean" },
         { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
         { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
         { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
@@ -1544,7 +1545,10 @@ function sharedFieldDefinitions(
       { label: "Reality Handshake Server", path: ["tls", "reality", "handshake", "server"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Handshake Server Port", path: ["tls", "reality", "handshake", "server_port"], kind: "number", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Private Key", path: ["tls", "reality", "private_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "Reality Short ID", path: ["tls", "reality", "short_id"], kind: "list", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Max Time Difference", path: ["tls", "reality", "max_time_difference"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
+      { label: "ECH Key (PEM/lines)", path: ["tls", "ech", "key"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Key Path", path: ["tls", "ech", "key_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
     ];
     const clientOnly: SharedFieldDefinition[] = [
       { label: "Disable SNI", path: ["tls", "disable_sni"], kind: "boolean" },

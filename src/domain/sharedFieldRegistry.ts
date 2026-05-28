@@ -118,7 +118,7 @@ export const SHARED_DOC_PLACEMENTS: SharedDocPlacement[] = [
   {
     doc: "shared/udp-over-tcp.md",
     group: "udp-over-tcp",
-    owners: ["outbounds[socks|shadowsocks|naive|tuic]"],
+    owners: ["outbounds[socks|shadowsocks|naive]"],
     mode: "embedded-inspector",
   },
   {
