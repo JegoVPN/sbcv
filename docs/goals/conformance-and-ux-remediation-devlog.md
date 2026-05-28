@@ -56,7 +56,8 @@ work, not after.
 - [x] A14 — endpoint-tailscale system_interface bool + name/mtu, version-gated (W22/C0-13) (`endpoint-tailscale-system-interface`) — PR #61
 - [x] A15 — dns-server-tailscale accept_search_domain toggle (testing-gated) (W23/C1-5) (`dns-server-tailscale-fields`) — PR #62
 - [x] A16 — hub-route default_network_type array shape + de-duplicated controls (W24) (`hub-route-network-type`) — PR #63
-- [ ] A16-norm — one-time normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (or make the shared list read path string-tolerant); ~2-day pre-release shape, strands silently in the list control (A16 review follow-up)
+- [x] A16-norm — normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (in `normalizeConfig`); ~2-day pre-release shape, was stranding silently in the list control (A16 review follow-up) — PR #84
+  - [ ] A16-norm-rest — the dial-group siblings `network_type`/`fallback_network_type` on outbounds/endpoints have the same legacy-string→list-control strand (untyped via the index signature, lower risk); coerce those on import too (A16-norm follow-up)
 - [x] A17 — inbound-redirect platform banner (Linux + macOS) + de-duplicated (W25) (`inbound-redirect-banner`) — PR #64
 - [x] A18 — inbound-vless does not seed tls:{enabled:true} (W26) (`inbound-vless-tls-default`) — PR #65
 - [x] A19 — settings-experimental V2Ray build-tag label → `with_v2ray_api` (W27) (`settings-experimental-label`) — PR #66
@@ -1428,3 +1429,31 @@ Status: implemented 2026-05-29 in `atomic/dns-rule-import-normalize`; merged in 
   predefined, `override_address`/`override_port` on route-options, sniff fields) still survive import.
   Also: nested logical-rule recursion (currently top-level only — inert today since nested rules carry
   no action/outbound/server, but worth revisiting if logical-rule conformance becomes a goal).
+
+### A16-norm route-network-type-import-normalize — coerce legacy raw-string network type (domain)
+Status: implemented 2026-05-29 in `atomic/route-network-type-import-normalize`; merged in PR #84.
+
+- What changed: A16 declared `route.default_network_type` / `default_fallback_network_type` as
+  `string[]`, but a legacy/pre-release config carrying the raw-string form (`default_network_type:
+  "tcp"`) imported a bare string into a `string[]`-typed field. That type-lie stranded silently in the
+  `kind: "list"` control (the user could neither see nor edit it) and risked `.length`/`.includes`
+  operating on the string elsewhere. Same root-cause shape as A10d: `normalizeConfig` (the single import
+  boundary) now coerces a raw-string value to a single-element array (`"tcp" → ["tcp"]`, `"" → []`),
+  leaving already-array values untouched.
+- Tests: `tests/route-network-type-import-normalize.test.ts` — string→array for both fields, empty
+  string→`[]`, array passthrough, a no-network-type route left alone, and (added in-pass) a non-string
+  element passthrough pinning the strings-only contract.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers, no should-fix.
+  Trace-verified the coercion across all value types (strings rewritten; number/array-of-non-strings/
+  null/object/undefined pass through), the `value: unknown` typeof-narrowing idiom, clone-not-input
+  mutation, write-side type-safety under strict + noUncheckedIndexedAccess, and zero interaction with
+  the adjacent A10d rule-normalizer (disjoint config subtrees). Confirmed `""→[]` matches the list
+  control's own `fromList`/`toList` behavior. Agreed the dial-group siblings are correctly deferred
+  (untyped via the index signature → no type-lie). Applied the one optional nice-to-have in-pass (the
+  non-string passthrough assertion).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (818 passed), `pnpm build`,
+  `pnpm e2e` (14 passed, incl. the round-trip fixture test).
+- Official check: n/a — domain import normalization.
+- Deferred to follow-up atomic: A16-norm-rest — the dial-group siblings `network_type` /
+  `fallback_network_type` on outbounds/endpoints share the legacy-string strand (untyped via the index
+  signature, so lower type-lie risk); coerce those on import too.

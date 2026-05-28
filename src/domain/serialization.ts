@@ -1,5 +1,13 @@
 import { normalizeDnsRule, normalizeRouteRule } from "./commands";
-import type { SingBoxConfig } from "./types";
+import type { RouteConfig, SingBoxConfig } from "./types";
+
+// A16 declares route.default_network_type / default_fallback_network_type as `string[]`. A legacy
+// pre-release config may carry the raw-string form; coerce it to a single-element array at the import
+// boundary so the model honors the type (and the list control / export stay correct). (A16-norm)
+function coerceRouteNetworkList(route: RouteConfig, key: "default_network_type" | "default_fallback_network_type") {
+  const value: unknown = route[key];
+  if (typeof value === "string") route[key] = value ? [value] : [];
+}
 
 export type ConfigExport = {
   fileName: "config.json";
@@ -58,6 +66,10 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
   if (dns?.rules) dns.rules = dns.rules.map(normalizeDnsRule);
   const route = config.route;
   if (route?.rules) route.rules = route.rules.map(normalizeRouteRule);
+  if (route) {
+    coerceRouteNetworkList(route, "default_network_type");
+    coerceRouteNetworkList(route, "default_fallback_network_type");
+  }
   return config;
 }
 
