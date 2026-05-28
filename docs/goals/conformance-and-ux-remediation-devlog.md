@@ -45,7 +45,7 @@ work, not after.
 
 ### Phase 2 — Residual node P0/P1
 - [x] A10a — dns-rule `server` settable for `evaluate` (not just route), Inspector half (C0-2) (`dns-rule-server-evaluate`) — PR #55
-- [ ] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`)
+- [x] A10b — dns-rule `evaluate`/`respond` ordering + response-match diagnostics (C0-4), domain (`dns-rule-ordering-diagnostics`) — PR #56
 - [ ] A10c — action-aware dns-server canvas port: only advertise the server port for server-bearing actions (claude P0; structural port-registry change) (`dns-rule-action-aware-port`)
 - [ ] A11 — rule-set-inline structured editor (`rule-set-inline-editor`)
 - [ ] A12 — rule-set-remote http_client object form (`rule-set-http-client`)
@@ -726,3 +726,29 @@ First atomic under the new one-pass expert-review gate.
   No e2e — Inspector form-gating, covered by component tests (`tests/dns-rule-server.test.tsx`).
 - Official check: `sing-box-stable/testing check` not run — A10a changes Inspector field gating, not
   bundled fixture/exported config output.
+
+### A10b dns-rule-ordering-diagnostics — evaluate/respond ordering (domain, C0-4)
+Status: implemented 2026-05-29 in `atomic/dns-rule-ordering-diagnostics`; merged in PR #56.
+
+- What changed (C0-4): a single ordered pass over `dns.rules[]` now flags the two upstream ordering
+  preconditions SBC ignored (`dns/rule_action.md`): `action:"respond"` with no preceding top-level
+  `evaluate` (`dns-rule-respond-without-evaluate`), and response matching — `match_response` OR any
+  Response Match Field (`response_rcode/answer/ns/extra`) — with no preceding top-level `evaluate`
+  (`dns-rule-match-response-without-evaluate`). A `precedingTopLevelEvaluate` flag is read for each
+  rule's checks and flipped true only AFTER them, so a rule's own evaluate never satisfies its own
+  precondition (matching runs before the action). Both errors are version-gated to `atLeast(version,
+  "1.14")`.
+- Frontend perf review: n/a — domain-only (`src/domain/diagnostics.ts`).
+- Expert review (one pass): a senior sing-box domain-correctness reviewer subagent — chosen because this
+  is a pure diagnostics/semantics change where false positives are the main risk. Verdict APPROVE.
+  Confirmed top-level-only scoping is correct (logical sub-rules can't carry `evaluate`), the
+  read-before-flip logic is sound, and no bundled template/fixture trips a false positive (TESTING_114
+  + the external 1.14 fixture order evaluate immediately before respond/match_response). Two SHOULD-FIX
+  applied this pass: gate the errors to 1.14 (avoid stable-channel double-reporting with the existing
+  testing-only warning); extend the trigger to Response Match Fields per C0-4's "and response fields",
+  not just `match_response`.
+  - Deferred to follow-up atomic: A10c (action-aware canvas port). C0-1 required-server diagnostic
+    still with A2c.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (715 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A10b adds semantic diagnostics, not bundled
+  fixture/exported config output.
