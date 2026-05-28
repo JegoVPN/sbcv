@@ -37,7 +37,7 @@ work, not after.
 - [x] A7a — endpoint outbound-half (domain): endpoints join the outbound reference namespace — `getOutboundTags` + delete cascade; both WireGuard & Tailscale per migration.md (`endpoint-outbound-refs`) — PR #47
 - [x] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations via `extraNodeKinds`) + graph edges + connect handlers (`endpoint-outbound-ports`) — PR #48
 - [x] A8a — canvas-connect-legibility: W2 dead-chips — implement selector/urltest proxy chips via `outboundTypeForChipLabel` + attach as member, prune WireGuard/cert/service chips; port-icon (T7) already satisfied (`canvas-connect-legibility`) — PR #49
-- [ ] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): disconnect targets the specific member reference (`multi-edge-disconnect`)
+- [x] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): mark the 8 writable array relations aggregate + suppress their ambiguous per-port disconnect (both ends); disconnect via per-edge remove / Inspector list (`multi-edge-disconnect`) — PR #50
 - [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
 
@@ -561,3 +561,30 @@ Status: implemented 2026-05-28 in `atomic/canvas-connect-legibility`; merged in 
   label->type fallback, no new subscriptions/rerenders.
 - Verification: `git diff --check`, `tsc -b`, `pnpm test` (663 passed | 1 todo), `pnpm build`. createCompatible
   is covered behaviorally by the W2 suite; no drag-interaction change beyond it.
+
+### A8-multiedge multi-edge-disconnect — suppress the ambiguous aggregate-port disconnect (canvas)
+Status: implemented 2026-05-29 in `atomic/multi-edge-disconnect`; merged in PR #50.
+
+- What changed (C1-7/8/23): `CanvasWorkspace.edgeByPort` maps each port to the FIRST edge only, so the
+  per-port disconnect control on a one-to-many ("aggregate") relation port could only ever remove the first
+  reference. Declarative fix: `AGGREGATE_RELATION_IDS` (portRelationRegistry) marks the eight writable
+  array-valued relations — selector, urltest, route-rule-inbound, route-rule-set, dns-rule-inbound,
+  dns-rule-set, service-verify-endpoint, and service-ssm-inbound — and SbcNode suppresses the per-port
+  disconnect button on those ports (both input and output ends, via `PortSpec.aggregate`). A specific
+  reference is disconnected via the per-edge remove (rendered edges, `onEdgesDelete`) or the Inspector list
+  editor (e.g. the selector "Candidates" checklist), which is complete and immune to the
+  `MAX_VISUAL_CANDIDATE_EDGES` cap.
+- DESIGN (user-approved): the Inspector-backed approach over removing the visual edge cap — the cap exists
+  for canvas density/perf, and the Inspector already provides complete per-reference list editing.
+- This completes A8 (A8a dead-chips #49 + A8-multiedge).
+- Codex review: four cycles. The first two (on an edge-counting, output-only approach) found four majors —
+  counting RENDERED (capped) edges, input-side multi-parent ambiguity, the capped-reference orphan, and the
+  non-selector aggregate ports — which drove the re-architecture to this declarative, Inspector-backed
+  approach. That approach's first review found two more — endpoint members were unremovable from the
+  Inspector candidate checklist (A7a updated the domain `getOutboundTags` but not the Inspector's local
+  `outboundTags`, so endpoint members read as stale), and two writable one-to-many service relations
+  (`service-verify-endpoint`, `service-ssm-inbound`) were missing from the aggregate set — both fixed
+  (endpoint-inclusive `outboundTags`; 8-relation aggregate set), then confirmed. `vercel-react`: one
+  boolean per port spec, no new subscriptions/rerenders.
+- Verification: `git diff --check`, targeted Vitest (51 passed), `tsc -b`, `pnpm test` (666 passed),
+  `pnpm build`, `pnpm e2e` (13 passed).

@@ -346,9 +346,13 @@ function objectField(value: unknown): InspectorEntity {
 }
 
 function outboundTags(config: SingBoxConfig, excludeTag?: string) {
-  return (config.outbounds ?? [])
-    .map((outbound) => outbound.tag)
-    .filter((tag): tag is string => Boolean(tag && tag !== excludeTag));
+  // Endpoints share the outbound tag namespace (A7a/A7b: a WireGuard/Tailscale endpoint is a valid
+  // route/selector/detour target), so they belong in every outbound-target picker, including the
+  // selector/urltest candidate checklist (otherwise endpoint members read as stale and cannot be removed).
+  return [
+    ...(config.outbounds ?? []).map((outbound) => outbound.tag),
+    ...(config.endpoints ?? []).map((endpoint) => endpoint.tag),
+  ].filter((tag): tag is string => Boolean(tag && tag !== excludeTag));
 }
 
 function endpointTags(config: SingBoxConfig, type?: string) {
