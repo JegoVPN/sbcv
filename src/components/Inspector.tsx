@@ -1,18 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import {
-  Braces,
-  GitBranch,
-  Globe2,
-  Layers3,
-  Network,
-  RadioTower,
-  Route,
-  Server,
-  Trash2,
-  Waypoints,
-  X,
-} from "lucide-react";
+import { Braces, Network, Route, Server, Trash2, X } from "lucide-react";
+import { getNodeIcon } from "../canvas/iconRegistry";
 import type { EntityRef, SingBoxConfig } from "../domain/types";
 import {
   CREATABLE_DNS_SERVER_TYPES,
@@ -28,24 +17,7 @@ import { useProjectStore } from "../state/useProjectStore";
 import { DnsRulesTable, RouteRulesTable } from "./RuleTables";
 
 type InspectorEntity = Record<string, unknown>;
-type InspectorKind = EntityRef["kind"];
 type UpdateField = (ref: EntityRef, field: string, value: unknown) => void;
-
-const inspectorIcons = {
-  inbound: RadioTower,
-  outbound: Network,
-  "dns-server": Server,
-  endpoint: Waypoints,
-  service: Server,
-  "rule-set": Layers3,
-  "certificate-provider": Braces,
-  "http-client": Network,
-  route: Route,
-  "route-rule": GitBranch,
-  dns: Globe2,
-  "dns-rule": GitBranch,
-  settings: Braces,
-} satisfies Record<InspectorKind, typeof Braces>;
 
 function selectedRefFromId(id: string | null): EntityRef | null {
   if (!id) return null;
@@ -1871,7 +1843,10 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
     }
     changeEntityType(ref, nextType);
   };
-  const InspectorIcon = inspectorIcons[ref.kind];
+  // Settings entities carry no canonical `type`; deriveGraph uses the ref path (log/ntp/experimental)
+  // as the node type, so match it here to keep the header icon consistent with the node card.
+  const iconType = ref.kind === "settings" ? String(ref.path) : entityType ?? "";
+  const InspectorIcon = getNodeIcon(ref.kind, iconType);
   const selectedEndpointReferences =
     ref.kind === "endpoint" && tagValue ? endpointReferences(config, tagValue) : null;
   const sharedGroups = sharedGroupsForEntity(ref, entityType, channel);

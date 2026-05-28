@@ -38,7 +38,9 @@ work, not after.
 - [x] A7b — endpoint outbound-half (canvas): input ports on endpoint nodes (broaden the 5 outbound-target relations via `extraNodeKinds`) + graph edges + connect handlers (`endpoint-outbound-ports`) — PR #48
 - [x] A8a — canvas-connect-legibility: W2 dead-chips — implement selector/urltest proxy chips via `outboundTypeForChipLabel` + attach as member, prune WireGuard/cert/service chips; port-icon (T7) already satisfied (`canvas-connect-legibility`) — PR #49
 - [x] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): mark the 8 writable array relations aggregate + suppress their ambiguous per-port disconnect (both ends); disconnect via per-edge remove / Inspector list (`multi-edge-disconnect`) — PR #50
-- [ ] A8b — implement confirmed icon set (`../ui-icon-set.md`): shared registry + brand SVGs (`node-icon-distinctness`)
+- [x] A8b — confirmed icon set (`../ui-icon-set.md`): one shared type-aware registry across node card / Palette / chip picker / Inspector; v4 monograms + Lucide glyphs; status glyphs reserved (`node-icon-distinctness`) — PR #52
+- [ ] A8b-brands — replace the WG/TO/TS interim monograms with the confirmed brand SVGs (WireGuard/Tor/Tailscale) after a license/bundle-size review (`node-brand-svgs`)
+- [ ] A8b-ports — expand `PortIconId` + derive the v4 port-relation glyph vocabulary (IC-P2-5: ListOrdered/FlagTriangleRight/Flag/Target/Crosshair/Milestone/CornerDownRight/DownloadCloud/ShieldCheck …) (`port-relation-icons`)
 - [ ] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`)
 
 ### Phase 2 — Residual node P0/P1
@@ -588,3 +590,43 @@ Status: implemented 2026-05-29 in `atomic/multi-edge-disconnect`; merged in PR #
   boolean per port spec, no new subscriptions/rerenders.
 - Verification: `git diff --check`, targeted Vitest (51 passed), `tsc -b`, `pnpm test` (666 passed),
   `pnpm build`, `pnpm e2e` (13 passed).
+
+### A8b node-icon-distinctness — one shared type-aware node-icon registry
+Status: implemented 2026-05-29 in `atomic/node-icon-distinctness`; merged in PR #52.
+
+- What changed (IC-P1-3 / `ui-icon-set.md` v4): the node card, Palette, chip picker, and Inspector each
+  kept a separate icon map, so the same `{kind,type}` drifted (Radio vs RadioTower, Settings vs Server,
+  Braces vs Shield) and `getNodeIcon` ignored `type` for every non-outbound kind (all inbounds →
+  RadioTower; all dns-server/service → Server). `direct` and `notice` also borrowed the reserved status
+  glyphs. New `src/canvas/iconRegistry.tsx` is the single source: `getNodeIcon(kind,type)` honours type
+  for every kind. Proxy + DNS-transport protocols render a 2-letter monogram (S5/HT/SS/H2/TU/AT/ST,
+  TC/UD/TL/HS/H3/QC); functional modes, hubs, rules, services, settings use distinct Lucide glyphs
+  (direct imports). Status glyphs are reserved. SbcNode, ChipPickerPopover, Inspector, and the
+  node-creating Palette items all resolve through it (Palette via `paletteNodeRef` reusing the existing
+  `protocols.ts` palette-kind→type maps; non-node catalog entries keep their own icon).
+- DECISION — v4 preview is authoritative over the `ui-icon-set.md` Lucide-name table: the preview
+  finalises proxy/DNS-transport types as **2-letter monograms** (not Lucide glyphs), which is also the
+  collision-free answer (the md table's `earth`/`network`/`shield-check` proposals double-booked). Brand
+  protocols (wireguard/tor/tailscale) are the only brand-SVG cells; the rest stay Lucide.
+- SCOPE SPLIT (don't-mix; recorded as queue rows): **A8b-brands** — brand SVGs deferred pending a
+  license/bundle-size review; interim distinct monograms (WG/TO/TS) hold the collision guarantee.
+  **A8b-ports** — the v4 port-relation glyph vocabulary (IC-P2-5) is a separate sub-atomic; port icons
+  already derive from the referenced kind and stay as-is here. Palette migration was **not** deferred —
+  Codex flagged it as outcome-critical to the single-source promise, so it landed in this atomic.
+- Frontend perf review (`vercel-react-best-practices`): pure derived-during-render resolution;
+  module-level monogram memoization (stable component identity, no remount); no new store subscriptions,
+  waterfalls, or bundle deps; direct lucide imports retained; each surface loads fewer icon objects.
+- Codex review:
+  - Round 1: 1 [P2] — Inspector passed `entityType ?? ""` for settings nodes, but settings entities carry
+    no canonical `type` (deriveGraph uses the ref path), so settings/log + settings/experimental headers
+    fell back to `cog`. Fixed: Inspector uses `ref.path` for settings.
+  - Round 2: 3 findings, all fixed (no round 3 per the 2-round gate): [P2] Palette still rendered its own
+    icons → wired through the registry; [P2] settings/ntp + settings/certificate fell to `cog` → mapped to
+    clock / file-badge2; [P3] legacy `outbound` type `wireguard` collided with the generic outbound icon →
+    mapped to the WireGuard monogram.
+  - Deferred to follow-up atomic: A8b-brands (brand SVGs), A8b-ports (port-relation vocab IC-P2-5).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (703 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (13 passed). New `tests/icon-registry.test.tsx` locks the v4 mappings, status-glyph
+  reservation, collision guarantee, and the chip-picker + Palette single-source paths.
+- Official check: `sing-box-stable/testing check` not run — A8b changes icon rendering, not bundled
+  fixture/exported config output.
