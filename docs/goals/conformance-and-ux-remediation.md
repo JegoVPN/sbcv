@@ -166,11 +166,11 @@ grafted into the phase that matches their don't-mix bucket. Each row becomes one
 | A1 | Shared TLS/multiplex/transport cards render correct fields per direction (`ref.kind`/role) | W6 (+W3) / C0-6, C0-7 / T1,T2 / atomic-1 | inspector field logic | `shared-cards-by-direction` |
 | A2 | No node exports invalid config: required markers + pre-export validation gate; rule-set local `format` inference | W9 / C0-1/5/10/12/16/17, C0-19 / T5 / atomic-2 | diagnostics + export | `required-fields-and-export-gate` |
 | A3 | `JsonField` never writes unparseable text (parse feedback + guard); `rules` becomes a handled field | W8 (+W4) / C0-18 / T4 / atomic-3 | inspector editor | `jsonfield-parse-safety` |
-| A4 | Type-change is safe: central action-schema normalizers (scrub stale fields) + confirm dialog; kv repeaters never seed blank `{"":""}` rows | W7, W13 / C0-3, C0-8, C0-9 / T3, T6 / atomic-4 | inspector data-safety | `type-change-safety` |
-| A5 | Version gating fires: pass `version` (not just `channel`) into `validateConfig` | W11 / C2-6 / T10 / atomic-5 | diagnostics/targets | `version-aware-gating` |
+| A4 | Type-change is safe: central action-schema normalizers (scrub stale fields) + confirm dialog; kv repeaters never seed blank `{"":""}` rows (incl. hosts `predefined` + HTTPS/H3 header maps) | W7, W13 / C0-3, C0-8, C0-9, C1-6 / T3, T6 / atomic-4 | inspector data-safety | `type-change-safety` |
+| A5 | Version gating fires: pass `version` (not just `channel`) into `validateConfig`; type-change/creatable options are channel-aware (no testing-only type offered on stable) | W11 / C2-6, C2-2 / T10 / atomic-5 | diagnostics/targets | `version-aware-gating` |
 | A6 | Reference integrity holds on rename/delete: complete `referenceRegistry` + dial-detour type guards | W12, W14 (+W1) / C1-2/4/11/16/17/20/21, C0-9, C2-1 / T11,T13 / atomic-6 | domain reference/port graph | `reference-and-detour-guards` |
 | A7 | Endpoints are first-class dial targets (outbound-half modeled) | W17 / C0-11 / T14 / atomic-7 (high risk; after A6) | domain reference/ports | `endpoint-outbound-half` |
-| A8 | Canvas connect is legible & correct: port icon from relation, kill/preview dead "+" chips, edge-specific multi-reference disconnect | W15, W16 (+W2/W5) / C1-9/12/15, C1-7/8/23 / T7,T8 / atomic-8 | canvas/graph interaction | `canvas-connect-legibility` |
+| A8 | Canvas connect is legible & correct: port icon from relation, kill/preview & complete dead/no-op "+" chips (incl. dns-rule create-connect), edge-specific multi-reference disconnect | W15, W16 (+W2/W5) / C1-9/12/15, C1-3, C1-7/8/23 / T7,T8 / atomic-8 | canvas/graph interaction | `canvas-connect-legibility` |
 | A8b | Implement the confirmed icon set in [`../ui-icon-set.md`](../ui-icon-set.md): shared icon registry across node card/palette/picker/Inspector, `getNodeIcon` honours `type`, fix `CheckCircle2`/`Shield`/`Server`/`Network`/`GitBranch` clashes, add WireGuard/Tailscale/Tor/Shadowsocks/TUIC/Hysteria brand SVGs behind a license/bundle gate | `../ui-icon-set.md` / `_ICONS.md` / IC-* / atomic-8b | canvas + palette + inspector icons | `node-icon-distinctness` |
 | A9 | Validity is readable: distinct warning glyph (not the green check) + relabel `✓ N`; edge-remove pointer-events fix | W10 / C2-7 / T9 / atomic-9 | canvas visual | `validity-readability` |
 
@@ -188,7 +188,7 @@ grafted into the phase that matches their don't-mix bucket. Each row becomes one
 | A17 | inbound-redirect platform banner (Linux + macOS) + de-duplicated | W25 | `inbound-redirect-banner` |
 | A18 | inbound-vless does not seed `tls:{enabled:true}` | W26 | `inbound-vless-tls-default` |
 | A19 | settings-experimental v2ray build-tag label (`with_v2ray_api`) | W27 | `settings-experimental-label` |
-| A20 | Residual node P1 batch, split per category (dns-server / inbound / outbound / rule / service); includes WireGuard peer schema, SSM `/`-key collision + orphan `managed`, VLESS flow-no-TLS, certificate-provider required fields | W28 / C0-14, C0-15, C1-10, C1-13, C1-14 | `residual-node-p1-<category>` (one per category) |
+| A20 | Residual node P1 batch, split per category (dns-server / inbound / outbound / rule / service); includes WireGuard peer schema, SSM `/`-key collision + orphan `managed`, VLESS flow-no-TLS, certificate-provider required fields, route-rule `bypass` outbound/route-options | W28 / C0-14, C0-15, C1-1, C1-10, C1-13, C1-14 | `residual-node-p1-<category>` (one per category) |
 | A21 | `cloudflared` testing inbound: creation + Inspector + token/dial diagnostics (stable stays gated) | C1-22 | `inbound-cloudflared-testing` |
 | A22 | HTTP Client: testing-gated creation/palette + Inspector branch + graph relations + stale-ref diagnostics | C1-16, C1-18, C1-19, C1-20 / C2-4 | `http-client-capability` |
 
@@ -206,7 +206,7 @@ grafted into the phase that matches their don't-mix bucket. Each row becomes one
 
 | ID | Outcome | W / cross-ref | Child-goal slug |
 |---|---|---|---|
-| A28 | Diagnostics/labels/copy polish batch | W34 / C2-* tail | `diagnostics-labels-polish` |
+| A28 | Diagnostics/labels/copy polish batch | W34 / C2 label/copy residue (structural C2 ids homed per-atomic above) | `diagnostics-labels-polish` |
 | A29 | Per-node P2 cleanup batch (icons, subtitles, export noise, deprecation hints) | W35 / IC-* tail, C2-3 | `per-node-p2-cleanup` |
 
 ## Near-Term Atomics

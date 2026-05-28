@@ -128,6 +128,29 @@ work, not after.
   `docs/ui-icon-set.md` here. Honor [[codex-review-gate]] and [[pr-over-commits]] for child atomics.
 - **Affects:** A8b; the per-atomic reading workflow; the PR #32 merge.
 
+### 2026-05-28 — Reconciliation-completeness audit: graft 4 unmapped Codex findings
+- **Context:** A verification pass cross-checked every Codex `C-`/`IC-` id and Pass-2 `T-`/`W-`/atomic id
+  against the Ordered Atomic Queue. All 35 W-items, 14 T-themes, 19 C0 P0s, the Pass-2 14-atomic queue,
+  and the `IC-P*-*` icon findings were already mapped — but four Codex findings (`C1-1`, `C1-3`, `C1-6`,
+  `C2-2`) had no row, silently breaking the "nothing from Codex is dropped" guarantee.
+- **Decision:** Graft each into its exact-match atomic (no new atomics; the behavior was already covered
+  by the row's W-item, only the `C-` id citation was missing):
+  - `C1-1` (route-rule `bypass` must expose `outbound`/route-options) → **A20** (its W28 rule category
+    already names "bypass-outbound select + resolve/route-options sub-fields").
+  - `C1-3` (dns-rule compatible chip creates a DNS server but never connects it — missing
+    `source.kind === "dns-rule"` branch in `createCompatible`) → **A8** (W16/T8 dead/no-op-chip cluster).
+  - `C1-6` (hosts `predefined` + HTTPS/H3 header maps persist empty keys) → **A4** (W13 already scopes
+    DoH-header/hosts empty-key prevention at the kv-repeater source).
+  - `C2-2` (Service Inspector type dropdown still offers testing-only `hysteria-realm` on stable) →
+    **A5** (channel/version-gating family; matches Codex exec-plan item 7). Its surface is
+    `protocols.ts`/Inspector option gating, distinct from A5's `validateConfig` change — confirm at
+    child-goal time whether it splits into a tiny follow-up.
+- **Reason:** The umbrella goal's entire value is the traceable cross-map; an unmapped finding is a
+  silent drop that no reader could trace by grepping its id.
+- **How to apply:** Every Codex `C-` id is now greppable to exactly one atomic row. With `C2-2` homed,
+  all `C2-*` ids are individually placed, so A28's "C2-* tail" was narrowed to "C2 label/copy residue."
+- **Affects:** A4, A5, A8, A20, A28.
+
 ## Open Questions / Risks
 
 - **Re-verify against HEAD.** Both reports and the `canvas-port-interaction-redesign-execution`
