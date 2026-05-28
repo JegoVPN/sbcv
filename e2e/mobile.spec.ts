@@ -2,6 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test.use({ viewport: { width: 390, height: 844 } });
 
+// The app boots with a non-empty default config, so importing prompts an overwrite confirm (A26).
+test.beforeEach(async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    void dialog.accept();
+  });
+});
+
 test("mobile shell — Check / Import / Export / node inspector flow", async ({ page }) => {
   await page.goto("/");
 

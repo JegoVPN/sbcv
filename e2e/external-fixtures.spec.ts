@@ -3,6 +3,14 @@ import path from "node:path";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+// The app boots with a non-empty default config, so importing prompts an overwrite confirm (A26).
+// Auto-accept it across these tests so imports proceed.
+test.beforeEach(async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    void dialog.accept();
+  });
+});
+
 type ManifestEntry = {
   id: string;
   source_repo: string;
@@ -162,11 +170,8 @@ test("representative external fixtures import, render, inspect, export, and re-i
   page.on("console", (message) => {
     if (message.type() === "error") consoleErrors.push(message.text());
   });
-  // Real-world fixtures may carry error-level diagnostics; accept the pre-export validation gate so the
-  // export → re-import round-trip still runs (A2b).
-  page.on("dialog", (dialog) => {
-    void dialog.accept();
-  });
+  // Dialogs (pre-export validation gate A2b, import-overwrite confirm A26) are auto-accepted by the
+  // file-level beforeEach.
 
   for (const [index, entry] of representativeFixtures.entries()) {
     pageErrors.length = 0;

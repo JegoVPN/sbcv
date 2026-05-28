@@ -2,6 +2,13 @@ import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+// The app boots with a non-empty default config, so importing prompts an overwrite confirm (A26).
+test.beforeEach(async ({ page }) => {
+  page.on("dialog", (dialog) => {
+    void dialog.accept();
+  });
+});
+
 async function importInlineConfig(page: Page, config: unknown) {
   await page.goto("/");
   await page.getByLabel("Import JSON file").setInputFiles({

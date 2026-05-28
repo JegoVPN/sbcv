@@ -85,7 +85,9 @@ work, not after.
   - [x] A24-legend — desktop edge legend (configured link / animated traffic path / hover-✕ disconnect) (W30) — PR #77
   - [ ] A24-rest — drag affordance, invalid-drop toast, right-click disconnect (W30 tail)
 - [ ] A25 — mobile build path (`mobile-build-path`)
-- [ ] A26 — import safety + onboarding (`import-safety-and-onboarding`)
+- [~] A26 — import safety + onboarding (`import-safety-and-onboarding`) — import-confirm slice landed
+  - [x] A26-confirm — confirm before import overwrites a non-empty config (desktop + mobile) (W32) — PR #79
+  - [ ] A26-rest — import undo + success/error feedback toast; empty/first-run onboarding state (W32 tail)
 - [x] A27 — template placeholder secrets: `placeholder-secret` warning on REPLACE_ME/change-me outbound/inbound secrets (W33) (`template-placeholder-secrets`) — PR #78
   - [ ] A27-rest — extend the placeholder-secret scan to nested users[].password/uuid (review follow-up)
 
@@ -1253,3 +1255,23 @@ Status: implemented 2026-05-29 in `atomic/template-placeholder-secrets`; merged 
   - Deferred to follow-up atomic: A27-rest (nested users[].password/uuid placeholder scan).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (787 passed | 1 todo), `pnpm build`.
 - Official check: n/a — semantic diagnostic.
+
+### A26-confirm import-safety-confirm — confirm before import overwrites a non-empty config (W32)
+Status: implemented 2026-05-29 in `atomic/import-safety-confirm`; merged in PR #79. First A26 slice.
+
+- What changed (W32): importing JSON replaced the whole config with no confirm, silently clobbering work
+  (the app boots with a non-empty default). Added an overwrite confirm on both import paths (desktop
+  TopBar + mobile MobileMenuSheet) via the exported `configHasContent(config)` helper; an empty config
+  imports with no prompt. The importing e2e specs got a file-level dialog-accept beforeEach.
+- Frontend perf review (`vercel-react-best-practices`): one extra subscribed `config` read in the topbar;
+  no new waterfalls/bundle deps. Pass.
+- Expert review (one pass): a reviewer subagent. Verdict APPROVE, no blockers. Confirmed both file-import
+  paths guarded (no third path; drag-drop import doesn't exist), correct cancel semantics, the mobile
+  getState() read is right, and the e2e dialog handling is single-registered. Applied the SHOULD-FIX
+  in-pass: extended `configHasContent` to also count settings-only nodes (log/ntp/certificate/
+  experimental), route/dns `final`, and certificate_providers/http_clients — so those no longer silently
+  clobber.
+  - Deferred to follow-up atomic: A26-rest (import undo + success/error toast; empty/first-run state).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (790 passed | 1 todo), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: n/a — import-flow UX.
