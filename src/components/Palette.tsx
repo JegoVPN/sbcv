@@ -205,7 +205,7 @@ const groups: PaletteGroup[] = [
       { label: "Hysteria2", kind: "inbound-hysteria2", icon: Plug, docsUrl: docs("inbound/hysteria2/"), status: "setup" },
       { label: "AnyTLS", kind: "inbound-anytls", icon: Shield, docsUrl: docs("inbound/anytls/"), status: "setup" },
       { label: "TUN", kind: "inbound-tun", icon: RadioTower, docsUrl: docs("inbound/tun/"), ready: true },
-      { label: "Redirect (Linux only)", kind: "inbound-redirect", icon: GitBranch, docsUrl: docs("inbound/redirect/"), status: "setup" },
+      { label: "Redirect (Linux / macOS)", kind: "inbound-redirect", icon: GitBranch, docsUrl: docs("inbound/redirect/"), status: "setup" },
       { label: "TProxy (Linux only)", kind: "inbound-tproxy", icon: GitBranch, docsUrl: docs("inbound/tproxy/"), status: "setup" },
       { label: "Cloudflared", kind: "inbound-cloudflared", icon: Globe2, docsUrl: docs("inbound/cloudflared/"), status: "gated" },
     ],

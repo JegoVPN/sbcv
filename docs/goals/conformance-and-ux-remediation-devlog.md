@@ -56,7 +56,7 @@ work, not after.
 - [x] A15 — dns-server-tailscale accept_search_domain toggle (testing-gated) (W23/C1-5) (`dns-server-tailscale-fields`) — PR #62
 - [x] A16 — hub-route default_network_type array shape + de-duplicated controls (W24) (`hub-route-network-type`) — PR #63
 - [ ] A16-norm — one-time normalize a legacy raw-string `default_network_type`/`default_fallback_network_type` → `[string]` on import (or make the shared list read path string-tolerant); ~2-day pre-release shape, strands silently in the list control (A16 review follow-up)
-- [ ] A17 — inbound-redirect platform banner (`inbound-redirect-banner`)
+- [x] A17 — inbound-redirect platform banner (Linux + macOS) + de-duplicated (W25) (`inbound-redirect-banner`) — PR #64
 - [ ] A18 — inbound-vless TLS default (`inbound-vless-tls-default`)
 - [ ] A19 — settings-experimental label (`settings-experimental-label`)
 - [ ] A20 — residual node P1 batch, per category (`residual-node-p1-<category>`)
@@ -933,3 +933,23 @@ Status: implemented 2026-05-29 in `atomic/hub-route-network-type`; merged in PR 
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (744 passed | 1 todo), `pnpm build`.
 - Official check: `sing-box-stable/testing check` not run — A16 removes duplicate Inspector controls +
   a type, not bundled fixture/exported config output.
+
+### A17 inbound-redirect-banner — correct + de-duplicated platform banner (Inspector + Palette, W25)
+Status: implemented 2026-05-29 in `atomic/inbound-redirect-banner`; merged in PR #64.
+
+- What changed (W25): the redirect inbound rendered TWO platform banners, both wrongly stating "Linux
+  only". Upstream: redirect is supported on **Linux and macOS** (Linux iptables REDIRECT / macOS pf);
+  only tproxy is Linux-only. Fixed the dedicated redirect banner copy and deleted the duplicate
+  `tproxy || redirect` "Linux-only inbound" banner (it double-stated tproxy and was wrong for redirect).
+  Both nodes now show exactly one platform banner. Palette label "Redirect (Linux only)" →
+  "Redirect (Linux / macOS)".
+- Frontend perf review (`vercel-react-best-practices`): removes a banner + copy change; no new
+  subscriptions/waterfalls/bundle deps. Pass.
+- Expert review (one pass): a senior sing-box + React reviewer subagent. Verdict APPROVE, no blockers.
+  Verified the load-bearing upstream facts (redirect.md "Only supported on Linux and macOS"; tproxy.md
+  "Only supported on Linux"), exactly-one-banner-each after the de-dup, no collateral deletion (tproxy
+  network enum intact), and no stale references. The optional platform-constraint diagnostic is correctly
+  out of W25's banner scope (runtime, not config-validity, constraint).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (746 passed | 1 todo), `pnpm build`.
+- Official check: `sing-box-stable/testing check` not run — A17 changes banner copy + a Palette label,
+  not bundled fixture/exported config output.
