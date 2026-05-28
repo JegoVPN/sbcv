@@ -1050,7 +1050,7 @@ describe("canonical sing-box domain model", () => {
   it("version-gates tailscale endpoint 1.13+ fields by target version (A5)", () => {
     const config = createStableTunSplitConfig();
     config.endpoints = [
-      { type: "tailscale", tag: "ts", advertise_tags: ["tag:x"], system_interface: "tailscale0" },
+      { type: "tailscale", tag: "ts", advertise_tags: ["tag:x"], system_interface: true },
     ] as never;
 
     const v112 = validateConfig(config, "stable", "1.12").map((d) => d.code);
@@ -2288,7 +2288,7 @@ describe("canonical sing-box domain model", () => {
           tag: "ts-ep",
           auth_key: "tskey",
           advertise_tags: ["tag:server"],
-          system_interface: "tailscale0",
+          system_interface: true,
         },
       ],
     } as typeof base;
