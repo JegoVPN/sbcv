@@ -1003,12 +1003,22 @@ textarea {
 .sbc-node-titlebar__badge {
   padding: 1px 8px;
   border-radius: 999px;
-  background: #3a2a0a;
-  color: #f2bc4b;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* Deprecated (whole-type going away): amber, matching the validation warning palette. */
+.sbc-node-titlebar__badge--deprecated {
+  background: #3a2a0a;
+  color: #f2bc4b;
+}
+
+/* Platform-locked (OS-restricted): neutral slate-blue — not an error, just an environment constraint. */
+.sbc-node-titlebar__badge--platform {
+  background: #102a3a;
+  color: #6fb6e6;
 }
 
 .sbc-node-shell--deprecated .sbc-node {
