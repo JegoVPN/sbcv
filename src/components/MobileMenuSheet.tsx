@@ -53,7 +53,13 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
       event.target.value = "";
       return;
     }
-    importJson(await file.text());
+    const result = importJson(await file.text());
+    const pushToast = useProjectStore.getState().pushToast;
+    if (result.ok) {
+      pushToast({ message: "Configuration imported", tone: "success" });
+    } else {
+      pushToast({ message: `Import failed: ${result.error}`, tone: "error", durationMs: 8000 });
+    }
     event.target.value = "";
     onClose();
   }
