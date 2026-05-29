@@ -332,21 +332,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
           <div className="sbc-node__subtitle">{data.subtitle}</div>
         </div>
 
-        {data.compatible.length > 0 ? (
-          <button
-            className="sbc-node__add nodrag"
-            type="button"
-            aria-label={`Add from ${data.title}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              const first = data.compatible[0];
-              if (first) createCompatible(id, first);
-            }}
-          >
-            <Plus size={20} />
-          </button>
-        ) : null}
-
         {!isNotice ? (
           <>
             <div className="sbc-node__toolbar nodrag" data-testid="node-bottom-toolbar">
