@@ -755,10 +755,22 @@ export function routeRuleAllowsOutbound(rule: Pick<RouteRule, "action"> | undefi
   return action === "" || action === "route" || action === "bypass";
 }
 
+// Return a copy of `rule` without the named keys (only those actually present), or `rule` unchanged
+// when there is nothing to drop — so the no-op fast path keeps its identity.
+function dropRuleKeys<T extends object>(rule: T, keys: string[]): T {
+  const present = keys.filter((key) => key in (rule as Record<string, unknown>));
+  if (!present.length) return rule;
+  const copy = { ...rule } as Record<string, unknown>;
+  for (const key of present) delete copy[key];
+  return copy as T;
+}
+
 export function normalizeRouteRule(rule: RouteRule): RouteRule {
-  if (routeRuleAllowsOutbound(rule)) return rule;
-  const { outbound: _outbound, ...rest } = rule;
-  return rest;
+  const action = typeof rule.action === "string" ? rule.action : "";
+  const drop = routeRuleAllowsOutbound(rule) ? [] : ["outbound"];
+  // `method`/`no_drop` are reject-only (sing-box route rule_action); scrub on any other action.
+  if (action !== "reject") drop.push("method", "no_drop");
+  return dropRuleKeys(rule, drop);
 }
 
 export function dnsRuleAllowsServer(rule: Pick<DnsRule, "action"> | undefined): boolean {
@@ -767,9 +779,13 @@ export function dnsRuleAllowsServer(rule: Pick<DnsRule, "action"> | undefined): 
 }
 
 export function normalizeDnsRule(rule: DnsRule): DnsRule {
-  if (dnsRuleAllowsServer(rule)) return rule;
-  const { server: _server, ...rest } = rule;
-  return rest;
+  const action = typeof rule.action === "string" ? rule.action : "";
+  const drop = dnsRuleAllowsServer(rule) ? [] : ["server"];
+  // `method`/`no_drop` are reject-only; `rcode`/`answer`/`ns`/`extra` are predefined-only
+  // (sing-box dns rule_action). Scrub each when the action is anything else.
+  if (action !== "reject") drop.push("method", "no_drop");
+  if (action !== "predefined") drop.push("rcode", "answer", "ns", "extra");
+  return dropRuleKeys(rule, drop);
 }
 
 export function addRouteRule(config: SingBoxConfig, rule?: RouteRule): SingBoxConfig {
