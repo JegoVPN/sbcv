@@ -40,7 +40,8 @@ import {
   relationForHandles,
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
-import { parseConfigJson, stringifyConfig } from "../domain/serialization";
+import { createProjectExport, parseConfigJson, parseProjectJson, stringifyConfig, SBC_PROJECT_SCHEMA_VERSION } from "../domain/serialization";
+import { APP_VERSION } from "../domain/appVersion";
 import {
   dnsServerTypeForPaletteKind,
   endpointTypeForPaletteKind,
@@ -58,7 +59,7 @@ import { supportsDnsServerDialFields, supportsOutboundDialFields } from "../doma
 import { targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
-import type { Diagnostic, EntityRef, ProjectLayout, SingBoxChannel, SingBoxConfig, SingBoxTargetId } from "../domain/types";
+import type { Diagnostic, EntityRef, ProjectLayout, SbcProject, SingBoxChannel, SingBoxConfig, SingBoxTargetId } from "../domain/types";
 
 type PanelTab = "rules" | "dns" | "json" | "diagnostics";
 type PortDirection = "input" | "output";
@@ -189,6 +190,10 @@ type ProjectStore = {
   setJsonDraft: (value: string) => void;
   applyJsonDraft: () => void;
   importJson: (value: string, options?: { snapshot?: boolean }) => { ok: boolean; error?: string };
+  // Project Save/Open: the versioned sbcv wrapper (config + layout + channel/version). Distinct from
+  // plain Import/Export — loadProject re-hydrates canvas positions instead of resetting them. (C16)
+  saveProject: () => SbcProject;
+  loadProject: (value: string, options?: { snapshot?: boolean }) => { ok: boolean; error?: string };
   refreshJson: () => void;
   validateNow: () => void;
   runOfficialCheck: () => Promise<void>;
@@ -1841,6 +1846,50 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         : state.history,
       selectedId: null,
       ...freshLayoutState(state),
+      globalPanelOpen: false,
+      focusedNodeId: null,
+    }));
+    return { ok: true };
+  },
+  saveProject: () => {
+    const state = get();
+    return {
+      kind: "sbcv-project",
+      schemaVersion: SBC_PROJECT_SCHEMA_VERSION,
+      appVersion: APP_VERSION,
+      singBoxChannel: state.channel,
+      singBoxVersion: state.version,
+      config: state.config,
+      layout: state.layout,
+    };
+  },
+  loadProject: (value, options) => {
+    // Parse outside set() so the caller learns success/failure (for user feedback). Unlike importJson,
+    // this re-hydrates the saved canvas layout (no freshLayoutState reset) and restores channel/version.
+    let project: SbcProject;
+    try {
+      project = parseProjectJson(value);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid sbcv project file.";
+      set(() => ({
+        ...resetValidationState(),
+        diagnostics: [{ level: "error", code: "project-parse", path: "$", source: "semantic", message }],
+      }));
+      return { ok: false, error: message };
+    }
+    set((state) => ({
+      ...sync(project.config, project.singBoxChannel, project.singBoxVersion),
+      channel: project.singBoxChannel,
+      version: project.singBoxVersion,
+      layout: project.layout,
+      // Bump the layout tokens (so the canvas re-fits to the loaded positions) but KEEP project.layout
+      // rather than wiping it like freshLayoutState does for a plain import.
+      layoutCaptureToken: state.layoutCaptureToken + 1,
+      freshLoadToken: state.freshLoadToken + 1,
+      history: options?.snapshot
+        ? [...state.history, { config: state.config, layout: state.layout }].slice(-MAX_HISTORY)
+        : state.history,
+      selectedId: null,
       globalPanelOpen: false,
       focusedNodeId: null,
     }));
