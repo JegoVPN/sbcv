@@ -1187,7 +1187,7 @@ describe("SBC editor shell", () => {
     const block = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.type === "block");
     expect(block).toBeDefined();
     const node = screen.getByTestId(`node-outbound:${block?.tag}`);
-    expect(within(node).getByTestId("node-deprecated-badge")).toBeInTheDocument();
+    expect(within(node).getByTestId("node-badge-deprecated")).toBeInTheDocument();
   });
 
   it("shows an inline deprecation banner when tls.acme is set on an inbound", () => {

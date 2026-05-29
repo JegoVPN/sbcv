@@ -37,7 +37,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import { getNodeIcon } from "../canvas/iconRegistry";
-import { nodeTitlebarLabel } from "../canvas/nodeLabels";
+import { nodeBadge, nodeTitlebarLabel } from "../canvas/nodeLabels";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import {
   portEndpointsForNode,
@@ -285,12 +285,12 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const leftPorts = splitPorts(inputPorts, "input");
   const rightPorts = splitPorts(outputPorts, "output");
 
-  const isDeprecated = data.kind === "outbound" && data.type === "block";
+  const badge = nodeBadge(data.kind, data.type);
   const isNotice = data.kind === "notice";
 
   return (
     <div
-      className={`sbc-node-shell ${selected ? "is-selected" : ""}${isDeprecated ? " sbc-node-shell--deprecated" : ""}`}
+      className={`sbc-node-shell ${selected ? "is-selected" : ""}${badge?.tone === "deprecated" ? " sbc-node-shell--deprecated" : ""}`}
       onClick={() => setSelectedId(id)}
       data-testid={`node-${id}`}
     >
@@ -299,9 +299,13 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
           <Icon size={18} strokeWidth={2.2} />
         </span>
         <span>{nodeTitlebarLabel(data.kind, data.type)}</span>
-        {isDeprecated ? (
-          <span className="sbc-node-titlebar__badge" data-testid="node-deprecated-badge" title="Deprecated since sing-box 1.11 — use route action=reject">
-            deprecated
+        {badge ? (
+          <span
+            className={`sbc-node-titlebar__badge sbc-node-titlebar__badge--${badge.tone}`}
+            data-testid={`node-badge-${badge.tone}`}
+            title={badge.title}
+          >
+            {badge.label}
           </span>
         ) : null}
       </div>

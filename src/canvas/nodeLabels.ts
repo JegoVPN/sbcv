@@ -91,3 +91,24 @@ export function nodeTitlebarLabel(kind: string, type: string): string {
   const typeLabel = labelForNodeType(type);
   return typeLabel === kindLabel ? kindLabel : `${kindLabel} · ${typeLabel}`;
 }
+
+// A small titlebar badge for orthogonal status the valid/warning/error glyph can't express: a node that
+// is deprecated (a whole type slated for removal) or platform-locked (only runs on some OSes). Grounded
+// in the upstream docs; tone drives the colour. Returns null when the node has nothing extra to flag.
+export type NodeBadgeTone = "deprecated" | "platform";
+export type NodeBadge = { label: string; tone: NodeBadgeTone; title: string };
+
+const NODE_BADGES: Record<string, NodeBadge> = {
+  // Whole-type deprecations (the type itself is going away — see upstream outbound/*.md).
+  "outbound:block": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 — use a route rule action=reject" },
+  "outbound:dns": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 (removed in 1.13) — use a route/DNS rule action=hijack-dns" },
+  "outbound:wireguard": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 (removed in 1.13) — use a WireGuard endpoint" },
+  // Platform-locked inbounds (run only on the named OSes — see upstream inbound/*.md).
+  "inbound:tproxy": { label: "Linux only", tone: "platform", title: "tproxy is only supported on Linux" },
+  "inbound:redirect": { label: "Linux / macOS", tone: "platform", title: "redirect is only supported on Linux and macOS" },
+  "inbound:tun": { label: "desktop only", tone: "platform", title: "tun is only supported on Linux, Windows and macOS" },
+};
+
+export function nodeBadge(kind: string, type: string): NodeBadge | null {
+  return NODE_BADGES[`${kind}:${type}`] ?? null;
+}
