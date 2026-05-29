@@ -1290,12 +1290,11 @@ function RouteRuleInspector({
               onChange={(event) => patch({ network_strategy: event.target.value || undefined })}
             >
               <option value="">(unset)</option>
+              {/* network_strategy accepts only default/hybrid/fallback; wifi/cellular/ethernet are
+                  network_type values (shared/dial.md). (L2-fix-route-strategy, audit H2) */}
               <option value="default">default</option>
               <option value="hybrid">hybrid</option>
               <option value="fallback">fallback</option>
-              <option value="wifi">wifi</option>
-              <option value="cellular">cellular</option>
-              <option value="ethernet">ethernet</option>
             </select>
           </label>
           <label className="field">
