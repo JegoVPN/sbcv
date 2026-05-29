@@ -1,6 +1,7 @@
 // Human-readable labels for canvas node kinds and types. Shared by the canvas selection helpers
 // (CanvasWorkspace) and the node titlebar (SbcNode) so a node never shows raw machine enums like
 // `outbound / shadowsocks` — it reads `Outbound · Shadowsocks`. (A28, W34)
+import { TYPE_MIN_VERSION } from "../domain/minVersions";
 import { atLeast } from "../domain/targets";
 
 export const typeLabels: Record<string, string> = {
@@ -102,21 +103,9 @@ export type NodeBadge = { label: string; tone: NodeBadgeTone; title: string };
 
 // Minimum sing-box version a node TYPE needs (upstream "Since sing-box X" notes). Surfaced only when the
 // project target is older, so an up-to-date target shows nothing. None of these overlap the deprecated/
-// platform sets, so a node still carries at most one badge.
-const MIN_VERSION: Record<string, string> = {
-  // 1.12 types — dormant today (the lowest selectable target is 1.12, so atLeast is always true), kept
-  // for correctness if a sub-1.12 target is ever added.
-  "inbound:anytls": "1.12",
-  "outbound:anytls": "1.12",
-  "endpoint:tailscale": "1.12",
-  // 1.13 types (only the naive OUTBOUND is new in 1.13; the naive INBOUND predates it).
-  "outbound:naive": "1.13",
-  "service:ccm": "1.13",
-  "service:ocm": "1.13",
-  // 1.14 types (testing-only) — these actually badge "needs 1.14" on the default 1.13 target.
-  "inbound:cloudflared": "1.14",
-  "service:hysteria-realm": "1.14",
-};
+// platform sets, so a node still carries at most one badge. The table is the shared domain source
+// (minVersions.ts), so this badge and the diagnostics type gates never disagree. (C7)
+const MIN_VERSION = TYPE_MIN_VERSION;
 
 const NODE_BADGES: Record<string, NodeBadge> = {
   // Whole-type deprecations (the type itself is going away — see upstream outbound/*.md).
