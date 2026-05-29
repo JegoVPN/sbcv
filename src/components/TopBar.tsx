@@ -258,7 +258,12 @@ export function TopBar() {
             />
           ) : null}
         </div>
-        <button type="button" onClick={exportConfig} data-testid="export-button">
+        <button
+          type="button"
+          onClick={exportConfig}
+          data-testid="export-button"
+          title="Downloads a normalized config: empty fields are dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may differ textually from your original but sing-box reads it identically."
+        >
           <Download size={15} />
           Export
         </button>
