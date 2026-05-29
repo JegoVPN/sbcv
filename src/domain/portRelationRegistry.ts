@@ -140,6 +140,16 @@ export const portRelations: PortRelation[] = [
   relation("dial-domain-resolver", "writable", endpoint("output", "outbound", "domain-resolver", "Domain resolver", "globe", undefined, ["block", "selector", "urltest", "dns"]), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/outbounds/*/domain_resolver", ["dns-server"]),
   relation("endpoint-domain-resolver", "writable", endpoint("output", "endpoint", "domain-resolver", "Domain resolver", "globe"), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/endpoints/*/domain_resolver", ["dns-server"]),
   relation("dns-server-domain-resolver", "writable", endpoint("output", "dns-server", "domain-resolver", "Domain resolver", "globe", undefined, ["legacy", "hosts", "fakeip", "tailscale", "resolved"]), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/dns/servers/*/domain_resolver", ["dns-server"]),
+  // http-client.md (testing, 1.14-only): the three cross-object `http_client` *string* refs each name a
+  // top-level `http_clients[]` entry, and the shared HTTP-client object itself embeds Dial Fields (its own
+  // `detour`). Modeled as writable edges so the http-client node stops floating; the edges are testing-
+  // gated in deriveGraph (http_client is 1.14-only). Object-form refs are inline (no tag) and not edged —
+  // same as the C1-20 `missing-http-client` diagnostic. Reuses the existing referenceRegistry cascade +
+  // diagnostics (no duplication). `cloudflare-origin-ca`/`acme` carry http_client; tailscale does not. (C11c)
+  relation("route-default-http-client", "writable", endpoint("output", "route", "default-http-client", "Default HTTP client", "globe"), endpoint("input", "http-client", "http-client-ref", "Upstream HTTP client", "globe"), "/route/default_http_client", ["http-client"]),
+  relation("rule-set-http-client", "writable", endpoint("output", "rule-set", "http-client", "HTTP client", "globe", "remote"), endpoint("input", "http-client", "http-client-ref", "Upstream HTTP client", "globe"), "/route/rule_set/*/http_client", ["http-client"]),
+  relation("certificate-provider-http-client", "writable", endpoint("output", "certificate-provider", "http-client", "HTTP client", "globe", undefined, ["tailscale"]), endpoint("input", "http-client", "http-client-ref", "Upstream HTTP client", "globe"), "/certificate_providers/*/http_client", ["http-client"]),
+  relation("http-client-detour", "writable", endpoint("output", "http-client", "dial-detour", "Dial detour outbound", "spline"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network", undefined, ["block", "dns"], ["endpoint"]), "/http_clients/*/detour", ["outbound"]),
 ];
 
 export function isPortNodeKind(value: string): value is PortNodeKind {

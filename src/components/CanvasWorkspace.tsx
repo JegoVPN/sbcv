@@ -235,6 +235,7 @@ export function CanvasWorkspace() {
   const config = useProjectStore((state) => state.config);
   const layout = useProjectStore((state) => state.layout);
   const diagnostics = useProjectStore((state) => state.diagnostics);
+  const channel = useProjectStore((state) => state.channel);
   const selectedId = useProjectStore((state) => state.selectedId);
   const setSelectedId = useProjectStore((state) => state.setSelectedId);
   const connectPorts = useProjectStore((state) => state.connectPorts);
@@ -247,7 +248,7 @@ export function CanvasWorkspace() {
   const layoutCaptureToken = useProjectStore((state) => state.layoutCaptureToken);
   const focusToken = useProjectStore((state) => state.focusToken);
   const focusedNodeId = useProjectStore((state) => state.focusedNodeId);
-  const graph = useMemo(() => deriveGraph(config, layout, diagnostics), [config, diagnostics, layout]);
+  const graph = useMemo(() => deriveGraph(config, layout, diagnostics, channel), [config, diagnostics, layout, channel]);
   const graphPositions = useMemo(
     () => graph.nodes.map((node) => ({ id: node.id, position: node.position })),
     [graph.nodes],

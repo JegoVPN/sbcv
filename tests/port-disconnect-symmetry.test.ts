@@ -16,15 +16,17 @@ function createDisconnectFixture(): SingBoxConfig {
   config.route = {
     ...config.route,
     final: "proxy",
+    // C11c: route.default_http_client + a remote rule_set http_client reference (testing-only edges).
+    default_http_client: "hc",
     rules: [
       { domain_suffix: ["cn"], inbound: ["tun-in", "ss-in"], outbound: "direct", rule_set: ["remote-rules", "other-rules"] },
       ...(config.route?.rules?.slice(1) ?? []),
     ],
     rule_set: [
       { type: "remote", tag: "remote-rules", format: "binary", url: "https://example.com/rules.srs", download_detour: "proxy" },
-      { type: "remote", tag: "other-rules", format: "binary", url: "https://example.com/other.srs" },
+      { type: "remote", tag: "other-rules", format: "binary", url: "https://example.com/other.srs", http_client: "hc" } as never,
     ],
-  };
+  } as never;
   config.dns = {
     ...config.dns,
     servers: [
@@ -45,7 +47,11 @@ function createDisconnectFixture(): SingBoxConfig {
   ];
   config.certificate_providers = [
     { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
+    // C11c: a non-tailscale provider carrying an http_client reference.
+    { type: "acme", tag: "acme-cp", domain: ["example.com"], http_client: "hc" } as never,
   ];
+  // C11c: a shared HTTP client with its own dial detour (the node is no longer floating).
+  config.http_clients = [{ tag: "hc", detour: "proxy" } as never];
   config.services = [
     { type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 } as never,
     { type: "ssm-api", tag: "ssm", servers: { "/": "ss-in", "/alt": "tun-in" } } as never,
@@ -195,6 +201,29 @@ const cases: Array<{
     edgeId: formatEdgeId("dns-server-domain-resolver", "remote-doh", "local-dns"),
     assert: (config) =>
       expect((config.dns?.servers?.find((server) => server.tag === "remote-doh") as Record<string, unknown> | undefined)?.domain_resolver).toBeUndefined(),
+  },
+  {
+    name: "route default_http_client",
+    edgeId: formatEdgeId("route-default-http-client", "hc"),
+    assert: (config) => expect((config.route as Record<string, unknown> | undefined)?.default_http_client).toBeUndefined(),
+  },
+  {
+    name: "rule-set http_client",
+    edgeId: formatEdgeId("rule-set-http-client", "other-rules", "hc"),
+    assert: (config) =>
+      expect((config.route?.rule_set?.find((ruleSet) => ruleSet.tag === "other-rules") as Record<string, unknown> | undefined)?.http_client).toBeUndefined(),
+  },
+  {
+    name: "certificate-provider http_client",
+    edgeId: formatEdgeId("certificate-provider-http-client", "acme-cp", "hc"),
+    assert: (config) =>
+      expect((config.certificate_providers?.find((provider) => provider.tag === "acme-cp") as Record<string, unknown> | undefined)?.http_client).toBeUndefined(),
+  },
+  {
+    name: "http-client dial detour",
+    edgeId: formatEdgeId("http-client-detour", "hc", "proxy"),
+    assert: (config) =>
+      expect((config.http_clients?.find((client) => client.tag === "hc") as Record<string, unknown> | undefined)?.detour).toBeUndefined(),
   },
 ];
 
