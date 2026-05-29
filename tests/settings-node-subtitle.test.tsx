@@ -30,10 +30,16 @@ describe("L4-subtitle-degeneric — settings node subtitles carry real info", ()
     expect(subtitleOf("settings:log")).toBe("logging disabled");
   });
 
-  it("ntp shows its server", () => {
-    useProjectStore.getState().importJson(JSON.stringify({ ntp: { server: "time.apple.com" } }));
+  it("ntp shows its server when enabled", () => {
+    useProjectStore.getState().importJson(JSON.stringify({ ntp: { enabled: true, server: "time.apple.com" } }));
     render(<App />);
     expect(subtitleOf("settings:ntp")).toBe("time sync · time.apple.com");
+  });
+
+  it("ntp reads as off when not enabled (enabled defaults to false), even with a server set", () => {
+    useProjectStore.getState().importJson(JSON.stringify({ ntp: { server: "time.apple.com" } }));
+    render(<App />);
+    expect(subtitleOf("settings:ntp")).toBe("time sync off");
   });
 
   it("experimental lists the enabled subsystems", () => {
@@ -50,8 +56,8 @@ describe("L4-subtitle-degeneric — settings node subtitles carry real info", ()
     expect(subtitleOf("settings:certificate")).toBe("TLS certificates");
   });
 
-  it("ntp with no server falls back to a meaningful label", () => {
-    useProjectStore.getState().importJson(JSON.stringify({ ntp: {} }));
+  it("ntp enabled with no server falls back to a meaningful label", () => {
+    useProjectStore.getState().importJson(JSON.stringify({ ntp: { enabled: true } }));
     render(<App />);
     expect(subtitleOf("settings:ntp")).toBe("time sync");
   });
