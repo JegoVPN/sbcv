@@ -1,3 +1,5 @@
+import { creatableTypes } from "./schemaRegistry";
+
 export const OUTBOUND_PALETTE_TYPES = {
   direct: "direct",
   block: "block",
@@ -21,26 +23,7 @@ export const OUTBOUND_PALETTE_TYPES = {
   urltest: "urltest",
 } as const;
 
-export const CREATABLE_OUTBOUND_TYPES = [
-  "direct",
-  "block",
-  "socks",
-  "http",
-  "shadowsocks",
-  "vmess",
-  "trojan",
-  "naive",
-  "hysteria",
-  "shadowtls",
-  "vless",
-  "tuic",
-  "hysteria2",
-  "anytls",
-  "tor",
-  "ssh",
-  "selector",
-  "urltest",
-] as const;
+export const CREATABLE_OUTBOUND_TYPES: readonly string[] = creatableTypes("outbound");
 
 export type OutboundPaletteKind = keyof typeof OUTBOUND_PALETTE_TYPES;
 
@@ -65,26 +48,7 @@ export const INBOUND_PALETTE_TYPES = {
   "inbound-cloudflared": "cloudflared",
 } as const;
 
-export const CREATABLE_INBOUND_TYPES = [
-  "direct",
-  "mixed",
-  "socks",
-  "http",
-  "shadowsocks",
-  "vmess",
-  "trojan",
-  "naive",
-  "hysteria",
-  "shadowtls",
-  "vless",
-  "tuic",
-  "hysteria2",
-  "anytls",
-  "tun",
-  "redirect",
-  "tproxy",
-  "cloudflared",
-] as const;
+export const CREATABLE_INBOUND_TYPES: readonly string[] = creatableTypes("inbound");
 
 export type InboundPaletteKind = keyof typeof INBOUND_PALETTE_TYPES;
 
@@ -105,20 +69,7 @@ export const DNS_SERVER_PALETTE_TYPES = {
   "dns-resolved": "resolved",
 } as const;
 
-export const CREATABLE_DNS_SERVER_TYPES = [
-  "local",
-  "hosts",
-  "tcp",
-  "udp",
-  "tls",
-  "quic",
-  "https",
-  "h3",
-  "dhcp",
-  "fakeip",
-  "tailscale",
-  "resolved",
-] as const;
+export const CREATABLE_DNS_SERVER_TYPES: readonly string[] = creatableTypes("dns-server");
 
 export type DnsServerPaletteKind = keyof typeof DNS_SERVER_PALETTE_TYPES;
 
@@ -127,7 +78,7 @@ export const ENDPOINT_PALETTE_TYPES = {
   "endpoint-tailscale": "tailscale",
 } as const;
 
-export const CREATABLE_ENDPOINT_TYPES = ["wireguard", "tailscale"] as const;
+export const CREATABLE_ENDPOINT_TYPES: readonly string[] = creatableTypes("endpoint");
 
 export type EndpointPaletteKind = keyof typeof ENDPOINT_PALETTE_TYPES;
 
@@ -140,7 +91,7 @@ export const SERVICE_PALETTE_TYPES = {
   "service-hysteria-realm": "hysteria-realm",
 } as const;
 
-export const CREATABLE_SERVICE_TYPES = ["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"] as const;
+export const CREATABLE_SERVICE_TYPES: readonly string[] = creatableTypes("service");
 
 export type ServicePaletteKind = keyof typeof SERVICE_PALETTE_TYPES;
 
@@ -211,7 +162,7 @@ const preferredRuleSetTags: Record<string, string> = {
   inline: "inline-rules",
 };
 
-export const CREATABLE_RULE_SET_TYPES = ["remote", "local", "inline"] as const;
+export const CREATABLE_RULE_SET_TYPES: readonly string[] = creatableTypes("rule-set");
 
 const preferredEndpointTags: Record<string, string> = {
   wireguard: "wg-ep",
