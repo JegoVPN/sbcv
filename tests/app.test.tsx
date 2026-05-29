@@ -1969,7 +1969,7 @@ describe("SBC editor shell", () => {
       useProjectStore.getState().createFromPalette("hysteria-out");
     });
     inspector = within(screen.getByLabelText("Node inspector"));
-    expect(inspector.getByText(/Hysteria v1 is deprecated/)).toBeInTheDocument();
+    expect(inspector.getByText(/Hysteria v1 is legacy/)).toBeInTheDocument();
 
     // block outbound deprecation banner
     act(() => {

@@ -939,7 +939,7 @@ export function validateConfig(
         "warning",
         "hysteria-v1-deprecated",
         `/outbounds/${index}`,
-        `Outbound "${tag}" uses Hysteria v1, which is deprecated by sing-box upstream in favour of Hysteria2. Migrate to type="hysteria2" for new deployments.`,
+        `Outbound "${tag}" uses Hysteria v1 (legacy); prefer type="hysteria2" for new deployments.`,
       );
     }
     if (outbound.type === "ssh") {
@@ -1078,7 +1078,7 @@ export function validateConfig(
         "warning",
         "inbound-hysteria-v1-deprecated",
         `/inbounds/${index}`,
-        `Inbound "${inbound.tag ?? `inbound-${index}`}" uses Hysteria v1, which is deprecated by sing-box upstream in favour of Hysteria2. Migrate to type="hysteria2" for new deployments.`,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" uses Hysteria v1 (legacy); prefer type="hysteria2" for new deployments.`,
       );
     }
     if (inbound.type === "cloudflared") {
