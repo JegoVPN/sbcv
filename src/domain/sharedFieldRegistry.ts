@@ -146,6 +146,15 @@ export function supportsDnsServerDialFields(type: string | null | undefined) {
   return Boolean(type && schemaRow("dns-server", type)?.sharedGroups.includes("dial"));
 }
 
+// Generic dial-group membership across the three dial-bearing node kinds — gates the domain_resolver
+// port/edge (C11b) so a non-dial outbound/dns-server type never emits a port-less edge.
+export function supportsDialFields(
+  kind: "outbound" | "endpoint" | "dns-server",
+  type: string | null | undefined,
+) {
+  return Boolean(type && schemaRow(kind, type)?.sharedGroups.includes("dial"));
+}
+
 export function sharedGroupsForEntity(
   ref: EntityRef,
   type?: string | null,

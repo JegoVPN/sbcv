@@ -130,6 +130,16 @@ export const portRelations: PortRelation[] = [
   relation("dns-server-service", "writable", endpoint("output", "dns-server", "service", "systemd-resolved service", "settings", "resolved"), endpoint("input", "service", "dns-server", "Upstream resolved DNS server", "globe", "resolved"), "/dns/servers/*/service", ["service"]),
   relation("certificate-provider-endpoint", "writable", endpoint("output", "certificate-provider", "endpoint", "Tailscale endpoint", "waypoints", "tailscale"), endpoint("input", "endpoint", "certificate-provider", "Upstream certificate provider endpoint", "shield", "tailscale"), "/certificate_providers/*/endpoint", ["endpoint"]),
   relation("settings-ntp-detour", "writable", endpoint("output", "settings", "dial-detour", "NTP detour outbound", "spline", "ntp"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network", undefined, ["block", "dns"], ["endpoint"]), "/ntp/detour", ["outbound"]),
+  // dial.md domain_resolver: a dial-bearing entity (outbound / endpoint / dns-server) resolves its own
+  // server name via a DNS server (string tag, or object form `{server: tag, …}`; added 1.12.0, required
+  // for domain-named servers since 1.14.0). One relation per source kind — mirroring the detour family —
+  // so the source type-gate (dial-group membership) is precise per kind (the "tailscale" type means dial
+  // on an endpoint but not on a dns-server, so a single shared nodeTypeExcludes can't serve all three).
+  // All three share the `domain-resolver` output handle → `domain-resolver-target` input on a dns-server.
+  // The Inspector select stays the editor; this just adds the canvas port + connect/disconnect. (C11b)
+  relation("dial-domain-resolver", "writable", endpoint("output", "outbound", "domain-resolver", "Domain resolver", "globe", undefined, ["block", "selector", "urltest", "dns"]), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/outbounds/*/domain_resolver", ["dns-server"]),
+  relation("endpoint-domain-resolver", "writable", endpoint("output", "endpoint", "domain-resolver", "Domain resolver", "globe"), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/endpoints/*/domain_resolver", ["dns-server"]),
+  relation("dns-server-domain-resolver", "writable", endpoint("output", "dns-server", "domain-resolver", "Domain resolver", "globe", undefined, ["legacy", "hosts", "fakeip", "tailscale", "resolved"]), endpoint("input", "dns-server", "domain-resolver-target", "Upstream domain resolver", "globe"), "/dns/servers/*/domain_resolver", ["dns-server"]),
 ];
 
 export function isPortNodeKind(value: string): value is PortNodeKind {

@@ -15,11 +15,14 @@ const cases: PortCase[] = [
   { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set"] },
   { kind: "dns", type: "dns", inputKeys: [], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
-  { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule"], outputKeys: ["outbound"] },
-  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule"], outputKeys: ["endpoint"] },
-  { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule"], outputKeys: ["service"] },
-  { kind: "endpoint", type: "wireguard", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"], outputKeys: ["dial-detour"] },
-  { kind: "endpoint", type: "tailscale", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "dns-server", "service-detour", "rule-set-download", "clash-download-detour", "derp-service", "certificate-provider"], outputKeys: ["dial-detour"] },
+  // C11b: every dns-server is a valid domain_resolver target (input `domain-resolver-target`); only dial
+  // dns-server types (https here) also expose the `domain-resolver` output. New relations sit at the end
+  // of the registry, so their ports trail the existing keys.
+  { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["outbound", "domain-resolver"] },
+  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["endpoint"] },
+  { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["service"] },
+  { kind: "endpoint", type: "wireguard", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"], outputKeys: ["dial-detour", "domain-resolver"] },
+  { kind: "endpoint", type: "tailscale", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "dns-server", "service-detour", "rule-set-download", "clash-download-detour", "derp-service", "certificate-provider"], outputKeys: ["dial-detour", "domain-resolver"] },
   { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
   { kind: "rule-set", type: "local", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   { kind: "rule-set", type: "inline", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
@@ -27,13 +30,13 @@ const cases: PortCase[] = [
     kind: "outbound",
     type: "direct",
     inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
-    outputKeys: ["dial-detour"],
+    outputKeys: ["dial-detour", "domain-resolver"],
   },
   {
     kind: "outbound",
     type: "socks",
     inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"],
-    outputKeys: ["dial-detour"],
+    outputKeys: ["dial-detour", "domain-resolver"],
   },
   {
     kind: "outbound",

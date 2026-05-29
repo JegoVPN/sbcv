@@ -9,7 +9,7 @@ import {
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
-import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
+import { supportsDialFields, supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
 
@@ -159,6 +159,18 @@ function outboundDetourTag(outbound: OutboundConfig) {
   return typeof outbound.detour === "string" && outbound.detour.trim() ? outbound.detour : undefined;
 }
 
+// dial.md domain_resolver is "A string or an object": the string is a dns-server tag; the object form
+// (DomainResolveOptions, reuses the route DNS rule action minus `action`) carries that tag under `server`.
+// Returns the referenced dns-server tag, or undefined when absent/blank. (C11b)
+function domainResolverTag(value: unknown): string | undefined {
+  if (typeof value === "string") return value.trim() ? value : undefined;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const server = (value as Record<string, unknown>).server;
+    return typeof server === "string" && server.trim() ? server : undefined;
+  }
+  return undefined;
+}
+
 function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : generatedEntityTag(kind as Parameters<typeof generatedEntityTag>[0], index);
 }
@@ -223,6 +235,16 @@ function isPortConnected(
       return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
     }
     if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
+    // domain_resolver target: any dial-bearing entity (outbound/endpoint/dns-server) resolving its server
+    // name through this dns-server lights its input dot (C11b).
+    if (kind === "dns-server" && portKey === "domain-resolver-target") {
+      const references = (entity: Record<string, unknown>) => domainResolverTag(entity.domain_resolver) === value;
+      return Boolean(
+        config.outbounds?.some((item) => references(item as Record<string, unknown>)) ||
+          config.endpoints?.some((item) => references(item as Record<string, unknown>)) ||
+          config.dns?.servers?.some((item) => references(item as Record<string, unknown>)),
+      );
+    }
     if (kind === "endpoint" && portKey === "dns-server") {
       return config.dns?.servers?.some((server) => server.type === "tailscale" && server.endpoint === value) ?? false;
     }
@@ -337,6 +359,19 @@ function isPortConnected(
   }
   if (kind === "dns-server" && portKey === "outbound") {
     return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
+  }
+  // domain_resolver source: the output dot lights when this entity points its domain_resolver at a
+  // dns-server (string or object `.server` form). Shared output handle across the three source kinds (C11b).
+  if (portKey === "domain-resolver") {
+    const owner =
+      kind === "outbound"
+        ? config.outbounds?.find((item) => item.tag === value)
+        : kind === "endpoint"
+          ? config.endpoints?.find((item) => item.tag === value)
+          : kind === "dns-server"
+            ? config.dns?.servers?.find((item) => item.tag === value)
+            : undefined;
+    return Boolean(domainResolverTag((owner as { domain_resolver?: unknown } | undefined)?.domain_resolver));
   }
   if (kind === "dns-server" && portKey === "endpoint") {
     return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.endpoint);
@@ -1019,6 +1054,46 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       );
     }
   }
+
+  // domain_resolver edges (C11b): a dial-bearing outbound/endpoint/dns-server resolving its own server
+  // name through a dns-server renders a writable edge to that dns-server. Gated by dial-group membership
+  // (identical to the registry's per-kind source excludes) so the output port always exists; only real,
+  // resolvable references render — a tag that names no dns-server stays a no-op (matching the Inspector).
+  const dnsServerTagSet = new Set(dnsServers.map((server, index) => entityTag(server.tag, "dns-server", index)));
+  const pushDomainResolverEdge = (
+    relationId: string,
+    kind: "outbound" | "endpoint" | "dns-server",
+    tag: string,
+    value: unknown,
+  ) => {
+    const resolverTag = domainResolverTag(value);
+    if (!resolverTag || !dnsServerTagSet.has(resolverTag)) return;
+    // A dns-server can't resolve its own host through itself; skip the self-loop an imported misconfig
+    // would otherwise draw (the connect path already rejects same-node wiring). Only reachable for the
+    // dns-server source (other kinds never collide with the `dns-server:` target id).
+    if (`${kind}:${tag}` === `dns-server:${resolverTag}`) return;
+    edges.push(
+      makeEdge(
+        formatEdgeId(relationId, tag, resolverTag),
+        `${kind}:${tag}`,
+        `dns-server:${resolverTag}`,
+        "domain-resolver",
+        "domain-resolver-target",
+      ),
+    );
+  };
+  outbounds.forEach((outbound, index) => {
+    if (!supportsDialFields("outbound", outbound.type)) return;
+    pushDomainResolverEdge("dial-domain-resolver", "outbound", entityTag(outbound.tag, "outbound", index), (outbound as Record<string, unknown>).domain_resolver);
+  });
+  endpoints.forEach((endpoint, index) => {
+    if (!supportsDialFields("endpoint", endpoint.type)) return;
+    pushDomainResolverEdge("endpoint-domain-resolver", "endpoint", entityTag(endpoint.tag, "endpoint", index), (endpoint as Record<string, unknown>).domain_resolver);
+  });
+  dnsServers.forEach((server, index) => {
+    if (!supportsDialFields("dns-server", server.type)) return;
+    pushDomainResolverEdge("dns-server-domain-resolver", "dns-server", entityTag(server.tag, "dns-server", index), (server as Record<string, unknown>).domain_resolver);
+  });
 
   centerColumnsVertically(nodes, layout);
 
