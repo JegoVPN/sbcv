@@ -270,13 +270,14 @@ test("connected edge remove button disconnects only canonical relation", async (
   await expect(page.getByRole("button", { name: "Remove connection edge:route-final:direct" })).toHaveCount(0);
 });
 
-test("port '+' click opens the searchable picker and creates a connected downstream node (N2)", async ({ page }) => {
-  // A bare route → its outbound/final port is unconnected, so it lives in the reveal overlay with a "+".
+test("clicking an unconnected port opens the searchable picker and creates a connected downstream node (N2)", async ({ page }) => {
+  // A bare route → its outbound/final port is unconnected, so it lives in the reveal overlay and is
+  // itself the "add a downstream node" affordance (no separate "+" badge).
   await importInlineConfig(page, { route: {} });
-  // Hover the node to reveal the overlay port, then click its "+".
+  // Hover the node to reveal the overlay port, then click the port itself.
   await page.getByTestId("node-route:main").hover();
   await page
-    .locator('[data-testid="node-route:main"] [data-port-type="outbound"] button.sbc-port__add')
+    .locator('[data-testid="node-route:main"] [data-port-type="outbound"]')
     .click();
 
   const picker = page.getByRole("dialog", { name: "Compatible nodes" });
@@ -311,12 +312,13 @@ test("node delete sits top-right in red and is revealed only on hover/select", a
   await expect(del).toHaveCSS("color", "rgb(255, 123, 123)");
 });
 
-test("plain-clicking a port handle never starts a sticky highlight (click-connect disabled)", async ({ page }) => {
+test("clicking a port never starts a React Flow click-connection (connectOnClick disabled)", async ({ page }) => {
   // Regression guard: with React Flow's connectOnClick default (true), a plain click on a source handle
-  // started a sticky click-connection — it set pendingPort, lit every compatible port green
-  // (is-compatible), and drew a pending connection line with no reliable way to clear it. With
-  // click-connect disabled a plain click must be completely inert. Two compatible nodes (bare route +
-  // direct outbound) so a real click-connect would have something to highlight.
+  // started a sticky click-connection — it set pendingPort, lit EVERY compatible port green
+  // (is-compatible), and drew an RF connection line with no reliable way to clear it. With click-connect
+  // disabled, clicking an unconnected port instead opens the picker (covered above) — it must never
+  // light up the all-ports compatible highlight or draw an RF connection line. Two compatible nodes
+  // (bare route + direct outbound) so a real click-connect would have something to light up.
   await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
 
   await page.getByTestId("node-route:main").hover();
@@ -328,7 +330,8 @@ test("plain-clicking a port handle never starts a sticky highlight (click-connec
   // A click is mouse down+up in place (no move → not a drag).
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
+  // No RF click-connect: no all-ports compatible highlight, no RF connection line. (The click opens the
+  // port picker, which reveals only the source port — not the click-connect's graph-wide green.)
   await expect(page.locator(".sbc-port.is-compatible")).toHaveCount(0);
-  await expect(page.locator(".sbc-port.is-pending")).toHaveCount(0);
   await expect(page.locator(".react-flow__connection-path")).toHaveCount(0);
 });
