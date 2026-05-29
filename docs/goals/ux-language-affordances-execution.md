@@ -111,8 +111,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L4-rule-field-scrub — A10d-rest: scrub other action-gated rule fields on import (reject
   `method`/`no_drop`, dns-predefined `rcode`, route-options `override_*`); optionally recurse logical
   rules.
-- [ ] L4-subtitle-degeneric — route / settings / notice node subtitles carry real info (extend the
-  A29-subtitle pattern to the remaining generic ones).
+- [x] L4-subtitle-degeneric — settings node subtitles carry real info (route/dns hubs already show rule
+  counts; notices already informative — only the four settings nodes were generic). — PR #91
 - [ ] L4-mobile-touch — mobile controls meet a ≥36px touch-target minimum (CSS).
 - [ ] L4-mobile-palette-defer — A25-rest: actually defer the Palette chunk on mobile (today App eagerly
   imports it for desktop).
@@ -143,3 +143,21 @@ Status: implemented 2026-05-29 in `atomic/dial-network-type-import-normalize`; m
   `as Record` casts (left as explicit-boundary); the same `kind:"list"` control also renders on
   dns-servers/ntp/http_clients/shadowtls nested dial → queued as L4-dial-network-type-2.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (852), `pnpm build`, `pnpm e2e` (14).
+
+### L4-subtitle-degeneric settings-node-subtitle (canvas) — PR #91
+Status: implemented 2026-05-29 in `atomic/settings-node-subtitle`; merged in PR #91.
+- What changed: all four settings nodes (log/ntp/certificate/experimental) showed the same generic
+  "global settings" subtitle. New `settingsSubtitle(path, entity)` helper gives each real info: log →
+  `log level <level>` / `logging disabled`; ntp → `time sync · <server>`; certificate → `certificate
+  store · <store>` / `TLS certificates`; experimental → the enabled subsystems joined (`Clash API ·
+  V2Ray API · cache file`). Falls back to a meaningful per-section label, never "global settings" for
+  the known paths. (route/dns hubs already show `N ordered rules`; notice nodes already informative.)
+- Tests: `tests/settings-node-subtitle.test.tsx` (log level, log disabled, ntp server, experimental
+  subsystems, certificate fallback, ntp-empty fallback).
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean. Verified the field names
+  against the upstream sing-box docs (log `level`/`disabled`, ntp `server`, certificate `store`,
+  experimental `clash_api`/`v2ray_api`/`cache_file` objects), the guarded cast, the single subtitle
+  consumer, and idiom-consistency with the sibling helpers. Applied both optional nits in-pass: typed
+  the param `path: SettingsPath` (makes the `"global settings"` fallback provably-unreachable / catches a
+  future typo'd path) and added an ntp-empty fallback test.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (858), `pnpm build`, `pnpm e2e` (14).
