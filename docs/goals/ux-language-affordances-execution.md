@@ -85,7 +85,14 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [x] L1-diag-hierarchy — reordered the diagnostics-popover item body so the human `message` is the
   headline (bright `#eef2f4`, weight 600, first) and the machine `code`/`path` drop to a muted monospace
   secondary line (`#8a96a3`, 11px) below it — was code-first/bold with the message buried last. — PR #116
-- [ ] L1-roundtrip-copy — a one-line "import→export normalizes fields" note where round-trip matters.
+- [x] L1-roundtrip-copy — surfaced the import→export normalization at the two round-trip touchpoints:
+  the desktop Export button now has a `title` tooltip ("Downloads a normalized config: empty fields are
+  dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may
+  differ textually from your original but sing-box reads it identically"), and the mobile Export row
+  caption changed from "Download current config as .json" → "Normalized .json — empty fields dropped,
+  shorthands expanded". — PR #117
+
+**Phase 1 complete** (L1-badges-a11y + L1-hysteria-tooltip remain as explicitly-deferred follow-ups).
 
 ### Phase 2 — Per-node copy accuracy audit (bucket 1d / D5)
 - [x] L2-audit — agent-driven sweep (3 parallel auditors vs `docs/upstream/sing-box/testing/**`).
