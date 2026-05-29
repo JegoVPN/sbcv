@@ -30,6 +30,7 @@ import {
   updateEntityField,
   updateRouteRule,
 } from "../domain/commands";
+import { SETTINGS_COLUMN_X } from "../canvas/graph";
 import { validateConfig } from "../domain/diagnostics";
 import {
   formatEdgeId,
@@ -975,22 +976,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       let selectedId = state.selectedId;
       if (kind === "settings-log") {
         config = ensureSettings(config, "log");
-        layout = pinLayout(layout, "settings:log", -300, 40);
+        layout = pinLayout(layout, "settings:log", SETTINGS_COLUMN_X, 40);
         selectedId = "settings:log";
       }
       if (kind === "settings-ntp") {
         config = ensureSettings(config, "ntp");
-        layout = pinLayout(layout, "settings:ntp", -300, 370);
+        layout = pinLayout(layout, "settings:ntp", SETTINGS_COLUMN_X, 370);
         selectedId = "settings:ntp";
       }
       if (kind === "settings-certificate") {
         config = ensureSettings(config, "certificate");
-        layout = pinLayout(layout, "settings:certificate", -300, 700);
+        layout = pinLayout(layout, "settings:certificate", SETTINGS_COLUMN_X, 700);
         selectedId = "settings:certificate";
       }
       if (kind === "settings-experimental") {
         config = ensureSettings(config, "experimental");
-        layout = pinLayout(layout, "settings:experimental", -300, 1030);
+        layout = pinLayout(layout, "settings:experimental", SETTINGS_COLUMN_X, 1030);
         selectedId = "settings:experimental";
       }
       const inboundType = inboundTypeForPaletteKind(kind);
