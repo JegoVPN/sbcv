@@ -27,6 +27,7 @@ describe("A10a — DNS rule server is settable for route and evaluate", () => {
     useProjectStore.getState().importJson(JSON.stringify({}));
   });
   afterEach(() => {
+    useProjectStore.getState().setChannel("stable");
     useProjectStore.getState().importJson(JSON.stringify({}));
   });
 
@@ -45,6 +46,8 @@ describe("A10a — DNS rule server is settable for route and evaluate", () => {
 
   it("keeps the server across route <-> evaluate (both require it)", () => {
     importDnsRule("route");
+    // `evaluate` is a 1.14-only action (gated to the testing channel in the Action select).
+    useProjectStore.getState().setChannel("testing");
     render(<App />);
     fireEvent.click(screen.getByTestId("node-dns-rule:0"));
 
