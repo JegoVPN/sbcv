@@ -147,7 +147,7 @@ export function RouteRulesTable() {
                 </select>
               </label>
               <label className="rule-field">
-                <span>Rule Set</span>
+                <span>Match rule-set</span>
                 <input
                   aria-label={`Route rule ${ruleIndex + 1} rule set`}
                   list="route-rule-set-tags"
@@ -253,7 +253,7 @@ export function DnsRulesTable() {
                 </select>
               </label>
               <label className="rule-field">
-                <span>Rule Set</span>
+                <span>Match rule-set</span>
                 <input
                   aria-label={`DNS rule ${ruleIndex + 1} rule set`}
                   list="dns-rule-set-tags"

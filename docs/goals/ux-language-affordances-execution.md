@@ -116,8 +116,25 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     chain"/bare. (Other MED dns hints — local `prefer_go`, dhcp placeholder — folded into L2-fix-med-copy.) — PR #107
   - [x] L2-fix-rule-set-deprecation — H9: a deprecation banner now appears when a remote rule-set's
     `download_detour` is set (deprecated 1.14 → `http_client`, removed 1.16). — PR #108
-  - [ ] L2-fix-med-copy — the MED list (tuic replay, block removed-in-1.13, domain_strategy removed-1.14,
-    rule-set match-field label, network_type value hints, store_rdrc/V2Ray banners, etc.).
+  - [~] L2-fix-med-copy — the MED list, re-verified vs current code + upstream (agent pass) and sliced
+    into copy vs behavior atomics. App has only stable/testing channels (no 1.12), which decides the
+    version findings. `accept_default_resolvers` (MED #5) was already fixed under H8. Structural V2Ray
+    transport per-type fields (MED #15) are out of the copy remit → deferred as a structural follow-up.
+    - [x] L2-med-rules-copy — rule match/action copy: "Rule Set" match field → "Match rule-set" (node
+      inspector ×2 + table editor ×2) and reject `no_drop` "(only return)" → "(else method falls back to
+      drop after 50 hits in 30s)" per upstream's 50-triggers/30s throttle. — PR #118
+    - [ ] L2-med-dns-server-copy — DNS server/cache copy: local `prefer_go` overstatement, dhcp interface
+      placeholder (`auto` is the legacy form), store_rdrc→store_dns banner (distinct caches).
+    - [ ] L2-med-banners-copy — protocol/build-tag banner copy: tuic 0-RTT replay wording,
+      tailscale/derp "stock binaries omit" → default-build softening (×3), V2Ray API tag citation,
+      block-outbound banner (removed in 1.13, rejected on both channels).
+    - [ ] L2-med-dial-fields (BEHAVIOR) — gate dial `domain_strategy` off on testing (removed 1.14) +
+      add value/platform hints to Network Type / Fallback Network (needs a hint slot in the shared dial
+      field descriptor/renderer).
+    - [ ] L2-med-naive-banner (BEHAVIOR) — add the naive platform-support banner (Apple/Android/Windows/
+      libcronet-Linux only).
+    - [ ] L2-med-dns-rule-actions (BEHAVIOR) — evaluate/respond hints + channel-gate those two options to
+      testing (1.14-only actions).
 
 ### Phase 3 — Affordance infrastructure (bucket 2 / D6)
 - [ ] L3-toast-infra — a minimal toast/notification host (store slice + a portal component, a11y-live).
