@@ -504,7 +504,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "route",
           type: "route",
           title: "Route",
-          subtitle: `${routeRules.length} ordered rules`,
+          subtitle: hubSubtitle(routeRules.length, config.route?.final),
           status: diagnosticStatus("/route", diagnostics),
         },
         layout,
@@ -657,14 +657,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "outbound",
           type: outbound.type,
           title: tag,
-          subtitle:
-            Array.isArray(outbound.outbounds) &&
-            outbound.outbounds.length &&
-            isOutboundGroup(outbound)
-              ? `${outbound.type}: ${outbound.outbounds.join(", ")}`
-              : outbound.server
-                ? `${outbound.type} ${outbound.server}:${outbound.server_port ?? ""}`
-                : `${outbound.type} outbound`,
+          subtitle: outboundSubtitle(outbound),
           status: diagnosticStatus(`/outbounds/${index}`, diagnostics),
         },
         layout,
@@ -709,7 +702,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "dns",
           type: "dns",
           title: "DNS",
-          subtitle: `${dnsRules.length} ordered rules`,
+          subtitle: hubSubtitle(dnsRules.length, config.dns?.final),
           status: diagnosticStatus("/dns", diagnostics),
         },
         layout,
@@ -842,7 +835,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                 ? ruleSet.url
                 : ruleSet.type === "local" && typeof ruleSet.path === "string"
                   ? ruleSet.path
-                  : `${ruleSet.type} rule-set`,
+                  : Array.isArray(ruleSet.rules)
+                    ? `${ruleSet.rules.length} inline rules`
+                    : `${ruleSet.type} rule-set`,
             status: diagnosticStatus(`/route/rule_set/${index}`, diagnostics),
           },
           layout,
@@ -1077,6 +1072,35 @@ function centerColumnsVertically(nodes: SbcFlowNode[], layout: ProjectLayout) {
   }
 }
 
+// Route/DNS hub: rule count + the default target (`final`). The final is the hub's one scalar decision
+// point (the outbound/server used when no rule matches), so it belongs in the summary alongside the count.
+function hubSubtitle(ruleCount: number, final: unknown): string {
+  const base = `${ruleCount} ordered rules`;
+  return typeof final === "string" && final ? `${base} · final → ${final}` : base;
+}
+
+// Outbound summary. The titlebar already names the type ("Outbound · Shadowsocks"), so the subtitle drops
+// the redundant type prefix and carries the connection identity instead: a detour chain when `detour` is
+// set (which makes sing-box ignore all other dial fields — shared/dial.md), the member list for a
+// selector/urltest group (capped + optional `default`), or `server:port` for a direct proxy.
+function outboundSubtitle(outbound: OutboundConfig): string {
+  if (isOutboundGroup(outbound) && Array.isArray(outbound.outbounds) && outbound.outbounds.length) {
+    const members = listLabel(outbound.outbounds.filter((tag): tag is string => typeof tag === "string"));
+    // `default` is a selector-only field (urltest auto-selects by latency, no default).
+    const def =
+      outbound.type === "selector" && typeof outbound.default === "string" && outbound.default
+        ? ` · default ${outbound.default}`
+        : "";
+    return members ? `${members}${def}` : `${outbound.type} group`;
+  }
+  const detour = outboundDetourTag(outbound);
+  if (detour) return `→ ${detour}`;
+  if (typeof outbound.server === "string" && outbound.server) {
+    return outbound.server_port != null ? `${outbound.server}:${outbound.server_port}` : outbound.server;
+  }
+  return `${outbound.type} outbound`;
+}
+
 function settingsSubtitle(path: SettingsPath, entity: Record<string, unknown>) {
   if (path === "log") {
     if (entity.disabled === true) return "logging disabled";
@@ -1084,6 +1108,9 @@ function settingsSubtitle(path: SettingsPath, entity: Record<string, unknown>) {
     return level ? `log level ${level}` : "logging";
   }
   if (path === "ntp") {
+    // NTP defaults to disabled (ntp/index.md), so a server with `enabled` unset is NOT actually syncing —
+    // surfacing the server then would be misleading.
+    if (entity.enabled !== true) return "time sync off";
     const server = typeof entity.server === "string" && entity.server ? entity.server : "";
     return server ? `time sync · ${server}` : "time sync";
   }
@@ -1122,8 +1149,21 @@ function dnsServerSubtitle(server: DnsServerConfig) {
         ? server.address
         : "";
   if (host) return server.server_port != null ? `${host}:${server.server_port}` : host;
-  // Tailscale DNS resolves through an endpoint rather than a host:port.
+  // Hostless server types resolve through a reference or a local resource rather than a host:port.
   if (typeof server.endpoint === "string" && server.endpoint) return `via ${server.endpoint}`;
+  if (server.type === "resolved" && typeof server.service === "string" && server.service) return `via ${server.service}`;
+  if (server.type === "fakeip") {
+    const range = typeof server.inet4_range === "string" && server.inet4_range ? server.inet4_range : "";
+    return range ? `FakeIP ${range}` : "FakeIP pool";
+  }
+  if (server.type === "hosts") {
+    const records = server.predefined && typeof server.predefined === "object" ? Object.keys(server.predefined).length : 0;
+    return records ? `${records} records` : "hosts file";
+  }
+  if (server.type === "dhcp") {
+    const iface = typeof server.interface === "string" && server.interface ? server.interface : "";
+    return iface ? `dhcp · ${iface}` : "dhcp (auto)";
+  }
   return `${server.type} dns server`;
 }
 
@@ -1141,15 +1181,19 @@ function endpointSubtitle(endpoint: EndpointConfig) {
 }
 
 function serviceSubtitle(service: ServiceConfig) {
+  // The titlebar names the type; the subtitle carries per-instance info so two services of the same type
+  // are distinguishable — managed-server count (ssm-api), user count (ccm/ocm), or the listen address.
   if (service.type === "ssm-api") {
     const count = service.servers && typeof service.servers === "object" ? Object.keys(service.servers).length : 0;
-    return `ssm-api ${count} managed servers`;
+    return `${count} managed servers`;
   }
-  if (service.type === "derp") return "tailscale derp service";
-  if (service.type === "resolved") return "systemd-resolved service";
-  if (service.type === "ccm") return "Claude Code multiplexer";
-  if (service.type === "ocm") return "OpenAI Codex multiplexer";
-  if (service.type === "hysteria-realm") return "hysteria2 realm service";
+  const users = Array.isArray(service.users) ? service.users.length : 0;
+  if ((service.type === "ccm" || service.type === "ocm") && users > 0) return `${users} users`;
+  const host = typeof service.listen === "string" && service.listen ? service.listen : "";
+  const port = typeof service.listen_port === "number" ? service.listen_port : undefined;
+  if (host && port != null) return `listen ${host}:${port}`;
+  if (port != null) return `listen :${port}`;
+  if (host) return `listen ${host}`;
   return `${service.type} service`;
 }
 
