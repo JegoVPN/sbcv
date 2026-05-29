@@ -110,7 +110,7 @@ const dialSharedFields = [
   "domain_strategy",
 ];
 const quicSharedFields = ["initial_packet_size", "disable_path_mtu_discovery", "idle_timeout", "keep_alive_period"];
-const inboundHandledFields = new Set([
+export const inboundHandledFields: ReadonlySet<string> = new Set([
   "tag",
   "type",
   "address",
@@ -155,7 +155,7 @@ const inboundHandledFields = new Set([
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
-const outboundHandledFields = new Set([
+export const outboundHandledFields: ReadonlySet<string> = new Set([
   "tag",
   "type",
   "server",
@@ -218,6 +218,64 @@ const outboundHandledFields = new Set([
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
+
+// C17 (silent-unreachable guard): every key targeted by a dedicated inline control — i.e. every
+// `updateField(ref, "<key>", …)` literal in the inbound/outbound/shared editors. A handled key not in
+// this set AND not surfaced by any shared-field group would be excluded from the Advanced JSON fallback
+// yet have no editor (the C1 transport / C3 tls.acme failure). Keep in sync with the inline controls;
+// the guard's coverage check (structurallyCoveredKeys) unions this with the shared-group field paths.
+export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
+  "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auto_detect_interface",
+  "auto_redirect", "auto_route", "brutal_debug", "cache_capacity", "cache_file", "cache_path", "certificate",
+  "certificate_directory_path", "certificate_path", "cipher", "client_subnet", "client_version", "clash_api",
+  "config_path", "congestion_control", "control_url", "credential_path", "data_directory", "default",
+  "default_interface", "default_mark", "detour", "disable_cache", "disable_expire", "disabled", "down_mbps",
+  "download_detour", "enabled", "endpoint", "endpoint_independent_nat", "exclude_interface", "exclude_package",
+  "exclude_uid_range", "executable_path", "extra_args", "extra_headers", "fakeip", "fallback", "final",
+  "find_process", "flow", "format", "grace_period", "ha_connections", "headers", "heartbeat", "home",
+  "hop_interval", "host_key", "host_key_algorithms", "idle_session_check_interval", "idle_session_timeout",
+  "idle_timeout", "include_interface", "include_package", "include_uid_range", "independent_cache", "interface",
+  "interrupt_exist_connections", "interval", "kex_algorithm", "level", "loopback_address", "mac", "masquerade",
+  "mesh_psk", "mesh_psk_file", "mesh_with", "method", "min_idle_session", "network", "obfs", "optimistic",
+  "outbounds", "output", "override_address", "override_android_vpn", "override_port", "packet_encoding",
+  "padding_scheme", "password", "path", "peers", "platform", "plugin", "plugin_opts", "post_quantum",
+  "predefined", "prefer_go", "private_key", "private_key_passphrase", "private_key_path", "protocol",
+  "quic_congestion_control", "region", "reverse_mapping", "route_address", "route_address_set",
+  "route_exclude_address", "route_exclude_address_set", "rules", "security", "server", "server_port",
+  "server_ports", "servers", "service", "set_system_proxy", "stack", "state_directory", "store", "strategy",
+  "stun", "system_interface", "system_interface_name", "timeout", "timestamp", "token", "tolerance", "torrc",
+  "udp_over_stream", "udp_relay_mode", "up_mbps", "update_interval", "url", "usages_path", "user", "username",
+  "users", "uuid", "verify_client_endpoint", "verify_client_url", "version", "zero_rtt_handshake",
+]);
+
+// C17: the set of keys a structured control covers for a given kind — the inline-control keys above plus
+// every top-level key surfaced by a shared-field group any creatable type of that kind can carry. The
+// guard asserts inbound/outbound handledFields ⊆ this set (channel-invariant in practice; computed per
+// channel since shared-group membership can be channel-gated).
+// Scope/limitation (by design, per C17): this proves a field DEFINITION / inline-control key EXISTS, not
+// that it renders a *working* control, and INLINE_RENDERED_KEYS is a single cross-kind set — so it does
+// not replace per-control coverage atomics (C1 transport, C3 tls.acme) and is a superset signal, not a
+// full reachability proof. It catches the "handled key with no editor anywhere" class.
+export function structurallyCoveredKeys(
+  kind: "inbound" | "outbound",
+  channel: SingBoxChannel,
+): Set<string> {
+  const covered = new Set<string>(["tag", "type"]);
+  for (const key of INLINE_RENDERED_KEYS) covered.add(key);
+  const types = kind === "inbound" ? CREATABLE_INBOUND_TYPES : CREATABLE_OUTBOUND_TYPES;
+  const probeConfig = {} as SingBoxConfig;
+  for (const type of types) {
+    const ref = { kind, tag: "__probe__" } as EntityRef;
+    for (const group of sharedGroupsForEntity(ref, type, channel)) {
+      for (const definition of sharedFieldDefinitions(group, ref, type, probeConfig, channel)) {
+        const head = definition.path[0];
+        if (head) covered.add(head);
+      }
+    }
+  }
+  return covered;
+}
+
 const dnsServerHandledFields = new Set([
   "tag",
   "type",
@@ -334,7 +392,7 @@ function labelForField(field: string) {
     .join(" ");
 }
 
-function editableScalarFields(entity: InspectorEntity, handledFields: Set<string>) {
+function editableScalarFields(entity: InspectorEntity, handledFields: ReadonlySet<string>) {
   return Object.entries(entity).filter(([field, value]) => {
     if (handledFields.has(field)) return false;
     const valueType = typeof value;
@@ -342,7 +400,7 @@ function editableScalarFields(entity: InspectorEntity, handledFields: Set<string
   });
 }
 
-function editableNonScalarFields(entity: InspectorEntity, handledFields: Set<string>) {
+function editableNonScalarFields(entity: InspectorEntity, handledFields: ReadonlySet<string>) {
   return Object.entries(entity).filter(([field, value]) => {
     if (handledFields.has(field)) return false;
     if (value === null || value === undefined) return false;
@@ -708,7 +766,7 @@ function AdvancedScalarFields({
   updateField,
 }: {
   entity: InspectorEntity;
-  handledFields: Set<string>;
+  handledFields: ReadonlySet<string>;
   entityRef: EntityRef;
   updateField: UpdateField;
 }) {
@@ -1036,7 +1094,7 @@ function AdvancedNonScalarFields({
   updateField,
 }: {
   entity: InspectorEntity;
-  handledFields: Set<string>;
+  handledFields: ReadonlySet<string>;
   entityRef: EntityRef;
   updateField: UpdateField;
 }) {
