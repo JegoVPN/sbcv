@@ -757,12 +757,20 @@ function isLogicalRule(rule: unknown): boolean {
   return Boolean(rule) && typeof rule === "object" && (rule as Record<string, unknown>).type === "logical";
 }
 
+// A nested logical sub-rule recurses with the same structured editor; beyond this depth it falls back
+// to the JSON escape hatch (the grammar allows unbounded nesting, but the UI caps disclosure). (C12)
+const MAX_INLINE_RULE_DEPTH = 3;
+
 function InlineRuleSetEditor({
   value,
   onChange,
+  depth = 0,
+  idPrefix = "inline-rule",
 }: {
   value: unknown;
   onChange: (value: unknown) => void;
+  depth?: number;
+  idPrefix?: string;
 }) {
   const rules = Array.isArray(value) ? value : [];
   const [mode, setMode] = useState<"structured" | "json">("structured");
@@ -812,7 +820,7 @@ function InlineRuleSetEditor({
         const ruleObj = (rule ?? {}) as Record<string, unknown>;
         const logical = isLogicalRule(rule);
         return (
-          <div className="inline-rule" data-testid={`inline-rule-${index}`} key={index}>
+          <div className="inline-rule" data-testid={`${idPrefix}-${index}`} key={index}>
             <div className="inline-rule__head">
               <span>Rule {index + 1}{logical ? " · logical" : ""}</span>
               <span className="inline-rule__actions">
@@ -822,7 +830,28 @@ function InlineRuleSetEditor({
               </span>
             </div>
             {logical ? (
-              <span className="field__hint">Logical (and/or) rule — edit its nested rules in JSON mode.</span>
+              depth < MAX_INLINE_RULE_DEPTH ? (
+                <>
+                  <label className="field">
+                    <span>Mode</span>
+                    <select
+                      value={typeof ruleObj.mode === "string" ? ruleObj.mode : "and"}
+                      onChange={(event) => patchRule(index, { mode: event.target.value })}
+                    >
+                      <option value="and">and</option>
+                      <option value="or">or</option>
+                    </select>
+                  </label>
+                  <InlineRuleSetEditor
+                    depth={depth + 1}
+                    idPrefix={`${idPrefix}-${index}-sub`}
+                    value={ruleObj.rules}
+                    onChange={(next) => patchRule(index, { rules: next })}
+                  />
+                </>
+              ) : (
+                <span className="field__hint">Logical (and/or) rule nested too deep — edit its nested rules in JSON mode.</span>
+              )
             ) : (
               INLINE_RULE_LIST_FIELDS.map((field) => (
                 <label className="field" key={field.key}>
