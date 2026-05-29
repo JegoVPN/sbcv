@@ -1129,14 +1129,32 @@ function settingsSubtitle(path: SettingsPath, entity: Record<string, unknown>) {
 }
 
 function inboundSubtitle(inbound: InboundConfig) {
-  // listen / listen_port reach InboundConfig through the TaggedConfig index signature (typed `unknown`),
-  // so narrow both before interpolating — a malformed import must not render `listen :true`.
+  // Fields reach InboundConfig through the TaggedConfig index signature (typed `unknown`), so narrow
+  // each before interpolating — a malformed import must not render `listen :true`.
+  const obj = inbound as Record<string, unknown>;
+  // TUN is a virtual interface, not a host:port listener — its identity is the interface + address.
+  if (inbound.type === "tun") {
+    const iface = typeof obj.interface_name === "string" && obj.interface_name ? obj.interface_name : "";
+    const addr = Array.isArray(obj.address) && typeof obj.address[0] === "string" ? obj.address[0] : "";
+    if (iface && addr) return `${iface} · ${addr}`;
+    return iface || addr || "tun inbound";
+  }
   const host = typeof inbound.listen === "string" && inbound.listen ? inbound.listen : "";
   const port = typeof inbound.listen_port === "number" ? inbound.listen_port : undefined;
-  if (host && port != null) return `listen ${host}:${port}`;
-  if (port != null) return `listen :${port}`;
-  if (host) return `listen ${host}`;
-  return `${inbound.type} inbound`;
+  const base = host && port != null ? `listen ${host}:${port}` : port != null ? `listen :${port}` : host ? `listen ${host}` : "";
+  // A second dimension when present: the shadowsocks cipher (its key security parameter) or the user
+  // count (auth-optional socks/mixed/http only show it once auth is configured; credential protocols
+  // carry users intrinsically). Absent → just the listen address (unchanged from before).
+  const detail =
+    inbound.type === "shadowsocks"
+      ? typeof obj.method === "string" && obj.method
+        ? obj.method
+        : ""
+      : Array.isArray(obj.users) && obj.users.length > 0
+        ? `${obj.users.length} users`
+        : "";
+  if (base) return detail ? `${base} · ${detail}` : base;
+  return detail ? `${inbound.type} · ${detail}` : `${inbound.type} inbound`;
 }
 
 function dnsServerSubtitle(server: DnsServerConfig) {
