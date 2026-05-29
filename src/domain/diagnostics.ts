@@ -124,7 +124,28 @@ export function validateConfig(
         );
       }
     });
+    // 1.13-added route-rule features — warn on a pre-1.13 target. (C7-C: rule_action.md bypass Since
+    // 1.13.0; rule.md interface_address / network_interface_address / default_interface_address Since 1.13.0)
+    if (!atLeast(version, "1.13")) {
+      const ruleObj = rule as Record<string, unknown>;
+      if (ruleObj.action === "bypass") {
+        push(diagnostics, "warning", "route-rule-bypass-1-13-only", `/route/rules/${index}/action`, `Route rule ${index + 1} uses action "bypass", which requires sing-box 1.13+, but the target is ${version}.`);
+      }
+      if (ruleObj.interface_address !== undefined || ruleObj.network_interface_address !== undefined || ruleObj.default_interface_address !== undefined) {
+        push(diagnostics, "warning", "route-rule-interface-address-1-13-only", `/route/rules/${index}`, `Route rule ${index + 1} sets interface_address / network_interface_address / default_interface_address, which require sing-box 1.13+, but the target is ${version}.`);
+      }
+    }
   });
+
+  // 1.13-added local DNS prefer_go (dns/server/local.md, Since 1.13.0) — warn on a pre-1.13 target. (C7-C)
+  if (!atLeast(version, "1.13")) {
+    listItems(config.dns?.servers).forEach((server, index) => {
+      const obj = server as Record<string, unknown>;
+      if (obj.type === "local" && obj.prefer_go !== undefined) {
+        push(diagnostics, "warning", "dns-local-prefer-go-1-13-only", `/dns/servers/${index}/prefer_go`, `Local DNS server "${server.tag ?? `dns-server-${index}`}" sets prefer_go, which requires sing-box 1.13+, but the target is ${version}.`);
+      }
+    });
+  }
 
   outbounds.forEach((outbound, index) => {
     if ((outbound.type === "selector" || outbound.type === "urltest") && Array.isArray(outbound.outbounds)) {
