@@ -216,6 +216,7 @@ export function TopBar() {
           <span>Target</span>
           <select
             aria-label="Sing-box target"
+            title="Which sing-box build to validate against. Stable (1.13) is the released version; testing (1.14) has newer features not yet in stable — pick the one your sing-box binary runs."
             value={target.id}
             onChange={(event) => setTarget(event.target.value as SingBoxTargetId)}
           >
