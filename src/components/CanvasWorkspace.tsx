@@ -52,7 +52,7 @@ const CHIP_PICKER_WIDTH = 320;
 const CHIP_PICKER_MAX_HEIGHT = 360;
 const CHIP_PICKER_MARGIN = 16;
 
-type PendingPort = {
+export type PendingPort = {
   nodeId: string;
   handleId: string;
   kind: PortNodeKind;
@@ -190,7 +190,7 @@ export function classifyConnectEnd(state: { isValid?: boolean | null; toNode?: u
   return "open-picker";
 }
 
-function chipCandidatesForPending(pending: PendingPort): ChipPickerCandidate[] {
+export function chipCandidatesForPending(pending: PendingPort): ChipPickerCandidate[] {
   const candidates = new Map<string, ChipPickerCandidate>();
   for (const relation of portRelations) {
     if (relation.mode !== "writable" || !relation.createTarget?.length) continue;

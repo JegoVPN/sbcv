@@ -67,7 +67,14 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
   The node-delete button moved into the toolbar (hover/selected-gated via `.sbc-node__delete` so it can't
   be clicked by accident). The count pill stays (DN-5). `createCompatible` dropped from SbcNode (store
   action + its coverage test stay for N2-compatible-retire). — shipped with N1
-- [ ] N2-candidate-correctness — ensure per-port candidate sets match upstream (apply the filtered sets: injectable-inbound, managed-shadowsocks, tailscale-endpoint, resolver=dns-only, …). Use `referenceRegistry`/`portRelations` as source; do NOT silently offer invalid targets.
+- [x] N2-candidate-correctness — an agent audit of the picker's candidate generator
+  (`chipCandidatesForPending` → `candidatesForEndpoint`/`endpointMatchesNode` → `createNodeAndConnect`)
+  found the per-port sets already **sound: 0 dead candidates, 0 upstream-invalid** — the filtering is
+  correct (resolver→DNS-servers-only, rule_set→rule-sets-only, ssm-api→managed shadowsocks inbound,
+  endpoint-typed→tailscale-only, resolved→resolved-only, dial/detour→full outbound namespace minus
+  self/block; every offered kind is handled by `createNodeAndConnect`). No fix needed; the gap was that
+  the generator was untested. Exported `chipCandidatesForPending`/`PendingPort` and added
+  `tests/picker-candidate-correctness.test.ts` to guard the per-port filtering against regressions. — PR #132
 - [ ] N2-compatible-retire — retire `data.compatible` string-label path + `createCompatible`/`outboundTypeForChipLabel` IF no longer used (or keep a count-only source for the toolbar pill); migrate `tests/compatible-chip-coverage.test.ts` + `tests/app.test.tsx` callers to `createNodeAndConnect`.
 
 ### Phase N3 — Card chrome cleanup + typography unification
