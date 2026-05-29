@@ -100,7 +100,7 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
           <button type="button" className="mobile-row-button" onClick={exportConfig}>
             <Download size={18} />
             <span className="mobile-row-button__title">Export</span>
-            <span className="mobile-row-button__meta">Download current config as .json</span>
+            <span className="mobile-row-button__meta">Normalized .json — empty fields dropped, shorthands expanded</span>
           </button>
         </li>
       </ul>
