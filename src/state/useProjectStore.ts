@@ -121,6 +121,11 @@ export type ToastInput = {
 let toastIdSeq = 0;
 const DEFAULT_TOAST_DURATION_MS = 5000;
 
+// Undo history (L3-undo-infra). A bounded LIFO stack of canonical snapshots; a flow that's about to
+// overwrite work (e.g. import) calls pushHistory() first, and undo() restores the most recent snapshot.
+type HistorySnapshot = { config: SingBoxConfig; layout: ProjectLayout };
+const MAX_HISTORY = 20;
+
 type ProjectStore = {
   channel: SingBoxChannel;
   version: string;
@@ -143,6 +148,9 @@ type ProjectStore = {
   toasts: Toast[];
   pushToast: (toast: ToastInput) => string;
   dismissToast: (id: string) => void;
+  history: HistorySnapshot[];
+  pushHistory: () => void;
+  undo: () => void;
   setSelectedId: (id: string | null) => void;
   focusNode: (id: string) => void;
   setPanelTab: (tab: PanelTab) => void;
@@ -875,6 +883,27 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     return id;
   },
   dismissToast: (id) => set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) })),
+
+  history: [],
+  pushHistory: () =>
+    set((state) => ({
+      history: [...state.history, { config: state.config, layout: state.layout }].slice(-MAX_HISTORY),
+    })),
+  undo: () =>
+    set((state) => {
+      const snapshot = state.history[state.history.length - 1];
+      if (!snapshot) return {};
+      return {
+        ...sync(snapshot.config, state.channel, state.version),
+        history: state.history.slice(0, -1),
+        layout: snapshot.layout,
+        layoutCaptureToken: state.layoutCaptureToken + 1,
+        freshLoadToken: state.freshLoadToken + 1,
+        selectedId: null,
+        globalPanelOpen: false,
+        focusedNodeId: null,
+      };
+    }),
 
   setSelectedId: (id) => set({ selectedId: id }),
   focusNode: (id) =>
