@@ -142,8 +142,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
       hidden on testing (removed in 1.14) and relabeled "(deprecated; removed in 1.14)" on stable
       (valid on 1.12/1.13); Network Type / Fallback Network gained the value/platform hint (wifi/cellular/
       ethernet/other; graphical Android/Apple clients only, with auto_detect_interface). — PR #121
-    - [ ] L2-med-naive-banner (BEHAVIOR) — add the naive platform-support banner (Apple/Android/Windows/
-      libcronet-Linux only).
+    - [x] L2-med-naive-banner (BEHAVIOR) — added a `kind="platform"` banner at the top of the naive
+      outbound body: "runs only on Apple platforms, Android, Windows, and certain Linux builds. Linux and
+      Windows builds must ship libcronet (libcronet.so / libcronet.dll on the binary's path)" per
+      outbound/naive.md's Platform Support warning. — PR #122
     - [ ] L2-med-dns-rule-actions (BEHAVIOR) — evaluate/respond hints + channel-gate those two options to
       testing (1.14-only actions).
 

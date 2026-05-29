@@ -3467,6 +3467,12 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
 
       {ref.kind === "outbound" ? (
         <>
+          {entityType === "naive" ? (
+            <PlatformBanner
+              kind="platform"
+              text="naive outbound runs only on Apple platforms, Android, Windows, and certain Linux builds. Linux and Windows builds must ship libcronet (libcronet.so on Linux / libcronet.dll on Windows, on the binary's path)."
+            />
+          ) : null}
           {entityType === "shadowtls" ? (
             <label className="field">
               <span>Version</span>
