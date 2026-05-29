@@ -188,7 +188,7 @@ type ProjectStore = {
   deleteDnsRule: (index: number) => void;
   setJsonDraft: (value: string) => void;
   applyJsonDraft: () => void;
-  importJson: (value: string) => void;
+  importJson: (value: string) => { ok: boolean; error?: string };
   refreshJson: () => void;
   validateNow: () => void;
   runOfficialCheck: () => Promise<void>;
@@ -1873,32 +1873,30 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         };
       }
     }),
-  importJson: (value) =>
-    set((state) => {
-      try {
-        return {
-          ...sync(parseConfigJson(value), state.channel, state.version),
-          selectedId: null,
-          ...freshLayoutState(state),
-          globalPanelOpen: false,
-          focusedNodeId: null,
-        };
-      } catch (error) {
-        return {
-          ...resetValidationState(),
-          jsonDraft: value,
-          diagnostics: [
-            {
-              level: "error",
-              code: "json-parse",
-              path: "$",
-              source: "semantic",
-              message: error instanceof Error ? error.message : "Invalid JSON.",
-            },
-          ],
-        };
-      }
-    }),
+  importJson: (value) => {
+    // Parse outside set() so the caller learns whether the import succeeded (for user feedback);
+    // resets and other programmatic callers simply ignore the result.
+    let parsed: SingBoxConfig;
+    try {
+      parsed = parseConfigJson(value);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Invalid JSON.";
+      set(() => ({
+        ...resetValidationState(),
+        jsonDraft: value,
+        diagnostics: [{ level: "error", code: "json-parse", path: "$", source: "semantic", message }],
+      }));
+      return { ok: false, error: message };
+    }
+    set((state) => ({
+      ...sync(parsed, state.channel, state.version),
+      selectedId: null,
+      ...freshLayoutState(state),
+      globalPanelOpen: false,
+      focusedNodeId: null,
+    }));
+    return { ok: true };
+  },
   refreshJson: () => set((state) => ({ jsonDraft: stringifyConfig(state.config) })),
   validateNow: () => {
     cancelSemanticValidation();
