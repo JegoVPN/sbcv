@@ -161,8 +161,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   `ToastHost` component mounted in both App shells. Each toast is its own ARIA live region (role
   `status` for info/success, `alert` for error), with dismiss + optional action buttons; auto-dismiss
   via a per-item timer. Infra only — no flow emits toasts yet. — PR #124
-- [ ] L3-undo-infra — an undo/history snapshot stack in the store (bounded; snapshots the canonical
-  config at mutation boundaries).
+- [x] L3-undo-infra — added a bounded (`MAX_HISTORY=20`) LIFO `history` stack of `{config, layout}`
+  snapshots: `pushHistory()` captures the current canonical state, `undo()` restores+pops the most
+  recent (re-syncing jsonDraft/diagnostics via `sync()` and bumping the layout tokens), no-op on empty.
+  Infra only — the flows that snapshot (import overwrite) come next. — PR #125
 - [ ] L3-import-feedback — import success/error toast (uses L3-toast-infra).
 - [ ] L3-import-undo — one-tap undo after an import overwrite (uses L3-undo-infra; pairs with the
   existing A26 import-confirm).
