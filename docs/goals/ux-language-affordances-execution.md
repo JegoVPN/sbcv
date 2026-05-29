@@ -136,9 +136,12 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
       block-outbound "Imports still round-trip" → "removed in sing-box 1.13 … rejected on the stable
       (1.13) and testing (1.14) channels". (Tor banner's "Standard releases do not include embedded tor"
       left as-is — `with_embedded_tor` genuinely isn't default.) — PR #120
-    - [ ] L2-med-dial-fields (BEHAVIOR) — gate dial `domain_strategy` off on testing (removed 1.14) +
-      add value/platform hints to Network Type / Fallback Network (needs a hint slot in the shared dial
-      field descriptor/renderer).
+    - [x] L2-med-dial-fields (BEHAVIOR) — added a `hint?` slot to `SharedFieldDefinition` (rendered as a
+      muted `.shared-field-hint` under the control in all three SharedFieldControl branches) + threaded
+      `channel` into `sharedFieldDefinitions`/`SharedFieldCards`. Used both: dial `domain_strategy` is now
+      hidden on testing (removed in 1.14) and relabeled "(deprecated; removed in 1.14)" on stable
+      (valid on 1.12/1.13); Network Type / Fallback Network gained the value/platform hint (wifi/cellular/
+      ethernet/other; graphical Android/Apple clients only, with auto_detect_interface). — PR #121
     - [ ] L2-med-naive-banner (BEHAVIOR) — add the naive platform-support banner (Apple/Android/Windows/
       libcronet-Linux only).
     - [ ] L2-med-dns-rule-actions (BEHAVIOR) — evaluate/respond hints + channel-gate those two options to
