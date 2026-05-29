@@ -1,4 +1,5 @@
 import { buildTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { proxyOutboundTypes as proxyOutboundTypeSet, requiredFieldsFor, tlsRequiredTypes } from "./schemaRegistry";
 import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
@@ -595,38 +596,10 @@ export function validateConfig(
     );
   });
 
-  const proxyOutboundTypes = new Set([
-    "socks",
-    "http",
-    "shadowsocks",
-    "vmess",
-    "trojan",
-    "naive",
-    "hysteria",
-    "shadowtls",
-    "vless",
-    "tuic",
-    "hysteria2",
-    "anytls",
-    "ssh",
-  ]);
-  const tlsRequiredOutboundTypes = new Set([
-    "trojan",
-    "naive",
-    "hysteria",
-    "hysteria2",
-    "tuic",
-    "anytls",
-    "shadowtls",
-  ]);
-  const tlsRequiredInboundTypes = new Set([
-    "trojan",
-    "naive",
-    "hysteria",
-    "hysteria2",
-    "tuic",
-    "anytls",
-  ]);
+  // Proxy / TLS-required membership is derived from the schema registry (the single source of truth).
+  const proxyOutboundTypes = proxyOutboundTypeSet();
+  const tlsRequiredOutboundTypes = tlsRequiredTypes("outbound");
+  const tlsRequiredInboundTypes = tlsRequiredTypes("inbound");
 
   outbounds.forEach((outbound, index) => {
     const tag = outbound.tag ?? `outbound-${index}`;
@@ -1093,7 +1066,9 @@ export function validateConfig(
     if (inbound.type === "cloudflared") {
       const obj = inbound as Record<string, unknown>;
       const tag = (obj.tag as string | undefined) ?? `inbound-${index}`;
-      if (typeof obj.token !== "string" || obj.token.trim() === "") {
+      // token-required-ness is declared in the schema registry (requiredFields: ["token"]).
+      const tokenRequired = requiredFieldsFor("inbound", "cloudflared").includes("token");
+      if (tokenRequired && (typeof obj.token !== "string" || obj.token.trim() === "")) {
         push(
           diagnostics,
           "error",
