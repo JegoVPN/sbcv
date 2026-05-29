@@ -932,6 +932,15 @@ export function validateConfig(
           `TUIC outbound "${tag}" sets both udp_over_stream and udp_relay_mode; the two are mutually exclusive.`,
         );
       }
+      if (obj.zero_rtt_handshake === true) {
+        push(
+          diagnostics,
+          "warning",
+          "tuic-zero-rtt-replay",
+          `/outbounds/${index}/zero_rtt_handshake`,
+          `TUIC outbound "${tag}" enables zero_rtt_handshake; 0-RTT is vulnerable to replay attacks — disabling it is recommended.`,
+        );
+      }
     }
     if (outbound.type === "hysteria") {
       push(
@@ -1126,6 +1135,15 @@ export function validateConfig(
         `Inbound "${inbound.tag ?? `inbound-${index}`}" (tuic)`,
         true,
       );
+      if ((inbound as Record<string, unknown>).zero_rtt_handshake === true) {
+        push(
+          diagnostics,
+          "warning",
+          "tuic-zero-rtt-replay",
+          `/inbounds/${index}/zero_rtt_handshake`,
+          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tuic) enables zero_rtt_handshake; 0-RTT is vulnerable to replay attacks — disabling it is recommended.`,
+        );
+      }
     }
     if (channel === "stable" && inbound.type === "tun") {
       const obj = inbound as Record<string, unknown>;
