@@ -42,7 +42,9 @@ const MAX_OUTBOUND_DEPTH = 2;
 const SETTINGS_NODE_IDS = ["settings:log", "settings:ntp", "settings:certificate", "settings:experimental"] as const;
 
 const COLUMNS = {
-  settings: -300,
+  // One full 720px stride left of the entry column. -300 was only 300px out — narrower than the 330px
+  // card — so a settings card (Log/NTP/…) overlapped the entry column horizontally at the same y.
+  settings: -720,
   entry: 0,
   rule: 720,
   target: 1440,
