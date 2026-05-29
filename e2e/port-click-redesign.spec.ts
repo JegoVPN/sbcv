@@ -186,6 +186,29 @@ test("desktop direct drop connects existing target without picker", async ({ pag
   expect(config.route.final).toBe("direct");
 });
 
+test("dragging over an incompatible handle turns the connection line red", async ({ page }) => {
+  // route's outbound output → an inbound's handles is structurally invalid. While hovering that
+  // incompatible target the in-flight line must go red so the user sees the drop will be rejected
+  // (instead of a neutral white line that silently does nothing).
+  await importInlineConfig(page, {
+    inbounds: [{ type: "mixed", tag: "in" }],
+    route: {},
+    outbounds: [{ type: "direct", tag: "direct" }],
+  });
+  await startPortDrag(page, "node-route:main", "outbound");
+  const ib = await page.getByTestId("node-inbound:in").boundingBox();
+  if (!ib) throw new Error("missing inbound node");
+  await page.mouse.move(ib.x + ib.width + 4, ib.y + ib.height / 2, { steps: 10 });
+
+  const invalidPath = page.locator(".react-flow__connection.invalid .react-flow__connection-path");
+  await expect(invalidPath).toHaveCount(1);
+  expect(await invalidPath.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(255, 93, 93)");
+
+  await page.mouse.up();
+  const picker = page.getByRole("dialog", { name: "Compatible nodes" });
+  if (await picker.count()) await page.keyboard.press("Escape");
+});
+
 test("invalid drop cancels without mutation", async ({ page }) => {
   await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
   const before = await exportedConfig(page);
