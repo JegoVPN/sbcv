@@ -100,6 +100,27 @@ function cancelSemanticValidation() {
   }
 }
 
+// Transient user-facing notifications (L3-toast-infra). Rendered by ToastHost; emitted by flows like
+// import feedback / invalid drop. `durationMs: null` is a sticky toast (no auto-dismiss).
+export type ToastTone = "info" | "success" | "error";
+export type ToastAction = { label: string; onAct: () => void };
+export type Toast = {
+  id: string;
+  message: string;
+  tone: ToastTone;
+  durationMs: number | null;
+  action?: ToastAction;
+};
+export type ToastInput = {
+  message: string;
+  tone?: ToastTone;
+  durationMs?: number | null;
+  action?: ToastAction;
+};
+
+let toastIdSeq = 0;
+const DEFAULT_TOAST_DURATION_MS = 5000;
+
 type ProjectStore = {
   channel: SingBoxChannel;
   version: string;
@@ -119,6 +140,9 @@ type ProjectStore = {
   freshLoadToken: number;
   focusToken: number;
   focusedNodeId: string | null;
+  toasts: Toast[];
+  pushToast: (toast: ToastInput) => string;
+  dismissToast: (id: string) => void;
   setSelectedId: (id: string | null) => void;
   focusNode: (id: string) => void;
   setPanelTab: (tab: PanelTab) => void;
@@ -835,6 +859,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   freshLoadToken: 0,
   focusToken: 0,
   focusedNodeId: null,
+  toasts: [],
+
+  pushToast: (toast) => {
+    toastIdSeq += 1;
+    const id = `toast-${toastIdSeq}`;
+    const next: Toast = {
+      id,
+      message: toast.message,
+      tone: toast.tone ?? "info",
+      durationMs: toast.durationMs === undefined ? DEFAULT_TOAST_DURATION_MS : toast.durationMs,
+      action: toast.action,
+    };
+    set((state) => ({ toasts: [...state.toasts, next] }));
+    return id;
+  },
+  dismissToast: (id) => set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) })),
 
   setSelectedId: (id) => set({ selectedId: id }),
   focusNode: (id) =>

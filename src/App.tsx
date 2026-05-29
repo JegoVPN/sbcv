@@ -3,6 +3,7 @@ import { CanvasWorkspace } from "./components/CanvasWorkspace";
 import { Inspector } from "./components/Inspector";
 import { MobileInspectorSheet } from "./components/MobileInspectorSheet";
 import { MobileTopBar } from "./components/MobileTopBar";
+import { ToastHost } from "./components/ToastHost";
 import { TopBar } from "./components/TopBar";
 import { useViewport } from "./components/useViewport";
 import "./styles.css";
@@ -23,6 +24,7 @@ export function App() {
           <CanvasWorkspace />
         </main>
         <MobileInspectorSheet />
+        <ToastHost />
       </div>
     );
   }
@@ -37,6 +39,7 @@ export function App() {
         <CanvasWorkspace />
         <Inspector />
       </main>
+      <ToastHost />
     </div>
   );
 }
