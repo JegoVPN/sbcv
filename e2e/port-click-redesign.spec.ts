@@ -290,6 +290,27 @@ test("port '+' click opens the searchable picker and creates a connected downstr
   await expect(picker).toHaveCount(0);
 });
 
+test("node delete sits top-right in red and is revealed only on hover/select", async ({ page }) => {
+  await importInlineConfig(page, { outbounds: [{ type: "direct", tag: "direct" }] });
+  const card = page.locator('[data-testid="node-outbound:direct"] [data-testid="node-card"]');
+  const del = page.getByRole("button", { name: "Delete direct" });
+
+  // Hidden until hover/select (delete is immediate + has no undo).
+  await expect(del).toHaveCSS("opacity", "0");
+  await page.getByTestId("node-outbound:direct").hover();
+  await expect(del).toHaveCSS("opacity", "1");
+
+  // Pinned to the card's top-right corner.
+  const cardBox = await card.boundingBox();
+  const delBox = await del.boundingBox();
+  expect(delBox).not.toBeNull();
+  expect(delBox!.x).toBeGreaterThan(cardBox!.x + cardBox!.width / 2);
+  expect(delBox!.y).toBeLessThan(cardBox!.y + cardBox!.height / 2);
+
+  // Red warning color (resting icon).
+  await expect(del).toHaveCSS("color", "rgb(255, 123, 123)");
+});
+
 test("plain-clicking a port handle never starts a sticky highlight (click-connect disabled)", async ({ page }) => {
   // Regression guard: with React Flow's connectOnClick default (true), a plain click on a source handle
   // started a sticky click-connection — it set pendingPort, lit every compatible port green
