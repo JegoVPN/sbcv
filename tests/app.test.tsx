@@ -1976,7 +1976,7 @@ describe("SBC editor shell", () => {
       useProjectStore.getState().createFromPalette("block");
     });
     inspector = within(screen.getByLabelText("Node inspector"));
-    expect(inspector.getByText(/Deprecated: outbound type `block`/)).toBeInTheDocument();
+    expect(inspector.getByText(/outbound type `block` was removed in sing-box 1\.13/)).toBeInTheDocument();
   });
 
   it("gates the dns-rule server select by action and surfaces reject + predefined sub-fields", () => {

@@ -2694,7 +2694,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               <ModuleCard title="V2Ray API" active={v2rayEnabled}>
                 <PlatformBanner
                   kind="build-tag"
-                  text="Build-tag gate: V2Ray API requires sing-box compiled with the with_v2ray_api tag. Standard releases do not include it; enabling listen+stats on a stock binary fails at runtime."
+                  text="Build-tag gate: V2Ray API requires sing-box built with the `with_v2ray_api` tag, which is not in the default build. Enabling listen + stats on a build without it fails at runtime."
                 />
                 <label className="field">
                   <span>Listen</span>
@@ -3578,7 +3578,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           {entityType === "block" ? (
             <PlatformBanner
               kind="deprecated"
-              text="Deprecated: outbound type `block` is superseded by route action `reject` from sing-box 1.11+. Imports still round-trip; new configs should use route.rules[].action=reject."
+              text="Removed: outbound type `block` was removed in sing-box 1.13 (deprecated since 1.11). It is rejected on the stable (1.13) and testing (1.14) channels — use a route rule with action `reject` instead."
             />
           ) : null}
           {entityType === "hysteria" ? (
@@ -4275,7 +4275,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     updateField(ref, "zero_rtt_handshake", event.target.checked || undefined)
                   }
                 />
-                <span>0-RTT Handshake (faster reconnects, weaker forward secrecy)</span>
+                <span>0-RTT Handshake (faster reconnects, vulnerable to replay attacks)</span>
               </label>
             </>
           ) : null}
@@ -4477,7 +4477,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           {entityType === "tailscale" ? (
             <PlatformBanner
               kind="build-tag"
-              text="Build-tag gate: dns-server `tailscale` requires sing-box built with the `with_tailscale` tag. Stock release binaries omit Tailscale support."
+              text="Build-tag gate: dns-server `tailscale` requires sing-box built with the `with_tailscale` tag (in official default builds; absent only from custom builds that drop it)."
             />
           ) : null}
           {"address" in entity ? (
@@ -4906,7 +4906,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
             <>
               <PlatformBanner
                 kind="build-tag"
-                text="Build-tag gate: endpoint `tailscale` requires sing-box built with the `with_tailscale` tag. Stock release binaries omit Tailscale support."
+                text="Build-tag gate: endpoint `tailscale` requires sing-box built with the `with_tailscale` tag (in official default builds; absent only from custom builds that drop it)."
               />
               <SensitiveTextField
                 label="Auth Key"
@@ -5056,7 +5056,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
             <>
               <PlatformBanner
                 kind="build-tag"
-                text="Build-tag gate: service `derp` requires sing-box built with the `with_tailscale` tag for verify_client_endpoint integration. Stock release binaries omit DERP support."
+                text="Build-tag gate: service `derp` requires sing-box built with the `with_tailscale` tag for verify_client_endpoint integration (in official default builds; absent only from custom builds that drop it)."
               />
               <label className="field">
                 <span>Config Path</span>

@@ -129,9 +129,13 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
       legacy address form); store_rdrc banner rewritten to distinguish the caches (store_rdrc = rejected/
       address-filter results only; store_dns = full DNS cache) + name the 1.16 removal; toggle label
       "(DNS cache reasons)" → "(rejected-response cache)". — PR #119
-    - [ ] L2-med-banners-copy — protocol/build-tag banner copy: tuic 0-RTT replay wording,
-      tailscale/derp "stock binaries omit" → default-build softening (×3), V2Ray API tag citation,
-      block-outbound banner (removed in 1.13, rejected on both channels).
+    - [x] L2-med-banners-copy — protocol/build-tag banner copy: tuic 0-RTT "weaker forward secrecy" →
+      "vulnerable to replay attacks"; tailscale/derp "Stock release binaries omit … support" → "(in
+      official default builds; absent only from custom builds that drop it)" (×3 — `with_tailscale` is
+      enabled-by-default); V2Ray API banner backticks `with_v2ray_api` + "not in the default build";
+      block-outbound "Imports still round-trip" → "removed in sing-box 1.13 … rejected on the stable
+      (1.13) and testing (1.14) channels". (Tor banner's "Standard releases do not include embedded tor"
+      left as-is — `with_embedded_tor` genuinely isn't default.) — PR #120
     - [ ] L2-med-dial-fields (BEHAVIOR) — gate dial `domain_strategy` off on testing (removed 1.14) +
       add value/platform hints to Network Type / Fallback Network (needs a hint slot in the shared dial
       field descriptor/renderer).
