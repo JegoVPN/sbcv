@@ -15,7 +15,7 @@ import {
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
-import { confirmAndExportConfig } from "./exportConfig";
+import { confirmAndExportConfig, downloadProject } from "./exportConfig";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
@@ -61,6 +61,7 @@ export { createSbcvFileName } from "./exportConfig";
 
 export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const projectInputRef = useRef<HTMLInputElement>(null);
   const brandMenuRef = useRef<HTMLDivElement>(null);
   const {
     channel,
@@ -203,6 +204,34 @@ export function TopBar() {
     event.target.value = "";
   }
 
+  function saveProjectFile() {
+    downloadProject(useProjectStore.getState().saveProject());
+  }
+
+  async function handleOpenProject(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_IMPORT_BYTES) {
+      alert(`File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum size is 10 MB.`);
+      event.target.value = "";
+      return;
+    }
+    // Opening a project replaces the whole workspace (config + layout) — confirm before clobbering.
+    if (configHasContent(config) && !window.confirm("Open replaces your current configuration and layout. Continue?")) {
+      event.target.value = "";
+      return;
+    }
+    const result = useProjectStore.getState().loadProject(await file.text(), { snapshot: true });
+    const { pushToast, undo } = useProjectStore.getState();
+    if (result.ok) {
+      pushToast({ message: "Project opened", tone: "success", action: { label: "Undo", onAct: undo } });
+    } else {
+      pushToast({ message: `Open failed: ${result.error}`, tone: "error", durationMs: 8000 });
+    }
+    event.target.value = "";
+  }
+
   return (
     <header className="topbar">
       <div className="brand-menu-host" ref={brandMenuRef}>
@@ -269,6 +298,18 @@ export function TopBar() {
               <FolderOpen size={17} />
               <span>Import JSON</span>
             </button>
+            <button
+              type="button"
+              className="brand-menu__item"
+              role="menuitem"
+              onClick={() => {
+                setBrandMenuOpen(false);
+                projectInputRef.current?.click();
+              }}
+            >
+              <FolderOpen size={17} />
+              <span>Open project (.sbcv)</span>
+            </button>
             <a className="brand-menu__item" role="menuitem" href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
               <Github size={17} />
               <span>GitHub</span>
@@ -333,6 +374,15 @@ export function TopBar() {
           <Download size={15} />
           Export
         </button>
+        <button
+          type="button"
+          onClick={saveProjectFile}
+          data-testid="save-project-button"
+          title="Saves a project file (.sbcv.json) — your config plus canvas layout and target — so node positions survive a round-trip. Plain Export writes a bare sing-box config (no layout)."
+        >
+          <Download size={15} />
+          Save project
+        </button>
       </div>
       <input
         ref={fileInputRef}
@@ -341,6 +391,14 @@ export function TopBar() {
         accept="application/json,.json"
         className="visually-hidden"
         onChange={handleImport}
+      />
+      <input
+        ref={projectInputRef}
+        type="file"
+        aria-label="Open sbcv project file"
+        accept=".sbcv.json,application/json,.json"
+        className="visually-hidden"
+        onChange={handleOpenProject}
       />
       {jsonViewerOpen ? (
         <Suspense fallback={null}>
