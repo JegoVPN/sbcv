@@ -406,7 +406,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           kind: "settings",
           type: path,
           title: path[0] ? `${path[0].toUpperCase()}${path.slice(1)}` : path,
-          subtitle: "global settings",
+          subtitle: settingsSubtitle(path, entity as Record<string, unknown>),
           status: diagnosticStatus(`/${path}`, diagnostics),
           compatible: [],
         },
@@ -1084,6 +1084,31 @@ function centerColumnsVertically(nodes: SbcFlowNode[], layout: ProjectLayout) {
       node.position = { x: node.position.x, y: node.position.y + shift };
     }
   }
+}
+
+function settingsSubtitle(path: SettingsPath, entity: Record<string, unknown>) {
+  if (path === "log") {
+    if (entity.disabled === true) return "logging disabled";
+    const level = typeof entity.level === "string" && entity.level ? entity.level : "";
+    return level ? `log level ${level}` : "logging";
+  }
+  if (path === "ntp") {
+    const server = typeof entity.server === "string" && entity.server ? entity.server : "";
+    return server ? `time sync · ${server}` : "time sync";
+  }
+  if (path === "certificate") {
+    const store = typeof entity.store === "string" && entity.store ? entity.store : "";
+    return store ? `certificate store · ${store}` : "TLS certificates";
+  }
+  if (path === "experimental") {
+    const parts: string[] = [];
+    const has = (key: string) => entity[key] && typeof entity[key] === "object";
+    if (has("clash_api")) parts.push("Clash API");
+    if (has("v2ray_api")) parts.push("V2Ray API");
+    if (has("cache_file")) parts.push("cache file");
+    return parts.length ? parts.join(" · ") : "experimental";
+  }
+  return "global settings";
 }
 
 function inboundSubtitle(inbound: InboundConfig) {
