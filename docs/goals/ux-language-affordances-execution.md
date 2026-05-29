@@ -66,9 +66,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 → 3, but Phase 4 can interleave.
 
 ### Phase 1 — Unified UX language (bucket 1)
-- [ ] L1-vocab — **the language spec**: a canonical voice + terminology glossary + badge vocabulary
-  table (state name, when it applies, word, color/treatment) honoring D2. The artifact every later copy
-  atomic conforms to. Lives in a new `docs/ui-language.md`. (planning atomic — no runtime change)
+- [~] L1-vocab — **the language spec**: drafted in `docs/ui-language.md` (voice + glossary + badge
+  vocabulary table per D2 + build-tag/brand-button/diagnostics rules). **AWAITING USER SIGN-OFF** — the
+  goal's one human gate. Open decisions: badge words (esp. `setup`→`add` test churn), the de-dup carrier,
+  and the Hysteria-v1 "deprecated" stance (H5/H6). — PR #109 (draft)
 - [ ] L1-badges — re-label + re-treat the palette status badges per L1-vocab (Add / Setup→? / Table→? /
   Inspector→? / Docs→? / Gated→? / Pending→? / Legacy / Open). Migrate the ~15 `name:"Setup X"` test
   assertions. De-duplicate the `(1.14 testing)`-label-plus-`GATED`-badge double-statement (D2).
