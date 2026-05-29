@@ -5540,6 +5540,12 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   onChange={(event) => updateField(ref, "update_interval", event.target.value || undefined)}
                 />
               </label>
+              {channel === "testing" && entity.download_detour ? (
+                <PlatformBanner
+                  kind="deprecated"
+                  text="`download_detour` is deprecated in sing-box 1.14.0 (removed in 1.16.0). Use an HTTP Client (`http_client`) instead."
+                />
+              ) : null}
               <label className="field">
                 <span>Download Detour</span>
                 <select
