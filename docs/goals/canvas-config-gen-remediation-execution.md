@@ -434,22 +434,22 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 
 - [x] C0-schema-registry (S1–S5) — #152, #153, #154, #155, #156
 - [x] C1-transport-subfields — #157
-- [ ] C2-cert-provider-create (A0/A/B)
+- [~] C2-cert-provider-create — A (creation) done #166; **B (per-type Inspector editor) pending**
 - [x] C3-tls-acme — #161
 - [x] C4-cloudflared-create — #158
 - [x] C5-version-gate-legacy-dns — #159
 - [x] C6-version-gate-naive — #162
-- [ ] C7-version-gate-channel-to-version (A/B/C)
+- [~] C7-version-gate-channel-to-version — A (min-version single-source) #172, B (1.13 TLS fields) #174; **C (route bypass / interface_address / local DNS prefer_go) pending**
 - [x] C8-export-gate-unify — #160
-- [ ] C9-dup-tag-namespace
-- [ ] C10-hysteria-server-ports
+- [x] C9-dup-tag-namespace — #169
+- [x] C10-hysteria-server-ports — #164
 - [ ] C17-no-silent-unreachable-guard
-- [ ] C11-detour-endpoint-edges (C11a/C11b/C11c)
-- [ ] C12-logical-rule-recursion
+- [~] C11-detour-endpoint-edges — C11a (detour→endpoint retarget) done #171; **C11b (dial-domain-resolver) / C11c (http_client edges) pending**
+- [x] C12-logical-rule-recursion — #168
 - [ ] C13-registry-driven-portswitch (S1/S2/S3)
 - [ ] C14-inspector-split (S1–S10)
 - [x] C15-ci-binary-check — #163
-- [ ] C16-project-save-load (a/b)
+- [~] C16-project-save-load — a (domain wrapper) #170 + b-store (loadProject/saveProject) #173 done; **b-UI (TopBar Save/Open) pending**
 - [ ] P3 re-assessment
 
 ## Decision Log
@@ -515,3 +515,35 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 - **Tests:** the gate itself (19 cases; asserts ≥1 pruned export differs from raw, proving the pruned path).
 - **Reviewer:** serialization/round-trip + CI/tooling — APPROVE (one informational nit: differ-counter conflates prune+normalize; guarantee still holds).
 - **Verify:** local real binaries — 18 pruned exports accepted, 19/19; tsc -b clean.
+
+### C2-cert-provider-create slice A — DONE (#166)
+- **What:** Certificate Providers palette items creatable on testing (gated stable): commands.createCertificateProvider (acme/cloudflare-origin-ca → `{type,tag,domain:[]}`; tailscale → `{type,tag,endpoint:""}`) + addCertificateProvider; createFromPalette testing-gated branch maps the four kinds → type (bare→acme, never the non-schema `certificate-provider`); Palette itemStatus flips `certificate-provider*` gated→setup on testing (shared-* duplicates stay reference-only).
+- **Tests:** certificate-provider-create.test.ts (scaffold per type incl. required field; testing creates+selects; stable creates nothing; dedup). **Reviewer:** domain schema-correctness — APPROVE. **Verify:** tsc clean; pnpm test 1267; build.
+- **Deferred:** slice B (per-type structured Inspector editor) — created nodes render via the generic Inspector fallback meanwhile.
+
+### C9-dup-tag-namespace — DONE (#169)
+- **What:** indexes.namespaceForKind (endpoint shares OUTBOUND namespace) + buildNamespacedTagIndex; diagnostics dup-tag loop keys on `${namespace} ${tag}` so cross-namespace tag reuse (inbound+outbound "proxy") no longer false-flags; same-namespace collisions still flagged. **Reviewer:** version-gating/diagnostics — APPROVE. **Verify:** tsc clean; pnpm test 1272; domain.test.ts:831 migrated to same-namespace.
+
+### C10-hysteria-server-ports — DONE (#164)
+- **What:** generalized the ssh absent-port exemption — an absent server_port is legal when ssh OR a non-empty `server_ports` array (port hopping); neither/empty/socks still error. **Reviewer:** version-gating/diagnostics — APPROVE. **Verify:** tsc clean; pnpm test 1267.
+
+### C12-logical-rule-recursion — DONE (#168)
+- **What:** InlineRuleSetEditor gains `depth`+`idPrefix`; a nested logical rule recurses with the same editor (Mode select + nested list), JSON hint only beyond MAX_INLINE_RULE_DEPTH (3). **Reviewer:** React/perf — APPROVE (bounded recursion, stable keys). **Verify:** tsc clean; pnpm test 1264.
+
+### C16-project-save-load slice a (domain) — DONE (#170)
+- **What:** SbcProject gains `kind:"sbcv-project"`+`schemaVersion`; serialization.createProjectExport/parseProjectJson (validates kind/schemaVersion/positions, normalizes inner config); ConfigExport.fileName widened to string. **Reviewer:** serialization/round-trip — APPROVE. **Verify:** tsc clean; pnpm test 1279.
+
+### C11-detour-endpoint-edges slice a — DONE (#171)
+- **What:** 6 dial-style detour edges resolve targets via outboundTargetNodeId (detour→endpoint renders endpoint:<tag>, not phantom outbound); 7 detour-target input relations gain extraNodeKinds ["endpoint"] so endpoint nodes render the handles + reflect connected state. **Reviewer:** canvas/React-Flow — APPROVE-WITH-NITS (connected-state widening applied in-pass). **Verify:** tsc clean; pnpm test 1292; e2e 24 (local real binaries).
+- **Deferred:** C11b (dial-domain-resolver writable relation), C11c (http_client testing-gated edges).
+
+### C7-version-gate slice A (min-version single-source) — DONE (#172)
+- **What:** TYPE→min-version table extracted to domain/minVersions.ts; nodeLabels badge + diagnostics naive/ccm/ocm gates read the one source. Zero behavior change. **Reviewer:** architecture/refactor — APPROVE. **Verify:** tsc clean; pnpm test 1291.
+
+### C7-version-gate slice B (1.13 TLS fields) — DONE (#174)
+- **What:** a 1.12 target warns on set 1.13 TLS fields (kernel_tx/kernel_rx/curve_preferences both roles; client_authentication inbound-only); 1.13/1.14 clean; default-off silent. **Reviewer:** version-gating/diagnostics — APPROVE. **Verify:** tsc clean; pnpm test 1305.
+- **Deferred:** C7-C (route bypass action / interface_address trio / local DNS prefer_go gates).
+
+### C16-project-save-load slice b (store) — DONE (#173)
+- **What:** store saveProject() (versioned wrapper) + loadProject() (re-hydrates layout positions — no freshLayoutState reset — restores channel/version, snapshots to undo, rejects a bare config); domain/appVersion.ts (APP_VERSION). **Reviewer:** serialization/round-trip + canvas — APPROVE. **Verify:** tsc clean; pnpm test 1293.
+- **Deferred:** slice b-UI (TopBar Save/Open buttons).
