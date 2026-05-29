@@ -39,6 +39,7 @@ import {
   Waypoints,
   Webhook,
 } from "lucide-react";
+import { BrandTailscale, BrandTor, BrandWireGuard } from "./brandIcons";
 
 // One shared, type-aware node-identity icon registry (A8b / IC-P1-3). The same {kind, type}
 // resolves to the same glyph on the node card, the chip picker, and the Inspector header. The
@@ -199,6 +200,13 @@ const RENDERERS: Record<string, IconRenderer> = {
   webhook: Webhook,
 };
 
+// Real brand glyphs (A8b-brands), keyed by the `brand:` ids nodeIconId emits.
+const BRAND_RENDERERS: Record<string, IconRenderer> = {
+  "brand:tor": BrandTor,
+  "brand:wireguard": BrandWireGuard,
+  "brand:tailscale": BrandTailscale,
+};
+
 const MONOGRAM_CACHE = new Map<string, IconRenderer>();
 
 function monogramId(code: string): string {
@@ -208,13 +216,12 @@ function monogramId(code: string): string {
 /** Stable id for a node's identity icon — used for the collision guarantee and cross-surface tests. */
 export function nodeIconId(kind: string, type: string): string {
   // Brand protocols, gated by the kinds v4 confirms (not every "tailscale"-typed kind is the brand).
-  // v4 ships these as brand SVGs; until the license/bundle-size review (deferred follow-up
-  // A8b-brands) they fall back to a distinct monogram so they stay collision-free.
-  if (kind === "outbound" && type === "tor") return "mono:TO";
+  // v4 ships these as real brand SVGs (extracted verbatim from _icons-preview-v4.html → brandIcons.tsx).
+  if (kind === "outbound" && type === "tor") return "brand:tor";
   // WireGuard is normally an endpoint, but imported configs can still carry the deprecated legacy
   // `outbound` with type "wireguard" — keep it distinct from the generic outbound default.
-  if ((kind === "endpoint" || kind === "outbound") && type === "wireguard") return "mono:WG";
-  if ((kind === "endpoint" || kind === "dns-server") && type === "tailscale") return "mono:TS";
+  if ((kind === "endpoint" || kind === "outbound") && type === "wireguard") return "brand:wireguard";
+  if ((kind === "endpoint" || kind === "dns-server") && type === "tailscale") return "brand:tailscale";
 
   if (kind === "inbound" || kind === "outbound") {
     const proxy = PROXY_MONOGRAM[type];
@@ -255,6 +262,8 @@ export function nodeIconId(kind: string, type: string): string {
 /** The renderable identity icon component for a node {kind, type}. Lucide glyph or monogram. */
 export function getNodeIcon(kind: string, type: string): IconRenderer {
   const id = nodeIconId(kind, type);
+  const brand = BRAND_RENDERERS[id];
+  if (brand) return brand;
   if (id.startsWith("mono:")) {
     const code = id.slice("mono:".length);
     let renderer = MONOGRAM_CACHE.get(code);
