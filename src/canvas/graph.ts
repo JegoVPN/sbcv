@@ -234,8 +234,8 @@ function isPortConnected(
         }) ?? false
       );
     }
-    // These five outbound-target ports are also exposed on endpoint nodes (A7b extraNodeKinds), so an
-    // endpoint wired as a route/selector/dns target reflects its connected state too.
+    // These outbound-target ports are also exposed on endpoint nodes (A7b + C11a extraNodeKinds), so an
+    // endpoint wired as a route/selector/dns/detour target reflects its connected state too.
     if ((kind === "outbound" || kind === "endpoint") && portKey === "route") return config.route?.final === value;
     if ((kind === "outbound" || kind === "endpoint") && portKey === "route-rule") {
       return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
@@ -249,21 +249,21 @@ function isPortConnected(
     if ((kind === "outbound" || kind === "endpoint") && portKey === "dns-detour") {
       return config.dns?.servers?.some((server) => server.detour === value) ?? false;
     }
-    if (kind === "outbound" && portKey === "detour-target") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "detour-target") {
       return Boolean(
         config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
           config.endpoints?.some((endpoint) => endpoint.detour === value) ||
           config.ntp?.detour === value,
       );
     }
-    if (kind === "outbound" && portKey === "clash-download-detour") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "clash-download-detour") {
       const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
       return clashApi?.external_ui_download_detour === value;
     }
-    if (kind === "outbound" && portKey === "service-detour") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "service-detour") {
       return config.services?.some((service) => service.detour === value) ?? false;
     }
-    if (kind === "outbound" && portKey === "rule-set-download") {
+    if ((kind === "outbound" || kind === "endpoint") && portKey === "rule-set-download") {
       return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
     }
     if (kind === "service" && portKey === "managed-inbound") {
@@ -681,7 +681,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     }
     const detour = outboundDetourTag(outbound);
     if (detour) {
-      edges.push(makeEdge(formatEdgeId("outbound-detour", tag, detour), id, `outbound:${detour}`, "dial-detour", "detour-target"));
+      edges.push(makeEdge(formatEdgeId("outbound-detour", tag, detour), id, outboundTargetNodeId(detour), "dial-detour", "detour-target"));
     }
   });
 
@@ -854,7 +854,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           makeEdge(
             formatEdgeId("rule-set-download", tag, ruleSet.download_detour),
             `rule-set:${tag}`,
-            `outbound:${ruleSet.download_detour}`,
+            outboundTargetNodeId(ruleSet.download_detour),
             "download-detour",
             "rule-set-download",
           ),
@@ -941,7 +941,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
       ),
     );
     if (typeof endpoint.detour === "string" && endpoint.detour) {
-      edges.push(makeEdge(formatEdgeId("endpoint-detour", tag, endpoint.detour), `endpoint:${tag}`, `outbound:${endpoint.detour}`, "dial-detour", "detour-target"));
+      edges.push(makeEdge(formatEdgeId("endpoint-detour", tag, endpoint.detour), `endpoint:${tag}`, outboundTargetNodeId(endpoint.detour), "dial-detour", "detour-target"));
     }
   });
 
@@ -970,7 +970,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
 
     if (service.detour) {
       const relationId = service.type === "ocm" ? "service-detour-ocm" : "service-detour-ccm";
-      edges.push(makeEdge(formatEdgeId(relationId, tag, service.detour), id, `outbound:${service.detour}`, "detour", "service-detour"));
+      edges.push(makeEdge(formatEdgeId(relationId, tag, service.detour), id, outboundTargetNodeId(service.detour), "detour", "service-detour"));
     }
 
     const verifyEndpoints = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
@@ -995,7 +995,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         makeEdge(
           formatEdgeId("settings-ntp-detour", ntp.detour),
           ntpNodeId,
-          `outbound:${ntp.detour}`,
+          outboundTargetNodeId(ntp.detour),
           "dial-detour",
           "detour-target",
         ),
@@ -1012,7 +1012,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         makeEdge(
           formatEdgeId("clash-api-download-detour", clashApi.external_ui_download_detour),
           experimentalNodeId,
-          `outbound:${clashApi.external_ui_download_detour}`,
+          outboundTargetNodeId(clashApi.external_ui_download_detour),
           "clash-download-detour",
           "clash-download-detour",
         ),
