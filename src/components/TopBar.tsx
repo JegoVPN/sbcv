@@ -186,7 +186,7 @@ export function TopBar() {
         type="button"
         className="brand"
         onClick={goHome}
-        aria-label="sbcv.app — return to home"
+        aria-label="sbcv.app — reset view (deselect and fit the canvas)"
         data-testid="brand-home"
       >
         <div className="brand-mark" aria-hidden>
