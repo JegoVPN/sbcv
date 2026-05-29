@@ -56,10 +56,13 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
   mid-drag; fit-then-reveal for the now-horizontal edge-remove button; node-body drop for invalid).
 
 ### Phase N2 — Unified searchable downstream picker
-- [ ] N2-picker-trigger — (follow-up) open `ChipPickerPopover` from a port "+" click (port-scoped) via
-  `canvasInteractionContext`. NOT yet done — adding a downstream node works today via the existing
-  drag-a-port-to-empty-canvas → searchable picker flow, which already satisfies "unify into the
-  searchable popover" (complaint #2). The port-"+"-click is a convenience layer on top.
+- [x] N2-picker-trigger — the unconnected-port "+" is now a button (`.sbc-port__add`) that opens the
+  searchable `ChipPickerPopover` port-scoped, via a new `openPortPicker(nodeId, handleId)` channel on
+  `canvasInteractionContext` (mirrors `disconnectPort`). CanvasWorkspace builds the pending port from the
+  port's DOM rect → `chipCandidatesForPending` → anchors the picker just outside the node (left of an
+  input port, right of an output), drawing the connector line; picking runs `createNodeAndConnect`. The
+  open/placement needs RF's flow-coordinate system, so the click→pick→create flow is an e2e
+  (`port-click-redesign.spec.ts`); a jsdom test guards the affordance + aria-label. — PR #131
 - [x] N2-remove-grid — deleted the overflowing `sbc-node__actions`/`node-chip` candidate grid (+ CSS).
   The node-delete button moved into the toolbar (hover/selected-gated via `.sbc-node__delete` so it can't
   be clicked by accident). The count pill stays (DN-5). `createCompatible` dropped from SbcNode (store

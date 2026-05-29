@@ -408,6 +408,51 @@ export function CanvasWorkspace() {
     }, chipPicker.flowPosition);
     setChipPicker(null);
   }, [chipPicker, createNodeAndConnect]);
+  // N2-picker-trigger: clicking a port's "+" opens the same searchable picker (port-scoped), anchored
+  // just outside the node next to that port. Reuses chipCandidatesForPending → createNodeAndConnect.
+  const openPortPicker = useCallback((nodeId: string, handleId: string) => {
+    const node = nodeById.get(nodeId);
+    const flow = flowRef.current;
+    if (!node || !flow) return;
+    const portEl = shellRef.current?.querySelector(
+      `[data-testid="node-${nodeId}"] [data-port-type="${handleId}"]`,
+    );
+    const portRect = portEl?.getBoundingClientRect();
+    if (!portRect) return;
+    const portCenter = { x: portRect.left + portRect.width / 2, y: portRect.top + portRect.height / 2 };
+    const sourceFlowPosition = flow.screenToFlowPosition(portCenter);
+    const pending: PendingPort = {
+      nodeId,
+      handleId,
+      kind: node.data.kind,
+      type: node.data.type,
+      sourceFlowPosition,
+    };
+    const candidates = chipCandidatesForPending(pending);
+    if (candidates.length === 0) return;
+    // Anchor the picker outward from the node (left of an input port, right of an output port).
+    const nodeRect = shellRef.current?.querySelector(`[data-testid="node-${nodeId}"]`)?.getBoundingClientRect();
+    const outward = nodeRect && portCenter.x < nodeRect.left + nodeRect.width / 2 ? -200 : 64;
+    const anchor = flow.screenToFlowPosition({ x: portCenter.x + outward, y: portCenter.y });
+    const pickerPlacement = boundedPickerPlacement(
+      anchor,
+      visibleFlowBounds(shellRef.current?.getBoundingClientRect(), flow),
+    );
+    const lineEnd = lineEndForPicker(sourceFlowPosition, pickerPlacement);
+    setSelectedId(nodeId);
+    setChipPicker({
+      ...pickerPlacement,
+      lineStart: sourceFlowPosition,
+      lineEnd,
+      flowPosition: anchor,
+      source: pending,
+      candidates,
+    });
+  }, [nodeById, setSelectedId]);
+
+  useEffect(() => {
+    interactionStoreRef.current.setOpenPortPicker(openPortPicker);
+  }, [openPortPicker]);
 
   useEffect(() => {
     if (!isNodeDraggingRef.current) setNodes(graph.nodes);
