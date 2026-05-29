@@ -73,4 +73,26 @@ describe("typed node subtitles", () => {
       "2 inline rules",
     );
   });
+
+  it("inbound subtitles add a second dimension (users / method / tun interface)", () => {
+    // credential protocols & auth-configured socks show the user count
+    expect(
+      subtitleOf({ inbounds: [{ type: "vmess", tag: "v", listen_port: 443, users: [{ uuid: "x" }] }] }, "inbound:v"),
+    ).toBe("listen :443 · 1 users");
+    expect(
+      subtitleOf({ inbounds: [{ type: "socks", tag: "s", listen: "127.0.0.1", listen_port: 1080, users: [{}, {}] }] }, "inbound:s"),
+    ).toBe("listen 127.0.0.1:1080 · 2 users");
+    // shadowsocks shows its cipher
+    expect(
+      subtitleOf({ inbounds: [{ type: "shadowsocks", tag: "ss", listen_port: 8388, method: "aes-256-gcm" }] }, "inbound:ss"),
+    ).toBe("listen :8388 · aes-256-gcm");
+    // tun is interface · address, not a fake listen:port
+    expect(
+      subtitleOf({ inbounds: [{ type: "tun", tag: "t", interface_name: "tun0", address: ["172.18.0.1/30"] }] }, "inbound:t"),
+    ).toBe("tun0 · 172.18.0.1/30");
+    // an auth-optional socks with no users is unchanged (no noisy suffix)
+    expect(
+      subtitleOf({ inbounds: [{ type: "socks", tag: "s2", listen: "127.0.0.1", listen_port: 1081 }] }, "inbound:s2"),
+    ).toBe("listen 127.0.0.1:1081");
+  });
 });
