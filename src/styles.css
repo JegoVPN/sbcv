@@ -1141,6 +1141,45 @@ textarea {
   border-color: #3c4650;
 }
 
+/* N1: by default a card shows only its CONNECTED ports (the direct children of the column, vertically
+   centered). UNCONNECTED ports live in this absolute overlay BELOW the connected group, so revealing
+   them never moves the connected ports (no edge re-anchoring needed). They stay mounted (handles always
+   connectable) but are hidden until the node is hovered or the port is a live drop-target during a drag. */
+.sbc-node__ports-extra {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  justify-items: inherit;
+  pointer-events: none;
+}
+
+.sbc-node__ports--left .sbc-node__ports-extra {
+  justify-items: start;
+}
+
+.sbc-node__ports--right .sbc-node__ports-extra {
+  justify-items: end;
+}
+
+.sbc-node__ports-extra .sbc-port {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+/* Reveal the overlay ports when the node is hovered, or per-port while they're a live connect-drag
+   target / the drag source. */
+.sbc-node-shell:hover .sbc-node__ports-extra .sbc-port,
+.sbc-node__ports-extra .sbc-port.is-compatible,
+.sbc-node__ports-extra .sbc-port.is-pending {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .sbc-port[data-editable="false"] {
   cursor: default;
   border-style: dashed;
@@ -1485,50 +1524,20 @@ button.sbc-port__action:focus-visible {
   background: #151b22;
 }
 
-.sbc-node__actions {
-  position: absolute;
-  left: 100%;
-  top: 0;
-  bottom: 0;
-  margin-left: 56px;
-  width: 200px;
-  z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 6px;
-  padding: 8px;
-  max-height: 100%;
-  overflow-y: auto;
-  background: #1a1e21;
-  border: 1px solid #30363d;
-  border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+/* N2-remove-grid: the overflowing per-node candidate-chip grid (.sbc-node__actions / .node-chip) is
+   gone — adding a downstream node is now the searchable picker (drag a port out to empty canvas). The
+   node-delete button moved into the toolbar; keep it hidden until the node is hovered or selected so it
+   can't be clicked by accident (node delete is immediate + has no undo). */
+.sbc-node__delete {
   opacity: 0;
-  transform: translateX(-4px);
   pointer-events: none;
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
+  transition: opacity 120ms ease;
 }
 
-.sbc-node:hover .sbc-node__actions,
-.sbc-node.is-selected .sbc-node__actions {
+.sbc-node:hover .sbc-node__delete,
+.sbc-node.is-selected .sbc-node__delete {
   opacity: 1;
-  transform: translateX(0);
   pointer-events: auto;
-}
-
-.node-chip {
-  min-height: 28px;
-  flex: 0 1 calc(50% - 3px);
-  padding: 0 8px;
-  border-color: #44515e;
-  background: #161b21;
-  font-size: var(--node-micro-size);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .node-icon-button,

@@ -28,12 +28,18 @@ async function exportedConfig(page: Page) {
   return JSON.parse(readFileSync(path, "utf8")) as Record<string, any>;
 }
 
-async function dragHandle(page: Page, fromSelector: string, to: { x: number; y: number }) {
-  const fromBox = await page.locator(fromSelector).boundingBox();
-  if (!fromBox) throw new Error(`missing handle ${fromSelector}`);
-  await page.mouse.move(fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
+// N1: ports are collapsed until revealed. Hover the source node to reveal its ports, then press its
+// source handle to begin a connect-drag. The node stays "hovered" while dragging because the pressed
+// handle is its descendant (mouseenter/leave + :hover are subtree-based), so the source port stays shown.
+async function startPortDrag(page: Page, nodeTestId: string, portType: string) {
+  await page.getByTestId(nodeTestId).hover();
+  const handle = page
+    .locator(`[data-testid="${nodeTestId}"] [data-port-type="${portType}"] .sbc-handle--source`)
+    .first();
+  const box = await handle.boundingBox();
+  if (!box) throw new Error(`missing source handle ${nodeTestId}/${portType}`);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(to.x, to.y, { steps: 8 });
 }
 
 test("desktop empty-drop opens chip picker and chip creates canonical route final", async ({ page }) => {
@@ -44,11 +50,8 @@ test("desktop empty-drop opens chip picker and chip creates canonical route fina
 
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
   if (!canvasBox) throw new Error("missing canvas");
-  await dragHandle(
-    page,
-    '[data-testid="node-route:main"] [data-port-type="outbound"] .sbc-handle--source',
-    { x: canvasBox.x + canvasBox.width * 0.72, y: canvasBox.y + canvasBox.height * 0.38 },
-  );
+  await startPortDrag(page, "node-route:main", "outbound");
+  await page.mouse.move(canvasBox.x + canvasBox.width * 0.72, canvasBox.y + canvasBox.height * 0.38, { steps: 8 });
 
   await expect(page.locator(".react-flow__connection-path")).toBeVisible();
   await expect(targetPort).toHaveClass(/is-compatible/);
@@ -74,11 +77,8 @@ test("desktop empty-drop chip picker is bounded and clears the pending connectio
 
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
   if (!canvasBox) throw new Error("missing canvas");
-  await dragHandle(
-    page,
-    '[data-testid="node-dns:main"] [data-port-type="dns-server"] .sbc-handle--source',
-    { x: canvasBox.x + canvasBox.width - 48, y: canvasBox.y + canvasBox.height - 24 },
-  );
+  await startPortDrag(page, "node-dns:main", "dns-server");
+  await page.mouse.move(canvasBox.x + canvasBox.width - 48, canvasBox.y + canvasBox.height - 24, { steps: 8 });
   await page.mouse.up();
 
   const picker = page.getByRole("dialog", { name: "Compatible nodes" });
@@ -168,15 +168,17 @@ test("desktop empty-drop chip picker is bounded and clears the pending connectio
 test("desktop direct drop connects existing target without picker", async ({ page }) => {
   await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
 
-  const targetBox = await page
-    .locator('[data-testid="node-outbound:direct"] [data-port-type="route"] .sbc-handle--source')
-    .boundingBox();
-  if (!targetBox) throw new Error("missing direct target handle");
-  await dragHandle(
-    page,
-    '[data-testid="node-route:main"] [data-port-type="outbound"] .sbc-handle--source',
-    { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 },
-  );
+  // Start the drag, then MOVE (RF only marks compatible targets once the pointer moves) — that reveals
+  // the compatible target port on `direct` (collapsed at rest). Then drop precisely onto it.
+  await startPortDrag(page, "node-route:main", "outbound");
+  const directNodeBox = await page.getByTestId("node-outbound:direct").boundingBox();
+  if (!directNodeBox) throw new Error("missing direct node");
+  await page.mouse.move(directNodeBox.x + directNodeBox.width / 2, directNodeBox.y + directNodeBox.height / 2, { steps: 8 });
+  const targetPort = page.locator('[data-testid="node-outbound:direct"] [data-port-type="route"]');
+  await expect(targetPort).toHaveClass(/is-compatible/);
+  const targetBox = await targetPort.boundingBox();
+  if (!targetBox) throw new Error("missing direct target port");
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 4 });
   await page.mouse.up();
 
   await expect(page.getByRole("dialog", { name: "Compatible nodes" })).toHaveCount(0);
@@ -187,19 +189,23 @@ test("desktop direct drop connects existing target without picker", async ({ pag
 test("invalid drop cancels without mutation", async ({ page }) => {
   await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
   const before = await exportedConfig(page);
+  const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
+  if (!canvasBox) throw new Error("missing canvas");
+  // An incompatible target port (direct's dns-detour) must NEVER become a drop target — under N1 it's an
+  // unconnected port living in the hidden `.sbc-node__ports-extra` overlay and never marked compatible
+  // during the drag, so an invalid edge can't be formed.
   const invalidPort = page.locator('[data-testid="node-outbound:direct"] [data-port-type="dns-detour"]');
-  const targetBox = await invalidPort.locator(".sbc-handle--target").boundingBox();
-  if (!targetBox) throw new Error("missing invalid target handle");
 
-  await dragHandle(
-    page,
-    '[data-testid="node-route:main"] [data-port-type="outbound"] .sbc-handle--source',
-    { x: targetBox.x + targetBox.width / 2, y: targetBox.y + targetBox.height / 2 },
-  );
+  await startPortDrag(page, "node-route:main", "outbound");
+  await page.mouse.move(canvasBox.x + canvasBox.width * 0.72, canvasBox.y + canvasBox.height * 0.38, { steps: 8 });
+  expect(await invalidPort.evaluate((el) => Boolean(el.closest(".sbc-node__ports-extra")))).toBe(true);
   await expect(invalidPort).not.toHaveClass(/is-compatible/);
   await page.mouse.up();
 
-  await expect(page.getByRole("dialog", { name: "Compatible nodes" })).toHaveCount(0);
+  // Released on empty canvas → the create-picker may appear (never an invalid edge); dismiss it.
+  const picker = page.getByRole("dialog", { name: "Compatible nodes" });
+  if (await picker.count()) await page.keyboard.press("Escape");
+  await expect(picker).toHaveCount(0);
   expect(await exportedConfig(page)).toEqual(before);
 });
 
@@ -221,11 +227,13 @@ test("connected-handle disconnect removes only the relation", async ({ page }) =
 // it (the button is pointer-events:none until hovered/selected — C2-7), then return its locator.
 async function revealEdgeRemove(page: Page, name: string) {
   const button = page.getByRole("button", { name });
-  const edge = page.locator(".sbc-edge").first();
-  await edge.waitFor({ state: "attached" });
-  // Hover the edge group, then settle the pointer onto the midpoint beneath the control, so the
-  // hidden (pointer-events:none) button reveals and stays revealed.
-  await edge.hover();
+  await button.waitFor({ state: "attached" });
+  // Fit the graph so the edge (and its midpoint button) is on-screen — the two nodes sit far apart and
+  // the connected-only edge is perfectly horizontal (bbox height 0), so neither `.hover()` nor an
+  // off-screen coordinate works. The button sits at the edge midpoint and is pointer-events:none until
+  // revealed, so moving the cursor onto its own box falls through to the edge beneath → reveals it.
+  await page.locator(".react-flow__controls-fitview").click();
+  await page.waitForTimeout(220);
   const box = await button.boundingBox();
   if (box) await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await expect(button).toHaveCSS("pointer-events", "all");
