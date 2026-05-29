@@ -1324,6 +1324,15 @@ button.sbc-port__action:focus-visible {
   stroke: #c7ff00;
 }
 
+/* React Flow tags the in-flight connection line `valid` / `invalid` / (neutral) via getConnectionStatus.
+   Dragging over an incompatible handle turns the line red so the user sees the drop will be rejected,
+   instead of a white line that silently does nothing. Releasing on empty canvas stays neutral (no
+   `invalid` class) so it can still open the create picker. !important overrides the inline
+   connectionLineStyle stroke RF applies to the path (the neutral white line is kept for valid/neutral). */
+.react-flow__connection.invalid .react-flow__connection-path {
+  stroke: #ff5d5d !important;
+}
+
 .canvas-shell[data-chip-picker-open="true"] .react-flow__connection,
 .canvas-shell[data-chip-picker-open="true"] .react-flow__connection-path {
   display: none !important;
