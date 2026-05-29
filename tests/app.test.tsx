@@ -2183,7 +2183,7 @@ describe("SBC editor shell", () => {
     expect(inspector.getByLabelText("TCP Keep Alive (1.13+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("TCP Keep Alive Interval (1.13+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("UDP Fragment")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Domain Strategy (deprecated 1.12+)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Domain Strategy (deprecated; removed in 1.14)")).toBeInTheDocument();
 
     fireEvent.click(inspector.getByLabelText("TCP Fast Open"));
     expect(useProjectStore.getState().config.outbounds?.at(-1)?.tcp_fast_open).toBe(true);

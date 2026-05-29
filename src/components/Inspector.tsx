@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Braces, Network, Route, Server, Trash2, X } from "lucide-react";
 import { getNodeIcon } from "../canvas/iconRegistry";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
-import type { EntityRef, SingBoxConfig } from "../domain/types";
+import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../domain/types";
 import {
   CREATABLE_DNS_SERVER_TYPES,
   CREATABLE_ENDPOINT_TYPES,
@@ -1498,6 +1498,8 @@ type SharedFieldDefinition = {
   path: string[];
   kind: SharedFieldKind;
   options?: string[];
+  /** Optional helper text rendered under the control. */
+  hint?: string;
   /** Hide this field unless the boolean value at this path is true. */
   gatedBy?: string[];
 };
@@ -1564,6 +1566,7 @@ function sharedFieldDefinitions(
   ref: EntityRef,
   type: string | null,
   config: SingBoxConfig,
+  channel: SingBoxChannel,
 ): SharedFieldDefinition[] {
   const outboundOptions = outboundTags(config, ref.kind === "outbound" ? ref.tag : undefined);
   const httpClientOptions = (config.http_clients ?? [])
@@ -1640,10 +1643,14 @@ function sharedFieldDefinitions(
       { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
       { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions] },
       { label: "Network Strategy", path: ["network_strategy"], kind: "select", options: networkStrategyOptions },
-      { label: "Network Type", path: ["network_type"], kind: "list" },
-      { label: "Fallback Network", path: ["fallback_network_type"], kind: "list" },
+      { label: "Network Type", path: ["network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
+      { label: "Fallback Network", path: ["fallback_network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
       { label: "Fallback Delay", path: ["fallback_delay"], kind: "text" },
-      { label: "Domain Strategy (deprecated 1.12+)", path: ["domain_strategy"], kind: "text" },
+      // domain_strategy was removed in sing-box 1.14 — hide it on the testing channel; on stable
+      // (1.12/1.13) it's still accepted (deprecated). See dial.md / migration.
+      ...(channel === "testing"
+        ? []
+        : ([{ label: "Domain Strategy (deprecated; removed in 1.14)", path: ["domain_strategy"], kind: "text" }] as SharedFieldDefinition[])),
     ];
   }
 
@@ -1834,6 +1841,7 @@ function SharedFieldControl({
           onChange={(event) => applyValue(event.target.checked)}
         />
         <span>{definition.label}</span>
+        {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
       </label>
     );
   }
@@ -1860,6 +1868,7 @@ function SharedFieldControl({
             </option>
           ))}
         </select>
+        {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
       </label>
     );
   }
@@ -1872,6 +1881,7 @@ function SharedFieldControl({
         value={definition.kind === "list" ? toList(value) : String(value ?? "")}
         onChange={(event) => applyValue(coerceSharedFieldValue(definition.kind, event.target.value))}
       />
+      {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
     </label>
   );
 }
@@ -1882,6 +1892,7 @@ function SharedFieldCards({
   entityRef,
   entityType,
   config,
+  channel,
   updateField,
 }: {
   groups: SharedFieldGroupId[];
@@ -1889,12 +1900,13 @@ function SharedFieldCards({
   entityRef: EntityRef;
   entityType: string | null;
   config: SingBoxConfig;
+  channel: SingBoxChannel;
   updateField: UpdateField;
 }) {
   const cards = groups
     .map((group) => ({
       group,
-      definitions: sharedFieldDefinitions(group, entityRef, entityType, config),
+      definitions: sharedFieldDefinitions(group, entityRef, entityType, config, channel),
     }))
     .filter((card) => card.definitions.length > 0);
 
@@ -5601,6 +5613,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
         entityRef={ref}
         entityType={entityType}
         config={config}
+        channel={channel}
         updateField={updateField}
       />
     </aside>
