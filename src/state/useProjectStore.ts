@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   addDnsRule,
+  addCertificateProvider,
   addDnsServer,
   addEndpoint,
   addHttpClient,
@@ -1040,6 +1041,21 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         config = addHttpClient(config);
         const created = config.http_clients?.[config.http_clients.length - 1];
         if (created?.tag) selectedId = `http-client:${created.tag}`;
+      }
+      // certificate_providers[] is sing-box 1.14+ — creatable on testing only. The bare "Provider"
+      // item defaults to acme so no invalid type is ever emitted. (C2)
+      const certProviderType =
+        kind === "certificate-provider-tailscale"
+          ? "tailscale"
+          : kind === "certificate-provider-cloudflare-origin-ca"
+            ? "cloudflare-origin-ca"
+            : kind === "certificate-provider-acme" || kind === "certificate-provider"
+              ? "acme"
+              : null;
+      if (certProviderType && state.channel === "testing") {
+        config = addCertificateProvider(config, certProviderType);
+        const created = config.certificate_providers?.[config.certificate_providers.length - 1];
+        if (created?.tag) selectedId = `certificate-provider:${created.tag}`;
       }
       const outboundType = outboundTypeForPaletteKind(kind);
       if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
