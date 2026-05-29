@@ -1992,7 +1992,7 @@ describe("SBC editor shell", () => {
     inspector = within(screen.getByLabelText("DNS rule 1 inspector"));
     expect(inspector.queryByLabelText("Server")).not.toBeInTheDocument();
     expect(inspector.getByLabelText("Reject Method")).toBeInTheDocument();
-    expect(inspector.getByLabelText("No drop (only return)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("No drop (else method falls back to drop after 50 hits in 30s)")).toBeInTheDocument();
     expect(useProjectStore.getState().config.dns?.rules?.[0]?.server).toBeUndefined();
 
     fireEvent.change(inspector.getByLabelText("Action"), { target: { value: "predefined" } });
@@ -2019,7 +2019,7 @@ describe("SBC editor shell", () => {
     inspector = within(screen.getByLabelText("Route rule 1 inspector"));
     expect(inspector.queryByLabelText("Outbound")).not.toBeInTheDocument();
     expect(inspector.getByLabelText("Reject Method")).toBeInTheDocument();
-    expect(inspector.getByLabelText("No drop (only return)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("No drop (else method falls back to drop after 50 hits in 30s)")).toBeInTheDocument();
     expect(useProjectStore.getState().config.route?.rules?.[0]?.outbound).toBeUndefined();
 
     // Sniff
