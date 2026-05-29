@@ -38,7 +38,7 @@ import type { LucideIcon } from "lucide-react";
 import type { SbcFlowNode, SbcNodeKind } from "../canvas/graph";
 import { getNodeIcon } from "../canvas/iconRegistry";
 import { nodeTitlebarLabel } from "../canvas/nodeLabels";
-import { dnsRuleAllowsServer } from "../domain/commands";
+import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import {
   portEndpointsForNode,
   portRelations,
@@ -132,6 +132,18 @@ export function getPortSpecs(
       endpoint.portKey === "dns-server" &&
       action !== undefined &&
       !dnsRuleAllowsServer({ action })
+    ) {
+      return [];
+    }
+    // Symmetric to the dns-rule gate above: a route-rule only dials an outbound for routing actions
+    // (route/bypass). For reject/sniff/resolve/hijack-dns the graph edge is already suppressed and the
+    // connect command refuses it, so the outbound port was a dead, misleading drag source — hide it.
+    if (
+      kind === "route-rule" &&
+      direction === "output" &&
+      endpoint.portKey === "outbound" &&
+      action !== undefined &&
+      !routeRuleAllowsOutbound({ action })
     ) {
       return [];
     }

@@ -8,7 +8,7 @@ import {
   type PortDirection,
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
-import { dnsRuleAllowsServer } from "../domain/commands";
+import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import { supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -547,9 +547,8 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         inboundRefs.forEach((tag) => {
           edges.push(makeEdge(formatEdgeId("route-rule-inbound", index, tag), `inbound:${tag}`, id, "route-rule-match", "inbound"));
         });
-        const ruleAction = typeof rule.action === "string" ? rule.action : "";
-        const routeRuleOutboundAllowed = ruleAction === "" || ruleAction === "route" || ruleAction === "bypass";
-        if (rule.outbound && routeRuleOutboundAllowed) {
+        // Same gate as the dns-rule→server edge: only routing actions dial an outbound.
+        if (rule.outbound && routeRuleAllowsOutbound(rule)) {
           edges.push(makeEdge(formatEdgeId("route-rule", index, rule.outbound), id, outboundTargetNodeId(rule.outbound), "outbound", "route-rule"));
         }
         if (visualizeRuleSets) {
