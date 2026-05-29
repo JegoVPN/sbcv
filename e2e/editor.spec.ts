@@ -54,6 +54,30 @@ test("selecting a node paints its first-degree edges in selection blue", async (
   expect(await plain.evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(199, 255, 0)");
 });
 
+test("a version-gated node shows a 'needs X' badge only on an older target", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Import JSON file").setInputFiles({
+    name: "config.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ outbounds: [{ type: "naive", tag: "n", server: "1.2.3.4", server_port: 443 }] })),
+  });
+  const node = page.getByTestId("node-outbound:n");
+  await node.waitFor({ state: "visible" });
+  const badge = node.getByTestId("node-badge-version");
+
+  // Default target is 1.13-stable; naive needs 1.13 → no version badge.
+  await expect(badge).toHaveCount(0);
+
+  // Switch to the 1.12 target → naive (needs 1.13) is now ahead of the target → badge appears.
+  await page.getByLabel("Sing-box target").selectOption("1.12-stable");
+  await expect(badge).toBeVisible();
+  await expect(badge).toHaveText(/needs 1\.13/i);
+
+  // Back to 1.13 → badge gone again.
+  await page.getByLabel("Sing-box target").selectOption("1.13-stable");
+  await expect(badge).toHaveCount(0);
+});
+
 test("manual zoom is preserved after dragging a node", async ({ page }) => {
   await page.goto("/");
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();

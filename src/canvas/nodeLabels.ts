@@ -1,6 +1,7 @@
 // Human-readable labels for canvas node kinds and types. Shared by the canvas selection helpers
 // (CanvasWorkspace) and the node titlebar (SbcNode) so a node never shows raw machine enums like
 // `outbound / shadowsocks` — it reads `Outbound · Shadowsocks`. (A28, W34)
+import { atLeast } from "../domain/targets";
 
 export const typeLabels: Record<string, string> = {
   direct: "Direct",
@@ -93,10 +94,24 @@ export function nodeTitlebarLabel(kind: string, type: string): string {
 }
 
 // A small titlebar badge for orthogonal status the valid/warning/error glyph can't express: a node that
-// is deprecated (a whole type slated for removal) or platform-locked (only runs on some OSes). Grounded
-// in the upstream docs; tone drives the colour. Returns null when the node has nothing extra to flag.
-export type NodeBadgeTone = "deprecated" | "platform";
+// is deprecated (a whole type slated for removal), platform-locked (only runs on some OSes), or needs a
+// newer sing-box than the project target. Grounded in the upstream docs; tone drives the colour. Returns
+// null when the node has nothing extra to flag.
+export type NodeBadgeTone = "deprecated" | "platform" | "version";
 export type NodeBadge = { label: string; tone: NodeBadgeTone; title: string };
+
+// Minimum sing-box version a node TYPE needs (upstream "Since sing-box X" notes). Surfaced only when the
+// project target is older, so an up-to-date target shows nothing. None of these overlap the deprecated/
+// platform sets, so a node still carries at most one badge.
+const MIN_VERSION: Record<string, string> = {
+  "inbound:anytls": "1.12",
+  "outbound:anytls": "1.12",
+  "inbound:naive": "1.13",
+  "outbound:naive": "1.13",
+  "endpoint:tailscale": "1.12",
+  "service:ccm": "1.13",
+  "service:ocm": "1.13",
+};
 
 const NODE_BADGES: Record<string, NodeBadge> = {
   // Whole-type deprecations (the type itself is going away — see upstream outbound/*.md).
@@ -110,6 +125,15 @@ const NODE_BADGES: Record<string, NodeBadge> = {
   "inbound:redirect": { label: "Linux / macOS", tone: "platform", title: "redirect is only supported on Linux and macOS" },
 };
 
-export function nodeBadge(kind: string, type: string): NodeBadge | null {
-  return NODE_BADGES[`${kind}:${type}`] ?? null;
+export function nodeBadge(kind: string, type: string, targetVersion?: string): NodeBadge | null {
+  const key = `${kind}:${type}`;
+  const min = MIN_VERSION[key];
+  if (min && targetVersion && !atLeast(targetVersion, min)) {
+    return {
+      label: `needs ${min}`,
+      tone: "version",
+      title: `${labelForNodeType(type)} requires sing-box ${min}, but the target is ${targetVersion}.`,
+    };
+  }
+  return NODE_BADGES[key] ?? null;
 }
