@@ -93,8 +93,16 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     select (kept 2022/AEAD/`none`); outbound select keeps them (valid). — PR #105
   - [x] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)` (both
     inbound + outbound; upstream omitted-version default is v1). — PR #104
-  - [ ] L2-fix-hysteria-copy — H4 (required Mbps placeholder) + H5/H6 (drop the false "deprecated"
-    banners + remove `hysteria-out` from `deprecatedKinds`).
+  - [x] L2-fix-hysteria-mbps — H4: Hysteria v1 outbound up/down Mbps placeholder "empty = no rate limit"
+    → "required (Mbps)" (upstream marks them Required). — PR #106
+  - [ ] L2-fix-hysteria-deprecated-stance — H5/H6 **DEFERRED (needs a product decision)**: the editor
+    treats Hysteria v1 as deprecated across THREE entangled sites — Inspector banners (`kind="deprecated"`),
+    Palette `deprecatedKinds` (the "Legacy" pill), AND diagnostics (`hysteria-v1-deprecated` /
+    `inbound-hysteria-v1-deprecated`) — plus tests pinning all three. The audit (H5) notes upstream
+    `deprecated.md` does NOT formally deprecate hysteria v1 (only its sub-fields). So the question "does
+    sbcv treat v1 as deprecated/legacy?" is an opinionated product stance, not a clear copy bug — and it
+    overlaps D2 (legacy treatment). Reconcile holistically (flip all 3 + tests, or keep the stance and
+    just drop the literal-false "upstream"/"official docs" attribution) with the user / in L1-badges.
   - [ ] L2-fix-dns-hints — H8 tailscale `accept_default_resolvers` + the MED dns hint cluster.
   - [ ] L2-fix-rule-set-deprecation — H9: `download_detour` deprecation banner → `http_client`.
   - [ ] L2-fix-med-copy — the MED list (tuic replay, block removed-in-1.13, domain_strategy removed-1.14,
@@ -327,3 +335,19 @@ Status: implemented 2026-05-29 in `atomic/l2-fix-ss-inbound-ciphers`; merged in 
   confirmed, scope limited to the inbound select (outbound keeps stream ciphers), `none` retained, no
   data loss (controlled select doesn't wipe an imported invalid method).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (880), `pnpm build` (select-options only).
+
+### L2-fix-hysteria-mbps (audit H4) — PR #106
+Status: implemented 2026-05-29 in `atomic/l2-fix-hysteria-copy`; merged in PR #106. Expert review CLEAN/APPROVE
+(upstream confirms up/down Required; hysteria2 untouched; banners confirmed reverted; deferral of H5/H6
+validated — the stance is entangled with diagnostics.ts hysteria-v1-deprecated + domain.test.ts).
+- What changed: the Hysteria **v1** outbound `up_mbps`/`down_mbps` inputs had placeholder
+  "empty = no rate limit", but `outbound/hysteria.md` marks both **Required**. Relabeled both to
+  "required (Mbps)".
+- Scope note: H5 (banner "deprecated upstream" wording) + H6 (Palette `deprecatedKinds` membership) were
+  investigated but **deferred** — the "v1 is deprecated" stance is entangled across Inspector banners,
+  the Palette pill, AND diagnostics (`hysteria-v1-deprecated`), plus tests; whether sbcv treats v1 as
+  deprecated is a product decision (upstream doesn't formally deprecate it) overlapping D2. Banner edits
+  were reverted to keep the editor's stance internally consistent pending that decision.
+- Tests: `tests/hysteria-mbps-required.test.tsx`.
+- Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (881), `pnpm build`.
