@@ -22,11 +22,6 @@ export type SbcNodeData = {
   title: string;
   subtitle: string;
   status: "valid" | "warning" | "error";
-  // Number of downstream connections wired from this node (selector/urltest members, a route's rules +
-  // final, a rule's targets, …). Counted from the node's outgoing edges in a post-pass, so it matches
-  // the edges actually drawn on the canvas. Replaces the old `compatible` "addable types" count, which
-  // showed e.g. 18 on a 3-member selector and confused users.
-  connections: number;
   connectedPorts?: Partial<Record<PortDirection, string[]>>;
   // Rule action (dns-rule / route-rule), when it gates action-aware ports/affordances.
   action?: string;
@@ -69,8 +64,7 @@ function nodePosition(layout: ProjectLayout, id: string, fallback: { x: number; 
 
 function makeNode(
   id: string,
-  // `connections` is filled by a post-pass over the edges (see deriveGraph), so callers don't supply it.
-  data: Omit<SbcNodeData, "connections">,
+  data: SbcNodeData,
   layout: ProjectLayout,
   fallback: { x: number; y: number },
 ): SbcFlowNode {
@@ -78,7 +72,7 @@ function makeNode(
     id,
     type: "sbc",
     position: nodePosition(layout, id, fallback),
-    data: { ...data, connections: 0 },
+    data,
     deletable: data.kind !== "notice",
   };
 }
@@ -1012,13 +1006,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   centerColumnsVertically(nodes, layout);
 
   annotateConnectedPorts(config, nodes);
-
-  // Count each node's downstream connections from its outgoing edges. Edges run upstream→downstream
-  // (makeEdge(source, target)), so the out-degree is exactly the node's wired downstream count, and it
-  // tracks the visual edge caps (capped edges aren't drawn, so they aren't counted either).
-  const outgoing = new Map<string, number>();
-  for (const edge of edges) outgoing.set(edge.source, (outgoing.get(edge.source) ?? 0) + 1);
-  for (const node of nodes) node.data.connections = outgoing.get(node.id) ?? 0;
 
   return { nodes, edges };
 }

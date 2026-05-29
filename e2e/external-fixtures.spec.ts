@@ -140,7 +140,6 @@ async function assertSelectedNodeAndInspector(page: Page) {
   await expect(firstNode.getByTestId("node-card")).toBeVisible();
   await expect(firstNode.getByTestId("node-left-ports")).toBeVisible();
   await expect(firstNode.getByTestId("node-right-ports")).toBeVisible();
-  await expect(firstNode.getByTestId("node-bottom-toolbar")).toBeVisible();
   await expect(page.getByTestId("node-selection-corner")).toHaveCount(4);
   const titlebar = (await firstNode.getByTestId("node-titlebar").textContent()) ?? "";
   if (titlebar === "Route") {
@@ -230,6 +229,5 @@ test("selected node and floating inspector fit mobile viewport", async ({ page }
   await expect(selectedNode.getByTestId("node-titlebar")).toBeVisible();
   await expect(selectedNode.getByTestId("node-left-ports")).toBeVisible();
   await expect(selectedNode.getByTestId("node-right-ports")).toBeVisible();
-  await expect(selectedNode.getByTestId("node-bottom-toolbar")).toBeVisible();
   await expect(page.getByTestId("node-inspector")).toBeVisible();
 });

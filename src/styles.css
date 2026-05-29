@@ -1017,12 +1017,13 @@ textarea {
 }
 
 .sbc-node {
-  min-height: 290px;
+  min-height: 196px;
   border: 1px solid #30363d;
   border-radius: 14px;
   background: #1a1e21;
   box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
-  padding: 38px 18px 82px;
+  /* Bottom padding no longer reserves space for the retired bottom toolbar. */
+  padding: 38px 18px 28px;
   position: relative;
   transition:
     border-color 120ms ease,
@@ -1485,68 +1486,6 @@ button.sbc-port__action:focus-visible {
   font-size: var(--node-secondary-size);
   line-height: 1.42;
   min-height: 38px;
-}
-
-.sbc-node__toolbar {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  left: 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 36px 64px;
-  gap: 8px;
-  align-items: center;
-}
-
-.sbc-node-pill {
-  min-height: 38px;
-  border-radius: 9px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-width: 0;
-  padding: 0 11px;
-  background: #101418;
-  color: #e7ecef;
-  font-size: var(--node-secondary-size);
-  font-weight: var(--node-strong-weight);
-  white-space: nowrap;
-}
-
-.sbc-node-pill--type {
-  justify-content: flex-start;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sbc-node-pill--valid {
-  color: #c7ff00;
-}
-
-.sbc-node-pill--warning {
-  color: #f2bc4b;
-}
-
-.sbc-node-pill--error {
-  color: #ff7777;
-}
-
-.sbc-node-primary {
-  min-width: 64px;
-  height: 48px;
-  padding: 0 12px;
-  border-radius: 14px;
-  border-color: #3f4b56;
-  background: #101418;
-  color: #c7ff00;
-  font-size: var(--node-secondary-size);
-  font-weight: var(--node-strong-weight);
-}
-
-.sbc-node-primary:hover:not(:disabled) {
-  border-color: #c7ff00;
-  background: #151b22;
 }
 
 /* Node delete: a red warning affordance pinned to the card's top-right corner. Kept hidden until the

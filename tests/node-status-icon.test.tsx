@@ -5,9 +5,9 @@ import { useProjectStore } from "../src/state/useProjectStore";
 
 // A9 validity-readability (Pass-2 T9/W10).
 // SbcNode renders the summary status glyph as a 3-way: error -> CircleAlert, warning -> TriangleAlert,
-// valid -> CheckCircle2, so a "warning" node is visually distinct from a valid node. The compatible
-// count affordance no longer reuses the valid checkmark. A vless outbound with a malformed uuid yields
-// a `warning` (not error) node.
+// valid -> CheckCircle2, so a "warning" node is visually distinct from a valid node. This is now the
+// single status surface on the card (the redundant bottom status pill + count affordance were retired).
+// A vless outbound with a malformed uuid yields a `warning` (not error) node.
 
 function renderWarningGraph() {
   useProjectStore.getState().importJson(JSON.stringify({
@@ -44,18 +44,13 @@ describe("node status glyph distinguishes warning from valid (W5 -> A9)", () => 
     expect(statusGlyphClass("outbound:warn-vless")).not.toBe(statusGlyphClass("outbound:ok-direct"));
   });
 
-  it("the compatible-count affordance no longer reuses the valid status checkmark (✓ N relabel)", () => {
+  it("shows status only once on the card — no duplicate bottom status pill", () => {
     renderWarningGraph();
     const node = screen.getByTestId("node-outbound:ok-direct");
-    const primaryGlyph = node.querySelector(".sbc-node-primary svg")?.getAttribute("class") ?? "";
-    expect(primaryGlyph).not.toContain("circle-check");
-  });
-
-  it("shows the real compatible count (0, not a forced 1) for a zero-compatible node", () => {
-    renderWarningGraph();
-    // A plain direct outbound advertises no compatible "+" chips; the count must read 0, not 1.
-    const node = screen.getByTestId("node-outbound:ok-direct");
-    const primary = node.querySelector(".sbc-node-primary");
-    expect(primary?.textContent).toBe("0");
+    // The retired bottom toolbar (type/status pills, gear, count) leaves the summary glyph as the sole
+    // status surface (reinforced by the status-tinted card border).
+    expect(node.querySelector(".sbc-node__status svg")).not.toBeNull();
+    expect(node.querySelector(".sbc-node-pill")).toBeNull();
+    expect(node.querySelector(".sbc-node__toolbar")).toBeNull();
   });
 });
