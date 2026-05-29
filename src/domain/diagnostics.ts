@@ -500,12 +500,16 @@ export function validateConfig(
     const obj = server as Record<string, unknown>;
     if (typeof obj.address === "string" && /^[a-z0-9+]+:\/\//i.test(obj.address)) {
       const tag = (obj.tag as string | undefined) ?? `dns-server-${index}`;
+      // Legacy schema-prefixed address: deprecated 1.12, removed 1.14 → error once the target is 1.14.
+      const removed = atLeast(version, "1.14");
       push(
         diagnostics,
-        "warning",
+        removed ? "error" : "warning",
         "dns-server-legacy-address-deprecated",
         `/dns/servers/${index}/address`,
-        `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
+        removed
+          ? `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"), removed in sing-box 1.14.0 — sing-box rejects this. Migrate to the typed form: split into \`type\` + \`server\`.`
+          : `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
       );
     }
     if (server.detour && !outboundTags.has(server.detour)) {
@@ -1185,12 +1189,16 @@ export function validateConfig(
   if (dnsTop && typeof dnsTop === "object") {
     const legacyFakeip = (dnsTop as Record<string, unknown>).fakeip;
     if (legacyFakeip && typeof legacyFakeip === "object" && !Array.isArray(legacyFakeip)) {
+      // Top-level dns.fakeip: deprecated 1.12, removed 1.14 → error once the target is 1.14.
+      const removed = atLeast(version, "1.14");
       push(
         diagnostics,
-        "warning",
+        removed ? "error" : "warning",
         "legacy-fakeip-deprecated",
         "/dns/fakeip",
-        "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
+        removed
+          ? "Top-level dns.fakeip was removed in sing-box 1.14.0 — sing-box rejects this. Migrate to a dns.servers[] entry with type=fakeip."
+          : "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
       );
     }
   }
