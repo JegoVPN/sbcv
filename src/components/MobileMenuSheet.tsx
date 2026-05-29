@@ -53,10 +53,10 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
       event.target.value = "";
       return;
     }
-    const result = importJson(await file.text());
-    const pushToast = useProjectStore.getState().pushToast;
+    const result = importJson(await file.text(), { snapshot: true });
+    const { pushToast, undo } = useProjectStore.getState();
     if (result.ok) {
-      pushToast({ message: "Configuration imported", tone: "success" });
+      pushToast({ message: "Configuration imported", tone: "success", action: { label: "Undo", onAct: undo } });
     } else {
       pushToast({ message: `Import failed: ${result.error}`, tone: "error", durationMs: 8000 });
     }
