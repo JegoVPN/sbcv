@@ -764,7 +764,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                 rule.action ??
                 "dns match",
               status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
-              // Only a server-bearing action (route/evaluate) can attach a DNS server.
             },
             layout,
             { x: COLUMNS.rule, y },
@@ -774,6 +773,7 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         stringRefs(rule.inbound).forEach((tag) => {
           edges.push(makeEdge(formatEdgeId("dns-rule-inbound", index, tag), `inbound:${tag}`, id, "dns-rule-match", "inbound"));
         });
+        // Only a server-bearing action (route/evaluate) can attach a DNS server.
         if (rule.server && dnsRuleAllowsServer(rule)) {
           edges.push(makeEdge(formatEdgeId("dns-rule", index, rule.server), id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
