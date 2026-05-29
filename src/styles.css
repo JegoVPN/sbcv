@@ -966,6 +966,12 @@ textarea {
   width: 330px;
   position: relative;
   padding-top: 30px;
+  /* Node-card type scale (N3): one secondary size/weight shared by the titlebar, subtitle, and the
+     whole toolbar row, so the count pill no longer reads several sizes larger than its neighbours. */
+  --node-title-size: 22px;
+  --node-secondary-size: 13px;
+  --node-micro-size: 11px;
+  --node-strong-weight: 760;
 }
 
 .sbc-node-titlebar {
@@ -977,8 +983,8 @@ textarea {
   gap: 8px;
   max-width: calc(100% - 32px);
   color: #808892;
-  font-size: 13px;
-  font-weight: 760;
+  font-size: var(--node-secondary-size);
+  font-weight: var(--node-strong-weight);
   letter-spacing: 0;
   text-transform: capitalize;
   pointer-events: none;
@@ -1395,8 +1401,8 @@ button.sbc-port__action:focus-visible {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #d8dde2;
-  font-size: 22px;
-  font-weight: 760;
+  font-size: var(--node-title-size);
+  font-weight: var(--node-strong-weight);
   letter-spacing: 0;
 }
 
@@ -1408,7 +1414,7 @@ button.sbc-port__action:focus-visible {
   -webkit-line-clamp: 3;
   color: #8c949d;
   margin-top: 10px;
-  font-size: 13px;
+  font-size: var(--node-secondary-size);
   line-height: 1.42;
   min-height: 38px;
 }
@@ -1435,7 +1441,8 @@ button.sbc-port__action:focus-visible {
   padding: 0 11px;
   background: #101418;
   color: #e7ecef;
-  font-weight: 760;
+  font-size: var(--node-secondary-size);
+  font-weight: var(--node-strong-weight);
   white-space: nowrap;
 }
 
@@ -1465,8 +1472,8 @@ button.sbc-port__action:focus-visible {
   border-color: #3f4b56;
   background: #101418;
   color: #c7ff00;
-  font-size: 18px;
-  font-weight: 860;
+  font-size: var(--node-secondary-size);
+  font-weight: var(--node-strong-weight);
 }
 
 .sbc-node-primary:hover:not(:disabled) {
@@ -1514,7 +1521,7 @@ button.sbc-port__action:focus-visible {
   padding: 0 8px;
   border-color: #44515e;
   background: #161b21;
-  font-size: 11px;
+  font-size: var(--node-micro-size);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
