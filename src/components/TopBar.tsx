@@ -2,7 +2,7 @@ import { CheckCircle2, CircleAlert, CircleX, Download, FileCheck2, FolderOpen, L
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
-import { createConfigExport } from "../domain/serialization";
+import { confirmAndExportConfig } from "./exportConfig";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
@@ -36,15 +36,9 @@ export function configHasContent(config: SingBoxConfig): boolean {
   );
 }
 
-function padTimestampPart(value: number) {
-  return String(value).padStart(2, "0");
-}
-
-export function createSbcvFileName(now = new Date()) {
-  const date = `${now.getFullYear()}${padTimestampPart(now.getMonth() + 1)}${padTimestampPart(now.getDate())}`;
-  const time = `${padTimestampPart(now.getHours())}${padTimestampPart(now.getMinutes())}${padTimestampPart(now.getSeconds())}`;
-  return `sbcv_${date}_${time}.json`;
-}
+// createSbcvFileName moved to ./exportConfig (shared with the mobile sheet); re-exported for
+// back-compat with existing importers (MobileMenuSheet, tests).
+export { createSbcvFileName } from "./exportConfig";
 
 export function TopBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -142,24 +136,9 @@ export function TopBar() {
   }
 
   function exportConfig() {
-    // Gate on semantic diagnostics: they are recomputed synchronously on every config change and are
-    // never cleared mid-flight (unlike official/binary diagnostics, which runOfficialCheck clears while a
-    // check is in progress), so the gate can't be raced into letting an invalid config through.
-    const errorCount = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
-    if (errorCount > 0) {
-      const proceed = window.confirm(
-        `This config has ${errorCount} error${errorCount === 1 ? "" : "s"} that sing-box may reject. Export anyway?`,
-      );
-      if (!proceed) return;
-    }
-    const exportedConfig = createConfigExport(useProjectStore.getState().config);
-    const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = createSbcvFileName();
-    link.click();
-    URL.revokeObjectURL(url);
+    // Gate on the synchronous semantic `diagnostics` slice (never cleared mid-flight, unlike
+    // official/binary diagnostics) so the gate can't be raced into letting an invalid config through.
+    confirmAndExportConfig(useProjectStore.getState().config, diagnostics);
   }
 
   async function handleImport(event: ChangeEvent<HTMLInputElement>) {
