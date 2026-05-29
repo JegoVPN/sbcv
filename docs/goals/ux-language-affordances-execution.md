@@ -82,11 +82,21 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L1-roundtrip-copy — a one-line "import→export normalizes fields" note where round-trip matters.
 
 ### Phase 2 — Per-node copy accuracy audit (bucket 1d / D5)
-- [ ] L2-audit — agent-driven sweep: for each node kind/type, compare title / subtitle / field labels /
-  hints against the upstream `.md` (`.tmp/sing-box-docs/**`). Output a findings table (node → wrong
-  copy → upstream-correct copy → severity). No runtime change.
-- [ ] L2-fix-* — apply corrections, sliced per node group (inbound / outbound / dns / endpoint / service
-  / route / rule-set / settings). One PR per group.
+- [x] L2-audit — agent-driven sweep (3 parallel auditors vs `docs/upstream/sing-box/testing/**`).
+  Findings table in `docs/ui-copy-audit.md` (9 HIGH incl. invalid-export bugs + a MED list). — PR #101
+- [ ] L2-fix-* — apply corrections, sliced. HIGH queue (from the audit):
+  - [ ] L2-fix-route-strategy — H2: route-options Network Strategy select offers invalid `wifi/cellular/
+    ethernet` → restrict to `default/hybrid/fallback`.
+  - [ ] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
+    commands seed + diagnostics); produces invalid exports today.
+  - [ ] L2-fix-ss-inbound-ciphers — H3: drop legacy stream ciphers from the shadowsocks INBOUND method list.
+  - [ ] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)`.
+  - [ ] L2-fix-hysteria-copy — H4 (required Mbps placeholder) + H5/H6 (drop the false "deprecated"
+    banners + remove `hysteria-out` from `deprecatedKinds`).
+  - [ ] L2-fix-dns-hints — H8 tailscale `accept_default_resolvers` + the MED dns hint cluster.
+  - [ ] L2-fix-rule-set-deprecation — H9: `download_detour` deprecation banner → `http_client`.
+  - [ ] L2-fix-med-copy — the MED list (tuic replay, block removed-in-1.13, domain_strategy removed-1.14,
+    rule-set match-field label, network_type value hints, store_rdrc/V2Ray banners, etc.).
 
 ### Phase 3 — Affordance infrastructure (bucket 2 / D6)
 - [ ] L3-toast-infra — a minimal toast/notification host (store slice + a portal component, a11y-live).
