@@ -20,6 +20,10 @@ function graphWithBroadPortCoverage() {
     ...(config.inbounds ?? []),
     { type: "shadowsocks", tag: "ss-in", listen: "127.0.0.1", listen_port: 1088, method: "none", password: "" } as never,
   ];
+  // C11b: a dial outbound resolving its server name through a dns-server (string form domain_resolver).
+  config.outbounds = (config.outbounds ?? []).map((outbound) =>
+    outbound.tag === "direct" ? ({ ...outbound, domain_resolver: "local-dns" } as never) : outbound,
+  );
   config.route = {
     ...config.route,
     rules: [
@@ -38,15 +42,19 @@ function graphWithBroadPortCoverage() {
   };
   config.dns = {
     ...config.dns,
+    // C11b: a dial dns-server (https) resolving its own remote host through another dns-server.
     servers: [
-      ...(config.dns?.servers ?? []),
+      ...(config.dns?.servers ?? []).map((server) =>
+        server.tag === "remote-doh" ? ({ ...server, domain_resolver: "local-dns" } as never) : server,
+      ),
       { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", accept_default_resolvers: false },
       { type: "resolved", tag: "resolved-dns", service: "resolved-svc" } as never,
     ],
     rules: [{ domain_suffix: ["cn"], inbound: "tun-in", server: "local-dns", rule_set: "remote-rules" }],
   };
+  // C11b: a dial endpoint (tailscale) resolving its server name through a dns-server.
   config.endpoints = [
-    { type: "tailscale", tag: "ts-ep", detour: "proxy" },
+    { type: "tailscale", tag: "ts-ep", detour: "proxy", domain_resolver: "local-dns" } as never,
   ];
   config.certificate_providers = [
     { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
@@ -111,6 +119,23 @@ describe("port relation registry", () => {
     expect(
       relationForHandles("certificate-provider", "tailscale", "endpoint", "endpoint", "tailscale", "certificate-provider", ["writable"])?.id,
     ).toBe("certificate-provider-endpoint");
+
+    // C11b — domain_resolver is one relation per dial-bearing source kind; non-dial source types resolve none.
+    expect(
+      relationForHandles("outbound", "trojan", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"])?.id,
+    ).toBe("dial-domain-resolver");
+    expect(
+      relationForHandles("endpoint", "wireguard", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"])?.id,
+    ).toBe("endpoint-domain-resolver");
+    expect(
+      relationForHandles("dns-server", "https", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"])?.id,
+    ).toBe("dns-server-domain-resolver");
+    expect(
+      relationForHandles("outbound", "selector", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"]),
+    ).toBeUndefined();
+    expect(
+      relationForHandles("dns-server", "hosts", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"]),
+    ).toBeUndefined();
   });
 
   it("keeps every rendered graph edge explainable by the registry", () => {

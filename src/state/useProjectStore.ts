@@ -789,6 +789,30 @@ function connectDirectedPortReference(
     }
   }
 
+  // domain_resolver: a dial-bearing outbound/endpoint/dns-server resolves its server name through a
+  // dns-server (C11b). The writableRelation lookup above already gated the source type to dial-capable
+  // kinds, so here we only write. Preserve a pre-existing object form's sibling fields (strategy, …);
+  // otherwise write the bare dns-server tag — the same value shape the Inspector's select writes.
+  if (
+    outputHandle === "domain-resolver" &&
+    inputHandle === "domain-resolver-target" &&
+    inputNode.kind === "dns-server" &&
+    (outputNode.kind === "outbound" || outputNode.kind === "endpoint" || outputNode.kind === "dns-server")
+  ) {
+    const owner =
+      outputNode.kind === "outbound"
+        ? config.outbounds?.find((item) => item.tag === outputNode.value)
+        : outputNode.kind === "endpoint"
+          ? config.endpoints?.find((item) => item.tag === outputNode.value)
+          : config.dns?.servers?.find((item) => item.tag === outputNode.value);
+    const current = (owner as { domain_resolver?: unknown } | undefined)?.domain_resolver;
+    const nextValue =
+      current && typeof current === "object" && !Array.isArray(current)
+        ? { ...(current as Record<string, unknown>), server: inputNode.value }
+        : inputNode.value;
+    return updateEntityField(config, { kind: outputNode.kind, tag: outputNode.value }, "domain_resolver", nextValue);
+  }
+
   return null;
 }
 

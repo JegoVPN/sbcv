@@ -254,6 +254,30 @@ const cases: SymmetryCase[] = [
     sourceHandle: "dial-detour",
     candidate: { nodeKind: "outbound", nodeType: "direct", handleId: "detour-target" },
   },
+  {
+    relationId: "dial-domain-resolver",
+    name: "outbound domain resolver",
+    base: { outbounds: [{ type: "socks", tag: "px", server: "1.2.3.4", server_port: 1080 }], dns: { servers: [] } },
+    sourceId: "outbound:px",
+    sourceHandle: "domain-resolver",
+    candidate: { nodeKind: "dns-server", nodeType: "local", handleId: "domain-resolver-target" },
+  },
+  {
+    relationId: "endpoint-domain-resolver",
+    name: "endpoint domain resolver",
+    base: { endpoints: [{ type: "wireguard", tag: "wg-ep" }], dns: { servers: [] } },
+    sourceId: "endpoint:wg-ep",
+    sourceHandle: "domain-resolver",
+    candidate: { nodeKind: "dns-server", nodeType: "local", handleId: "domain-resolver-target" },
+  },
+  {
+    relationId: "dns-server-domain-resolver",
+    name: "dns server domain resolver",
+    base: { dns: { servers: [{ type: "https", tag: "doh", server: "1.1.1.1" }] } },
+    sourceId: "dns-server:doh",
+    sourceHandle: "domain-resolver",
+    candidate: { nodeKind: "dns-server", nodeType: "local", handleId: "domain-resolver-target" },
+  },
 ];
 
 describe("chip-create and drag-connect symmetry", () => {
