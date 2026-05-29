@@ -53,11 +53,11 @@ describe("A21 — cloudflared testing inbound", () => {
       expect(inspector.getByLabelText("Token")).toBeInTheDocument();
     });
 
-    it("is gated on stable but actionable on testing in the Palette", () => {
+    it("is gated on stable but actionable on testing in the Palette", async () => {
       useProjectStore.getState().loadMinimal();
       useProjectStore.getState().setChannel("testing");
       render(<App />);
-      const palette = within(screen.getByLabelText("Node palette"));
+      const palette = within(await screen.findByLabelText("Node palette"));
       fireEvent.click(palette.getByRole("button", { name: /Library/ }));
       fireEvent.click(palette.getByRole("button", { name: /^Inbounds/ }));
       // On testing, the Cloudflared entry is a "Setup" action (creatable), not gated.

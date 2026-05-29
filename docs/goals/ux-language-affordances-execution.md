@@ -117,8 +117,9 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   counts; notices already informative — only the four settings nodes were generic). — PR #91
 - [x] L4-mobile-touch — mobile controls meet a ≥36px touch-target minimum: the mobile topbar status
   pill was 30px (brand/icon-buttons already 36px) → bumped to 36px. — PR #99
-- [ ] L4-mobile-palette-defer — A25-rest: actually defer the Palette chunk on mobile (today App eagerly
-  imports it for desktop).
+- [x] L4-mobile-palette-defer — A25-rest: App now `lazy`-loads the desktop Palette, so it code-splits
+  into its own 19KB chunk (was in the main bundle); the mobile shell never renders it (lazy via
+  MobileNodeSheet on demand), so mobile no longer downloads it on first load. — PR #100
 
 ## Running TODO
 Mirror of the queue above; tick as merged. (Populated during execution.)
@@ -230,3 +231,25 @@ Status: implemented 2026-05-29 in `atomic/mobile-touch-targets`; merged in PR #9
   (no other in-scope mobile control <36px), valid + non-flaky selectors, and no layout break (pill now
   matches the 36px brand/icon row).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build`, `pnpm e2e` (16).
+
+### L4-mobile-palette-defer (code-split) — PR #100. **Phase 4 core complete (6/6).**
+Status: implemented 2026-05-29 in `atomic/mobile-palette-defer`; merged in PR #100.
+- What changed: `App.tsx` now `React.lazy`-loads the desktop `Palette` (Suspense fallback = an
+  `aria-hidden` layout placeholder). The bundler splits it into `Palette-*.js` (19KB / 5KB gzip) — it
+  was previously bundled into the main entry. The mobile shell never renders `<Palette/>` (the node-add
+  path lazy-loads it via `MobileNodeSheet` on demand), so mobile's first load no longer ships the
+  Palette chunk. Main `index` chunk dropped ~9KB.
+- Test migration: lazy-loading made 6 desktop tests that synchronously queried the Palette fail (the
+  first such test per file, since vitest isolates module graphs and `React.lazy` resolves on a
+  microtask). Migrated each to `await screen.findByLabelText("Node palette")` / `await findByRole(...)`
+  — the correct pattern for lazy content. The Suspense fallback is `aria-hidden` (no "Node palette"
+  label) so those awaits resolve only on the real Palette.
+- Tests: full suite 874 green; `editor.spec.ts` (Playwright auto-waits on the now-lazy palette) green.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean — no blockers/should-fix.
+  Verified the named-export lazy form + Suspense (wraps only Palette), the aria-hidden fallback (no label
+  collision), that mobile renders no Palette + no other static importer (chunk truly split), the
+  test-migration soundness, and — checking all 29 App-rendering test files — that no unmigrated test is
+  left flaky. e2e safe (Playwright auto-waits). One nit: unused `data-testid="palette-loading"` (kept as
+  harmless instrumentation).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build` (Palette chunk
+  split confirmed), `pnpm e2e` (16; one unrelated drag-path flake, 7/7 on isolated re-run).
