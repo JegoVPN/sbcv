@@ -1,9 +1,16 @@
-# sbcv UI Language Spec (L1-vocab) — DRAFT for sign-off
+# sbcv UI Language Spec (L1-vocab)
 
 The single source of truth for sbcv's user-facing copy. Every Phase-1 copy atomic (L1-badges,
-L1-buildtags, L1-brandbtn, glossary, diagnostics) conforms to this. **Status: DRAFT — awaiting the
-user's wording sign-off (the goal's one human gate).** Proposed words are marked → ; the user confirms
-or edits before any copy ships.
+L1-buildtags, L1-brandbtn, glossary, diagnostics) conforms to this.
+
+**Status: SIGNED OFF by the user 2026-05-29.** Decisions:
+- **Badge words = the full proposed set**, including `setup → Add` (the ~15 `name:"Setup X"` test
+  assertions get migrated). So: Setup→Add, Table→List, Inspector→In parent, Docs→Reference,
+  Gated→Needs 1.14, Pending→Soon; Add/Legacy/Open keep their words. Legacy = colored; testing/gated = muted.
+- **De-dup carrier:** keep the `Needs 1.14`-style badge, drop the version suffix from the label.
+- **Hysteria v1 = KEEP the Legacy treatment** (pill + banner + diagnostic — the opinionated "prefer
+  Hysteria2"), but **drop the literal-false "deprecated upstream / official docs recommend migrating"
+  attribution** in the banners. (So `hysteria-out` stays in `deprecatedKinds`; only the wording changes.)
 
 ## Voice
 - **Plain, specific, sing-box-accurate.** Prefer the upstream term the user must learn (e.g. "Outbound",

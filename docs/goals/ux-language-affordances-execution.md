@@ -66,18 +66,14 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 → 3, but Phase 4 can interleave.
 
 ### Phase 1 — Unified UX language (bucket 1)
-- [~] L1-vocab — **the language spec**: drafted in `docs/ui-language.md` (voice + glossary + badge
-  vocabulary table per D2 + build-tag/brand-button/diagnostics rules). **AWAITING USER SIGN-OFF** — the
-  goal's one human gate. Open decisions: badge words (esp. `setup`→`add` test churn), the de-dup carrier,
-  and the Hysteria-v1 "deprecated" stance (H5/H6). — PR #109 (draft)
+- [x] L1-vocab — language spec `docs/ui-language.md` **SIGNED OFF** (badge words = full proposed set incl. setup→Add; Hysteria v1 keeps Legacy but drops false-upstream wording; de-dup keeps badge drops label suffix). — PR #109
 - [ ] L1-badges — re-label + re-treat the palette status badges per L1-vocab (Add / Setup→? / Table→? /
   Inspector→? / Docs→? / Gated→? / Pending→? / Legacy / Open). Migrate the ~15 `name:"Setup X"` test
   assertions. De-duplicate the `(1.14 testing)`-label-plus-`GATED`-badge double-statement (D2).
 - [ ] L1-buildtags — drop `(with_tailscale)`/`(with_tor)` suffixes from palette labels (D3); if useful,
   surface the build tag as a tooltip/secondary line.
-- [ ] L1-brandbtn — fix the brand-logo button label `"sbcv.app — return to home"`: `goHome` only
-  deselects + closes the global panel + re-fits the canvas (no navigation, no reset). Relabel to match
-  (e.g. "Reset view" / "Deselect & fit").
+- [x] L1-brandbtn — relabeled both brand buttons (desktop + mobile) `aria-label` from "…return to home"
+  → "sbcv.app — reset view (deselect and fit the canvas)" (goHome only deselects + re-fits). — PR #110
 - [ ] L1-target-glossary — target/channel/version tooltip (what stable 1.13 vs testing 1.14 means).
 - [ ] L1-diag-hierarchy — diagnostics read message-first, code secondary (human-readable hierarchy).
 - [ ] L1-roundtrip-copy — a one-line "import→export normalizes fields" note where round-trip matters.
@@ -378,3 +374,15 @@ actionable Phase 2 HIGH queue** (H1–H4, H7, H8, H9 done; H5/H6 deferred as a p
 - Tests: `tests/rule-set-download-detour-deprecation.test.tsx` (banner when set; absent when unset).
 - Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (885), `pnpm build`.
+
+### L1-brandbtn (canvas/topbar copy) — PR #110
+Status: implemented 2026-05-29 in `atomic/l1-brandbtn`; merged in PR #110. First Phase-1 (post-sign-off) atomic.
+- What changed: the brand-logo button's `aria-label` (desktop TopBar + mobile MobileTopBar) said
+  "sbcv.app — return to home", but `goHome` only deselects + closes the global panel + re-fits the canvas
+  (no navigation, no config reset). Relabeled both → "sbcv.app — reset view (deselect and fit the canvas)".
+- Tests: `tests/brand-button-label.test.tsx` (aria-label reads "reset view", not "return to home"). The
+  `brand-home` testid is unchanged so existing tests/e2e stay green.
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE — goHome confirmed
+  (deselect + close panel + re-fit, no nav/reset), both buttons relabeled, testid/onClick unchanged, no
+  old-label test refs. Two NITs (mobile-variant direct coverage; doc PR# optimism) left.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (887), `pnpm build`.

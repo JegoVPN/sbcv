@@ -92,7 +92,7 @@ export function MobileTopBar() {
         type="button"
         className="mobile-brand"
         onClick={goHome}
-        aria-label="sbcv.app — return to home"
+        aria-label="sbcv.app — reset view (deselect and fit the canvas)"
         data-testid="brand-home"
       >
         <svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
