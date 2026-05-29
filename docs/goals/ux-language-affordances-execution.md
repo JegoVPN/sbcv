@@ -81,7 +81,7 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   the Inspector banner. (D3) — PR #111
 - [x] L1-brandbtn — relabeled both brand buttons (desktop + mobile) `aria-label` from "…return to home"
   → "sbcv.app — reset view (deselect and fit the canvas)" (goHome only deselects + re-fits). — PR #110
-- [ ] L1-target-glossary — target/channel/version tooltip (what stable 1.13 vs testing 1.14 means).
+- [x] L1-target-glossary — target selector tooltip explaining stable 1.13 (released) vs testing 1.14 (newer features). — PR #115
 - [ ] L1-diag-hierarchy — diagnostics read message-first, code secondary (human-readable hierarchy).
 - [ ] L1-roundtrip-copy — a one-line "import→export normalizes fields" note where round-trip matters.
 
@@ -450,3 +450,14 @@ Status: implemented 2026-05-29 in `atomic/l1-hysteria-wording`; merged in PR #11
   but the same false-upstream class for hysteria-out; a fix needs a kind-aware tooltip (out of this
   banner+diagnostic-scoped atomic).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (890), `pnpm build`.
+
+### L1-target-glossary (topbar copy) — PR #115
+Status: implemented 2026-05-29 in `atomic/l1-target-glossary`; merged in PR #115.
+- What changed: the "Sing-box target" selector had no explanation. Added a `title` tooltip: "Stable
+  (1.13) is the released version; testing (1.14) has newer features not yet in stable — pick the one
+  your sing-box binary runs."
+- Tests: `tests/target-glossary-tooltip.test.tsx` (tooltip mentions stable/1.13 + testing/1.14).
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE — tooltip accurate vs the
+  channel/target model (targets.ts/useProjectStore), title-only (no logic), non-tautological test. FYI:
+  omits the 1.12-Legacy option (reasonable — explains the two main channels).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (891), `pnpm build`.
