@@ -2528,8 +2528,12 @@ button.sbc-edge-remove:focus-visible {
   width: auto;
 }
 
-/* Mobile node-add sheet (A25 / W31): reuse the desktop Palette inside a bottom sheet */
+/* Mobile node-add sheet (A25 / W31): reuse the desktop Palette inside a bottom sheet.
+   The @media(max-width:980px) rule above hides the desktop side Palette with `display:none`; that also
+   hid this reused copy (the sheet rendered empty — the "+" looked broken). Restore `display` here (this
+   selector outranks the bare `.palette` hide), alongside neutralizing the desktop absolute layout. */
 .mobile-node-sheet .palette {
+  display: block;
   position: static;
   top: auto;
   left: auto;

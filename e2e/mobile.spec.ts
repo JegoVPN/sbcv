@@ -53,6 +53,27 @@ test("mobile shell — Check / Import / Export / node inspector flow", async ({ 
   await expect(page.getByTestId("mobile-inspector-sheet")).toHaveCount(0);
 });
 
+test("mobile + opens a populated add-node sheet (palette not hidden away)", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+
+  // Tapping the topbar "+" opens the node sheet, which reuses the desktop Palette. Regression: the
+  // mobile @media `.palette{display:none}` (which hides the desktop side palette) also collapsed this
+  // reused copy to 0×0, so the sheet opened empty and the "+" looked broken.
+  await page.getByTestId("mobile-add-node").click();
+  const sheet = page.getByTestId("mobile-node-sheet");
+  await expect(sheet).toBeVisible();
+
+  const palette = sheet.getByLabel("Node palette");
+  await expect(palette).toBeVisible();
+  const box = await palette.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.height).toBeGreaterThan(0);
+
+  // Its actual controls render and are reachable.
+  await expect(sheet.getByPlaceholder("Search config")).toBeVisible();
+});
+
 test("mobile topbar controls meet the 36px touch-target minimum (L4)", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("app-mobile")).toBeVisible();
