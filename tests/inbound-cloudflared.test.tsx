@@ -61,7 +61,7 @@ describe("A21 — cloudflared testing inbound", () => {
       fireEvent.click(palette.getByRole("button", { name: /Library/ }));
       fireEvent.click(palette.getByRole("button", { name: /^Inbounds/ }));
       // On testing, the Cloudflared entry is a "Setup" action (creatable), not gated.
-      expect(palette.getByRole("button", { name: "Setup Cloudflared" })).toBeInTheDocument();
+      expect(palette.getByRole("button", { name: "Add Cloudflared" })).toBeInTheDocument();
     });
   });
 });

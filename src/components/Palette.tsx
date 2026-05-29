@@ -300,14 +300,16 @@ const groups: PaletteGroup[] = [
 const templateGroup = groups[0];
 const libraryGroups = groups.slice(1);
 
+// Badge words per the L1-vocab spec (docs/ui-language.md, user-signed-off 2026-05-29): plain,
+// cause-not-jargon. `legacy` stays the colored quality-bar; `Needs 1.14` reads the cause of gating.
 const statusLabel: Record<PaletteStatus, string> = {
   add: "Add",
-  setup: "Setup",
-  table: "Table",
-  inspector: "Inspector",
-  docs: "Docs",
-  gated: "Gated",
-  pending: "Pending",
+  setup: "Add",
+  table: "List",
+  inspector: "In parent",
+  docs: "Reference",
+  gated: "Needs 1.14",
+  pending: "Soon",
   deprecated: "Legacy",
   open: "Open",
 };
@@ -332,15 +334,15 @@ function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>)
 }
 
 function statusTitle(status: PaletteStatus, label: string) {
-  if (status === "add") return `Add ${label} to canvas`;
-  if (status === "setup") return `Add ${label} setup draft to canvas`;
-  if (status === "table") return `Add or edit ${label} through the ordered table`;
-  if (status === "inspector") return `${label} is edited inside its parent Inspector`;
-  if (status === "gated") return `${label} is target-gated and needs matching sing-box validation`;
-  if (status === "pending") return `${label} is planned but not implemented as a writable command yet`;
+  if (status === "add") return `Add ${label} to the canvas`;
+  if (status === "setup") return `Add ${label} as a draft — fill in the required fields after`;
+  if (status === "table") return `Add or edit ${label} through the ordered list`;
+  if (status === "inspector") return `${label} is edited inside its parent node`;
+  if (status === "gated") return `${label} needs sing-box 1.14 — switch to the testing target to create it`;
+  if (status === "pending") return `${label} is planned — not creatable yet`;
   if (status === "deprecated") return `${label} is deprecated by sing-box; new configs should use the recommended replacement`;
   if (status === "open") return `${label} already exists — click to open the Inspector`;
-  return `${label} is documentation-only in the current UI`;
+  return `${label} is reference-only in the current UI`;
 }
 
 function canActivate(item: PaletteItem, status: PaletteStatus) {

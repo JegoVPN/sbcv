@@ -97,11 +97,11 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^DNS/ }));
-    expect(palette.getByRole("button", { name: "Legacy Server: Docs" })).toBeDisabled();
+    expect(palette.getByRole("button", { name: "Legacy Server: Reference" })).toBeDisabled();
 
     fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
-    expect(palette.getByRole("button", { name: "WireGuard: Docs" })).toBeDisabled();
-    expect(palette.getByRole("button", { name: "DNS: Docs" })).toBeDisabled();
+    expect(palette.getByRole("button", { name: "WireGuard: Reference" })).toBeDisabled();
+    expect(palette.getByRole("button", { name: "DNS: Reference" })).toBeDisabled();
   });
 
   it("marks the loaded template without closing the template panel", () => {
@@ -140,7 +140,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Inbounds/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add HTTP" }));
 
     let inspector = within(screen.getByLabelText("Node inspector"));
     expect(inspector.getByText("Listen Fields")).toBeInTheDocument();
@@ -194,7 +194,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^NTP/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup NTP Settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add NTP Settings" }));
 
     expect(useProjectStore.getState().selectedId).toBe("settings:ntp");
     expect(useProjectStore.getState().config.ntp?.server).toBe("time.apple.com");
@@ -204,7 +204,7 @@ describe("SBC editor shell", () => {
     const certificateGroup = palette.getAllByRole("button", { name: /^Certificate/ })[0];
     if (!certificateGroup) throw new Error("missing Certificate group");
     fireEvent.click(certificateGroup);
-    fireEvent.click(screen.getByRole("button", { name: "Setup Certificate" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Certificate" }));
 
     expect(useProjectStore.getState().selectedId).toBe("settings:certificate");
     expect(useProjectStore.getState().config.certificate?.store).toBe("system");
@@ -212,7 +212,7 @@ describe("SBC editor shell", () => {
     expect(screen.getByText("Certificate Paths")).toBeInTheDocument();
 
     fireEvent.click(palette.getByRole("button", { name: /^Experimental/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Experimental" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Experimental" }));
 
     expect(useProjectStore.getState().selectedId).toBe("settings:experimental");
     expect(useProjectStore.getState().config.experimental?.cache_file).toMatchObject({ enabled: false });
@@ -227,7 +227,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add HTTP" }));
 
     const created = useProjectStore.getState().config.outbounds?.at(-1);
 
@@ -244,7 +244,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Naive" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Naive" }));
 
     expect(useProjectStore.getState().selectedId).toBe("outbound:naive-out");
     const before = useProjectStore.getState().jsonDraft;
@@ -349,13 +349,13 @@ describe("SBC editor shell", () => {
     let palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Outbounds/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Naive" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Naive" }));
 
     expect(useProjectStore.getState().config.route?.rules?.at(-1)?.outbound).toBe("naive-out");
 
     fireEvent.click(screen.getByTestId("node-outbound:proxy"));
     palette = within(screen.getByLabelText("Node palette"));
-    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add HTTP" }));
 
     const proxy = useProjectStore.getState().config.outbounds?.find((outbound) => outbound.tag === "proxy");
     expect(proxy?.outbounds).toContain("http-out");
@@ -384,7 +384,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Inbounds/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup HTTP" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add HTTP" }));
 
     const created = useProjectStore.getState().config.inbounds?.at(-1);
 
@@ -401,7 +401,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^DNS/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup TCP Server" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add TCP Server" }));
 
     const created = useProjectStore.getState().config.dns?.servers?.at(-1);
 
@@ -418,7 +418,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Route/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Remote Rule Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Remote Rule Set" }));
 
     const created = useProjectStore.getState().config.route?.rule_set?.at(-1);
 
@@ -431,11 +431,11 @@ describe("SBC editor shell", () => {
     expect(screen.getByTestId("node-rule-set:remote-rules")).toBeInTheDocument();
     expect(screen.getByText("Download Detour")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Setup Local Rule Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Local Rule Set" }));
     const localCreated = useProjectStore.getState().config.route?.rule_set?.at(-1);
     expect(localCreated).toMatchObject({ type: "local" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Setup Inline Rule Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Inline Rule Set" }));
     const inlineCreated = useProjectStore.getState().config.route?.rule_set?.at(-1);
     expect(inlineCreated).toMatchObject({ type: "inline" });
   });
@@ -476,7 +476,7 @@ describe("SBC editor shell", () => {
     const palette = within(screen.getByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Endpoints/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Setup Tailscale" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add Tailscale" }));
 
     expect(useProjectStore.getState().selectedId).toBe("endpoint:ts-ep");
     expect(useProjectStore.getState().config.endpoints?.at(-1)).toMatchObject({ type: "tailscale", tag: "ts-ep" });
