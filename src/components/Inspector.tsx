@@ -294,6 +294,27 @@ const serviceHandledFields = new Set([
 ]);
 const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client", "rules"]);
 
+// C2-B: fields the per-type certificate-provider editor renders structurally; the rest (e.g. http_client,
+// dns01_challenge) fall through to the Advanced JSON sections. external_account is an object whose
+// key_id/mac_key are rendered as nested controls, so the parent is handled here.
+const certificateProviderHandledFields = new Set([
+  "tag",
+  "type",
+  "domain",
+  "email",
+  "provider",
+  "data_directory",
+  "key_type",
+  "profile",
+  "account_key",
+  "external_account",
+  "api_token",
+  "origin_ca_key",
+  "request_type",
+  "requested_validity",
+  "endpoint",
+]);
+
 // Seeds a new kv-repeater row with a unique, non-empty key so a blank {"":""} entry can never be
 // committed to (and exported from) canonical config (W13 / C0-6). Mirrors the ccm/ocm addHeader pattern.
 export function withUniqueBlankKey<T extends Record<string, unknown>>(map: T, base: string): T {
@@ -1601,7 +1622,19 @@ function nestedPatch(entity: InspectorEntity, path: string[], value: unknown): {
   const last = nested[nested.length - 1];
   if (!last) return null;
   cursor[last] = value;
-  return { field, value: nextRoot };
+  // Clearing the last populated leaf of a nested object would otherwise leave an empty `{}` behind (the
+  // export pruner keeps empty objects), so a cleared sub-field emits non-canonical noise (e.g.
+  // `external_account: {}`). Drop the whole top-level object when every leaf became empty. (C2-B)
+  return { field, value: hasMeaningfulValue(nextRoot) ? nextRoot : undefined };
+}
+
+// True if a value carries information worth serializing: a non-empty string/array, any boolean/number,
+// or an object with at least one meaningful leaf (recursively). Empty objects/strings/arrays are noise.
+function hasMeaningfulValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.values(value as Record<string, unknown>).some(hasMeaningfulValue);
+  return true;
 }
 
 function isSharedValueActive(value: unknown) {
@@ -2097,6 +2130,38 @@ function SharedFieldCards({
       })}
     </div>
   );
+}
+
+// C2-B: per-type structured field definitions for certificate_providers (testing-only, 1.14). acme &
+// cloudflare-origin-ca require domain[]; tailscale reuses a Tailscale endpoint. Rendered through the shared
+// SharedFieldControl so the list/select/text/number controls (and object-form JSON fallback) are reused.
+function certificateProviderFields(entityType: string | null, config: SingBoxConfig): SharedFieldDefinition[] {
+  if (entityType === "acme") {
+    return [
+      { label: "Domain", path: ["domain"], kind: "list", hint: "ACME is disabled when empty." },
+      { label: "Email", path: ["email"], kind: "text" },
+      { label: "Provider", path: ["provider"], kind: "text", hint: "letsencrypt | zerossl | https://… (custom)" },
+      { label: "Data Directory", path: ["data_directory"], kind: "text" },
+      { label: "Key Type", path: ["key_type"], kind: "select", options: ["ed25519", "p256", "p384", "rsa2048", "rsa4096"] },
+      { label: "Profile", path: ["profile"], kind: "text" },
+      { label: "Account Key", path: ["account_key"], kind: "text" },
+      { label: "EAB Key ID", path: ["external_account", "key_id"], kind: "text" },
+      { label: "EAB MAC Key", path: ["external_account", "mac_key"], kind: "text" },
+    ];
+  }
+  if (entityType === "cloudflare-origin-ca") {
+    return [
+      { label: "Domain", path: ["domain"], kind: "list", hint: "Certificate hostnames." },
+      { label: "API Token", path: ["api_token"], kind: "text", hint: "Conflicts with Origin CA Key." },
+      { label: "Origin CA Key", path: ["origin_ca_key"], kind: "text", hint: "Conflicts with API Token." },
+      { label: "Request Type", path: ["request_type"], kind: "select", options: ["origin-rsa", "origin-ecc"] },
+      { label: "Requested Validity", path: ["requested_validity"], kind: "number", hint: "Days: 7 | 30 | 90 | 365 | 730 | 1095 | 5475 (default)." },
+    ];
+  }
+  if (entityType === "tailscale") {
+    return [{ label: "Endpoint", path: ["endpoint"], kind: "select", options: endpointTags(config, "tailscale") }];
+  }
+  return [];
 }
 
 export function Inspector({ compact = false }: { compact?: boolean } = {}) {
@@ -5757,6 +5822,22 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
           <AdvancedNonScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
+        </>
+      ) : null}
+
+      {ref.kind === "certificate-provider" ? (
+        <>
+          {certificateProviderFields(entityType, config).map((definition) => (
+            <SharedFieldControl
+              key={definition.path.join(".")}
+              definition={definition}
+              entity={entity}
+              entityRef={ref}
+              updateField={updateField}
+            />
+          ))}
+          <AdvancedScalarFields entity={entity} handledFields={certificateProviderHandledFields} entityRef={ref} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={certificateProviderHandledFields} entityRef={ref} updateField={updateField} />
         </>
       ) : null}
 
