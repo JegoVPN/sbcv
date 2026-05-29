@@ -47,7 +47,7 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
 
 ### Phase N3 — Card chrome cleanup + typography unification
 - [x] N3-remove-center-plus — removed the center "+" (`sbc-node__add` JSX + CSS). — PR #97
-- [ ] N3-toolbar-typography — introduce a node type-scale (CSS custom props on `.sbc-node-shell`: `--node-title:22px/760`, `--node-secondary:13px/760`, `--node-micro:11px`); set `.sbc-node-pill` an explicit `font-size:13px`; bring `.sbc-node-primary` from `18px/860 → 13px/760` (fixes the oversized "18"); normalize the leading-glyph `size` props (14–15) for rhythm. Keep `node-bottom-toolbar` + `.sbc-node-primary` testids/classnames (tests pin them: `node-status-icon.test.tsx`, `external-fixtures.spec.ts`).
+- [x] N3-toolbar-typography — node type-scale custom props on `.sbc-node-shell` (`--node-title-size:22px`, `--node-secondary-size:13px`, `--node-micro-size:11px`, `--node-strong-weight:760`); `.sbc-node-pill` gets explicit `13px`; `.sbc-node-primary` `18px/860 → 13px/760` (fixes the oversized "18"); titlebar/title/subtitle/chip re-pointed at the tokens (value-neutral). — PR #98
 
 ### Phase N4 — (appendix / separate effort) connection-model completeness
 The upstream study found the canvas relation set is missing whole edge classes (resolver/`domain_resolver`, http-client refs, inbound→inbound chain, selector/urltest `default`, certificate_provider TLS, inbound dialer detours, derp mesh/verify detours, tun rule-set sets, v2ray_api stats). **This is a larger correctness effort, NOT part of the visual redesign** — queued here for visibility; prioritize separately. `referenceRegistry.ts` already encodes most of these and is the blueprint; the one reference missing from both is `tls.reality.handshake.detour`.
@@ -111,3 +111,24 @@ Status: implemented 2026-05-29 in `atomic/node-remove-center-plus`; merged in PR
   no dangling `.sbc-node__add` refs anywhere, no behavior regression (per-port "+" + hover chips cover
   add-downstream), and the test is non-tautological (the urltest node genuinely has compatible>0).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build`, `pnpm e2e` (14).
+
+### N3-toolbar-typography (canvas CSS) — PR #98
+Status: implemented 2026-05-29 in `atomic/node-toolbar-typography`; merged in PR #98.
+- What changed: the bottom-toolbar count pill rendered `18px/860` while its neighbour pills inherited
+  the 16px browser default (no font tokens existed) — the user's "18 字体大了好几号" complaint.
+  Introduced a node type-scale via CSS custom props on `.sbc-node-shell`
+  (`--node-title-size:22px`, `--node-secondary-size:13px`, `--node-micro-size:11px`,
+  `--node-strong-weight:760`). The real fixes: `.sbc-node-pill` now sets explicit `13px` (was the
+  accidental 16px inherit) and `.sbc-node-primary` drops to `13px/760` (was `18px/860`). Titlebar/
+  title/subtitle/`.node-chip` re-pointed at the tokens (value-neutral — same sizes, now centralized).
+  Leading-glyph sizes are JSX `size` props, left as-is.
+- Tests: new e2e in `editor.spec.ts` measuring computed `font-size` — asserts the count pill is `13px`
+  and equal to the type pill (jsdom can't compute font-size, so this is e2e). Testids/classnames
+  preserved so `node-status-icon.test.tsx` / `external-fixtures.spec.ts` stay green.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean — no blockers/should-fix.
+  Verified value-neutrality byte-for-byte against main (only real changes: pill 16-inherit→13, primary
+  18/860→13/760), custom-prop inheritance (all referencing elements are descendants of `.sbc-node-shell`,
+  no portals), no regression to the pinned `.sbc-node-primary`/`node-bottom-toolbar` tests, and the e2e
+  font-size assertion is non-flaky (route:main always renders both pills). Two optional nits (var()
+  fallbacks; token coupling) deemed unnecessary.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build`, `pnpm e2e` (15).
