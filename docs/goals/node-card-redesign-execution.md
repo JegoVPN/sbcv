@@ -89,7 +89,11 @@ User decision (2026-05-29): **keep the count pill, just unify its font** (DN-5 c
 
 ## Decision Log
 - **2026-05-29 — DN-5 confirmed (user):** keep the toolbar compatible-count pill; the objection was its *size* (18px/860), not its presence. N3 unifies it to the secondary scale (13px/760) without removing it.
-- **OQ-1 / OQ-2:** pending user pick (trade-offs laid out above); recommendation = OQ-1 Option B, OQ-2 Option A.
+- **2026-05-29 — FULL PLAN APPROVED (user "全案你的推荐走"):** all recommendations adopted.
+  **OQ-1 = Option B** (unconnected editable ports reveal on hover/drag → still draggable to existing
+  nodes; the port "+" opens the searchable picker for new nodes — both gestures kept). **OQ-2 = Option
+  A** (readonly/decorative structural ports also collapse by default; they reappear when their
+  structural link is live). DN-1..DN-7 as recommended. The plan is now fully executable.
 
 ## Milestone Notes
 (One block per merged atomic.)
