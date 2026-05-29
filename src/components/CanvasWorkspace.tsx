@@ -529,13 +529,6 @@ export function CanvasWorkspace() {
       </ReactFlow>
       </CanvasInteractionContext.Provider>
       {selectedTitle ? <div className="canvas-selection-pill">Selected {selectedTitle}</div> : null}
-      {isMobile ? null : (
-        <div className="canvas-edge-legend" data-testid="canvas-edge-legend" aria-label="Edge legend">
-          <span className="canvas-edge-legend__row"><span className="canvas-edge-legend__swatch canvas-edge-legend__swatch--link" aria-hidden="true" /> Configured link / reference</span>
-          <span className="canvas-edge-legend__row"><span className="canvas-edge-legend__swatch canvas-edge-legend__swatch--flow" aria-hidden="true" /> Animated: traffic path (entry → route → final)</span>
-          <span className="canvas-edge-legend__row"><span className="canvas-edge-legend__swatch canvas-edge-legend__swatch--remove" aria-hidden="true">✕</span> Hover a writable edge to disconnect</span>
-        </div>
-      )}
     </section>
   );
 }
