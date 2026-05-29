@@ -1083,6 +1083,12 @@ textarea {
   position: absolute;
   z-index: 5;
   display: grid;
+  /* Pin the column to one port-width. The only in-flow children are 40px .sbc-port circles (the
+     .sbc-node__ports-extra overlay is out of flow), so without an explicit width the column shrinks to
+     0 when a side has NO connected ports — leaving the right:-36px / left:-36px anchor off by ~36px and
+     floating the hover-revealed extra ports far from the card. A fixed 40px keeps the anchor identical
+     whether or not connected ports exist. */
+  width: 40px;
   gap: 12px;
   pointer-events: auto;
 }
