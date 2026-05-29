@@ -34,14 +34,36 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
 ## Phases & Atomic Queue
 
 ### Phase N1 — Port column: connected-by-default, reveal-on-demand
-- [ ] N1-connected-default — render only connected ports (input/output) by default, using `data.connectedPorts`; hidden ports are CSS-collapsed (kept in DOM with handles mounted), columns stay vertically centered. Connected ports NEVER hidden. Preserve the dns-rule action suppression + aggregate disconnect rules.
-- [ ] N1-reveal-on-drag — during a pending connect-drag, reveal this node's `isCompatible` ports (reuse `compatiblePortKeys`/`pendingPortKey`) so they're droppable; ensure no invisible-but-snappable handle within `connectionRadius`.
-- [ ] N1-reveal-on-hover — reveal collapsed ports on node hover (pure CSS via `.sbc-node-shell:hover`, since hidden ports stay mounted) — gives an outgoing-drag affordance from unconnected ports.
-- [ ] N1-tests — migrate `tests/port-interaction-destructive.test.tsx` + `e2e/port-click-redesign.spec.ts` to the new visibility model (hidden-but-present; reveal-on-drag/hover).
+> **Implemented as one coherent unit with N2-remove-grid (coupled). The plan's DN-1 mechanism changed
+> during execution.** Connected ports render in the centered flow column; UNCONNECTED ports render in an
+> absolute `.sbc-node__ports-extra` overlay, hidden until the node is hovered or the port is a live
+> drop-target during a drag. **Key correction:** `updateNodeInternals` is NOT used (it was actively
+> harmful — it raced the canvas initial fitView, throwing nodes off-screen in the heavy multi-import
+> e2e). React Flow reads handle positions live at interaction time, so the absolute overlay (connected
+> ports never move on reveal) needs no re-measure; reveal is pure CSS. Verified: 940 jsdom + 16/16
+> Playwright e2e green (e2e is the only thing that can verify the visual collapse/reveal + fit — jsdom
+> doesn't apply stylesheet CSS).
+- [x] N1-connected-default — connected ports (per `data.connectedPorts`) render in the centered flow
+  column; unconnected ports go to the hidden `.sbc-node__ports-extra` overlay; all ports stay mounted.
+  dns-rule action suppression + aggregate disconnect rules preserved.
+- [x] N1-reveal-on-drag — overlay ports with `is-compatible`/`is-pending` reveal during a connect-drag
+  (pure CSS) so they're droppable; the picker's source port stays revealed while its picker is open
+  (CanvasWorkspace keeps `pendingPortKey` on `chipPicker.source`).
+- [x] N1-reveal-on-hover — `.sbc-node-shell:hover .sbc-node__ports-extra .sbc-port` reveals the overlay
+  (pure CSS; subtree `:hover` covers the out-of-box ports). Outgoing-drag affordance from unconnected ports.
+- [x] N1-tests — `tests/node-port-visibility.test.tsx` (connected→primary, unconnected→overlay) + migrated
+  `e2e/port-click-redesign.spec.ts` to the reveal model (hover-to-reveal before drag; measure targets
+  mid-drag; fit-then-reveal for the now-horizontal edge-remove button; node-body drop for invalid).
 
 ### Phase N2 — Unified searchable downstream picker
-- [ ] N2-picker-trigger — open `ChipPickerPopover` from a port "+" click (port-scoped), reusing `chipCandidatesForPending` → `createNodeAndConnect`; anchor via `boundedPickerPlacement`. Channel the request through `canvasInteractionContext` (the existing SbcNode↔CanvasWorkspace bus).
-- [ ] N2-remove-grid — delete the overflowing `sbc-node__actions`/`node-chip` grid (+ CSS); the searchable popover replaces it.
+- [ ] N2-picker-trigger — (follow-up) open `ChipPickerPopover` from a port "+" click (port-scoped) via
+  `canvasInteractionContext`. NOT yet done — adding a downstream node works today via the existing
+  drag-a-port-to-empty-canvas → searchable picker flow, which already satisfies "unify into the
+  searchable popover" (complaint #2). The port-"+"-click is a convenience layer on top.
+- [x] N2-remove-grid — deleted the overflowing `sbc-node__actions`/`node-chip` candidate grid (+ CSS).
+  The node-delete button moved into the toolbar (hover/selected-gated via `.sbc-node__delete` so it can't
+  be clicked by accident). The count pill stays (DN-5). `createCompatible` dropped from SbcNode (store
+  action + its coverage test stay for N2-compatible-retire). — shipped with N1
 - [ ] N2-candidate-correctness — ensure per-port candidate sets match upstream (apply the filtered sets: injectable-inbound, managed-shadowsocks, tailscale-endpoint, resolver=dns-only, …). Use `referenceRegistry`/`portRelations` as source; do NOT silently offer invalid targets.
 - [ ] N2-compatible-retire — retire `data.compatible` string-label path + `createCompatible`/`outboundTypeForChipLabel` IF no longer used (or keep a count-only source for the toolbar pill); migrate `tests/compatible-chip-coverage.test.ts` + `tests/app.test.tsx` callers to `createNodeAndConnect`.
 

@@ -324,11 +324,15 @@ export function CanvasWorkspace() {
   }, [disconnectPort]);
 
   useEffect(() => {
+    // Keep the source port revealed both during an active connect-drag AND while the chip-picker it
+    // opened is still up — otherwise (N1) a now-unconnected source port collapses out from under the
+    // picker's connector line. The port-triggered picker (N2) reuses this same source-reveal.
+    const revealedSource = pendingPort ?? chipPicker?.source ?? null;
     interactionStoreRef.current.setSnapshot({
-      pendingPortKey: pendingPort ? interactionPortKey(pendingPort.nodeId, pendingPort.handleId) : null,
+      pendingPortKey: revealedSource ? interactionPortKey(revealedSource.nodeId, revealedSource.handleId) : null,
       compatiblePortKeys,
     });
-  }, [compatiblePortKeys, pendingPort]);
+  }, [compatiblePortKeys, pendingPort, chipPicker]);
 
   useEffect(() => {
     if (layoutCaptureToken === 0) return;

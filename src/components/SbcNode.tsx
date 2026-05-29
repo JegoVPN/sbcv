@@ -152,6 +152,16 @@ export function getPortSpecs(
   });
 }
 
+// N1: ports split into two groups so the card shows only its CONNECTED ports by default. Connected
+// ports render in the normal (vertically-centered) flow column; UNCONNECTED ports render in an absolute
+// `.sbc-node__ports-extra` overlay that's hidden until the node is hovered or the port is a valid
+// drop-target during a connect-drag. Because the overlay is out-of-flow, revealing it never moves the
+// connected ports (no edge re-anchoring / React Flow re-measure needed — RF reads handle positions
+// live at interaction time). All ports stay mounted so their handles are always connectable.
+export function portIsConnected(connectedPorts: Partial<Record<PortDirection, string[]>>, direction: PortDirection, key: string): boolean {
+  return Boolean(connectedPorts[direction]?.includes(key));
+}
+
 export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const Icon = getNodeIcon(data.kind, data.type);
   const StatusIcon = statusIcon(data.status);
@@ -165,14 +175,85 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
     [data.kind, data.type, data.action],
   );
   const { compatiblePortKeys, disconnectPort, pendingPortKey } = useCanvasInteraction(id, portKeys);
-  const { setSelectedId, createCompatible, deleteEntity } = useProjectStore(
+  const { setSelectedId, deleteEntity } = useProjectStore(
     useShallow((state) => ({
       setSelectedId: state.setSelectedId,
-      createCompatible: state.createCompatible,
       deleteEntity: state.deleteEntity,
     })),
   );
   const connectedPorts = data.connectedPorts ?? EMPTY_CONNECTED_PORTS;
+
+  const renderPort = (port: PortSpec, direction: PortDirection) => {
+    const connected = portIsConnected(connectedPorts, direction, port.key);
+    const isCompatible = compatiblePortKeys.has(port.key);
+    const isPending = pendingPortKey === port.key;
+    const side = direction === "input" ? "input" : "output";
+    const handleSide = direction === "input" ? "in" : "out";
+    const position = direction === "input" ? Position.Left : Position.Right;
+    const relationWord = direction === "input" ? "for" : "from";
+    const actionLabel = port.editable ? (connected ? "Connected" : "Start") : connected ? "Linked" : "Readonly";
+    return (
+      <div
+        className={`sbc-port sbc-port--${side} ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}
+        key={port.key}
+        role="button"
+        tabIndex={0}
+        title={port.label}
+        aria-label={`${actionLabel} ${port.label} ${relationWord} ${data.title}`}
+        data-port-type={port.key}
+        data-port-node-kind={port.nodeKind}
+        data-port-node-type={port.nodeType}
+        data-port-mode={port.mode}
+        data-editable={port.editable ? "true" : "false"}
+        data-connected={connected ? "true" : "false"}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <Handle
+          id={port.key}
+          className={`sbc-handle sbc-handle--${handleSide} sbc-handle--target${isCompatible ? " valid" : ""}`}
+          type="target"
+          position={position}
+          isConnectable={port.editable}
+        />
+        <Handle
+          id={port.key}
+          className={`sbc-handle sbc-handle--${handleSide} sbc-handle--source${isCompatible ? " valid" : ""}`}
+          type="source"
+          position={position}
+          isConnectable={port.editable}
+        />
+        <port.icon size={15} />
+        <span className="sbc-port__label">{port.label}</span>
+        {port.editable && connected && !port.aggregate ? (
+          <button
+            className="sbc-port__action nodrag"
+            type="button"
+            aria-label={`Disconnect ${port.label} ${relationWord} ${data.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              disconnectPort(id, port.key);
+            }}
+          >
+            <Trash2 size={10} />
+          </button>
+        ) : port.editable && !connected ? (
+          <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
+        ) : null}
+      </div>
+    );
+  };
+
+  // Connected ports stay in the centered flow column; unconnected ones go to the hover/drag-revealed
+  // overlay. Split per direction so each column centers on just its connected ports.
+  const splitPorts = (ports: PortSpec[], direction: PortDirection) => ({
+    connected: ports.filter((port) => portIsConnected(connectedPorts, direction, port.key)),
+    extra: ports.filter((port) => !portIsConnected(connectedPorts, direction, port.key)),
+  });
+  const leftPorts = splitPorts(inputPorts, "input");
+  const rightPorts = splitPorts(outputPorts, "output");
+
   const isDeprecated = data.kind === "outbound" && data.type === "block";
   const isNotice = data.kind === "notice";
   const canDelete = !isNotice;
@@ -205,123 +286,17 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         ) : null}
 
         <div className="sbc-node__ports sbc-node__ports--left" data-testid="node-left-ports">
-          {inputPorts.map((port) => {
-            const connected = Boolean(connectedPorts.input?.includes(port.key));
-            const actionLabel = port.editable ? (connected ? "Connected" : "Start") : (connected ? "Linked" : "Readonly");
-            const isCompatible = compatiblePortKeys.has(port.key);
-            const isPending = pendingPortKey === port.key;
-            return (
-              <div
-                className={`sbc-port sbc-port--input ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}
-                key={port.key}
-                role="button"
-                tabIndex={0}
-                title={port.label}
-                aria-label={`${actionLabel} ${port.label} for ${data.title}`}
-                data-port-type={port.key}
-                data-port-node-kind={port.nodeKind}
-                data-port-node-type={port.nodeType}
-                data-port-mode={port.mode}
-                data-editable={port.editable ? "true" : "false"}
-                data-connected={connected ? "true" : "false"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                }}
-              >
-                <Handle
-                  id={port.key}
-                  className={`sbc-handle sbc-handle--in sbc-handle--target${isCompatible ? " valid" : ""}`}
-                  type="target"
-                  position={Position.Left}
-                  isConnectable={port.editable}
-                />
-                <Handle
-                  id={port.key}
-                  className={`sbc-handle sbc-handle--in sbc-handle--source${isCompatible ? " valid" : ""}`}
-                  type="source"
-                  position={Position.Left}
-                  isConnectable={port.editable}
-                />
-                <port.icon size={15} />
-                <span className="sbc-port__label">{port.label}</span>
-                {port.editable && connected && !port.aggregate ? (
-                  <button
-                    className="sbc-port__action nodrag"
-                    type="button"
-                    aria-label={`Disconnect ${port.label} for ${data.title}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      disconnectPort(id, port.key);
-                    }}
-                  >
-                    <Trash2 size={10} />
-                  </button>
-                ) : port.editable && !connected ? (
-                  <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
-                ) : null}
-              </div>
-            );
-          })}
+          {leftPorts.connected.map((port) => renderPort(port, "input"))}
+          <div className="sbc-node__ports-extra" data-testid="node-left-ports-extra">
+            {leftPorts.extra.map((port) => renderPort(port, "input"))}
+          </div>
         </div>
 
         <div className="sbc-node__ports sbc-node__ports--right" data-testid="node-right-ports">
-          {outputPorts.map((port) => {
-            const connected = Boolean(connectedPorts.output?.includes(port.key));
-            const actionLabel = port.editable ? (connected ? "Connected" : "Start") : (connected ? "Linked" : "Readonly");
-            const isCompatible = compatiblePortKeys.has(port.key);
-            const isPending = pendingPortKey === port.key;
-            return (
-              <div
-                className={`sbc-port sbc-port--output ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}
-                key={port.key}
-                role="button"
-                tabIndex={0}
-                title={port.label}
-                aria-label={`${actionLabel} ${port.label} from ${data.title}`}
-                data-port-type={port.key}
-                data-port-node-kind={port.nodeKind}
-                data-port-node-type={port.nodeType}
-                data-port-mode={port.mode}
-                data-editable={port.editable ? "true" : "false"}
-                data-connected={connected ? "true" : "false"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                }}
-              >
-                <Handle
-                  id={port.key}
-                  className={`sbc-handle sbc-handle--out sbc-handle--target${isCompatible ? " valid" : ""}`}
-                  type="target"
-                  position={Position.Right}
-                  isConnectable={port.editable}
-                />
-                <Handle
-                  id={port.key}
-                  className={`sbc-handle sbc-handle--out sbc-handle--source${isCompatible ? " valid" : ""}`}
-                  type="source"
-                  position={Position.Right}
-                  isConnectable={port.editable}
-                />
-                <port.icon size={15} />
-                <span className="sbc-port__label">{port.label}</span>
-                {port.editable && connected && !port.aggregate ? (
-                  <button
-                    className="sbc-port__action nodrag"
-                    type="button"
-                    aria-label={`Disconnect ${port.label} from ${data.title}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      disconnectPort(id, port.key);
-                    }}
-                  >
-                    <Trash2 size={10} />
-                  </button>
-                ) : port.editable && !connected ? (
-                  <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
-                ) : null}
-              </div>
-            );
-          })}
+          {rightPorts.connected.map((port) => renderPort(port, "output"))}
+          <div className="sbc-node__ports-extra" data-testid="node-right-ports-extra">
+            {rightPorts.extra.map((port) => renderPort(port, "output"))}
+          </div>
         </div>
 
         <div className="sbc-node__summary">
@@ -366,25 +341,9 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
                 <CirclePlus size={15} />
                 {data.compatible.length}
               </button>
-            </div>
-
-            <div className="sbc-node__actions nodrag" data-testid="node-hover-actions">
-              {data.compatible.map((kind) => (
-                <button
-                  key={kind}
-                  className="node-chip"
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    createCompatible(id, kind);
-                  }}
-                >
-                  + {kind}
-                </button>
-              ))}
               {canDelete ? (
                 <button
-                  className="node-icon-button node-icon-button--danger"
+                  className="node-icon-button node-icon-button--danger sbc-node__delete"
                   type="button"
                   aria-label={`Delete ${data.title}`}
                   onClick={(event) => {
