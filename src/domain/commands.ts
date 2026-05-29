@@ -793,5 +793,30 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
     const ntp = next.ntp as Record<string, unknown> | undefined;
     if (ntp && ntp.detour === detourTag) ntp.detour = undefined;
   }
+  // domain_resolver (C11b): clear the reference whether it is the bare string tag or the object form's
+  // `server`. The object form requires `server`, so dropping the reference removes the whole object — a
+  // resolver object without a server is invalid.
+  const clearDomainResolver = (owner: Record<string, unknown> | undefined, resolverTag: string) => {
+    if (!owner) return;
+    const resolver = owner.domain_resolver;
+    if (typeof resolver === "string" && resolver === resolverTag) owner.domain_resolver = undefined;
+    else if (
+      resolver &&
+      typeof resolver === "object" &&
+      !Array.isArray(resolver) &&
+      (resolver as Record<string, unknown>).server === resolverTag
+    ) {
+      owner.domain_resolver = undefined;
+    }
+  };
+  if (relation === "dial-domain-resolver") {
+    clearDomainResolver(next.outbounds?.find((item) => item.tag === parts[0]) as Record<string, unknown> | undefined, parts[1] ?? "");
+  }
+  if (relation === "endpoint-domain-resolver") {
+    clearDomainResolver(next.endpoints?.find((item) => item.tag === parts[0]) as Record<string, unknown> | undefined, parts[1] ?? "");
+  }
+  if (relation === "dns-server-domain-resolver") {
+    clearDomainResolver(next.dns?.servers?.find((item) => item.tag === parts[0]) as Record<string, unknown> | undefined, parts[1] ?? "");
+  }
   return next;
 }

@@ -11,7 +11,7 @@ function createDisconnectFixture(): SingBoxConfig {
     { type: "shadowsocks", tag: "ss-in", listen: "127.0.0.1", listen_port: 1088, method: "none", password: "" } as never,
   ];
   config.outbounds = (config.outbounds ?? []).map((outbound) =>
-    outbound.tag === "hk" ? { ...outbound, detour: "direct" } : outbound,
+    outbound.tag === "hk" ? { ...outbound, detour: "direct", domain_resolver: "local-dns" } : outbound,
   );
   config.route = {
     ...config.route,
@@ -28,7 +28,10 @@ function createDisconnectFixture(): SingBoxConfig {
   config.dns = {
     ...config.dns,
     servers: [
-      ...(config.dns?.servers ?? []),
+      // C11b: remote-doh (https, dial) resolves its own host through local-dns — a dns-server source.
+      ...(config.dns?.servers ?? []).map((server) =>
+        server.tag === "remote-doh" ? ({ ...server, domain_resolver: "local-dns" } as never) : server,
+      ),
       { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", accept_default_resolvers: false },
       { type: "resolved", tag: "resolved-dns", service: "resolved-svc" } as never,
     ],
@@ -37,7 +40,8 @@ function createDisconnectFixture(): SingBoxConfig {
   };
   config.endpoints = [
     { type: "tailscale", tag: "ts-ep", detour: "proxy" },
-    { type: "tailscale", tag: "ts-ep-2" },
+    // C11b: an endpoint source resolving its server name through local-dns.
+    { type: "tailscale", tag: "ts-ep-2", domain_resolver: "local-dns" } as never,
   ];
   config.certificate_providers = [
     { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
@@ -173,6 +177,24 @@ const cases: Array<{
     name: "settings NTP detour",
     edgeId: formatEdgeId("settings-ntp-detour", "proxy"),
     assert: (config) => expect(config.ntp?.detour).toBeUndefined(),
+  },
+  {
+    name: "outbound domain_resolver",
+    edgeId: formatEdgeId("dial-domain-resolver", "hk", "local-dns"),
+    assert: (config) =>
+      expect((config.outbounds?.find((outbound) => outbound.tag === "hk") as Record<string, unknown> | undefined)?.domain_resolver).toBeUndefined(),
+  },
+  {
+    name: "endpoint domain_resolver",
+    edgeId: formatEdgeId("endpoint-domain-resolver", "ts-ep-2", "local-dns"),
+    assert: (config) =>
+      expect((config.endpoints?.find((endpoint) => endpoint.tag === "ts-ep-2") as Record<string, unknown> | undefined)?.domain_resolver).toBeUndefined(),
+  },
+  {
+    name: "dns-server domain_resolver",
+    edgeId: formatEdgeId("dns-server-domain-resolver", "remote-doh", "local-dns"),
+    assert: (config) =>
+      expect((config.dns?.servers?.find((server) => server.tag === "remote-doh") as Record<string, unknown> | undefined)?.domain_resolver).toBeUndefined(),
   },
 ];
 
