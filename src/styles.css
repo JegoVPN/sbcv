@@ -1642,6 +1642,16 @@ button.sbc-edge-remove:focus-visible {
   font-size: 14px;
 }
 
+/* Optional helper text under a shared field control; spans the full width below the input. */
+.shared-field-hint {
+  grid-column: 1 / -1;
+  flex-basis: 100%;
+  margin-top: -6px;
+  font-size: 11px;
+  color: #8a96a3;
+  line-height: 1.4;
+}
+
 .field input,
 .field select,
 .field textarea {
