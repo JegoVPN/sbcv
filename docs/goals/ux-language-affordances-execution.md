@@ -165,7 +165,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   snapshots: `pushHistory()` captures the current canonical state, `undo()` restores+pops the most
   recent (re-syncing jsonDraft/diagnostics via `sync()` and bumping the layout tokens), no-op on empty.
   Infra only — the flows that snapshot (import overwrite) come next. — PR #125
-- [ ] L3-import-feedback — import success/error toast (uses L3-toast-infra).
+- [x] L3-import-feedback — `importJson` now returns `{ ok, error? }` (parse moved outside `set()`);
+  both import handlers (desktop TopBar + mobile MobileMenuSheet) raise a success toast ("Configuration
+  imported") or an error toast ("Import failed: …", 8s) — a parse error was previously only visible in
+  the diagnostics popover. Programmatic callers/resets ignore the result, so no toast spam. — PR #126
 - [ ] L3-import-undo — one-tap undo after an import overwrite (uses L3-undo-infra; pairs with the
   existing A26 import-confirm).
 - [ ] L3-invalid-drop — invalid drag-drop feedback toast (uses L3-toast-infra).
