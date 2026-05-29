@@ -199,8 +199,8 @@ The top toolbar stays minimal:
 - Target dropdown: `1.13 stable`, `1.12 Legacy`, `1.14 testing`.
 - `Check`
 - `Export`
-- `Import`
 - Status pill
+- Brand menu: product identity, reset view, current JSON viewer, `Import`, and GitHub.
 
 `Minimal`, Route Rules, DNS Rules, JSON, and Diagnostics do not belong as permanent top-level pills. Templates and Library own starters. Inspector and tables own node-specific editing. Advanced JSON can exist as a deliberate mode, not a duplicated default panel.
 
