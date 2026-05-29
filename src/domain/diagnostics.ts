@@ -691,6 +691,30 @@ export function validateConfig(
     }
   });
 
+  // 1.13-added TLS fields (shared/tls.md "Changes in sing-box 1.13.0") — warn on a pre-1.13 target;
+  // a 1.13/1.14 target is clean. Default-off shapes (kernel_*=false, curve_preferences=[],
+  // client_authentication="no") produce nothing. client_authentication is server-only (inbound). (C7-B)
+  if (!atLeast(version, "1.13")) {
+    const checkTls113Fields = (tlsValue: unknown, pathPrefix: string, label: string, isServer: boolean) => {
+      if (!tlsValue || typeof tlsValue !== "object" || Array.isArray(tlsValue)) return;
+      const tls = tlsValue as Record<string, unknown>;
+      const warn = (field: string, code: string) =>
+        push(diagnostics, "warning", code, `${pathPrefix}/tls/${field}`, `${label} uses tls.${field}, which requires sing-box 1.13+, but the target is ${version}.`);
+      if (tls.kernel_tx === true) warn("kernel_tx", "tls-kernel-tx-1-13-only");
+      if (tls.kernel_rx === true) warn("kernel_rx", "tls-kernel-rx-1-13-only");
+      if (Array.isArray(tls.curve_preferences) && tls.curve_preferences.length > 0) warn("curve_preferences", "tls-curve-preferences-1-13-only");
+      if (isServer && typeof tls.client_authentication === "string" && tls.client_authentication && tls.client_authentication !== "no") {
+        warn("client_authentication", "tls-client-authentication-1-13-only");
+      }
+    };
+    listItems(config.inbounds).forEach((item, index) =>
+      checkTls113Fields((item as Record<string, unknown>).tls, `/inbounds/${index}`, `Inbound "${item.tag ?? `inbound-${index}`}"`, true),
+    );
+    outbounds.forEach((item, index) =>
+      checkTls113Fields((item as Record<string, unknown>).tls, `/outbounds/${index}`, `Outbound "${item.tag ?? `outbound-${index}`}"`, false),
+    );
+  }
+
   endpoints.forEach((endpoint, index) => {
     const ep = endpoint as Record<string, unknown>;
     if (ep.type !== "wireguard") return;
