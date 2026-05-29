@@ -103,8 +103,11 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L4-export-noise — trim provably-inert empty-string/empty-array export noise. **D7: keep
   sing-box-usable** — test round-trip + that a representative cleaned config still parses; never strip a
   meaningful empty.
-- [ ] L4-dial-network-type — A16-norm-rest: coerce legacy raw-string `network_type` /
-  `fallback_network_type` on outbounds/endpoints (dial group) at import (same shape as A16-norm).
+- [x] L4-dial-network-type — A16-norm-rest: coerce legacy raw-string `network_type` /
+  `fallback_network_type` on outbounds/endpoints (dial group) at import (same shape as A16-norm). — PR #90
+- [ ] L4-dial-network-type-2 — extend the same coercion to the remaining `kind:"list"` network-type
+  carriers (dns-servers, ntp settings, http_clients, shadowtls nested dial) (L4-dial-network-type
+  review follow-up)
 - [ ] L4-rule-field-scrub — A10d-rest: scrub other action-gated rule fields on import (reject
   `method`/`no_drop`, dns-predefined `rcode`, route-options `override_*`); optionally recurse logical
   rules.
@@ -121,4 +124,22 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 (Append dated entries as decisions are made during execution.)
 
 ## Milestone Notes
-(One block per merged atomic: what changed, tests, expert-review verdict + in-pass fixes, verification.)
+
+### L4-dial-network-type dial-network-type-import-normalize (domain) — PR #90
+Status: implemented 2026-05-29 in `atomic/dial-network-type-import-normalize`; merged in PR #90.
+- What changed: A16-norm coerced the route `default_network_type` / `default_fallback_network_type`
+  legacy raw-string → `[string]` on import. This extends the same coercion to the dial-group siblings
+  `network_type` / `fallback_network_type` on outbounds and endpoints (they render through the same
+  `kind:"list"` control and had the same legacy-string strand). Generalized the A16-norm helper into
+  `coerceStringList(record, key)` (drops `RouteConfig` import); `normalizeConfig` now runs it over the
+  route defaults plus each outbound/endpoint. Non-string values pass through untouched.
+- Tests: `tests/dial-network-type-import-normalize.test.ts` (outbound/endpoint network_type +
+  fallback_network_type string→array, empty→[], array + non-string passthrough, route regression guard).
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers, no should-fix.
+  Confirmed the helper rename is behavior-preserving, the clone (not input) is mutated, no item shape
+  throws (array items survive the object guard but only string values are rewritten), `RouteConfig`
+  import removal is safe, and — per sing-box docs — `network_type` is always `string[]` (1.11+), never
+  legitimately a bare string, so arrayifying is always correct. Two NITs, both non-blocking: redundant
+  `as Record` casts (left as explicit-boundary); the same `kind:"list"` control also renders on
+  dns-servers/ntp/http_clients/shadowtls nested dial → queued as L4-dial-network-type-2.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (852), `pnpm build`, `pnpm e2e` (14).
