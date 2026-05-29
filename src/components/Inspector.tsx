@@ -2769,7 +2769,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           {entityType === "hysteria" ? (
             <PlatformBanner
               kind="deprecated"
-              text="Hysteria v1 is deprecated upstream. New deployments should use type=hysteria2; v1 is kept for import compatibility only."
+              text="Hysteria v1 is legacy — prefer `hysteria2` for new deployments."
             />
           ) : null}
           {entityType === "redirect" ? (
@@ -3584,7 +3584,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
           {entityType === "hysteria" ? (
             <PlatformBanner
               kind="deprecated"
-              text="Hysteria v1 is deprecated. The official docs recommend migrating to Hysteria2; new deployments should choose `hysteria2`."
+              text="Hysteria v1 is legacy — prefer `hysteria2` for new deployments."
             />
           ) : null}
           {"server" in entity ? (

@@ -99,14 +99,9 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     inbound + outbound; upstream omitted-version default is v1). — PR #104
   - [x] L2-fix-hysteria-mbps — H4: Hysteria v1 outbound up/down Mbps placeholder "empty = no rate limit"
     → "required (Mbps)" (upstream marks them Required). — PR #106
-  - [ ] L2-fix-hysteria-deprecated-stance — H5/H6 **DEFERRED (needs a product decision)**: the editor
-    treats Hysteria v1 as deprecated across THREE entangled sites — Inspector banners (`kind="deprecated"`),
-    Palette `deprecatedKinds` (the "Legacy" pill), AND diagnostics (`hysteria-v1-deprecated` /
-    `inbound-hysteria-v1-deprecated`) — plus tests pinning all three. The audit (H5) notes upstream
-    `deprecated.md` does NOT formally deprecate hysteria v1 (only its sub-fields). So the question "does
-    sbcv treat v1 as deprecated/legacy?" is an opinionated product stance, not a clear copy bug — and it
-    overlaps D2 (legacy treatment). Reconcile holistically (flip all 3 + tests, or keep the stance and
-    just drop the literal-false "upstream"/"official docs" attribution) with the user / in L1-badges.
+  - [x] L2-fix-hysteria-deprecated-stance (H5/H6) — RESOLVED via L1-hysteria-wording per user sign-off:
+    KEEP the Legacy treatment (pill + banner + diagnostic codes) but drop the literal-false "deprecated
+    upstream / official docs recommend" wording from the banners + diagnostic messages. — PR #114
   - [x] L2-fix-dns-hints — H8: tailscale + resolved `accept_default_resolvers` now read as "accept for
     fallback (in addition to MagicDNS/matching domains; off ⇒ NXDOMAIN)" — was "forward to MagicDNS
     chain"/bare. (Other MED dns hints — local `prefer_go`, dhcp placeholder — folded into L2-fix-med-copy.) — PR #107
@@ -436,4 +431,22 @@ Status: implemented 2026-05-29 in `atomic/l1-badges-treatment`; merged in PR #11
   hue 209/sat 12% (cool, muted) vs Legacy hue 14/sat 100% (warm, the colored bar) — genuinely distinct
   per D2; Legacy unchanged; de-dup isolated; test sound. NIT: the muted family (gated/pending/docs/
   inspector) is color-undifferentiated by design (the word differentiates; only Legacy owns color).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (890), `pnpm build`.
+
+### L1-hysteria-wording (resolves L2 H5/H6) — PR #114
+Status: implemented 2026-05-29 in `atomic/l1-hysteria-wording`; merged in PR #114.
+- What changed (per the L1-vocab sign-off "keep Legacy, fix wording"): the 2 Inspector banners + the 2
+  `hysteria-v1-deprecated`/`inbound-hysteria-v1-deprecated` diagnostic messages claimed Hysteria v1 was
+  "deprecated upstream" / "the official docs recommend migrating" — false (upstream `deprecated.md`
+  doesn't formally deprecate v1). Reworded to sbcv's accurate opinionated stance: "Hysteria v1 is legacy
+  — prefer `hysteria2` for new deployments." The Legacy TREATMENT is intentionally KEPT: the diagnostic
+  CODES, the Palette `deprecatedKinds` pill, and the banner `kind="deprecated"` visual are unchanged.
+- Tests: migrated the `app.test.tsx` banner assertion (`/Hysteria v1 is deprecated/`→`/legacy/`); the
+  `domain.test.ts` diagnostic-CODE assertions are unchanged (codes kept).
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE/clean — false attribution gone
+  from both banners + both diagnostic messages, Legacy treatment (codes/pill/banner-kind) intentionally
+  kept, tests consistent. NIT (deferred follow-up L1-hysteria-tooltip): the GENERIC `deprecated`-status
+  Palette tooltip still says "deprecated by sing-box" — accurate for block/dns-fakeip (upstream-deprecated)
+  but the same false-upstream class for hysteria-out; a fix needs a kind-aware tooltip (out of this
+  banner+diagnostic-scoped atomic).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (890), `pnpm build`.
