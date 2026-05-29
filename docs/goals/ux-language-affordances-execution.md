@@ -156,7 +156,11 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   structural follow-up (out of the copy remit). **Phase 2 complete.**
 
 ### Phase 3 — Affordance infrastructure (bucket 2 / D6)
-- [ ] L3-toast-infra — a minimal toast/notification host (store slice + a portal component, a11y-live).
+- [x] L3-toast-infra — added a toast store slice (`toasts` + `pushToast`/`dismissToast`, monotonic ids,
+  default 5s auto-dismiss, `durationMs: null` = sticky, optional `{label,onAct}` action) and a
+  `ToastHost` component mounted in both App shells. Each toast is its own ARIA live region (role
+  `status` for info/success, `alert` for error), with dismiss + optional action buttons; auto-dismiss
+  via a per-item timer. Infra only — no flow emits toasts yet. — PR #124
 - [ ] L3-undo-infra — an undo/history snapshot stack in the store (bounded; snapshots the canonical
   config at mutation boundaries).
 - [ ] L3-import-feedback — import success/error toast (uses L3-toast-infra).
