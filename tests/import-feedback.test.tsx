@@ -52,7 +52,7 @@ describe("L3-import-feedback — mobile toast", () => {
   it("shows a success toast after a valid import from the mobile menu sheet", async () => {
     render(
       <>
-        <MobileMenuSheet open onClose={() => {}} onOpenTemplates={() => {}} />
+        <MobileMenuSheet open onClose={() => {}} onOpenTemplates={() => {}} onOpenJson={() => {}} />
         <ToastHost />
       </>,
     );

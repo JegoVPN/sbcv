@@ -52,9 +52,10 @@ Drop `(with_tailscale)` / `(with_tor)` from palette **labels** → "Tailscale", 
 requirement as the existing build-tag **banner** in the Inspector (already present) + optionally a tooltip,
 not in the primary name.
 
-## Brand-button label (L1-brandbtn)
-The brand logo's `aria-label "sbcv.app — return to home"` is a mislabel — `goHome` only deselects, closes
-the global panel, and re-fits the canvas (no navigation/reset). → **"Reset view (deselect & fit canvas)"**.
+## Brand menu (L1-brandmenu)
+The brand control opens the `sbcv.app` menu. The menu header expands the name as
+`sing-box configuration visualizer`; reset view is an explicit menu action because `goHome` only
+deselects, closes the global panel, and re-fits the canvas.
 
 ## Terminology glossary (consistent terms)
 - **Target** = channel + version (e.g. "stable 1.13", "testing 1.14"). Tooltip (L1-target-glossary):

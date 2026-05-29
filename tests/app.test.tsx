@@ -25,7 +25,9 @@ describe("SBC editor shell", () => {
     expect(screen.getByRole("option", { name: "1.13 stable" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "1.12 Legacy" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "1.14 testing" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Import" })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("brand-menu-toggle"));
+    expect(screen.getByRole("menuitem", { name: /Import JSON/i })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: /View JSON/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Check" }));
     expect(screen.getByLabelText(/Checking|Parsing JSON|Running sing-box/)).toBeInTheDocument();
     expect(await screen.findByLabelText("Valid")).toBeInTheDocument();
@@ -1044,7 +1046,7 @@ describe("SBC editor shell", () => {
     expect(dns?.timeout).toBe("7s");
   });
 
-  it("brand pill click clears selection + closes panel + bumps freshLoadToken", () => {
+  it("brand menu reset view clears selection + closes panel + bumps freshLoadToken", () => {
     useProjectStore.getState().loadTemplate();
     act(() => {
       useProjectStore.getState().openGlobalPanel("json");
@@ -1054,9 +1056,10 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().globalPanelOpen).toBe(true);
     const beforeToken = useProjectStore.getState().freshLoadToken;
     render(<App />);
-    const brand = screen.getByTestId("brand-home");
+    const brand = screen.getByTestId("brand-menu-toggle");
     expect(brand.tagName).toBe("BUTTON");
     fireEvent.click(brand);
+    fireEvent.click(screen.getByRole("menuitem", { name: /Reset view/i }));
     expect(useProjectStore.getState().selectedId).toBeNull();
     expect(useProjectStore.getState().globalPanelOpen).toBe(false);
     expect(useProjectStore.getState().freshLoadToken).toBe(beforeToken + 1);
