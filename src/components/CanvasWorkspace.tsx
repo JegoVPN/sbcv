@@ -501,9 +501,9 @@ export function CanvasWorkspace() {
         onConnectEnd={handleConnectEnd}
         // Click-to-connect is OFF: a plain click on a port handle would start a sticky click-connection
         // (sets pendingPort → all compatible ports light up green), and that mode had no reliable exit in
-        // this UI (the .sbc-port stopPropagation + dual overlapping handles swallow the click-connect-end),
-        // so the highlight got stuck. Creating a downstream node is covered by dragging a port to empty
-        // canvas and by each port's "+" picker, so click-connect is redundant — disable it entirely.
+        // this UI (dual overlapping source/target handles under Loose mode + no path that clears RF's
+        // click-connect-start), so the highlight got stuck. Creating a downstream node is covered by
+        // dragging a port to empty canvas and by each port's "+" picker, so click-connect is redundant.
         connectOnClick={false}
         isValidConnection={isValidConnection}
         onNodeClick={(_, node) => setSelectedId(node.id)}

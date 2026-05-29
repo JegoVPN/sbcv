@@ -289,3 +289,25 @@ test("port '+' click opens the searchable picker and creates a connected downstr
   expect(config.route?.final).toBeTruthy();
   await expect(picker).toHaveCount(0);
 });
+
+test("plain-clicking a port handle never starts a sticky highlight (click-connect disabled)", async ({ page }) => {
+  // Regression guard: with React Flow's connectOnClick default (true), a plain click on a source handle
+  // started a sticky click-connection — it set pendingPort, lit every compatible port green
+  // (is-compatible), and drew a pending connection line with no reliable way to clear it. With
+  // click-connect disabled a plain click must be completely inert. Two compatible nodes (bare route +
+  // direct outbound) so a real click-connect would have something to highlight.
+  await importInlineConfig(page, { route: {}, outbounds: [{ type: "direct", tag: "direct" }] });
+
+  await page.getByTestId("node-route:main").hover();
+  const handle = page
+    .locator('[data-testid="node-route:main"] [data-port-type="outbound"] .sbc-handle--source')
+    .first();
+  const box = await handle.boundingBox();
+  if (!box) throw new Error("missing route source handle");
+  // A click is mouse down+up in place (no move → not a drag).
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page.locator(".sbc-port.is-compatible")).toHaveCount(0);
+  await expect(page.locator(".sbc-port.is-pending")).toHaveCount(0);
+  await expect(page.locator(".react-flow__connection-path")).toHaveCount(0);
+});
