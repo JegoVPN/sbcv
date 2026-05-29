@@ -22,7 +22,6 @@ import {
   ListOrdered,
   Milestone,
   Network,
-  Plus,
   RadioTower,
   Route,
   Server,
@@ -191,15 +190,22 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
     const handleSide = direction === "input" ? "in" : "out";
     const position = direction === "input" ? Position.Left : Position.Right;
     const relationWord = direction === "input" ? "for" : "from";
+    // An editable, still-unconnected port IS the "add a downstream node" affordance: clicking it opens
+    // the same searchable picker as dragging the port out to empty canvas (openPortPicker). The old
+    // separate "+" badge was dropped — it overlapped the port icon and duplicated this exact action.
+    const isAddable = port.editable && !connected;
     const actionLabel = port.editable ? (connected ? "Connected" : "Start") : connected ? "Linked" : "Readonly";
+    const ariaLabel = isAddable
+      ? `Add a node to ${port.label} of ${data.title}`
+      : `${actionLabel} ${port.label} ${relationWord} ${data.title}`;
     return (
       <div
-        className={`sbc-port sbc-port--${side} ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}`}
+        className={`sbc-port sbc-port--${side} ${connected ? "is-connected" : ""}${isCompatible ? " is-compatible" : ""}${isPending ? " is-pending" : ""}${isAddable ? " is-addable" : ""}`}
         key={port.key}
         role="button"
         tabIndex={0}
         title={port.label}
-        aria-label={`${actionLabel} ${port.label} ${relationWord} ${data.title}`}
+        aria-label={ariaLabel}
         data-port-type={port.key}
         data-port-node-kind={port.nodeKind}
         data-port-node-type={port.nodeType}
@@ -208,7 +214,19 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         data-connected={connected ? "true" : "false"}
         onClick={(event) => {
           event.stopPropagation();
+          if (isAddable) openPortPicker(id, port.key);
         }}
+        onKeyDown={
+          isAddable
+            ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  openPortPicker(id, port.key);
+                }
+              }
+            : undefined
+        }
       >
         <Handle
           id={port.key}
@@ -237,18 +255,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
             }}
           >
             <Trash2 size={10} />
-          </button>
-        ) : port.editable && !connected ? (
-          <button
-            className="sbc-port__action sbc-port__add nodrag"
-            type="button"
-            aria-label={`Add a node to ${port.label} of ${data.title}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              openPortPicker(id, port.key);
-            }}
-          >
-            <Plus size={11} />
           </button>
         ) : null}
       </div>

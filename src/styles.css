@@ -1199,6 +1199,9 @@ textarea {
   bottom: -3px;
   width: 16px;
   height: 16px;
+  /* Override the global button{min-height:34px} tap-target floor — without this it stretched the 16px
+     action into a 16×34 vertical pill that overlapped the port icon. */
+  min-height: 16px;
   border: 1px solid #202832;
   border-radius: 999px;
   display: grid;
@@ -1211,6 +1214,12 @@ textarea {
   transition:
     opacity 120ms ease,
     transform 120ms ease;
+}
+
+/* An unconnected editable port is itself the "add a downstream node" button (opens the picker), so it
+   reads as clickable. The separate "+" badge was removed (it overlapped the icon + duplicated this). */
+.sbc-port.is-addable {
+  cursor: pointer;
 }
 
 button.sbc-port__action {
