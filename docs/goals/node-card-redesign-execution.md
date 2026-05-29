@@ -46,7 +46,7 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
 - [ ] N2-compatible-retire — retire `data.compatible` string-label path + `createCompatible`/`outboundTypeForChipLabel` IF no longer used (or keep a count-only source for the toolbar pill); migrate `tests/compatible-chip-coverage.test.ts` + `tests/app.test.tsx` callers to `createNodeAndConnect`.
 
 ### Phase N3 — Card chrome cleanup + typography unification
-- [ ] N3-remove-center-plus — remove the center "+" (`sbc-node__add` JSX + CSS). No test impact.
+- [x] N3-remove-center-plus — removed the center "+" (`sbc-node__add` JSX + CSS). — PR #97
 - [ ] N3-toolbar-typography — introduce a node type-scale (CSS custom props on `.sbc-node-shell`: `--node-title:22px/760`, `--node-secondary:13px/760`, `--node-micro:11px`); set `.sbc-node-pill` an explicit `font-size:13px`; bring `.sbc-node-primary` from `18px/860 → 13px/760` (fixes the oversized "18"); normalize the leading-glyph `size` props (14–15) for rhythm. Keep `node-bottom-toolbar` + `.sbc-node-primary` testids/classnames (tests pin them: `node-status-icon.test.tsx`, `external-fixtures.spec.ts`).
 
 ### Phase N4 — (appendix / separate effort) connection-model completeness
@@ -96,4 +96,18 @@ User decision (2026-05-29): **keep the count pill, just unify its font** (DN-5 c
   structural link is live). DN-1..DN-7 as recommended. The plan is now fully executable.
 
 ## Milestone Notes
-(One block per merged atomic.)
+
+### N3-remove-center-plus (canvas) — PR #97
+Status: implemented 2026-05-29 in `atomic/node-remove-center-plus`; merged in PR #97. First node-card atomic.
+- What changed: removed the big center "+" button (`sbc-node__add`) from the node card. It auto-linked
+  to `data.compatible[0]` (over-design — silently picked the first candidate). The right-side downstream
+  ports + the hover candidate affordance already cover "add downstream"; `Plus`/`createCompatible` stay
+  used elsewhere (port affordance, hover chips) so no orphaned imports. Deleted the orphaned
+  `.sbc-node__add` CSS.
+- Tests: `tests/node-center-plus-removed.test.tsx` (no `.sbc-node__add` / no "Add from" button even for
+  a node with compatible candidates).
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean — no blockers/should-fix.
+  Confirmed the JSX removal is well-formed, `Plus`/`createCompatible` stay used (no orphaned imports),
+  no dangling `.sbc-node__add` refs anywhere, no behavior regression (per-port "+" + hover chips cover
+  add-downstream), and the test is non-tautological (the urltest node genuinely has compatible>0).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build`, `pnpm e2e` (14).

@@ -1413,20 +1413,6 @@ button.sbc-port__action:focus-visible {
   min-height: 38px;
 }
 
-.sbc-node__add {
-  position: absolute;
-  left: 18px;
-  bottom: 94px;
-  width: 48px;
-  min-width: 48px;
-  height: 48px;
-  padding: 0;
-  border-radius: 12px;
-  border-color: #444b53;
-  background: #101418;
-  color: #e4e9ee;
-}
-
 .sbc-node__toolbar {
   position: absolute;
   right: 16px;
