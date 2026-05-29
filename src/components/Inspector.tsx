@@ -4830,8 +4830,9 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   writePeers([
                     ...peers,
                     {
-                      server: "192.0.2.1",
-                      server_port: 51820,
+                      // upstream WireGuard peer keys (endpoint/wireguard.md): address/port, not server/server_port
+                      address: "192.0.2.1",
+                      port: 51820,
                       public_key: "",
                       allowed_ips: ["0.0.0.0/0"],
                     } as Record<string, unknown>,
@@ -4845,18 +4846,18 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     {peers.map((peer, index) => (
                       <div key={index} className="rule-row">
                         <label className="field">
-                          <span>Server</span>
+                          <span>Address</span>
                           <input
-                            value={String(peer.server ?? "")}
-                            onChange={(event) => patchPeer(index, { server: event.target.value })}
+                            value={String(peer.address ?? "")}
+                            onChange={(event) => patchPeer(index, { address: event.target.value })}
                           />
                         </label>
                         <label className="field">
                           <span>Port</span>
                           <input
                             type="number"
-                            value={Number(peer.server_port ?? 51820)}
-                            onChange={(event) => patchPeer(index, { server_port: Number(event.target.value) })}
+                            value={Number(peer.port ?? 51820)}
+                            onChange={(event) => patchPeer(index, { port: Number(event.target.value) })}
                           />
                         </label>
                         <SensitiveTextField

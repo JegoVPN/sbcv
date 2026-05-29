@@ -1589,7 +1589,8 @@ describe("SBC editor shell", () => {
 
     fireEvent.click(within(inspector.getByTestId("wireguard-peers-editor")).getByRole("button", { name: /Add peer/ }));
     updated = useProjectStore.getState().config.endpoints?.find((e) => e.type === "wireguard");
-    expect(((updated as Record<string, unknown>).peers as Record<string, unknown>[])[0]).toMatchObject({ server: "192.0.2.1" });
+    // upstream WireGuard peer keys are address/port (L2-fix-wireguard-peer), not server/server_port
+    expect(((updated as Record<string, unknown>).peers as Record<string, unknown>[])[0]).toMatchObject({ address: "192.0.2.1", port: 51820 });
   });
 
   it("provides a structured predefined hosts editor for dns-server hosts type", () => {

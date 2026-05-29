@@ -87,8 +87,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L2-fix-* — apply corrections, sliced. HIGH queue (from the audit):
   - [x] L2-fix-route-strategy — H2: route-options Network Strategy select offered invalid `wifi/cellular/
     ethernet` → restricted to `default/hybrid/fallback`. — PR #102
-  - [ ] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
-    commands seed + diagnostics); produces invalid exports today.
+  - [x] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
+    createEndpoint seed); was producing invalid exports. (DERP mesh peer correctly keeps server/port.) — PR #103
   - [ ] L2-fix-ss-inbound-ciphers — H3: drop legacy stream ciphers from the shadowsocks INBOUND method list.
   - [ ] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)`.
   - [ ] L2-fix-hysteria-copy — H4 (required Mbps placeholder) + H5/H6 (drop the false "deprecated"
@@ -278,3 +278,22 @@ Status: implemented 2026-05-29 in `atomic/l2-fix-route-strategy`; merged in PR #
   `["", default, hybrid, fallback]`; none of wifi/cellular/ethernet).
 - Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (875), `pnpm build`, `pnpm e2e` (16).
+
+### L2-fix-wireguard-peer (audit H1) — PR #103
+Status: implemented 2026-05-29 in `atomic/l2-fix-wireguard-peer`; merged in PR #103.
+- What changed: a WireGuard endpoint **peer** used the keys `server`/`server_port`, but upstream
+  (`endpoint/wireguard.md`) defines a peer as `address`/`port` — so a created/edited peer exported an
+  invalid config (sing-box doesn't recognize peer `server`). Fixed THREE sites: the `createEndpoint`
+  wireguard seed (`commands.ts`), the Inspector peer row (`Inspector.tsx` — label "Server"→"Address",
+  reads/writes `address`/`port`), and the **Add-peer button seed** (`Inspector.tsx` addPeer). The DERP
+  service `mesh_with` peer (a different control) correctly keeps `server`/`server_port` per
+  `service/derp.md` — left untouched.
+- Tests: `tests/wireguard-peer-address.test.tsx` (seed + Inspector read/write); migrated the existing
+  `app.test.tsx` Add-peer assertion from `server` to `address`/`port`.
+- Expert review (one pass): a senior reviewer subagent. Verdict CHANGES-REQUESTED → fixed → clean.
+  BLOCKER it caught: the Add-peer button still seeded `server`/`server_port` (a third write site I
+  missed) and `app.test.tsx:1592` pinned the buggy value (passing only because of the bug). Fixed the
+  addPeer seed + the test assertion in-pass. Reviewer also confirmed DERP mesh_with correctly untouched,
+  no other peer `server` reads, and that no import migration is warranted (old exports were already
+  invalid; address/port aren't upstream-required).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (877), `pnpm build`, `pnpm e2e` (16).
