@@ -1086,7 +1086,11 @@ function hubSubtitle(ruleCount: number, final: unknown): string {
 function outboundSubtitle(outbound: OutboundConfig): string {
   if (isOutboundGroup(outbound) && Array.isArray(outbound.outbounds) && outbound.outbounds.length) {
     const members = listLabel(outbound.outbounds.filter((tag): tag is string => typeof tag === "string"));
-    const def = typeof outbound.default === "string" && outbound.default ? ` · default ${outbound.default}` : "";
+    // `default` is a selector-only field (urltest auto-selects by latency, no default).
+    const def =
+      outbound.type === "selector" && typeof outbound.default === "string" && outbound.default
+        ? ` · default ${outbound.default}`
+        : "";
     return members ? `${members}${def}` : `${outbound.type} group`;
   }
   const detour = outboundDetourTag(outbound);
