@@ -1551,6 +1551,16 @@ button.sbc-port__action:focus-visible {
   stroke-width: 2.2;
 }
 
+/* A selected node's first-degree edges paint in the card's selection blue (solid, slightly heavier) so
+   its immediate up/downstream chain reads apart from the green graph. Compound selector outranks the
+   bare .react-flow__edge-path; the dashed dasharray of animated edges is cleared so the highlight is
+   a continuous line. */
+.react-flow__edge-path.sbc-edge__path--highlighted {
+  stroke: #2d99ff;
+  stroke-width: 3;
+  stroke-dasharray: none;
+}
+
 button.sbc-edge-remove {
   position: absolute;
   z-index: 5;
