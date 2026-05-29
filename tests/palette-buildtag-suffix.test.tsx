@@ -15,7 +15,7 @@ describe("L1-buildtags — palette labels have no build-tag suffix", () => {
     const palette = within(await screen.findByLabelText("Node palette"));
     fireEvent.click(palette.getByRole("button", { name: /Library/ }));
     fireEvent.click(palette.getByRole("button", { name: /^Endpoints/ }));
-    expect(palette.getByRole("button", { name: "Setup Tailscale" })).toBeInTheDocument();
+    expect(palette.getByRole("button", { name: "Add Tailscale" })).toBeInTheDocument();
     expect(palette.queryByRole("button", { name: /with_tailscale/ })).toBeNull();
   });
 
