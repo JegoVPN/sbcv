@@ -1,4 +1,5 @@
 import { buildNamespacedTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { typeMinVersion } from "./minVersions";
 import { proxyOutboundTypes as proxyOutboundTypeSet, requiredFieldsFor, tlsRequiredTypes } from "./schemaRegistry";
 import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
@@ -139,14 +140,16 @@ export function validateConfig(
         }
       });
     }
-    // naive is Since sing-box 1.13.0 (absent in 1.12); a 1.12 binary rejects it. Mirrors ccm/ocm.
-    if (outbound.type === "naive" && !atLeast(version, "1.13")) {
+    // naive is Since sing-box 1.13.0 (absent in 1.12); a 1.12 binary rejects it. Type min-version comes
+    // from the shared minVersions table (same source as the canvas badge). Mirrors ccm/ocm.
+    const naiveMin = typeMinVersion("outbound", "naive");
+    if (outbound.type === "naive" && naiveMin && !atLeast(version, naiveMin)) {
       push(
         diagnostics,
         "error",
         "outbound-naive-version",
         `/outbounds/${index}/type`,
-        `Outbound "${outbound.tag}" (naive) requires sing-box 1.13+, but the target is ${version}. sing-box ${version} rejects it.`,
+        `Outbound "${outbound.tag}" (naive) requires sing-box ${naiveMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
       );
     }
   });
@@ -174,13 +177,14 @@ export function validateConfig(
       );
     }
 
-    if ((service.type === "ccm" || service.type === "ocm") && !atLeast(version, "1.13")) {
+    const serviceMin = typeMinVersion("service", service.type);
+    if ((service.type === "ccm" || service.type === "ocm") && serviceMin && !atLeast(version, serviceMin)) {
       push(
         diagnostics,
         "error",
         "service-ccm-ocm-version",
         `/services/${index}/type`,
-        `Service "${service.tag}" (${service.type}) requires sing-box 1.13+, but the target is ${version}. sing-box ${version} rejects it.`,
+        `Service "${service.tag}" (${service.type}) requires sing-box ${serviceMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
       );
     }
 
