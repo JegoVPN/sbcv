@@ -326,6 +326,9 @@ function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>)
   if (item.kind === "inbound-cloudflared" && channel !== "testing") return "gated";
   // http_clients[] is sing-box 1.14+ — creatable on testing, gated on stable.
   if (item.kind === "http-client" && channel !== "testing") return "gated";
+  // certificate_providers[] is sing-box 1.14+ — creatable (setup) on testing, gated on stable. (C2)
+  // Matches only the real palette items (certificate-provider*), not the reference-only "shared-*" set.
+  if (item.kind.startsWith("certificate-provider")) return channel === "testing" ? "setup" : "gated";
   if (deprecatedKinds.has(item.kind)) return "deprecated";
   if (singletons.has(item.kind)) return "open";
   if (item.status) return item.status;
