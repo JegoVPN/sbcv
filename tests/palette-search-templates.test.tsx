@@ -11,10 +11,10 @@ describe("A23 — palette search covers templates", () => {
   beforeEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
   afterEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
 
-  it("surfaces a matching template preset when searching", () => {
+  it("surfaces a matching template preset when searching", async () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
-    const palette = within(screen.getByLabelText("Node palette"));
+    const palette = within(await screen.findByLabelText("Node palette"));
 
     // Pick a distinctive word from a real template label.
     const sample = TEMPLATE_PRESETS[0]!;
@@ -25,10 +25,10 @@ describe("A23 — palette search covers templates", () => {
     expect(palette.getByText(new RegExp(sample.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"))).toBeInTheDocument();
   });
 
-  it("shows nothing template-side for a non-matching query (no false surfacing)", () => {
+  it("shows nothing template-side for a non-matching query (no false surfacing)", async () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
-    const palette = within(screen.getByLabelText("Node palette"));
+    const palette = within(await screen.findByLabelText("Node palette"));
     fireEvent.change(palette.getByPlaceholderText(/search/i), { target: { value: "zzzznomatchqwerty" } });
     for (const preset of TEMPLATE_PRESETS) {
       expect(palette.queryByText(preset.label)).toBeNull();

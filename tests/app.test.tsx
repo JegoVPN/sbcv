@@ -14,7 +14,8 @@ describe("SBC editor shell", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
     expect(screen.getByText("sbcv.app")).toBeInTheDocument();
-    expect(screen.getByLabelText("Node palette")).toBeInTheDocument();
+    // Palette is lazy-loaded (code-split off the main bundle) — await it.
+    expect(await screen.findByLabelText("Node palette")).toBeInTheDocument();
     expect(screen.getByLabelText("SBC visual canvas")).toBeInTheDocument();
     expect(screen.queryByLabelText("Node inspector")).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId("node-route:main"));
