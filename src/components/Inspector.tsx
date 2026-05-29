@@ -1341,11 +1341,13 @@ function DnsRuleInspector({
   index,
   rule,
   config,
+  channel,
   updateDnsRule,
 }: {
   index: number;
   rule: InspectorEntity;
   config: SingBoxConfig;
+  channel: SingBoxChannel;
   updateDnsRule: (index: number, patch: Record<string, unknown>) => void;
 }) {
   const isLogical = rule.type === "logical";
@@ -1411,13 +1413,25 @@ function DnsRuleInspector({
           }}
         >
           <option value="route">route</option>
-          <option value="evaluate">evaluate</option>
-          <option value="respond">respond</option>
+          {/* evaluate / respond are 1.14-only actions (dns/rule_action.md) — offer them on the testing
+              channel only, but keep an already-set value selectable so the control still displays it. */}
+          {channel === "testing" || rule.action === "evaluate" ? <option value="evaluate">evaluate</option> : null}
+          {channel === "testing" || rule.action === "respond" ? <option value="respond">respond</option> : null}
           <option value="route-options">route-options</option>
           <option value="reject">reject</option>
           <option value="predefined">predefined</option>
         </select>
       </label>
+      {/* hint sits outside the label so it doesn't pollute the select's accessible name */}
+      {rule.action === "evaluate" ? (
+        <small className="shared-field-hint">
+          evaluate (1.14+): queries a server and saves the response for later rules; allowed on top-level rules only, and does not terminate rule evaluation.
+        </small>
+      ) : rule.action === "respond" ? (
+        <small className="shared-field-hint">
+          respond (1.14+): returns the response from a preceding top-level evaluate; sends no query, and errors if there is no evaluated response.
+        </small>
+      ) : null}
       {dnsRuleAllowsServer(rule) ? (
         <label className="field">
           <span>Server</span>
@@ -2284,7 +2298,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
         <RouteRuleInspector index={ref.index} rule={entity} config={config} updateRouteRule={updateRouteRule} />
       ) : null}
       {ref.kind === "dns-rule" ? (
-        <DnsRuleInspector index={ref.index} rule={entity} config={config} updateDnsRule={updateDnsRule} />
+        <DnsRuleInspector index={ref.index} rule={entity} config={config} channel={channel} updateDnsRule={updateDnsRule} />
       ) : null}
 
       {tagValue ? (
