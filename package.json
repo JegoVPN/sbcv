@@ -11,7 +11,7 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run --exclude tests/external-fixtures-render.test.ts",
+    "test": "vitest run --exclude tests/external-fixtures-render.test.ts --exclude tests/export-binary-check.test.ts",
     "test:watch": "vitest",
     "e2e": "playwright test",
     "docs:install": "node scripts/install-sing-box-docs.mjs",
@@ -19,7 +19,8 @@
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
     "fixtures:update:external": "node scripts/update-external-fixtures.mjs && node scripts/update-external-official-gates.mjs",
     "validate:external": "node scripts/validate-external-fixtures.mjs && vitest run tests/external-fixtures.test.ts && node scripts/run-external-render-gate.mjs",
-    "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm validate:external && pnpm e2e"
+    "validate:export-binary": "vitest run tests/export-binary-check.test.ts",
+    "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm validate:external && pnpm validate:export-binary && pnpm e2e"
   },
   "dependencies": {
     "@xyflow/react": "^12.9.3",
