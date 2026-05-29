@@ -266,7 +266,6 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
   const isDeprecated = data.kind === "outbound" && data.type === "block";
   const isNotice = data.kind === "notice";
-  const canDelete = !isNotice;
 
   return (
     <div
@@ -319,19 +318,17 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
 
         {!isNotice ? (
           <>
-            {canDelete ? (
-              <button
-                className="sbc-node__delete"
-                type="button"
-                aria-label={`Delete ${data.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  deleteEntity(data.ref);
-                }}
-              >
-                <Trash2 size={14} />
-              </button>
-            ) : null}
+            <button
+              className="sbc-node__delete"
+              type="button"
+              aria-label={`Delete ${data.title}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                deleteEntity(data.ref);
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
             <div className="sbc-node__toolbar nodrag" data-testid="node-bottom-toolbar">
               <span className="sbc-node-pill sbc-node-pill--type">
                 <Icon size={16} />
