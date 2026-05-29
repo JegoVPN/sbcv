@@ -432,15 +432,15 @@ backlog 全部合并后,**重跑评估 workflow 复测**,而非自我宣布完�
 
 Mirror of the queue above; tick as merged. (Populated during execution.)
 
-- [ ] C0-schema-registry (S1–S5)
-- [ ] C1-transport-subfields
+- [x] C0-schema-registry (S1–S5) — #152, #153, #154, #155, #156
+- [x] C1-transport-subfields — #157
 - [ ] C2-cert-provider-create (A0/A/B)
-- [ ] C3-tls-acme
-- [ ] C4-cloudflared-create
-- [ ] C5-version-gate-legacy-dns
-- [ ] C6-version-gate-naive
+- [x] C3-tls-acme — #161
+- [x] C4-cloudflared-create — #158
+- [x] C5-version-gate-legacy-dns — #159
+- [x] C6-version-gate-naive — #162
 - [ ] C7-version-gate-channel-to-version (A/B/C)
-- [ ] C8-export-gate-unify
+- [x] C8-export-gate-unify — #160
 - [ ] C9-dup-tag-namespace
 - [ ] C10-hysteria-server-ports
 - [ ] C17-no-silent-unreachable-guard
@@ -448,7 +448,7 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 - [ ] C12-logical-rule-recursion
 - [ ] C13-registry-driven-portswitch (S1/S2/S3)
 - [ ] C14-inspector-split (S1–S10)
-- [ ] C15-ci-binary-check
+- [x] C15-ci-binary-check — #163
 - [ ] C16-project-save-load (a/b)
 - [ ] P3 re-assessment
 
@@ -460,7 +460,58 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 - 2026-05-30 — Source corrections folded in from the grounded backlog: C9 stable inbound-tag is **line 40** (testing copy is line 41, shifted by the `cloudflared` row); C14 testing top-level keys are a **12-key superset** (adds `certificate_providers` + `http_clients`), NOT identical to stable's 10 (the assessment's "9/identical" phrasings were corrected); C1 HTTP `idle_timeout` default = **zero per prose L91** (the JSON example L39 "15s" is example-only); C3 testing `tls.acme` carries `Deprecated in sing-box 1.14.0` (verified L715). Package manager is `pnpm` throughout (matches `release:check`).
 - 2026-05-30 — Review gate is **per-PR best-suited Claude Code expert reviewer subagent(s)** (Agent tool), NOT Codex (per active MEMORY: the 2-round Codex gate was replaced 2026-05-29).
 - 2026-05-30 — User decisions on the 4 open questions: (1) **P3 done-bar raised to ≥90% AND zero forced JSON-fallback for any mainstream construct** (harder than the ≥85% default) → motivated adding **C17-no-silent-unreachable-guard** (P1, test-only) to make "零回退" an enforceable CI invariant rather than an aspirational number; (2) sequencing keeps the default (C0 first, but C1–C3 independently shippable); (3) C2/C3 stay split (not merged into one ACME epic); (4) C13/C14 stay independent back-to-back (no slice interleave). Queue is now C0–C17.
+- 2026-05-30 — Execution model: disjoint-file atomics run as concurrent PRs (one each touching domain/diagnostics, Inspector, useProjectStore, serialization/export) since GitHub squash-merge auto-merges non-overlapping diffs; same-file atomics stay sequential. Each PR rebased onto latest main before merge; post-merge issue gate run on combined main.
+- 2026-05-30 — Local real-binary validation: `.tools/bin/` holds the three sing-box binaries (stable 1.13.12 / testing 1.14.0-alpha.25 / 1.12.25). Run the full `release:check` (incl. validate:fixtures/external + e2e + the C15 export-binary gate) **locally with `PATH="$PWD/.tools/bin:$PATH"` before pushing**, so CI is confirmation rather than discovery.
+- 2026-05-30 — Known flaky e2e: `e2e/port-click-redesign.spec.ts:317` (node-delete hover opacity) flakes ~50% on CI's headless chromium (catches the CSS transition mid-flight) but is rock-solid locally; it hit unrelated domain-only PRs (S5/C4/C5). Mitigation = rerun the failed CI job, not debug the PR (it can't be reproduced/fixed-verified locally). See `[[project_flaky_e2e_node_delete_hover]]`.
 
 ## Milestone Notes
 
 (Filled in during execution, one entry per atomic/slice — mirror the ux-language doc's format: Status / What changed / Tests / Expert review verdict + in-pass fixes / Verification commands.)
+
+### C0-schema-registry (S1–S5) — DONE (#152–#156)
+- **What:** New `src/domain/schemaRegistry.ts` declarative per-type table (factory / creatable / paletteKind / channel / version+deprecation markers / sharedGroups / proxy·tls·required flags) + typed selectors. Consumers flipped to derive from it, byte-identically: S1 seed + matches-today guards; S2 `protocols.ts` CREATABLE_* → `creatableTypes(kind)` (palette maps stay literal-typed); S3 `commands.create*()` → `schemaRow().factory()`; S4 `sharedFieldRegistry.sharedGroupsForEntity` + dial predicates → table; S5 `diagnostics.ts` proxy/tls/required Sets + cloudflared token → table.
+- **Tests:** schema-registry{,-factory,-shared-groups,-diagnostics}.test.ts (matches-today characterization vs each live source); protocols-creatable-frozen, commands-factory-frozen, shared-groups-derived (frozen goldens proving derivation reproduces exact output).
+- **Reviewer:** architecture/refactor (×5, one per slice) — APPROVE each; S1 SHOULD-FIX (add diagnostics-seam characterization test) applied; nits (docs-sourced markers comment, channel-field comment) applied. Exhaustive byte-equivalence verified (63 factory rows, 64 group combos, 3 diagnostics Sets).
+- **Verify:** tsc -b clean; pnpm test green at every slice; pnpm build green; combined post-merge gate on main 1228 passed.
+
+### C1-transport-subfields — DONE (#157)
+- **What:** Every documented V2Ray transport sub-field editable from the Inspector card (http.method, ws.max_early_data/early_data_header_name, grpc.permit_without_stream, headers string-map) via a new `keyvalue` SharedFieldKind + a value-equality `visibleWhen` gate; per-variant visibility (quic = Type only). `transport` stays in handledFields.
+- **Tests:** tests/v2ray-transport-subfields.test.tsx (per-variant visibility + typed round-trips + headers prune-to-undefined + inbound parity).
+- **Reviewer:** domain schema-correctness (field contract vs v2ray-transport.md, line-by-line) + frontend gate — APPROVE, no findings.
+- **Verify:** tsc -b clean; pnpm test 1237.
+
+### C3-tls-acme — DONE (#161)
+- **What:** Structured inbound (server-only) ACME editor + dns01_challenge sub-editor in the TLS card; provider-gated dns01 fields via `visibleWhen`, 1.14 dns01 fields channel-gated to testing, custom `https://` provider preserved (free-text). `tls` stays in handledFields.
+- **Tests:** tests/tls-acme.test.tsx (inbound-shows / outbound-hides, channel gate, provider gate, custom-provider+cloudflare round-trip).
+- **Reviewer:** domain schema-correctness (ACME/dns01 contract vs tls.md + dns01_challenge.md; inbound-only role gate confirmed) + frontend gate — APPROVE, no findings.
+- **Verify:** full local `release:check` against real binaries — pnpm test 1242 · validate:fixtures 18 · validate:external 220 · e2e 23.
+
+### C4-cloudflared-create — DONE (#158)
+- **What:** `createFromPalette` cloudflared guard swapped from a hard type-exclusion to a testing channel gate (mirrors hysteria-realm/http-client); "Add Cloudflared" creates `{type,tag,token:""}` on testing, nothing on stable.
+- **Tests:** tests/inbound-cloudflared.test.tsx (C4 block) — testing creates+selects, stable creates nothing, non-cloudflared unregressed, click-through renders the node.
+- **Reviewer:** version-gating/diagnostics — APPROVE (empirically reverted the gate → the two bug-exercising tests fail; palette itemStatus alignment confirmed).
+- **Verify:** tsc -b clean; cloudflared suite 9/9; full suite green.
+
+### C5-version-gate-legacy-dns — DONE (#159)
+- **What:** Legacy schema-prefixed DNS-server `address` and top-level `dns.fakeip` become **errors** on the 1.14 target (binary removed them) via `atLeast(version,"1.14")`; stay warnings on 1.12/1.13. Same codes; level+message branch.
+- **Tests:** tests/version-gate-legacy-dns.test.ts (error on testing, warning on stable+1.12, single emission, "removed in sing-box 1.14.0" message).
+- **Reviewer:** version-gating/diagnostics — APPROVE (severity vs docs verified; testing presets use modern DNS so unaffected). Test regex fixed in-pass ("removed in sing-box 1.14.0").
+- **Verify:** tsc -b clean; pnpm test 1234.
+
+### C6-version-gate-naive — DONE (#162)
+- **What:** `naive` outbound emits a blocking error on the 1.12 target (Since 1.13.0) — code `outbound-naive-version`, path `/outbounds/${i}/type` — mirroring the ccm/ocm gate. Diagnostic-only.
+- **Tests:** tests/outbound-naive-version.test.ts (1.12 error / 1.13·1.14 clean / path+level / summarize→error / non-naive negative).
+- **Reviewer:** version-gating/diagnostics — APPROVE, no findings.
+- **Verify:** tsc -b clean; pnpm test 1255; build green.
+
+### C8-export-gate-unify — DONE (#160)
+- **What:** Extracted `confirmAndExportConfig(config,diagnostics):boolean` to `src/components/exportConfig.ts` (+ `createSbcvFileName` moved, re-exported from TopBar); desktop and mobile export now share the same error-diagnostics confirm gate; mobile sources diagnostics from getState() and only closes the sheet on a proceeded export.
+- **Tests:** tests/export-gate.test.tsx mobile describe (error+cancel keeps sheet open / error+confirm downloads / valid no-prompt) + 3 existing desktop cases stay green.
+- **Reviewer:** React/perf — APPROVE (no new subscription / stale closure; no import cycle; behavior parity verified).
+- **Verify:** tsc -b clean; pnpm test 1231.
+
+### C15-ci-binary-check — DONE (#163)
+- **What:** `tests/export-binary-check.test.ts` feeds `createConfigExport(parseConfigJson(fixture)).contents` (the pruned download bytes) through `sing-box check` on the matched binary for every internal fixture; reuses the singbox-target/check policies verbatim; warn-skips when binaries absent. Wired `validate:export-binary` into `release:check`, excluded from plain `test`.
+- **Tests:** the gate itself (19 cases; asserts ≥1 pruned export differs from raw, proving the pruned path).
+- **Reviewer:** serialization/round-trip + CI/tooling — APPROVE (one informational nit: differ-counter conflates prune+normalize; guarantee still holds).
+- **Verify:** local real binaries — 18 pruned exports accepted, 19/19; tsc -b clean.
