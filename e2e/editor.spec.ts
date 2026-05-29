@@ -34,6 +34,26 @@ test("stable-first visual editor primary path", async ({ page }) => {
   await expect(page.getByTestId("node-outbound:direct")).toBeVisible();
 });
 
+test("selecting a node paints its first-degree edges in selection blue", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("node-route:main")).toBeVisible();
+
+  // No selection → every edge is the default green, none highlighted.
+  await expect(page.locator(".sbc-edge__path--highlighted")).toHaveCount(0);
+
+  await page.getByTestId("node-route:main").click();
+
+  // The route hub's first-degree edges (to its rules / final outbound) turn selection-blue.
+  const highlighted = page.locator(".sbc-edge__path--highlighted");
+  await expect(highlighted.first()).toBeVisible();
+  expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
+
+  // An edge not incident to the route hub stays green (e.g. a selector→member edge).
+  const plain = page.locator(".sbc-edge__path:not(.sbc-edge__path--highlighted)").first();
+  await expect(plain).toBeVisible();
+  expect(await plain.evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(199, 255, 0)");
+});
+
 test("manual zoom is preserved after dragging a node", async ({ page }) => {
   await page.goto("/");
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();
