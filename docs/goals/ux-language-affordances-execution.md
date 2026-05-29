@@ -71,9 +71,11 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   - [x] L1-badges-words — statusLabel words: Setup→Add, Table→List, Inspector→In parent, Docs→Reference,
     Gated→Needs 1.14, Pending→Soon (Add/Legacy/Open kept); statusTitle tooltips aligned; 20 test
     assertions migrated. — PR #112
-  - [ ] L1-badges-treatment — legacy = colored (amber, the bar) vs testing/gated = muted; de-dup the
-    "Hysteria Realm (1.14 testing)" label suffix (badge carries it); confirm a11y for the setup-vs-add
-    same-name case (L1-badges-words NIT — consider node-kind in the aria-label).
+  - [x] L1-badges-treatment — gated badge → muted cool slate (was warm amber, too close to Legacy);
+    Legacy stays the warm-orange colored bar (already correct). De-dup'd the "Hysteria Realm (1.14
+    testing)" suffix → bare label (the `Needs 1.14` badge carries it). — PR #113
+  - [ ] L1-badges-a11y — (L1-badges-words NIT) under active search a setup-draft + ready-add of the same
+    protocol share the accessible name "Add X"; consider node-kind in the aria-label. (deferred follow-up)
 - [x] L1-buildtags — dropped `(with_tailscale)`/`(with_tor)` suffixes from the 4 palette labels (dns
   Tailscale Server, endpoint Tailscale, Tor outbound, DERP service); the build-tag requirement stays on
   the Inspector banner. (D3) — PR #111
@@ -420,3 +422,18 @@ Status: implemented 2026-05-29 in `atomic/l1-badges-words`; merged in PR #112.
   confirm the muted-vs-neutral visual is a sufficient a11y differentiator (or add the node-kind to the
   aria-label).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (889), `pnpm build`, `pnpm e2e` (16).
+
+### L1-badges-treatment (palette CSS + de-dup / D2) — PR #113
+Status: implemented 2026-05-29 in `atomic/l1-badges-treatment`; merged in PR #113.
+- What changed (D2 — legacy ≠ testing/gated must LOOK different): the `gated` badge was warm amber
+  (#f5c76b), too close to the `Legacy` warm-orange — now muted cool slate (#8794a0) so it recedes as
+  "needs a newer target" (informational), while `Legacy` (#ff8c69 + dark-red border) stays the colored
+  quality bar. Also de-dup'd the "Hysteria Realm (1.14 testing)" label → bare "Hysteria Realm" (the
+  `Needs 1.14` gated badge carries the version).
+- Tests: `tests/palette-hysteria-realm-dedup.test.tsx` (bare label + gated `Needs 1.14` badge on stable).
+- Deferred: L1-badges-a11y (the setup-vs-add same-name-under-search NIT).
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE — HSL-measured: gated now
+  hue 209/sat 12% (cool, muted) vs Legacy hue 14/sat 100% (warm, the colored bar) — genuinely distinct
+  per D2; Legacy unchanged; de-dup isolated; test sound. NIT: the muted family (gated/pending/docs/
+  inspector) is color-undifferentiated by design (the word differentiates; only Legacy owns color).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (890), `pnpm build`.
