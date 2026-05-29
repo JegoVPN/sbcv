@@ -12,6 +12,7 @@ const config = {
       { domain_suffix: ["cn"], outbound: "direct" },
       { domain_keyword: ["ads"], action: "reject" },
       { domain: ["x.com"], action: "sniff" },
+      { action: "hijack-dns" },
     ],
   },
   dns: { rules: [{ domain_suffix: ["cn"], action: "reject" }] },
@@ -32,6 +33,11 @@ describe("rule action label", () => {
     expect(action("route-rule:1")).toBe("reject");
     expect(sub("route-rule:2")).toBe("x.com · sniff");
     expect(action("route-rule:2")).toBe("sniff");
+  });
+
+  it("a rule with an action but no match conditions shows just the action label", () => {
+    expect(sub("route-rule:3")).toBe("hijack-dns");
+    expect(action("route-rule:3")).toBe("hijack-dns");
   });
 
   it("dns rule actions are labelled the same way", () => {
