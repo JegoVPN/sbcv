@@ -829,14 +829,15 @@ describe("canonical sing-box domain model", () => {
   });
 
   it("targets duplicate-tag diagnostics at individual tag paths", () => {
+    // C9: duplicate-tag is namespaced — a tag reused across namespaces (inbound vs outbound) is NOT a
+    // collision, so the per-path assertion uses two same-namespace outbounds.
     const config: SingBoxConfig = {
-      inbounds: [{ type: "tun", tag: "dup" }],
-      outbounds: [{ type: "direct", tag: "dup" }],
+      outbounds: [{ type: "direct", tag: "dup" }, { type: "block", tag: "dup" }],
     };
     const duplicates = validateConfig(config, "stable").filter((diagnostic) => diagnostic.code === "duplicate-tag");
 
-    expect(duplicates.map((diagnostic) => diagnostic.path).sort()).toEqual(["/inbounds/0/tag", "/outbounds/0/tag"]);
-    expect(duplicates.map((diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, config)).sort()).toEqual(["inbound:dup", "outbound:dup"]);
+    expect(duplicates.map((diagnostic) => diagnostic.path).sort()).toEqual(["/outbounds/0/tag", "/outbounds/1/tag"]);
+    expect(duplicates.map((diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, config)).sort()).toEqual(["outbound:dup", "outbound:dup"]);
   });
 
   it("places DNS-only rule-set nodes after route-referenced rule-set nodes", () => {
