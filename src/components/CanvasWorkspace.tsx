@@ -499,8 +499,12 @@ export function CanvasWorkspace() {
         onConnect={handleConnect}
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
-        onClickConnectStart={handleConnectStart}
-        onClickConnectEnd={handleConnectEnd}
+        // Click-to-connect is OFF: a plain click on a port handle would start a sticky click-connection
+        // (sets pendingPort → all compatible ports light up green), and that mode had no reliable exit in
+        // this UI (dual overlapping source/target handles under Loose mode + no path that clears RF's
+        // click-connect-start), so the highlight got stuck. Creating a downstream node is covered by
+        // dragging a port to empty canvas and by each port's "+" picker, so click-connect is redundant.
+        connectOnClick={false}
         isValidConnection={isValidConnection}
         onNodeClick={(_, node) => setSelectedId(node.id)}
         onInit={(instance) => {
@@ -515,6 +519,10 @@ export function CanvasWorkspace() {
           setNodePosition(node.id, node.position);
         }}
         onPaneClick={() => {
+          // Defense in depth: also drop any pending connect-drag so its compatible-port highlight can
+          // never outlive the interaction (e.g. a drag whose pointer left the window without firing
+          // onConnectEnd). Cheap and idempotent — pendingPort is already null on the normal path.
+          setPendingPort(null);
           if (suppressNextPaneClickRef.current) return;
           setSelectedId(null);
           setChipPicker(null);
