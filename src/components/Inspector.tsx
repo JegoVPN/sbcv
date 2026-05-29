@@ -1166,7 +1166,7 @@ function RouteRuleInspector({
           <RuleListField label="Domain keyword" value={rule.domain_keyword} onChange={(value) => patch({ domain_keyword: value })} />
           <RuleListField label="Domain" value={rule.domain} onChange={(value) => patch({ domain: value })} />
           <RuleListField label="Domain regex" value={rule.domain_regex} onChange={(value) => patch({ domain_regex: value })} />
-          <RuleListField label="Rule Set" value={rule.rule_set} onChange={(value) => patch({ rule_set: value })} />
+          <RuleListField label="Match rule-set" value={rule.rule_set} onChange={(value) => patch({ rule_set: value })} />
         </>
       )}
 
@@ -1217,7 +1217,7 @@ function RouteRuleInspector({
           </label>
           <label className="toggle-row">
             <input type="checkbox" checked={Boolean(rule.no_drop)} onChange={(event) => patch({ no_drop: event.target.checked || undefined })} />
-            <span>No drop (only return)</span>
+            <span>No drop (else method falls back to drop after 50 hits in 30s)</span>
           </label>
         </>
       ) : null}
@@ -1390,7 +1390,7 @@ function DnsRuleInspector({
           <RuleListField label="Domain keyword" value={rule.domain_keyword} onChange={(value) => patch({ domain_keyword: value })} />
           <RuleListField label="Domain" value={rule.domain} onChange={(value) => patch({ domain: value })} />
           <RuleListField label="Domain regex" value={rule.domain_regex} onChange={(value) => patch({ domain_regex: value })} />
-          <RuleListField label="Rule Set" value={rule.rule_set} onChange={(value) => patch({ rule_set: value })} />
+          <RuleListField label="Match rule-set" value={rule.rule_set} onChange={(value) => patch({ rule_set: value })} />
         </>
       )}
 
@@ -1442,7 +1442,7 @@ function DnsRuleInspector({
           </label>
           <label className="toggle-row">
             <input type="checkbox" checked={Boolean(rule.no_drop)} onChange={(event) => patch({ no_drop: event.target.checked || undefined })} />
-            <span>No drop (only return)</span>
+            <span>No drop (else method falls back to drop after 50 hits in 30s)</span>
           </label>
         </>
       ) : null}
