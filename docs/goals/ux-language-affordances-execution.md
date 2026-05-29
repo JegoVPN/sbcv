@@ -89,7 +89,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     ethernet` → restricted to `default/hybrid/fallback`. — PR #102
   - [x] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
     createEndpoint seed); was producing invalid exports. (DERP mesh peer correctly keeps server/port.) — PR #103
-  - [ ] L2-fix-ss-inbound-ciphers — H3: drop legacy stream ciphers from the shadowsocks INBOUND method list.
+  - [x] L2-fix-ss-inbound-ciphers — H3: dropped legacy stream ciphers from the shadowsocks INBOUND method
+    select (kept 2022/AEAD/`none`); outbound select keeps them (valid). — PR #105
   - [x] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)` (both
     inbound + outbound; upstream omitted-version default is v1). — PR #104
   - [ ] L2-fix-hysteria-copy — H4 (required Mbps placeholder) + H5/H6 (drop the false "deprecated"
@@ -311,3 +312,18 @@ Status: implemented 2026-05-29 in `atomic/l2-fix-shadowtls-version`; merged in P
   confirmed, both sites changed, no seed contradiction.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (878), `pnpm build` (label-only; no
   e2e path).
+
+### L2-fix-ss-inbound-ciphers (audit H3) — PR #105
+Status: implemented 2026-05-29 in `atomic/l2-fix-ss-inbound-ciphers`; merged in PR #105.
+- What changed: the shadowsocks **inbound** Method `<select>` (Inspector.tsx ~3099) offered a "Legacy /
+  Stream cipher" optgroup (aes-*-ctr/cfb, rc4-md5, chacha20-ietf, xchacha20) that a shadowsocks inbound
+  rejects — those are outbound-only (`inbound/shadowsocks.md` lists only 2022 + AEAD + `none`). Removed
+  the stream ciphers from the inbound select, keeping the valid `none` (relabeled the group "Other").
+  The separate **outbound** shadowsocks Method select (Inspector.tsx ~3850) keeps stream ciphers — valid
+  per `outbound/shadowsocks.md` — untouched.
+- Tests: `tests/shadowsocks-inbound-ciphers.test.tsx` (inbound drops stream ciphers, keeps 2022/AEAD/none;
+  outbound still offers them).
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE, no findings — upstream
+  confirmed, scope limited to the inbound select (outbound keeps stream ciphers), `none` retained, no
+  data loss (controlled select doesn't wipe an imported invalid method).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (880), `pnpm build` (select-options only).
