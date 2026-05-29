@@ -171,6 +171,12 @@ function domainResolverTag(value: unknown): string | undefined {
   return undefined;
 }
 
+// http-client.md: an `http_client` value is "a string or an object". Only the string form (a top-level
+// http_clients[] tag) is an edge; the object form is inline (no tag) and intentionally not edged. (C11c)
+function httpClientRefTag(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
 function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : generatedEntityTag(kind as Parameters<typeof generatedEntityTag>[0], index);
 }
@@ -216,6 +222,7 @@ function isPortConnected(
   type: string,
   direction: PortDirection,
   portKey: string,
+  channel: "stable" | "testing",
 ) {
   const value = nodeValueFromId(id);
 
@@ -275,7 +282,10 @@ function isPortConnected(
       return Boolean(
         config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
           config.endpoints?.some((endpoint) => endpoint.detour === value) ||
-          config.ntp?.detour === value,
+          config.ntp?.detour === value ||
+          // The shared HTTP-client object's own dial detour (C11c) — testing-gated, matching the edge.
+          (channel === "testing" &&
+            (config.http_clients?.some((client) => (client as Record<string, unknown>).detour === value) ?? false)),
       );
     }
     if ((kind === "outbound" || kind === "endpoint") && portKey === "clash-download-detour") {
@@ -312,6 +322,17 @@ function isPortConnected(
           if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
           return rule.rule_set === value;
         }) ?? false
+      );
+    }
+    // http_client target (C11c): the node lights when route.default_http_client / a remote rule_set's
+    // http_client / an acme|cloudflare-origin-ca provider's http_client names it (string form only).
+    // Testing-gated — http_client is 1.14-only, matching the suppressed edge on stable.
+    if (kind === "http-client" && portKey === "http-client-ref") {
+      if (channel !== "testing") return false;
+      return Boolean(
+        httpClientRefTag((config.route as Record<string, unknown> | undefined)?.default_http_client) === value ||
+          config.route?.rule_set?.some((ruleSet) => httpClientRefTag((ruleSet as Record<string, unknown>).http_client) === value) ||
+          config.certificate_providers?.some((provider) => httpClientRefTag((provider as Record<string, unknown>).http_client) === value),
       );
     }
     return false;
@@ -405,17 +426,30 @@ function isPortConnected(
   if (kind === "service" && portKey === "detour") {
     return Boolean(config.services?.find((service) => service.tag === value)?.detour);
   }
+  // http_client source dots (C11c) — testing-gated, string form only (object form is inline, not edged).
+  if (channel === "testing" && kind === "route" && portKey === "default-http-client") {
+    return Boolean(httpClientRefTag((config.route as Record<string, unknown> | undefined)?.default_http_client));
+  }
+  if (channel === "testing" && kind === "rule-set" && portKey === "http-client") {
+    return Boolean(httpClientRefTag((config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value) as Record<string, unknown> | undefined)?.http_client));
+  }
+  if (channel === "testing" && kind === "certificate-provider" && portKey === "http-client") {
+    return Boolean(httpClientRefTag((config.certificate_providers?.find((provider) => provider.tag === value) as Record<string, unknown> | undefined)?.http_client));
+  }
+  if (channel === "testing" && kind === "http-client" && portKey === "dial-detour") {
+    return Boolean((config.http_clients?.find((client) => client.tag === value) as Record<string, unknown> | undefined)?.detour);
+  }
   return false;
 }
 
-function annotateConnectedPorts(config: SingBoxConfig, nodes: SbcFlowNode[]) {
+function annotateConnectedPorts(config: SingBoxConfig, nodes: SbcFlowNode[], channel: "stable" | "testing") {
   for (const node of nodes) {
     const input = portEndpointsForNode(node.data.kind, node.data.type, "input")
-      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "input", port.portKey))
+      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "input", port.portKey, channel))
       .map((port) => port.portKey)
       .sort();
     const output = portEndpointsForNode(node.data.kind, node.data.type, "output")
-      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "output", port.portKey))
+      .filter((port) => isPortConnected(config, node.id, node.data.kind, node.data.type, "output", port.portKey, channel))
       .map((port) => port.portKey)
       .sort();
 
@@ -425,7 +459,15 @@ function annotateConnectedPorts(config: SingBoxConfig, nodes: SbcFlowNode[]) {
   }
 }
 
-export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagnostics: Diagnostic[]) {
+// `channel` gates the testing-only http_client edges/ports (C11c); it defaults to "testing" so the many
+// existing 3-arg callers (and the canonical config, which is the source of truth) keep their behavior —
+// CanvasWorkspace threads the live store channel so a stable target suppresses 1.14-only http_client wiring.
+export function deriveGraph(
+  config: SingBoxConfig,
+  layout: ProjectLayout,
+  diagnostics: Diagnostic[],
+  channel: "stable" | "testing" = "testing",
+) {
   const nodes: SbcFlowNode[] = [];
   const edges: Edge[] = [];
   const columnLayout = createColumnAllocator();
@@ -1095,9 +1137,45 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
     pushDomainResolverEdge("dns-server-domain-resolver", "dns-server", entityTag(server.tag, "dns-server", index), (server as Record<string, unknown>).domain_resolver);
   });
 
+  // http_client edges (C11c) — testing-only (http_client is 1.14): the three string refs into the
+  // http-client node + the shared HTTP-client object's own dial detour out to an outbound. The string
+  // form names a top-level http_clients[] tag; the object form is inline and not edged. Reuses the
+  // existing referenceRegistry cascade + diagnostics — no duplication here.
+  if (channel === "testing") {
+    const httpClientTagSet = new Set(httpClients.map((client, index) => entityTag(client.tag, "http-client", index)));
+    if (config.route) {
+      const tag = httpClientRefTag((config.route as Record<string, unknown>).default_http_client);
+      if (tag && httpClientTagSet.has(tag)) {
+        edges.push(makeEdge(formatEdgeId("route-default-http-client", tag), "route:main", `http-client:${tag}`, "default-http-client", "http-client-ref"));
+      }
+    }
+    if (visualizeRuleSets) {
+      ruleSets.forEach((ruleSet, index) => {
+        if (ruleSet.type !== "remote") return;
+        const tag = httpClientRefTag((ruleSet as Record<string, unknown>).http_client);
+        if (tag && httpClientTagSet.has(tag)) {
+          edges.push(makeEdge(formatEdgeId("rule-set-http-client", entityTag(ruleSet.tag, "rule-set", index), tag), `rule-set:${entityTag(ruleSet.tag, "rule-set", index)}`, `http-client:${tag}`, "http-client", "http-client-ref"));
+        }
+      });
+    }
+    certificateProviders.forEach((provider, index) => {
+      if (provider.type === "tailscale") return;
+      const tag = httpClientRefTag((provider as Record<string, unknown>).http_client);
+      if (tag && httpClientTagSet.has(tag)) {
+        edges.push(makeEdge(formatEdgeId("certificate-provider-http-client", entityTag(provider.tag, "certificate-provider", index), tag), `certificate-provider:${entityTag(provider.tag, "certificate-provider", index)}`, `http-client:${tag}`, "http-client", "http-client-ref"));
+      }
+    });
+    httpClients.forEach((client, index) => {
+      const detour = httpClientRefTag((client as Record<string, unknown>).detour);
+      if (detour) {
+        edges.push(makeEdge(formatEdgeId("http-client-detour", entityTag(client.tag, "http-client", index), detour), `http-client:${entityTag(client.tag, "http-client", index)}`, outboundTargetNodeId(detour), "dial-detour", "detour-target"));
+      }
+    });
+  }
+
   centerColumnsVertically(nodes, layout);
 
-  annotateConnectedPorts(config, nodes);
+  annotateConnectedPorts(config, nodes, channel);
 
   return { nodes, edges };
 }

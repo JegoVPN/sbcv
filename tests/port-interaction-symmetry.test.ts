@@ -278,6 +278,38 @@ const cases: SymmetryCase[] = [
     sourceHandle: "domain-resolver",
     candidate: { nodeKind: "dns-server", nodeType: "local", handleId: "domain-resolver-target" },
   },
+  {
+    relationId: "route-default-http-client",
+    name: "route default http client",
+    base: { route: {}, http_clients: [] },
+    sourceId: "route:main",
+    sourceHandle: "default-http-client",
+    candidate: { nodeKind: "http-client", nodeType: "http-client", handleId: "http-client-ref" },
+  },
+  {
+    relationId: "rule-set-http-client",
+    name: "rule set http client",
+    base: { route: { rule_set: [{ type: "remote", tag: "rs", format: "binary", url: "https://example.com/r.srs" }] } },
+    sourceId: "rule-set:rs",
+    sourceHandle: "http-client",
+    candidate: { nodeKind: "http-client", nodeType: "http-client", handleId: "http-client-ref" },
+  },
+  {
+    relationId: "certificate-provider-http-client",
+    name: "certificate provider http client",
+    base: { certificate_providers: [{ type: "acme", tag: "cp", domain: ["example.com"] }] },
+    sourceId: "certificate-provider:cp",
+    sourceHandle: "http-client",
+    candidate: { nodeKind: "http-client", nodeType: "http-client", handleId: "http-client-ref" },
+  },
+  {
+    relationId: "http-client-detour",
+    name: "http client dial detour",
+    base: { http_clients: [{ tag: "hc" }], outbounds: [] },
+    sourceId: "http-client:hc",
+    sourceHandle: "dial-detour",
+    candidate: { nodeKind: "outbound", nodeType: "direct", handleId: "detour-target" },
+  },
 ];
 
 describe("chip-create and drag-connect symmetry", () => {

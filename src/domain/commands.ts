@@ -818,5 +818,29 @@ export function disconnectEdge(config: SingBoxConfig, edgeId: string): SingBoxCo
   if (relation === "dns-server-domain-resolver") {
     clearDomainResolver(next.dns?.servers?.find((item) => item.tag === parts[0]) as Record<string, unknown> | undefined, parts[1] ?? "");
   }
+  // http_client string references (C11c). Object-form values carry no edge, so only the string ref is
+  // cleared. The shared HTTP-client object's own detour is cleared like any other dial detour.
+  if (relation === "route-default-http-client") {
+    const route = next.route as Record<string, unknown> | undefined;
+    if (route && route.default_http_client === parts[0]) route.default_http_client = undefined;
+  }
+  if (relation === "rule-set-http-client") {
+    next.route?.rule_set?.forEach((ruleSet) => {
+      const record = ruleSet as Record<string, unknown>;
+      if (ruleSet.tag === parts[0] && record.http_client === parts[1]) record.http_client = undefined;
+    });
+  }
+  if (relation === "certificate-provider-http-client") {
+    next.certificate_providers?.forEach((provider) => {
+      const record = provider as Record<string, unknown>;
+      if (provider.tag === parts[0] && record.http_client === parts[1]) record.http_client = undefined;
+    });
+  }
+  if (relation === "http-client-detour") {
+    next.http_clients?.forEach((client) => {
+      const record = client as Record<string, unknown>;
+      if (client.tag === parts[0] && record.detour === parts[1]) record.detour = undefined;
+    });
+  }
   return next;
 }
