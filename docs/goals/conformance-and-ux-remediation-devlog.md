@@ -84,7 +84,7 @@ work, not after.
   - [x] A23-search — Add Library search covers Templates (W29) — PR #76
   - [ ] A23-rest — empty first-run state, remove dead "Docs" rows, de-jargon badges, Add-vs-Setup labels (W29 tail)
 - [~] A24 — canvas connect/disconnect discoverability + edge legend (`canvas-connect-discoverability`) — legend slice landed
-  - [x] A24-legend — desktop edge legend (configured link / animated traffic path / hover-✕ disconnect) (W30) — PR #77
+  - [x] A24-legend — desktop edge legend (configured link / animated traffic path / hover-✕ disconnect) (W30) — PR #77; **REVERTED in PR #87** at the user's request ("删掉这个提醒，没意义") — the legend read as clutter, not a useful key
   - [ ] A24-rest — drag affordance, invalid-drop toast, right-click disconnect (W30 tail)
 - [~] A25 — mobile build path (`mobile-build-path`) — node-add slice landed
   - [x] A25-add — mobile node-add path: Palette in a bottom sheet via an "Add node" button (W31/T12) — PR #80
@@ -1513,3 +1513,19 @@ Status: implemented 2026-05-29 in `atomic/node-icon-brands`; merged in PR #86. U
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (827 passed), `pnpm build`,
   `pnpm e2e` (14 passed).
 - Official check: n/a — canvas icon rendering.
+
+### A24-legend REVERTED remove-edge-legend — drop the desktop edge legend (canvas)
+Status: reverted 2026-05-29 in `atomic/remove-edge-legend`; merged in PR #87.
+
+- What changed: removed the bottom-left desktop canvas edge legend added in A24-legend (#77). The user
+  reviewed it on the live canvas and judged it clutter, not a useful key ("删掉这个提醒，没意义").
+  Deleted the JSX block in `CanvasWorkspace.tsx`, the `.canvas-edge-legend*` CSS in `styles.css`, and
+  `tests/canvas-edge-legend.test.tsx`. `isMobile` stays (used by many other props); no dangling refs.
+- Tests: `pnpm test` 826 (was 827; the one legend test removed with the feature). No other test or e2e
+  referenced the legend.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (826 passed), `pnpm build`,
+  `pnpm e2e` (14 passed). No expert-review gate — a direct user-requested feature removal, not a
+  remediation atomic; risk is only "is it cleanly gone" (grep confirms no residual refs).
+- Note: this only removes the *legend*. The edge visual language itself (solid lime = configured
+  link/reference, animated dashed = traffic path, hover-✕ = disconnect) is unchanged — it was always
+  rendered by CanvasEdge, the legend was just a key describing it.
