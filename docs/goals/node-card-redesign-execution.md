@@ -57,20 +57,39 @@ The upstream study found the canvas relation set is missing whole edge classes (
 - **DN-2 Reveal triggers = drag (required) + hover (CSS, cheap).** Explicit expand-chevron optional/deferred. *Recommended.*
 - **DN-3 Picker = port-scoped** (one handle → its candidates), reusing the drag-to-empty machinery, opened by a port "+" click. *Recommended over node-scoped.*
 - **DN-4 Center "+" removed; grid removed; picker is the single downstream-add path.** *Per user.*
-- **DN-5 Keep the toolbar count pill** (informative "N compatible") but at the unified 13px/760; compute its count from the candidate generator if `data.compatible` is retired. *Recommended; user only objected to its SIZE, not its presence.*
+- **DN-5 Keep the toolbar count pill** (informative "N compatible") but at the unified 13px/760; compute its count from the candidate generator if `data.compatible` is retired. **✅ CONFIRMED by user 2026-05-29** (keep count, unify font).
 - **DN-6 Type scale = 22 title / 13 secondary (titlebar, subtitle, all toolbar pills incl. count) / 11 micro.** *Recommended.*
 - **DN-7 Scope boundary:** N1–N3 are the visual redesign; N4 (relation completeness) is a separate goal. *Recommended — don't balloon the redesign.*
 
 ## Open questions for the user
-- Should unconnected *editable* ports offer an outgoing-drag start at all, or is the picker (DN-3/DN-4) the only "add downstream" path? (Affects whether hover-reveal is required or just polish.)
-- Should readonly/decorative structural ports (route↔inbound hub, rule order) also collapse-by-default, or stay as always-visible structure?
-- Keep the toolbar count pill (DN-5) or remove it entirely with the center "+"?
+
+### OQ-1 — Do unconnected editable ports still start an outgoing connect-drag, or is the picker the only add path?
+Key nuance: there are **two distinct actions** a port supports — (a) **connect to an EXISTING node** (drag a wire from the port to another node) and (b) **create a NEW downstream node + connect** (the picker). The picker (N2) only does (b).
+- **Option A — picker-only** (no drag from unconnected ports; "+" → picker is the sole add path).
+  - Pros: simplest single mental model; hover-reveal becomes optional polish; fewest hidden-handle/measurement worries; scales to many candidates.
+  - Cons: **loses "connect to an existing node by dragging a wire"** from a collapsed port — unless the picker is extended to also list existing nodes as targets (extra work). Drops a conventional canvas gesture.
+- **Option B — hover/drag-reveal + picker** (unconnected ports reveal on hover → draggable to existing nodes; "+" → picker for new nodes). *Recommended.*
+  - Pros: keeps BOTH gestures (wire-to-existing AND create-new); matches canvas conventions; the reveal is cheap CSS since handles stay mounted.
+  - Cons: hover-reveal is then required (not optional); hidden handles must stay measured (already the DN-1 plan).
+
+### OQ-2 — Do readonly/decorative structural ports (route↔inbound hub, rule order) also collapse by default?
+Note: a readonly port's "connected" state already means *the structural relationship exists* (e.g. route↔inbound is "connected" when inbounds exist), so under a connected-only rule they appear exactly when relevant.
+- **Option A — collapse them too** (show only when their structural link is live). *Recommended.*
+  - Pros: one consistent rule; maximal de-noise; they still show whenever the structure actually exists.
+  - Cons: the node's "shape/role" isn't always advertised when empty (minor — the titlebar already states kind·type).
+- **Option B — always show structural ports** (collapse only editable ones).
+  - Pros: stable structural affordance; node role always visible.
+  - Cons: re-introduces the noise we're removing; two different rules (editable vs structural).
+
+### OQ-3 — Toolbar count pill — RESOLVED ✅
+User decision (2026-05-29): **keep the count pill, just unify its font** (DN-5 confirmed). Only the size was the problem.
 
 ## Running TODO
 (Mirror of the queue; tick as merged.)
 
 ## Decision Log
-(Dated entries as decisions land.)
+- **2026-05-29 — DN-5 confirmed (user):** keep the toolbar compatible-count pill; the objection was its *size* (18px/860), not its presence. N3 unifies it to the secondary scale (13px/760) without removing it.
+- **OQ-1 / OQ-2:** pending user pick (trade-offs laid out above); recommendation = OQ-1 Option B, OQ-2 Option A.
 
 ## Milestone Notes
 (One block per merged atomic.)
