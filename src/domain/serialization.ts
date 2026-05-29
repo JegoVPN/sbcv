@@ -88,11 +88,30 @@ export function stringifyConfig(config: SingBoxConfig): string {
   return JSON.stringify(config, null, 2);
 }
 
+// Recursively drop provably-inert export noise from a COPY of the config: object keys whose value is
+// an empty string or an empty array — sing-box treats both as absent, so removing them keeps the config
+// equivalent while making the downloaded file cleaner. Conservative (D7 — don't over-clean): keeps
+// empty objects, `false`, `0`, `null`, and never drops array *elements* (only object keys). Does not
+// mutate the input. Applied only to the download (createConfigExport), not the live editable JSON draft.
+function pruneExportNoise(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(pruneExportNoise);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+      if (raw === "") continue;
+      if (Array.isArray(raw) && raw.length === 0) continue;
+      out[key] = pruneExportNoise(raw);
+    }
+    return out;
+  }
+  return value;
+}
+
 export function createConfigExport(config: SingBoxConfig): ConfigExport {
   return {
     fileName: "config.json",
     mimeType: "application/json",
-    contents: stringifyConfig(config),
+    contents: stringifyConfig(pruneExportNoise(config) as SingBoxConfig),
   };
 }
 
