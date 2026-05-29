@@ -12,15 +12,16 @@ describe("node semantic badge", () => {
     }
   });
 
-  it("flags platform-locked inbounds (tproxy / redirect / tun)", () => {
+  it("flags the hard platform-locked inbounds (tproxy / redirect)", () => {
     expect(nodeBadge("inbound", "tproxy")?.tone).toBe("platform");
     expect(nodeBadge("inbound", "redirect")?.tone).toBe("platform");
-    expect(nodeBadge("inbound", "tun")?.tone).toBe("platform");
   });
 
-  it("returns null for ordinary, unconstrained nodes", () => {
+  it("returns null for ordinary or broadly-supported nodes", () => {
     expect(nodeBadge("outbound", "shadowsocks")).toBeNull();
     expect(nodeBadge("inbound", "mixed")).toBeNull();
+    // tun is intentionally not badged — it's also the primary inbound on the mobile apps.
+    expect(nodeBadge("inbound", "tun")).toBeNull();
     expect(nodeBadge("dns-server", "tls")).toBeNull();
     expect(nodeBadge("route", "route")).toBeNull();
   });

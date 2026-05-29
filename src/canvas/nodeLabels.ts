@@ -103,10 +103,11 @@ const NODE_BADGES: Record<string, NodeBadge> = {
   "outbound:block": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 — use a route rule action=reject" },
   "outbound:dns": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 (removed in 1.13) — use a route/DNS rule action=hijack-dns" },
   "outbound:wireguard": { label: "deprecated", tone: "deprecated", title: "Deprecated since sing-box 1.11 (removed in 1.13) — use a WireGuard endpoint" },
-  // Platform-locked inbounds (run only on the named OSes — see upstream inbound/*.md).
+  // Platform-locked inbounds — hard kernel-feature locks (upstream "Only supported on …"). tun is
+  // intentionally NOT badged: although the config doc names desktop OSes, tun is the primary inbound on
+  // the Android/iOS apps too (via the platform VPN API), so a "desktop only" badge would mislead.
   "inbound:tproxy": { label: "Linux only", tone: "platform", title: "tproxy is only supported on Linux" },
   "inbound:redirect": { label: "Linux / macOS", tone: "platform", title: "redirect is only supported on Linux and macOS" },
-  "inbound:tun": { label: "desktop only", tone: "platform", title: "tun is only supported on Linux, Windows and macOS" },
 };
 
 export function nodeBadge(kind: string, type: string): NodeBadge | null {
