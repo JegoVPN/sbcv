@@ -1,5 +1,5 @@
-import { createConfigExport } from "../domain/serialization";
-import type { Diagnostic, SingBoxConfig } from "../domain/types";
+import { createConfigExport, createProjectExport } from "../domain/serialization";
+import type { Diagnostic, SbcProject, SingBoxConfig } from "../domain/types";
 
 function padTimestampPart(value: number) {
   return value.toString().padStart(2, "0");
@@ -9,6 +9,24 @@ export function createSbcvFileName(now = new Date()) {
   const date = `${now.getFullYear()}${padTimestampPart(now.getMonth() + 1)}${padTimestampPart(now.getDate())}`;
   const time = `${padTimestampPart(now.getHours())}${padTimestampPart(now.getMinutes())}${padTimestampPart(now.getSeconds())}`;
   return `sbcv_${date}_${time}.json`;
+}
+
+function downloadBlob(contents: string, mimeType: string, fileName: string): void {
+  const blob = new Blob([contents], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+// Download the project wrapper (C16): config + layout + channel/version as `*.sbcv.json`. Unlike the
+// config Export, this is NOT diagnostics-gated (saving a draft project is always allowed) and carries
+// the `kind:"sbcv-project"` discriminator so it's never confused with a plain sing-box config.
+export function downloadProject(project: SbcProject): void {
+  const exported = createProjectExport(project);
+  downloadBlob(exported.contents, exported.mimeType, createSbcvFileName().replace(/\.json$/, ".sbcv.json"));
 }
 
 /**
