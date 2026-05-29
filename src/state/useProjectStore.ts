@@ -813,6 +813,22 @@ function connectDirectedPortReference(
     return updateEntityField(config, { kind: outputNode.kind, tag: outputNode.value }, "domain_resolver", nextValue);
   }
 
+  // http_client cross-object references (C11c). The writableRelation lookup above already gated the
+  // source type (remote rule_set / non-tailscale certificate-provider) and channel-invariant relation;
+  // a string tag is written (object-form http_client stays editable via the Inspector / JSON).
+  if (outputNode.kind === "route" && outputHandle === "default-http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
+    return updateEntityField(config, { kind: "route", id: "main" }, "default_http_client", inputNode.value);
+  }
+  if (outputNode.kind === "rule-set" && outputHandle === "http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
+    return updateEntityField(config, { kind: "rule-set", tag: outputNode.value }, "http_client", inputNode.value);
+  }
+  if (outputNode.kind === "certificate-provider" && outputHandle === "http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
+    return updateEntityField(config, { kind: "certificate-provider", tag: outputNode.value }, "http_client", inputNode.value);
+  }
+  if (outputNode.kind === "http-client" && outputHandle === "dial-detour" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "detour-target") {
+    return updateEntityField(config, { kind: "http-client", tag: outputNode.value }, "detour", inputNode.value);
+  }
+
   return null;
 }
 
@@ -841,6 +857,12 @@ function createNodeForConnectCandidate(config: SingBoxConfig, candidate: CreateN
     next = addService(next, candidate.nodeType, preferredServiceTag(candidate.nodeType));
     const created = next.services?.[insertIndex];
     return created?.tag ? { config: next, nodeId: `service:${created.tag}` } : null;
+  }
+  if (candidate.nodeKind === "http-client") {
+    const insertIndex = next.http_clients?.length ?? 0;
+    next = addHttpClient(next);
+    const created = next.http_clients?.[insertIndex];
+    return created?.tag ? { config: next, nodeId: `http-client:${created.tag}` } : null;
   }
   if (candidate.nodeKind === "rule-set") {
     const insertIndex = next.route?.rule_set?.length ?? 0;

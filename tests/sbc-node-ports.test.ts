@@ -11,7 +11,9 @@ type PortCase = {
 
 const cases: PortCase[] = [
   { kind: "inbound", type: "tun", inputKeys: [], outputKeys: ["route", "route-rule-match", "dns-rule-match"] },
-  { kind: "route", type: "route", inputKeys: ["inbound"], outputKeys: ["route-rule", "outbound"] },
+  // C11c: route exposes a `default-http-client` output (registry-ordered at the end); the port is
+  // channel-agnostic (only the edge/connectedPorts are testing-gated in deriveGraph).
+  { kind: "route", type: "route", inputKeys: ["inbound"], outputKeys: ["route-rule", "outbound", "default-http-client"] },
   { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set"] },
   { kind: "dns", type: "dns", inputKeys: [], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
@@ -23,7 +25,8 @@ const cases: PortCase[] = [
   { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["service"] },
   { kind: "endpoint", type: "wireguard", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"], outputKeys: ["dial-detour", "domain-resolver"] },
   { kind: "endpoint", type: "tailscale", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "dns-server", "service-detour", "rule-set-download", "clash-download-detour", "derp-service", "certificate-provider"], outputKeys: ["dial-detour", "domain-resolver"] },
-  { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour"] },
+  // C11c: a remote rule-set exposes an `http-client` output (1.14 downloader); local/inline do not.
+  { kind: "rule-set", type: "remote", inputKeys: ["route-rule", "dns-rule"], outputKeys: ["download-detour", "http-client"] },
   { kind: "rule-set", type: "local", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   { kind: "rule-set", type: "inline", inputKeys: ["route-rule", "dns-rule"], outputKeys: [] },
   {
@@ -55,6 +58,11 @@ const cases: PortCase[] = [
   { kind: "service", type: "ccm", inputKeys: [], outputKeys: ["detour"] },
   { kind: "service", type: "resolved", inputKeys: ["dns-server"], outputKeys: [] },
   { kind: "certificate-provider", type: "tailscale", inputKeys: [], outputKeys: ["endpoint"] },
+  // C11c: acme/cloudflare-origin-ca providers expose an `http-client` output; tailscale (above) does not.
+  { kind: "certificate-provider", type: "acme", inputKeys: [], outputKeys: ["http-client"] },
+  // C11c: the http-client node is no longer port-less — it receives refs (`http-client-ref`) and dials
+  // through its own detour (`dial-detour`).
+  { kind: "http-client", type: "http-client", inputKeys: ["http-client-ref"], outputKeys: ["dial-detour"] },
   { kind: "settings", type: "ntp", inputKeys: [], outputKeys: ["dial-detour"] },
   { kind: "settings", type: "experimental", inputKeys: [], outputKeys: ["clash-download-detour"] },
 ];

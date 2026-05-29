@@ -26,6 +26,8 @@ function graphWithBroadPortCoverage() {
   );
   config.route = {
     ...config.route,
+    // C11c: route.default_http_client + a remote rule_set http_client (both → the http-client node).
+    default_http_client: "hc",
     rules: [
       { domain_suffix: ["cn"], inbound: "tun-in", outbound: "direct", rule_set: "remote-rules" },
       ...(config.route?.rules?.slice(1) ?? []),
@@ -37,9 +39,10 @@ function graphWithBroadPortCoverage() {
         format: "binary",
         url: "https://example.com/rules.srs",
         download_detour: "proxy",
+        http_client: "hc",
       },
     ],
-  };
+  } as never;
   config.dns = {
     ...config.dns,
     // C11b: a dial dns-server (https) resolving its own remote host through another dns-server.
@@ -58,7 +61,11 @@ function graphWithBroadPortCoverage() {
   ];
   config.certificate_providers = [
     { type: "tailscale", tag: "ts-cert", endpoint: "ts-ep" },
+    // C11c: a non-tailscale provider's http_client reference.
+    { type: "acme", tag: "acme-cp", domain: ["example.com"], http_client: "hc" } as never,
   ];
+  // C11c: a shared HTTP client with its own dial detour — the node is fully wired (in + out edges).
+  config.http_clients = [{ tag: "hc", detour: "proxy" } as never];
   config.services = [
     { type: "resolved", tag: "resolved-svc", listen: "127.0.0.53", listen_port: 53 } as never,
     { type: "ssm-api", tag: "ssm", servers: { "/": "ss-in" } } as never,
@@ -135,6 +142,27 @@ describe("port relation registry", () => {
     ).toBeUndefined();
     expect(
       relationForHandles("dns-server", "hosts", "domain-resolver", "dns-server", "local", "domain-resolver-target", ["writable"]),
+    ).toBeUndefined();
+
+    // C11c — http_client refs into the http-client node + the node's own dial detour out to an outbound.
+    expect(
+      relationForHandles("route", "route", "default-http-client", "http-client", "http-client", "http-client-ref", ["writable"])?.id,
+    ).toBe("route-default-http-client");
+    expect(
+      relationForHandles("rule-set", "remote", "http-client", "http-client", "http-client", "http-client-ref", ["writable"])?.id,
+    ).toBe("rule-set-http-client");
+    expect(
+      relationForHandles("certificate-provider", "acme", "http-client", "http-client", "http-client", "http-client-ref", ["writable"])?.id,
+    ).toBe("certificate-provider-http-client");
+    expect(
+      relationForHandles("http-client", "http-client", "dial-detour", "outbound", "direct", "detour-target", ["writable"])?.id,
+    ).toBe("http-client-detour");
+    // A local/inline rule-set and a tailscale provider carry no http_client output.
+    expect(
+      relationForHandles("rule-set", "local", "http-client", "http-client", "http-client", "http-client-ref", ["writable"]),
+    ).toBeUndefined();
+    expect(
+      relationForHandles("certificate-provider", "tailscale", "http-client", "http-client", "http-client", "http-client-ref", ["writable"]),
     ).toBeUndefined();
   });
 
