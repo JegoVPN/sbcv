@@ -179,6 +179,17 @@ function candidatesForEndpoint(endpoint: PortEndpoint): ChipPickerCandidate[] {
     }));
 }
 
+// Outcome of releasing a connection drag (L3-invalid-drop). Pure so it can be unit-tested without a
+// real React Flow drag (which jsdom can't drive): `connected` = a valid drop (onConnect applies it);
+// `incompatible` = released on a node/handle that rejected the connection (→ user feedback);
+// `open-picker` = released on empty canvas (→ offer to create a compatible node).
+export type ConnectEndOutcome = "connected" | "incompatible" | "open-picker";
+export function classifyConnectEnd(state: { isValid?: boolean | null; toNode?: unknown; toHandle?: unknown }): ConnectEndOutcome {
+  if (state.isValid) return "connected";
+  if (state.toNode || state.toHandle) return "incompatible";
+  return "open-picker";
+}
+
 function chipCandidatesForPending(pending: PendingPort): ChipPickerCandidate[] {
   const candidates = new Map<string, ChipPickerCandidate>();
   for (const relation of portRelations) {
@@ -342,8 +353,18 @@ export function CanvasWorkspace() {
     const pending = pendingPortRef.current;
     setPendingPort(null);
     if (!pending) return;
-    const state = connectionState as { isValid?: boolean; toNode?: unknown; toHandle?: unknown };
-    if (state.isValid || state.toNode || state.toHandle) return;
+    const state = connectionState as { isValid?: boolean | null; toNode?: unknown; toHandle?: unknown };
+    const outcome = classifyConnectEnd(state);
+    if (outcome === "connected") return; // onConnect applies the edge
+    if (outcome === "incompatible") {
+      // Released on a node/handle that rejected the connection — say why nothing happened.
+      useProjectStore.getState().pushToast({
+        message: "Those ports can't be connected — they aren't compatible.",
+        tone: "error",
+        durationMs: 4000,
+      });
+      return;
+    }
     const point = eventClientPoint(event);
     if (!point) return;
     const candidates = chipCandidatesForPending(pending);
