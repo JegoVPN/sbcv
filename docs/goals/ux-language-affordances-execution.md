@@ -174,7 +174,11 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   a parse error leaves no stray snapshot). Both import handlers pass the flag and the import-success
   toast carries a one-tap **Undo** action that calls `undo()` to restore the prior config. Pairs with
   the A26 import-confirm (confirm before clobber, undo to recover). — PR #127
-- [ ] L3-invalid-drop — invalid drag-drop feedback toast (uses L3-toast-infra).
+- [x] L3-invalid-drop — releasing a connection drag on an incompatible node/handle used to do nothing
+  (React Flow rejects it; `handleConnectEnd` returned silently). Extracted a pure, exported
+  `classifyConnectEnd(state) → "connected" | "incompatible" | "open-picker"` (React Flow drag isn't
+  unit-testable in jsdom, so the decision is tested in isolation); `handleConnectEnd` now toasts
+  "Those ports can't be connected — they aren't compatible." on the incompatible outcome. — PR #128
 - [ ] L3-rightclick-disconnect — (optional) right-click an edge/port to disconnect (context menu).
 - [ ] L3-drag-affordance — (optional) clearer in-drag visual hint (CSS/interaction).
 
