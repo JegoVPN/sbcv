@@ -32,6 +32,7 @@ import {
   updateRouteRule,
 } from "../domain/commands";
 import { SETTINGS_COLUMN_X } from "../canvas/graph";
+import { adapterConnect } from "../domain/portReferenceAdapter";
 import { validateConfig } from "../domain/diagnostics";
 import {
   formatEdgeId,
@@ -585,11 +586,6 @@ function disconnectSelectorMember(config: SingBoxConfig, parentTag: string, chil
   return disconnectEdge(config, formatEdgeId(parentType, parentTag, childTag));
 }
 
-function numberedNodeIndex(node: { value: string }) {
-  const index = Number(node.value);
-  return Number.isInteger(index) ? index : -1;
-}
-
 function portNodeType(config: SingBoxConfig, node: { kind: string; value: string }) {
   if (node.kind === "inbound") return config.inbounds?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "outbound") return config.outbounds?.find((item) => item.tag === node.value)?.type;
@@ -605,22 +601,6 @@ function portNodeType(config: SingBoxConfig, node: { kind: string; value: string
   if (node.kind === "dns-rule") return "dns-rule";
   if (node.kind === "settings") return node.value;
   return undefined;
-}
-
-function clashApiObject(config: SingBoxConfig) {
-  const clashApi = config.experimental?.clash_api;
-  return clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)
-    ? clashApi as Record<string, unknown>
-    : {};
-}
-
-function setClashApiDownloadDetour(config: SingBoxConfig, outboundTag: string | undefined) {
-  return updateEntityField(
-    config,
-    { kind: "settings", path: "experimental" },
-    "clash_api",
-    { ...clashApiObject(config), external_ui_download_detour: outboundTag },
-  );
 }
 
 // Pick a distinct SSM-API servers path: "/" if free, else "/<tag>" (suffixed if needed).
@@ -656,180 +636,7 @@ function connectDirectedPortReference(
   );
   if (!writableRelation) return null;
 
-  if (outputNode.kind === "inbound" && outputHandle === "route-rule-match" && inputNode.kind === "route-rule" && inputHandle === "inbound") {
-    const index = numberedNodeIndex(inputNode);
-    const current = index >= 0 ? config.route?.rules?.[index] : undefined;
-    return index >= 0 ? updateRouteRule(config, index, { inbound: addTagRef(current?.inbound, outputNode.value) }) : null;
-  }
-
-  if (outputNode.kind === "inbound" && outputHandle === "dns-rule-match" && inputNode.kind === "dns-rule" && inputHandle === "inbound") {
-    const index = numberedNodeIndex(inputNode);
-    const current = index >= 0 ? config.dns?.rules?.[index] : undefined;
-    return index >= 0 ? updateDnsRule(config, index, { inbound: addTagRef(current?.inbound, outputNode.value) }) : null;
-  }
-
-  if (outputNode.kind === "inbound" && outputHandle === "service" && inputNode.kind === "service" && inputHandle === "managed-inbound") {
-    const service = config.services?.find((item) => item.tag === inputNode.value);
-    const inbound = config.inbounds?.find((item) => item.tag === outputNode.value);
-    if (service?.type !== "ssm-api" || inbound?.type !== "shadowsocks") return null;
-    const currentServers = service.servers && typeof service.servers === "object" ? service.servers : {};
-    // servers is a path->inbound map; each managed server needs a distinct path. Don't clobber an
-    // existing "/" mapping when wiring a second inbound (C1-13); reuse the existing entry if this inbound
-    // is already mapped.
-    const alreadyMapped = Object.values(currentServers).includes(outputNode.value);
-    const servers = alreadyMapped
-      ? currentServers
-      : { ...currentServers, [uniqueServerPath(currentServers, outputNode.value)]: outputNode.value };
-    const withService = updateEntityField(config, { kind: "service", tag: inputNode.value }, "servers", servers);
-    return updateEntityField(withService, { kind: "inbound", tag: outputNode.value }, "managed", true);
-  }
-
-  if (outputNode.kind === "route" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "route") {
-    return setRouteFinal(config, inputNode.value);
-  }
-
-  if (outputNode.kind === "route-rule" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "route-rule") {
-    const index = numberedNodeIndex(outputNode);
-    const rule = index >= 0 ? config.route?.rules?.[index] : undefined;
-    return index >= 0 && routeRuleAllowsOutbound(rule) ? updateRouteRule(config, index, { outbound: inputNode.value }) : null;
-  }
-
-  if (outputNode.kind === "route-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "route-rule") {
-    const index = numberedNodeIndex(outputNode);
-    const current = index >= 0 ? config.route?.rules?.[index] : undefined;
-    return index >= 0 ? updateRouteRule(config, index, { rule_set: addTagRef(current?.rule_set, inputNode.value) }) : null;
-  }
-
-  if (outputNode.kind === "dns" && outputHandle === "dns-server" && inputNode.kind === "dns-server" && inputHandle === "dns") {
-    return setDnsFinal(config, inputNode.value);
-  }
-
-  if (outputNode.kind === "dns-rule" && outputHandle === "dns-server" && inputNode.kind === "dns-server" && inputHandle === "dns-rule") {
-    const index = numberedNodeIndex(outputNode);
-    const rule = index >= 0 ? config.dns?.rules?.[index] : undefined;
-    return index >= 0 && dnsRuleAllowsServer(rule) ? updateDnsRule(config, index, { server: inputNode.value }) : null;
-  }
-
-  if (outputNode.kind === "dns-rule" && outputHandle === "rule-set" && inputNode.kind === "rule-set" && inputHandle === "dns-rule") {
-    const index = numberedNodeIndex(outputNode);
-    const current = index >= 0 ? config.dns?.rules?.[index] : undefined;
-    return index >= 0 ? updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, inputNode.value) }) : null;
-  }
-
-  if (outputNode.kind === "dns-server" && outputHandle === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "dns-detour") {
-    const server = config.dns?.servers?.find((item) => item.tag === outputNode.value);
-    return supportsDnsServerDialFields(server?.type)
-      ? updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "detour", inputNode.value)
-      : null;
-  }
-
-  if (outputNode.kind === "dns-server" && outputHandle === "endpoint" && inputNode.kind === "endpoint" && inputHandle === "dns-server") {
-    return updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "endpoint", inputNode.value);
-  }
-
-  if (outputNode.kind === "dns-server" && outputHandle === "service" && inputNode.kind === "service" && inputHandle === "dns-server") {
-    const server = config.dns?.servers?.find((item) => item.tag === outputNode.value);
-    const service = config.services?.find((item) => item.tag === inputNode.value);
-    return server?.type === "resolved" && service?.type === "resolved"
-      ? updateEntityField(config, { kind: "dns-server", tag: outputNode.value }, "service", inputNode.value)
-      : null;
-  }
-
-  if (outputNode.kind === "endpoint" && outputHandle === "dial-detour" && inputNode.kind === "outbound" && inputHandle === "detour-target") {
-    return updateEntityField(config, { kind: "endpoint", tag: outputNode.value }, "detour", inputNode.value);
-  }
-
-  if (outputNode.kind === "service" && outputHandle === "verify-client-endpoint" && inputNode.kind === "endpoint" && inputHandle === "derp-service") {
-    const service = config.services?.find((item) => item.tag === outputNode.value);
-    const endpoint = config.endpoints?.find((item) => item.tag === inputNode.value);
-    if (service?.type !== "derp" || endpoint?.type !== "tailscale") return null;
-    return updateEntityField(
-      config,
-      { kind: "service", tag: outputNode.value },
-      "verify_client_endpoint",
-      addTagRef(service.verify_client_endpoint as string | string[] | undefined, inputNode.value),
-    );
-  }
-
-  if (outputNode.kind === "service" && outputHandle === "detour" && inputNode.kind === "outbound" && inputHandle === "service-detour") {
-    const service = config.services?.find((item) => item.tag === outputNode.value);
-    if (service?.type !== "ccm" && service?.type !== "ocm") return null;
-    return updateEntityField(config, { kind: "service", tag: outputNode.value }, "detour", inputNode.value);
-  }
-
-  if (outputNode.kind === "rule-set" && outputHandle === "download-detour" && inputNode.kind === "outbound" && inputHandle === "rule-set-download") {
-    return updateEntityField(config, { kind: "rule-set", tag: outputNode.value }, "download_detour", inputNode.value);
-  }
-
-  if (outputNode.kind === "settings" && outputNode.value === "experimental" && outputHandle === "clash-download-detour" && inputNode.kind === "outbound" && inputHandle === "clash-download-detour") {
-    return setClashApiDownloadDetour(config, inputNode.value);
-  }
-
-  if (outputNode.kind === "settings" && outputNode.value === "ntp" && outputHandle === "dial-detour" && inputNode.kind === "outbound" && inputHandle === "detour-target") {
-    return updateEntityField(config, { kind: "settings", path: "ntp" }, "detour", inputNode.value);
-  }
-
-  if (outputNode.kind === "certificate-provider" && outputHandle === "endpoint" && inputNode.kind === "endpoint" && inputHandle === "certificate-provider") {
-    const provider = config.certificate_providers?.find((item) => item.tag === outputNode.value);
-    const endpoint = config.endpoints?.find((item) => item.tag === inputNode.value);
-    return provider?.type === "tailscale" && endpoint?.type === "tailscale"
-      ? updateEntityField(config, { kind: "certificate-provider", tag: outputNode.value }, "endpoint", inputNode.value)
-      : null;
-  }
-
-  if (outputNode.kind === "outbound" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint")) {
-    if (outputHandle === "outbound-member" && (inputHandle === "selector-group" || inputHandle === "urltest-group")) {
-      return connectSelectorCandidate(config, outputNode.value, inputNode.value);
-    }
-    if (outputHandle === "dial-detour" && inputHandle === "detour-target") {
-      const outbound = config.outbounds?.find((item) => item.tag === outputNode.value);
-      return supportsOutboundDetour(outbound?.type)
-        ? updateEntityField(config, { kind: "outbound", tag: outputNode.value }, "detour", inputNode.value)
-        : null;
-    }
-  }
-
-  // domain_resolver: a dial-bearing outbound/endpoint/dns-server resolves its server name through a
-  // dns-server (C11b). The writableRelation lookup above already gated the source type to dial-capable
-  // kinds, so here we only write. Preserve a pre-existing object form's sibling fields (strategy, …);
-  // otherwise write the bare dns-server tag — the same value shape the Inspector's select writes.
-  if (
-    outputHandle === "domain-resolver" &&
-    inputHandle === "domain-resolver-target" &&
-    inputNode.kind === "dns-server" &&
-    (outputNode.kind === "outbound" || outputNode.kind === "endpoint" || outputNode.kind === "dns-server")
-  ) {
-    const owner =
-      outputNode.kind === "outbound"
-        ? config.outbounds?.find((item) => item.tag === outputNode.value)
-        : outputNode.kind === "endpoint"
-          ? config.endpoints?.find((item) => item.tag === outputNode.value)
-          : config.dns?.servers?.find((item) => item.tag === outputNode.value);
-    const current = (owner as { domain_resolver?: unknown } | undefined)?.domain_resolver;
-    const nextValue =
-      current && typeof current === "object" && !Array.isArray(current)
-        ? { ...(current as Record<string, unknown>), server: inputNode.value }
-        : inputNode.value;
-    return updateEntityField(config, { kind: outputNode.kind, tag: outputNode.value }, "domain_resolver", nextValue);
-  }
-
-  // http_client cross-object references (C11c). The writableRelation lookup above already gated the
-  // source type (remote rule_set / non-tailscale certificate-provider) and channel-invariant relation;
-  // a string tag is written (object-form http_client stays editable via the Inspector / JSON).
-  if (outputNode.kind === "route" && outputHandle === "default-http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
-    return updateEntityField(config, { kind: "route", id: "main" }, "default_http_client", inputNode.value);
-  }
-  if (outputNode.kind === "rule-set" && outputHandle === "http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
-    return updateEntityField(config, { kind: "rule-set", tag: outputNode.value }, "http_client", inputNode.value);
-  }
-  if (outputNode.kind === "certificate-provider" && outputHandle === "http-client" && inputNode.kind === "http-client" && inputHandle === "http-client-ref") {
-    return updateEntityField(config, { kind: "certificate-provider", tag: outputNode.value }, "http_client", inputNode.value);
-  }
-  if (outputNode.kind === "http-client" && outputHandle === "dial-detour" && (inputNode.kind === "outbound" || inputNode.kind === "endpoint") && inputHandle === "detour-target") {
-    return updateEntityField(config, { kind: "http-client", tag: outputNode.value }, "detour", inputNode.value);
-  }
-
-  return null;
+  return adapterConnect(config, writableRelation, outputNode, inputNode);
 }
 
 function createNodeForConnectCandidate(config: SingBoxConfig, candidate: CreateNodeAndConnectCandidate) {
