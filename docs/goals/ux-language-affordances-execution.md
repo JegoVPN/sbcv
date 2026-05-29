@@ -70,8 +70,9 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L1-badges — re-label + re-treat the palette status badges per L1-vocab (Add / Setup→? / Table→? /
   Inspector→? / Docs→? / Gated→? / Pending→? / Legacy / Open). Migrate the ~15 `name:"Setup X"` test
   assertions. De-duplicate the `(1.14 testing)`-label-plus-`GATED`-badge double-statement (D2).
-- [ ] L1-buildtags — drop `(with_tailscale)`/`(with_tor)` suffixes from palette labels (D3); if useful,
-  surface the build tag as a tooltip/secondary line.
+- [x] L1-buildtags — dropped `(with_tailscale)`/`(with_tor)` suffixes from the 4 palette labels (dns
+  Tailscale Server, endpoint Tailscale, Tor outbound, DERP service); the build-tag requirement stays on
+  the Inspector banner. (D3) — PR #111
 - [x] L1-brandbtn — relabeled both brand buttons (desktop + mobile) `aria-label` from "…return to home"
   → "sbcv.app — reset view (deselect and fit the canvas)" (goHome only deselects + re-fits). — PR #110
 - [ ] L1-target-glossary — target/channel/version tooltip (what stable 1.13 vs testing 1.14 means).
@@ -386,3 +387,13 @@ Status: implemented 2026-05-29 in `atomic/l1-brandbtn`; merged in PR #110. First
   (deselect + close panel + re-fit, no nav/reset), both buttons relabeled, testid/onClick unchanged, no
   old-label test refs. Two NITs (mobile-variant direct coverage; doc PR# optimism) left.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (887), `pnpm build`.
+
+### L1-buildtags (palette copy / D3) — PR #111
+Status: implemented 2026-05-29 in `atomic/l1-buildtags`; merged in PR #111.
+- What changed: dropped the `(with_tailscale)` / `(with_tor)` build-tag suffixes from the 4 palette
+  labels (DNS "Tailscale Server", endpoint "Tailscale", outbound "Tor", service "DERP") → the bare
+  protocol names. The build-tag requirement is still conveyed by the Inspector build-tag banner.
+- Tests: `tests/palette-buildtag-suffix.test.tsx` (endpoint Tailscale + Tor outbound suffix-free);
+  migrated `app.test.tsx`'s "Setup Tailscale (with_tailscale)" → "Setup Tailscale".
+- Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (889), `pnpm build`.
