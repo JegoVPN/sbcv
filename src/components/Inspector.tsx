@@ -4470,7 +4470,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     updateField(ref, "accept_default_resolvers", event.target.checked || undefined)
                   }
                 />
-                <span>Accept default resolvers</span>
+                <span>Accept default resolvers for fallback (in addition to matching domains; off ⇒ NXDOMAIN for non-matching)</span>
               </label>
             </>
           ) : null}
@@ -4587,7 +4587,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                     updateField(ref, "accept_default_resolvers", event.target.checked || undefined)
                   }
                 />
-                <span>Accept default resolvers (forward queries to MagicDNS chain)</span>
+                <span>Accept default resolvers for fallback (in addition to MagicDNS; off ⇒ NXDOMAIN for non-Tailscale domains)</span>
               </label>
               {channel === "testing" ? (
                 <label className="toggle-row">

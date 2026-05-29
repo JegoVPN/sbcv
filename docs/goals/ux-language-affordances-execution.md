@@ -103,7 +103,9 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     sbcv treat v1 as deprecated/legacy?" is an opinionated product stance, not a clear copy bug — and it
     overlaps D2 (legacy treatment). Reconcile holistically (flip all 3 + tests, or keep the stance and
     just drop the literal-false "upstream"/"official docs" attribution) with the user / in L1-badges.
-  - [ ] L2-fix-dns-hints — H8 tailscale `accept_default_resolvers` + the MED dns hint cluster.
+  - [x] L2-fix-dns-hints — H8: tailscale + resolved `accept_default_resolvers` now read as "accept for
+    fallback (in addition to MagicDNS/matching domains; off ⇒ NXDOMAIN)" — was "forward to MagicDNS
+    chain"/bare. (Other MED dns hints — local `prefer_go`, dhcp placeholder — folded into L2-fix-med-copy.) — PR #107
   - [ ] L2-fix-rule-set-deprecation — H9: `download_detour` deprecation banner → `http_client`.
   - [ ] L2-fix-med-copy — the MED list (tuic replay, block removed-in-1.13, domain_strategy removed-1.14,
     rule-set match-field label, network_type value hints, store_rdrc/V2Ray banners, etc.).
@@ -351,3 +353,15 @@ validated — the stance is entangled with diagnostics.ts hysteria-v1-deprecated
 - Tests: `tests/hysteria-mbps-required.test.tsx`.
 - Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (881), `pnpm build`.
+
+### L2-fix-dns-hints (audit H8) — PR #107
+Status: implemented 2026-05-29 in `atomic/l2-fix-dns-hints`; merged in PR #107.
+- What changed: the tailscale DNS-server `accept_default_resolvers` toggle was labeled "(forward queries
+  to MagicDNS chain)" — wrong; upstream accepts the system DEFAULT resolvers for FALLBACK queries in
+  addition to MagicDNS (off ⇒ NXDOMAIN for non-Tailscale domains). Relabeled both it and the resolved
+  server's bare label to the accurate fallback semantics.
+- Tests: `tests/dns-accept-default-resolvers-hint.test.tsx`.
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE — upstream confirmed
+  (accept for fallback in addition to MagicDNS/matching; off⇒NXDOMAIN), minimal diff, non-tautological
+  test. One NIT (label length) left as-is.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (883), `pnpm build`.
