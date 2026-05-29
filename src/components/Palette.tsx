@@ -155,7 +155,7 @@ const groups: PaletteGroup[] = [
       { label: "DHCP Server", kind: "dns-dhcp", icon: Network, docsUrl: docs("dns/server/dhcp/"), status: "setup" },
       { label: "FakeIP Server", kind: "dns-fakeip-server", icon: Blocks, docsUrl: docs("dns/server/fakeip/"), status: "setup" },
       { label: "mDNS Server", kind: "dns-mdns", icon: Globe2, docsUrl: docs("dns/server/mdns/"), status: "gated" },
-      { label: "Tailscale Server (with_tailscale)", kind: "dns-tailscale", icon: Waypoints, docsUrl: docs("dns/server/tailscale/"), status: "setup" },
+      { label: "Tailscale Server", kind: "dns-tailscale", icon: Waypoints, docsUrl: docs("dns/server/tailscale/"), status: "setup" },
       { label: "Resolved Server (Linux only)", kind: "dns-resolved", icon: Server, docsUrl: docs("dns/server/resolved/"), status: "setup" },
     ],
   },
@@ -184,7 +184,7 @@ const groups: PaletteGroup[] = [
     title: "Endpoints",
     items: [
       { label: "WireGuard", kind: "endpoint-wireguard", icon: Waypoints, docsUrl: docs("endpoint/wireguard/"), status: "setup" },
-      { label: "Tailscale (with_tailscale)", kind: "endpoint-tailscale", icon: Waypoints, docsUrl: docs("endpoint/tailscale/"), status: "setup" },
+      { label: "Tailscale", kind: "endpoint-tailscale", icon: Waypoints, docsUrl: docs("endpoint/tailscale/"), status: "setup" },
     ],
   },
   {
@@ -228,7 +228,7 @@ const groups: PaletteGroup[] = [
       { label: "TUIC", kind: "tuic-out", icon: Plug, docsUrl: docs("outbound/tuic/"), status: "setup" },
       { label: "Hysteria2", kind: "hysteria2-out", icon: Plug, docsUrl: docs("outbound/hysteria2/"), status: "setup" },
       { label: "AnyTLS", kind: "anytls-out", icon: Shield, docsUrl: docs("outbound/anytls/"), status: "setup" },
-      { label: "Tor (with_tor)", kind: "tor-out", icon: Network, docsUrl: docs("outbound/tor/"), status: "setup" },
+      { label: "Tor", kind: "tor-out", icon: Network, docsUrl: docs("outbound/tor/"), status: "setup" },
       { label: "SSH", kind: "ssh-out", icon: Server, docsUrl: docs("outbound/ssh/"), status: "setup" },
       { label: "DNS", kind: "dns-out", icon: Globe2, docsUrl: docs("outbound/dns/"), status: "docs" },
       { label: "Selector", kind: "selector", icon: Shuffle, docsUrl: docs("outbound/selector/"), ready: true },
@@ -255,7 +255,7 @@ const groups: PaletteGroup[] = [
   {
     title: "Services",
     items: [
-      { label: "DERP (with_tailscale)", kind: "service-derp", icon: Server, docsUrl: docs("service/derp/"), status: "setup" },
+      { label: "DERP", kind: "service-derp", icon: Server, docsUrl: docs("service/derp/"), status: "setup" },
       { label: "Resolved (Linux only)", kind: "service-resolved", icon: Server, docsUrl: docs("service/resolved/"), status: "setup" },
       { label: "SSM API", kind: "service-ssm-api", icon: Server, docsUrl: docs("service/ssm-api/"), status: "setup" },
       { label: "CCM", kind: "service-ccm", icon: Server, docsUrl: docs("service/ccm/"), status: "setup" },
