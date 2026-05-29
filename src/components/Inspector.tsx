@@ -3116,17 +3116,11 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
                   <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
                 </optgroup>
-                <optgroup label="Legacy / Stream cipher">
-                  <option value="none">none</option>
-                  <option value="aes-128-ctr">aes-128-ctr</option>
-                  <option value="aes-192-ctr">aes-192-ctr</option>
-                  <option value="aes-256-ctr">aes-256-ctr</option>
-                  <option value="aes-128-cfb">aes-128-cfb</option>
-                  <option value="aes-192-cfb">aes-192-cfb</option>
-                  <option value="aes-256-cfb">aes-256-cfb</option>
-                  <option value="rc4-md5">rc4-md5</option>
-                  <option value="chacha20-ietf">chacha20-ietf</option>
-                  <option value="xchacha20">xchacha20</option>
+                {/* Shadowsocks INBOUND accepts only 2022 + AEAD + `none` (inbound/shadowsocks.md);
+                    stream ciphers (aes-*-ctr/cfb, rc4-md5, chacha20-ietf, xchacha20) are outbound-only
+                    and the inbound rejects them. (L2-fix-ss-inbound-ciphers, audit H3) */}
+                <optgroup label="Other">
+                  <option value="none">none (no encryption)</option>
                 </optgroup>
               </select>
             </label>
