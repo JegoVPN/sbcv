@@ -5,6 +5,8 @@ import { useProjectStore } from "../state/useProjectStore";
 
 export const CanvasEdge = memo(function CanvasEdge({
   id,
+  source,
+  target,
   sourceX,
   sourceY,
   targetX,
@@ -18,6 +20,10 @@ export const CanvasEdge = memo(function CanvasEdge({
   deletable,
 }: EdgeProps) {
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
+  const selectedId = useProjectStore((state) => state.selectedId);
+  // A selected node lights its first-degree edges (the ones it is an endpoint of) in the card's
+  // selection blue, so its immediate up/downstream chain stands out from the rest of the green graph.
+  const highlighted = selectedId != null && (source === selectedId || target === selectedId);
   const [hovered, setHovered] = useState(false);
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -48,7 +54,7 @@ export const CanvasEdge = memo(function CanvasEdge({
           markerEnd={markerEnd}
           style={style}
           interactionWidth={24}
-          className={animated ? "sbc-edge__path sbc-edge__path--animated" : "sbc-edge__path"}
+          className={`${animated ? "sbc-edge__path sbc-edge__path--animated" : "sbc-edge__path"}${highlighted ? " sbc-edge__path--highlighted" : ""}`}
         />
       </g>
       {canRemove ? (
