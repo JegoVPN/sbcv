@@ -185,10 +185,11 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
     [data.kind, data.type, data.action],
   );
   const { compatiblePortKeys, disconnectPort, pendingPortKey, openPortPicker } = useCanvasInteraction(id, portKeys);
-  const { setSelectedId, deleteEntity } = useProjectStore(
+  const { setSelectedId, deleteEntity, targetVersion } = useProjectStore(
     useShallow((state) => ({
       setSelectedId: state.setSelectedId,
       deleteEntity: state.deleteEntity,
+      targetVersion: state.version,
     })),
   );
   const connectedPorts = data.connectedPorts ?? EMPTY_CONNECTED_PORTS;
@@ -285,7 +286,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   const leftPorts = splitPorts(inputPorts, "input");
   const rightPorts = splitPorts(outputPorts, "output");
 
-  const badge = nodeBadge(data.kind, data.type);
+  const badge = nodeBadge(data.kind, data.type, targetVersion);
   const isNotice = data.kind === "notice";
 
   return (

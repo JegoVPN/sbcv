@@ -1021,6 +1021,13 @@ textarea {
   color: #6fb6e6;
 }
 
+/* Version-gated: needs a newer sing-box than the project target — violet, distinct from the amber
+   deprecated and blue platform badges. */
+.sbc-node-titlebar__badge--version {
+  background: #271a3a;
+  color: #b48ef2;
+}
+
 .sbc-node-shell--deprecated .sbc-node {
   border-color: #6a5418;
   opacity: 0.78;
