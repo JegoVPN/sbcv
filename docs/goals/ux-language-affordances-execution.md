@@ -67,9 +67,13 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 
 ### Phase 1 — Unified UX language (bucket 1)
 - [x] L1-vocab — language spec `docs/ui-language.md` **SIGNED OFF** (badge words = full proposed set incl. setup→Add; Hysteria v1 keeps Legacy but drops false-upstream wording; de-dup keeps badge drops label suffix). — PR #109
-- [ ] L1-badges — re-label + re-treat the palette status badges per L1-vocab (Add / Setup→? / Table→? /
-  Inspector→? / Docs→? / Gated→? / Pending→? / Legacy / Open). Migrate the ~15 `name:"Setup X"` test
-  assertions. De-duplicate the `(1.14 testing)`-label-plus-`GATED`-badge double-statement (D2).
+- [~] L1-badges — re-label + re-treat the palette status badges per L1-vocab (split for size):
+  - [x] L1-badges-words — statusLabel words: Setup→Add, Table→List, Inspector→In parent, Docs→Reference,
+    Gated→Needs 1.14, Pending→Soon (Add/Legacy/Open kept); statusTitle tooltips aligned; 20 test
+    assertions migrated. — PR #112
+  - [ ] L1-badges-treatment — legacy = colored (amber, the bar) vs testing/gated = muted; de-dup the
+    "Hysteria Realm (1.14 testing)" label suffix (badge carries it); confirm a11y for the setup-vs-add
+    same-name case (L1-badges-words NIT — consider node-kind in the aria-label).
 - [x] L1-buildtags — dropped `(with_tailscale)`/`(with_tor)` suffixes from the 4 palette labels (dns
   Tailscale Server, endpoint Tailscale, Tor outbound, DERP service); the build-tag requirement stays on
   the Inspector banner. (D3) — PR #111
@@ -397,3 +401,22 @@ Status: implemented 2026-05-29 in `atomic/l1-buildtags`; merged in PR #111.
   migrated `app.test.tsx`'s "Setup Tailscale (with_tailscale)" → "Setup Tailscale".
 - Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (889), `pnpm build`.
+
+### L1-badges-words (palette copy) — PR #112
+Status: implemented 2026-05-29 in `atomic/l1-badges-words`; merged in PR #112.
+- What changed: per the signed-off L1-vocab, renamed the palette `statusLabel` words — `setup→Add`,
+  `table→List`, `inspector→In parent`, `docs→Reference`, `gated→Needs 1.14`, `pending→Soon` (Add /
+  Legacy / Open unchanged) — and aligned the `statusTitle` tooltips (the setup "draft" nuance moves to
+  the tooltip). The colored-legacy / muted-gated visual treatment + the "(1.14 testing)" label de-dup
+  are the sibling L1-badges-treatment slice.
+- Tests: migrated 20 assertions — 17 `name:"Setup X"` → `"Add X"` (app/inbound-cloudflared/
+  http-client-create/palette-buildtag-suffix) + 3 `"X: Docs"` → `"X: Reference"` (the disabled
+  reference-row test).
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE — all 9 words match the
+  signed-off spec, tooltips consistent, migration complete (20 assertions, none stale), aria-label forms
+  correct, no logic change. NIT (deferred to L1-badges-treatment): the `setup→Add` merge means under
+  active *search* a setup-draft and a ready-add of the same protocol (e.g. inbound vs outbound "Direct")
+  share the accessible name "Add Direct" — spec-intended + harmless today, but the treatment slice should
+  confirm the muted-vs-neutral visual is a sufficient a11y differentiator (or add the node-kind to the
+  aria-label).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (889), `pnpm build`, `pnpm e2e` (16).
