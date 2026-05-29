@@ -1531,20 +1531,42 @@ button.sbc-port__action:focus-visible {
   background: #151b22;
 }
 
-/* N2-remove-grid: the overflowing per-node candidate-chip grid (.sbc-node__actions / .node-chip) is
-   gone — adding a downstream node is now the searchable picker (drag a port out to empty canvas). The
-   node-delete button moved into the toolbar; keep it hidden until the node is hovered or selected so it
-   can't be clicked by accident (node delete is immediate + has no undo). */
+/* Node delete: a red warning affordance pinned to the card's top-right corner. Kept hidden until the
+   node is hovered or selected so it can't be clicked by accident (node delete is immediate + has no
+   undo). Self-contained styling (no .node-icon-button) so it doesn't inherit the toolbar button sizing. */
 .sbc-node__delete {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  border-color: #5a2a30;
+  background: #2a1416;
+  color: #ff7b7b;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 }
 
 .sbc-node:hover .sbc-node__delete,
 .sbc-node.is-selected .sbc-node__delete {
   opacity: 1;
   pointer-events: auto;
+}
+
+.sbc-node__delete:hover {
+  background: #712d34;
+  border-color: #a9444e;
+  color: #fff;
 }
 
 .node-icon-button,
