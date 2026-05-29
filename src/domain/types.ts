@@ -127,7 +127,11 @@ export type ProjectLayout = {
   positions: Record<string, { x: number; y: number }>;
 };
 
+// App-local project wrapper (NOT a sing-box config — never fed to `sing-box check`). The `kind`
+// discriminator + `schemaVersion` make it self-identifying and distinct from a bare config. (C16)
 export type SbcProject = {
+  kind: "sbcv-project";
+  schemaVersion: number;
   appVersion: string;
   singBoxChannel: SingBoxChannel;
   singBoxVersion: string;

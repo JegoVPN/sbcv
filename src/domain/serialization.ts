@@ -1,5 +1,5 @@
 import { normalizeDnsRule, normalizeRouteRule } from "./commands";
-import type { SingBoxConfig } from "./types";
+import type { SbcProject, SingBoxConfig } from "./types";
 
 // A legacy/pre-release config may carry a raw-string value where the model expects a `string[]` list
 // (route.default_network_type / default_fallback_network_type — A16-norm; and the dial-group
@@ -12,7 +12,8 @@ function coerceStringList(record: Record<string, unknown>, key: string) {
 }
 
 export type ConfigExport = {
-  fileName: "config.json";
+  // "config.json" for a bare sing-box config; "project.sbcv.json" for the C16 project wrapper.
+  fileName: string;
   mimeType: "application/json";
   contents: string;
 };
@@ -117,4 +118,51 @@ export function createConfigExport(config: SingBoxConfig): ConfigExport {
 
 export function parseConfigJson(json: string): SingBoxConfig {
   return normalizeConfig(JSON.parse(json));
+}
+
+// ── Project (sbcv) wrapper ──────────────────────────────────────────────────────────────────────
+// A versioned app-local wrapper carrying config + canvas layout + authoring channel/version. It is
+// NOT a sing-box config and must never be fed to `sing-box check`; the `kind` discriminator keeps it
+// strictly distinct from a bare config (Open rejects a bare config; plain Import rejects this). (C16)
+export const SBC_PROJECT_KIND = "sbcv-project" as const;
+export const SBC_PROJECT_SCHEMA_VERSION = 1;
+
+export function createProjectExport(project: SbcProject): ConfigExport {
+  const payload: SbcProject = {
+    kind: SBC_PROJECT_KIND,
+    schemaVersion: SBC_PROJECT_SCHEMA_VERSION,
+    appVersion: project.appVersion,
+    singBoxChannel: project.singBoxChannel,
+    singBoxVersion: project.singBoxVersion,
+    config: project.config,
+    layout: project.layout,
+  };
+  return {
+    fileName: "project.sbcv.json",
+    mimeType: "application/json",
+    contents: `${JSON.stringify(payload, null, 2)}\n`,
+  };
+}
+
+export function parseProjectJson(json: string): SbcProject {
+  const parsed = JSON.parse(json) as Record<string, unknown> | null;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed) || parsed.kind !== SBC_PROJECT_KIND) {
+    throw new Error('Not an sbcv project file (expected kind: "sbcv-project"). Use plain Import for a sing-box config.');
+  }
+  if (typeof parsed.schemaVersion !== "number") {
+    throw new Error("sbcv project is missing a numeric schemaVersion.");
+  }
+  const layout = parsed.layout as { positions?: unknown } | undefined;
+  if (!layout || typeof layout !== "object" || Array.isArray(layout) || typeof layout.positions !== "object" || layout.positions === null || Array.isArray(layout.positions)) {
+    throw new Error("sbcv project layout.positions is malformed.");
+  }
+  return {
+    kind: SBC_PROJECT_KIND,
+    schemaVersion: parsed.schemaVersion,
+    appVersion: typeof parsed.appVersion === "string" ? parsed.appVersion : "",
+    singBoxChannel: parsed.singBoxChannel === "testing" ? "testing" : "stable",
+    singBoxVersion: typeof parsed.singBoxVersion === "string" ? parsed.singBoxVersion : "",
+    config: normalizeConfig(parsed.config),
+    layout: { positions: layout.positions as Record<string, { x: number; y: number }> },
+  };
 }
