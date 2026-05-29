@@ -1149,19 +1149,28 @@ textarea {
 }
 
 /* N1: by default a card shows only its CONNECTED ports (the direct children of the column, vertically
-   centered). UNCONNECTED ports live in this absolute overlay BELOW the connected group, so revealing
-   them never moves the connected ports (no edge re-anchoring needed). They stay mounted (handles always
-   connectable) but are hidden until the node is hovered or the port is a live drop-target during a drag. */
+   centered). UNCONNECTED ports live in these absolute overlays split half ABOVE (--before) and half
+   BELOW (--after) the connected group, so the revealed column stays centered on the card without moving
+   the connected ports (no edge re-anchoring needed). They stay mounted (handles always connectable) but
+   are hidden until the node is hovered or the port is a live drop-target during a drag. */
 .sbc-node__ports-extra {
   position: absolute;
-  top: 100%;
   left: 0;
   right: 0;
-  margin-top: 12px;
   display: grid;
   gap: 12px;
   justify-items: inherit;
   pointer-events: none;
+}
+
+.sbc-node__ports-extra--after {
+  top: 100%;
+  margin-top: 12px;
+}
+
+.sbc-node__ports-extra--before {
+  bottom: 100%;
+  margin-bottom: 12px;
 }
 
 .sbc-node__ports--left .sbc-node__ports-extra {
