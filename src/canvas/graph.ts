@@ -41,10 +41,13 @@ const DNS_LANE_MIN_Y = 900;
 const MAX_OUTBOUND_DEPTH = 2;
 const SETTINGS_NODE_IDS = ["settings:log", "settings:ntp", "settings:certificate", "settings:experimental"] as const;
 
+// One full 720px stride left of the entry column. -300 was only 300px out — narrower than the 330px
+// card — so a settings card (Log/NTP/…) overlapped the entry column horizontally at the same y.
+// Exported so the Palette "add settings node" path pins to the same column instead of re-hardcoding it.
+export const SETTINGS_COLUMN_X = -720;
+
 const COLUMNS = {
-  // One full 720px stride left of the entry column. -300 was only 300px out — narrower than the 330px
-  // card — so a settings card (Log/NTP/…) overlapped the entry column horizontally at the same y.
-  settings: -720,
+  settings: SETTINGS_COLUMN_X,
   entry: 0,
   rule: 720,
   target: 1440,
