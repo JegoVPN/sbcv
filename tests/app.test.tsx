@@ -237,7 +237,7 @@ describe("SBC editor shell", () => {
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 
-  it("keeps unconnected outbound side-port clicks as no-op connection starts", () => {
+  it("does not implicitly connect when an unconnected outbound side-port is clicked (picker-gated)", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);
 
@@ -248,7 +248,8 @@ describe("SBC editor shell", () => {
 
     expect(useProjectStore.getState().selectedId).toBe("outbound:naive-out");
     const before = useProjectStore.getState().jsonDraft;
-    fireEvent.click(screen.getByLabelText("Start Upstream Route final for naive-out"));
+    // Clicking an unconnected port opens the add picker; it must not mutate config until a candidate is picked.
+    fireEvent.click(screen.getByLabelText("Add a node to Upstream Route final of naive-out"));
     expect(useProjectStore.getState().jsonDraft).toBe(before);
     expect(useProjectStore.getState().config.route?.final).not.toBe("naive-out");
   });
@@ -468,7 +469,7 @@ describe("SBC editor shell", () => {
     expect(screen.getByText("State Directory")).toBeInTheDocument();
 
     const before = useProjectStore.getState().jsonDraft;
-    fireEvent.click(screen.getByLabelText("Start Upstream Tailscale DNS server for ts-ep"));
+    fireEvent.click(screen.getByLabelText("Add a node to Upstream Tailscale DNS server of ts-ep"));
     expect(useProjectStore.getState().jsonDraft).toBe(before);
 
     const tailscaleServer = useProjectStore
