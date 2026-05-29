@@ -108,9 +108,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L4-dial-network-type-2 — extend the same coercion to the remaining `kind:"list"` network-type
   carriers (dns-servers, ntp settings, http_clients, shadowtls nested dial) (L4-dial-network-type
   review follow-up)
-- [ ] L4-rule-field-scrub — A10d-rest: scrub other action-gated rule fields on import (reject
-  `method`/`no_drop`, dns-predefined `rcode`, route-options `override_*`); optionally recurse logical
-  rules.
+- [x] L4-rule-field-scrub — A10d-rest: scrub the *unambiguously* action-exclusive rule fields on import
+  (dns/route reject-only `method`/`no_drop`; dns predefined-only `rcode`/`answer`/`ns`/`extra`). Shared
+  route-options fields (`override_*`/`network_*`) intentionally NOT scrubbed — valid on
+  route/bypass/route-options. — PR #92
 - [x] L4-subtitle-degeneric — settings node subtitles carry real info (route/dns hubs already show rule
   counts; notices already informative — only the four settings nodes were generic). — PR #91
 - [ ] L4-mobile-touch — mobile controls meet a ≥36px touch-target minimum (CSS).
@@ -161,3 +162,28 @@ Status: implemented 2026-05-29 in `atomic/settings-node-subtitle`; merged in PR 
   the param `path: SettingsPath` (makes the `"global settings"` fallback provably-unreachable / catches a
   future typo'd path) and added an ntp-empty fallback test.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (858), `pnpm build`, `pnpm e2e` (14).
+
+### L4-rule-field-scrub rule-action-field-scrub (domain) — PR #92
+Status: implemented 2026-05-29 in `atomic/rule-action-field-scrub`; merged in PR #92.
+- What changed: extends the A10d import-boundary scrub (server/outbound) to the other *unambiguously*
+  action-exclusive rule-output fields, verified against the sing-box 1.14 `rule_action` docs: dns &
+  route reject-only `method`/`no_drop`; dns predefined-only `rcode`/`answer`/`ns`/`extra`. A stale
+  `{action:"route", rcode:"…"}` etc. was invisible on every surface yet re-exported; now scrubbed.
+  `normalizeDnsRule`/`normalizeRouteRule` (run on both add/update and import via A10d) gained a shared
+  `dropRuleKeys(rule, keys)` that drops only present keys and keeps the no-op identity fast-path.
+- **Deliberately NOT scrubbed (D7 spirit — don't drop valid config):** the route-options fields
+  (`override_address`/`override_port`/`network_strategy`/`network_type`/`tls_*`/`udp_*`) are valid on
+  `route`, `bypass`, AND `route-options` actions, so they are shared, not exclusive. Sniff/resolve
+  action fields likewise left (entangled). Conservative scope = only the provably-exclusive fields.
+- Tests: `tests/rule-action-field-scrub.test.ts` (dns reject/predefined scrub + retention, route
+  reject scrub + retention, shared-route-options-kept, cross-field reject-keeps-method-drops-rcode,
+  no-re-export); A10d + bypass regressions green.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean, no blockers/should-fix.
+  Rigorously verified field-exclusivity against the upstream 1.14 docs — `method`/`no_drop` reject-only
+  (both dns+route), `rcode`/`answer`/`ns`/`extra` predefined-only (dns); critically confirmed the bare
+  output names don't collide with the `response_*`-prefixed dns *match* fields (so no match condition is
+  scrubbed), and the shared route-options fields are correctly left. Verified no add/update regression
+  (templates/Inspector/store never set an output field on a mismatched action). Applied the one optional
+  nit in-pass (cross-field reject-keeps-method-but-drops-stale-rcode test). Logical sub-rule recursion
+  remains an explicit future follow-up (matches A10d).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (867), `pnpm build`, `pnpm e2e` (14).
