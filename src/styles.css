@@ -2214,7 +2214,8 @@ button.sbc-edge-remove:focus-visible {
 .mobile-topbar__center .status-pill {
   font-size: 11px;
   padding: 0 10px;
-  min-height: 30px;
+  /* L4-mobile-touch: ≥36px tap target (was 30px); the brand + icon buttons are already 36px. */
+  min-height: 36px;
 }
 
 .mobile-topbar__icon-btn {

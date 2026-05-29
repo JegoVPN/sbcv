@@ -52,3 +52,20 @@ test("mobile shell — Check / Import / Export / node inspector flow", async ({ 
   await page.keyboard.press("Escape");
   await expect(page.getByTestId("mobile-inspector-sheet")).toHaveCount(0);
 });
+
+test("mobile topbar controls meet the 36px touch-target minimum (L4)", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+  const controls = [
+    page.locator(".mobile-topbar .status-pill"),
+    page.getByTestId("brand-home"),
+    page.getByTestId("mobile-add-node"),
+    page.getByRole("button", { name: "Run check" }),
+    page.getByTestId("mobile-menu-toggle"),
+  ];
+  for (const control of controls) {
+    const box = await control.first().boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(36);
+  }
+});
