@@ -28,5 +28,8 @@ describe("tuic zero_rtt_handshake replay warning", () => {
     expect(
       codes({ outbounds: [{ type: "tuic", tag: "t", server: "1.2.3.4", server_port: 443, uuid, zero_rtt_handshake: false }] }),
     ).not.toContain("tuic-zero-rtt-replay");
+    expect(
+      codes({ inbounds: [{ type: "tuic", tag: "ti", listen: "::", listen_port: 443, users: [{ uuid, password: "p" }] }] }),
+    ).not.toContain("tuic-zero-rtt-replay");
   });
 });
