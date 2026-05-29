@@ -179,8 +179,24 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   `classifyConnectEnd(state) → "connected" | "incompatible" | "open-picker"` (React Flow drag isn't
   unit-testable in jsdom, so the decision is tested in isolation); `handleConnectEnd` now toasts
   "Those ports can't be connected — they aren't compatible." on the incompatible outcome. — PR #128
-- [ ] L3-rightclick-disconnect — (optional) right-click an edge/port to disconnect (context menu).
-- [ ] L3-drag-affordance — (optional) clearer in-drag visual hint (CSS/interaction).
+- [~] L3-rightclick-disconnect — (optional) DEFERRED. A right-click context menu to disconnect overlaps
+  the existing port-click disconnect (`togglePortConnection`); the two disconnect affordances should be
+  designed together rather than bolted on. Revisit with the node-card interaction pass.
+- [~] L3-drag-affordance — (optional) DEFERRED. "Clearer in-drag visual hint" is a subjective design
+  call (compatible ports already highlight via `compatiblePortKeys`); wants product/design intent before
+  guessing at dimming/pulsing. Revisit with the node-card interaction pass.
+
+**Phase 3 complete** (5 core flows shipped: toast-infra #124, undo-infra #125, import-feedback #126,
+import-undo #127, invalid-drop #128). The 2 optional polish items are deferred as above.
+
+## Goal status — UX language & affordances queue COMPLETE (required scope)
+
+All required atomics across Phase 4 (mechanical), Phase 1 (unified language), Phase 2 (per-node copy
+accuracy incl. the 6 L2-med slices), and Phase 3 (affordance infra + flows) are shipped, reviewed, and
+merged. Deferred (explicitly optional / needs design input): L1-badges-a11y, L1-hysteria-tooltip,
+L3-rightclick-disconnect, L3-drag-affordance. Out of copy remit (structural): V2Ray transport per-type
+fields (MED #15). Next user-prioritized work is the **node-card N1/N2 redesign** (separate plan:
+`docs/goals/node-card-redesign-execution.md`).
 
 ### Phase 4 — Mechanical cleanups (bucket 3 — greenlit, no wording) 
 - [x] L4-export-noise — the DOWNLOAD (`createConfigExport` only — not the editable draft) prunes inert
