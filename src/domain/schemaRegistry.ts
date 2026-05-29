@@ -30,7 +30,11 @@ export interface SchemaRow {
   creatable: boolean;
   /** Palette item key that maps to this type (protocols.ts *_PALETTE_TYPES); undefined when the kind has no palette map. */
   paletteKind?: string;
-  /** Only meaningful on this channel; undefined = available on every selectable target. */
+  /**
+   * Only meaningful on this channel; undefined = available on every selectable target. Today the
+   * live testing-only gating lives in Palette status flags + targets.ts, not one transcribable Set —
+   * this is forward-looking metadata that a later slice consumes (the markers test asserts its values).
+   */
   channel?: Channel;
   /** Upstream "Since sing-box X". */
   versionAdded?: string;
@@ -613,6 +617,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "legacy",
     creatable: false,
     paletteKind: "dns-legacy",
+    // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES); the version numbers
+    // are docs-sourced (upstream dns/server/legacy.md: deprecated 1.12, removed 1.14) — no nodeLabels entry.
     deprecatedIn: "1.12",
     removedIn: "1.14",
     factory: (tag) => ({ type: "legacy", tag, address: "8.8.8.8", strategy: "prefer_ipv4" }),
@@ -704,6 +710,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: false,
     paletteKind: "dns-mdns",
     channel: "testing",
+    // versionAdded is docs-sourced (upstream dns/server/index.md: mdns added 1.14) — no nodeLabels entry.
     versionAdded: "1.14",
     factory: (tag) => ({ type: "mdns", tag, interface: [] }),
     sharedGroups: ["dial"],
