@@ -115,7 +115,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   route/bypass/route-options. — PR #92
 - [x] L4-subtitle-degeneric — settings node subtitles carry real info (route/dns hubs already show rule
   counts; notices already informative — only the four settings nodes were generic). — PR #91
-- [ ] L4-mobile-touch — mobile controls meet a ≥36px touch-target minimum (CSS).
+- [x] L4-mobile-touch — mobile controls meet a ≥36px touch-target minimum: the mobile topbar status
+  pill was 30px (brand/icon-buttons already 36px) → bumped to 36px. — PR #99
 - [ ] L4-mobile-palette-defer — A25-rest: actually defer the Palette chunk on mobile (today App eagerly
   imports it for desktop).
 
@@ -215,3 +216,17 @@ Status: implemented 2026-05-29 in `atomic/export-prune-empty`; merged in PR #93.
   dropped, draft path untouched, and that diagnostics-equivalence + idempotency soundly replaces
   byte-identity (does not mask a regression).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (873), `pnpm build`, `pnpm e2e` (14).
+
+### L4-mobile-touch (canvas CSS) — PR #99
+Status: implemented 2026-05-29 in `atomic/mobile-touch-targets`; merged in PR #99.
+- What changed: audited mobile interactive controls — the mobile brand button, the topbar icon buttons
+  (Add/Check/Menu), and the menu-field selects/row-buttons are already ≥36px; the one violator was the
+  mobile topbar status/check pill (`.mobile-topbar__center .status-pill`) at `min-height:30px`. Bumped
+  to 36px (font-size 11px kept — legibility ≠ tap target).
+- Tests: new e2e in `mobile.spec.ts` (390×844) asserting the mobile topbar controls (status pill, brand,
+  add-node, run-check, menu) all have `boundingBox().height ≥ 36`. (jsdom can't compute layout, so e2e.)
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean — no blockers/should-fix/
+  nits. Confirmed isolation (only the mobile rule changed; desktop `.status-pill` untouched), the audit
+  (no other in-scope mobile control <36px), valid + non-flaky selectors, and no layout break (pill now
+  matches the 36px brand/icon row).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build`, `pnpm e2e` (16).
