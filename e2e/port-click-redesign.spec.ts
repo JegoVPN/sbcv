@@ -269,3 +269,23 @@ test("connected edge remove button disconnects only canonical relation", async (
   expect(config.outbounds).toEqual([{ type: "direct", tag: "direct" }]);
   await expect(page.getByRole("button", { name: "Remove connection edge:route-final:direct" })).toHaveCount(0);
 });
+
+test("port '+' click opens the searchable picker and creates a connected downstream node (N2)", async ({ page }) => {
+  // A bare route → its outbound/final port is unconnected, so it lives in the reveal overlay with a "+".
+  await importInlineConfig(page, { route: {} });
+  // Hover the node to reveal the overlay port, then click its "+".
+  await page.getByTestId("node-route:main").hover();
+  await page
+    .locator('[data-testid="node-route:main"] [data-port-type="outbound"] button.sbc-port__add')
+    .click();
+
+  const picker = page.getByRole("dialog", { name: "Compatible nodes" });
+  await expect(picker).toBeVisible();
+  await picker.getByRole("button", { name: /direct/i }).first().click();
+
+  // The pick created a direct outbound and wired it as the route's final.
+  const config = await exportedConfig(page);
+  expect((config.outbounds ?? []).some((outbound: any) => outbound.type === "direct")).toBe(true);
+  expect(config.route?.final).toBeTruthy();
+  await expect(picker).toHaveCount(0);
+});
