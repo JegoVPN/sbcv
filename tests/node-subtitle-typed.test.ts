@@ -94,5 +94,10 @@ describe("typed node subtitles", () => {
     expect(
       subtitleOf({ inbounds: [{ type: "socks", tag: "s2", listen: "127.0.0.1", listen_port: 1081 }] }, "inbound:s2"),
     ).toBe("listen 127.0.0.1:1081");
+    // graceful fallbacks: tun with only an interface; shadowsocks with no method
+    expect(subtitleOf({ inbounds: [{ type: "tun", tag: "t2", interface_name: "tun1" }] }, "inbound:t2")).toBe("tun1");
+    expect(
+      subtitleOf({ inbounds: [{ type: "shadowsocks", tag: "ss2", listen_port: 8389 }] }, "inbound:ss2"),
+    ).toBe("listen :8389");
   });
 });
