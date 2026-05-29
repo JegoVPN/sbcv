@@ -2,12 +2,12 @@ import { Download, FolderOpen, LayoutTemplate } from "lucide-react";
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
-import { createConfigExport } from "../domain/serialization";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import type { SingBoxTargetId } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 import { BottomSheet } from "./BottomSheet";
-import { configHasContent, createSbcvFileName } from "./TopBar";
+import { confirmAndExportConfig } from "./exportConfig";
+import { configHasContent } from "./TopBar";
 
 interface MobileMenuSheetProps {
   open: boolean;
@@ -28,15 +28,10 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
   const target = targetFromVersion(channel, version);
 
   function exportConfig() {
-    const exportedConfig = createConfigExport(useProjectStore.getState().config);
-    const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = createSbcvFileName();
-    link.click();
-    URL.revokeObjectURL(url);
-    onClose();
+    // Same error-diagnostics gate as desktop. diagnostics isn't selected here, so read it from the
+    // store alongside config; only close the sheet when the export actually proceeded.
+    const { config, diagnostics } = useProjectStore.getState();
+    if (confirmAndExportConfig(config, diagnostics)) onClose();
   }
 
   async function handleImport(event: ChangeEvent<HTMLInputElement>) {
