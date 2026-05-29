@@ -361,22 +361,6 @@ describe("SBC editor shell", () => {
     expect(proxy?.outbounds).toContain("http-out");
   });
 
-  it("does not connect chip-created resources through stale latest entities", () => {
-    useProjectStore.getState().loadTemplate();
-    act(() => {
-      useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "direct");
-      useProjectStore.getState().updateField({ kind: "dns", id: "main" }, "final", "local-dns");
-      useProjectStore.getState().createCompatible("route:main", "DNS Server");
-      useProjectStore.getState().createCompatible("outbound:proxy", "DNS Server");
-      useProjectStore.getState().createCompatible("dns:main", "Direct");
-    });
-
-    const state = useProjectStore.getState();
-    expect(state.config.route?.final).toBe("direct");
-    expect(state.config.dns?.final).toBe("local-dns");
-    expect(state.config.outbounds?.find((outbound) => outbound.tag === "proxy")?.outbounds).not.toContain("proxy");
-  });
-
   it("adds inbound setup drafts from the Library and opens editable listen fields", () => {
     useProjectStore.getState().loadMinimal();
     render(<App />);

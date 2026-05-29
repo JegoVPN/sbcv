@@ -75,7 +75,18 @@ A focused canvas-UX initiative addressing three concrete node-card problems the 
   self/block; every offered kind is handled by `createNodeAndConnect`). No fix needed; the gap was that
   the generator was untested. Exported `chipCandidatesForPending`/`PendingPort` and added
   `tests/picker-candidate-correctness.test.ts` to guard the per-port filtering against regressions. — PR #132
-- [ ] N2-compatible-retire — retire `data.compatible` string-label path + `createCompatible`/`outboundTypeForChipLabel` IF no longer used (or keep a count-only source for the toolbar pill); migrate `tests/compatible-chip-coverage.test.ts` + `tests/app.test.tsx` callers to `createNodeAndConnect`.
+- [x] N2-compatible-retire — removed the now-dead `createCompatible` store action (the chip-grid was its
+  only UI consumer — gone in N2-remove-grid; the picker uses `createNodeAndConnect`) and its exclusive
+  helper `outboundTypeForChipLabel` + `OUTBOUND_CHIP_TYPES`. Deleted the obsolete
+  `tests/compatible-chip-coverage.test.ts` (it probed `createCompatible`; the picker path is now guarded
+  by `port-interaction-symmetry` + `picker-candidate-correctness`) and the createCompatible-specific
+  `app.test.tsx` "stale latest entities" test (that bug class is structural to the old path; the new
+  path takes explicit refs). **Kept `data.compatible`** (graph.ts) — it's the source for the toolbar
+  count pill (DN-5), now used only for its `.length`. — PR #133
+
+**Node-card redesign complete (N1–N3 + N2).** N4 (connection-model completeness) is a separate effort
+per DN-7. Known minor nit: a node with many unconnected ports has a tall reveal overlay that can overlap
+a lower neighbor on hover (opacity + pointer-events gated, harmless).
 
 ### Phase N3 — Card chrome cleanup + typography unification
 - [x] N3-remove-center-plus — removed the center "+" (`sbc-node__add` JSX + CSS). — PR #97

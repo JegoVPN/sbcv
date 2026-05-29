@@ -44,7 +44,6 @@ import {
   endpointTypeForPaletteKind,
   inboundTypeForPaletteKind,
   outboundTypeForPaletteKind,
-  outboundTypeForChipLabel,
   preferredDnsServerTag,
   preferredEndpointTag,
   preferredInboundTag,
@@ -163,7 +162,6 @@ type ProjectStore = {
   loadTemplatePreset: (id: TemplatePresetId) => void;
   loadMinimal: () => void;
   createFromPalette: (kind: string) => void;
-  createCompatible: (sourceId: string, kind: string) => void;
   createNodeAndConnect: (
     sourceId: string,
     sourceHandle: string,
@@ -1064,79 +1062,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
       if (kind === "dns-rule") config = addDnsRule(config);
       return { ...sync(config, state.channel, state.version), layout, selectedId };
-    }),
-
-  createCompatible: (sourceId, kind) =>
-    set((state) => {
-      let config = state.config;
-      let createdOutboundTag: string | null = null;
-      let createdDnsServerTag: string | null = null;
-      if (kind === "Route") config = ensureRoute(config);
-
-      const createOutboundForKind = (type: string, preferredTag: string) => {
-        const insertIndex = config.outbounds?.length ?? 0;
-        config = addOutbound(config, type, preferredTag);
-        createdOutboundTag = config.outbounds?.[insertIndex]?.tag ?? null;
-      };
-      const createDnsServerForKind = (type: string) => {
-        const insertIndex = config.dns?.servers?.length ?? 0;
-        config = addDnsServer(config, type);
-        createdDnsServerTag = config.dns?.servers?.[insertIndex]?.tag ?? null;
-      };
-
-      if (kind === "Direct") createOutboundForKind("direct", "direct");
-      if (kind === "Block") createOutboundForKind("block", "block");
-      if (kind === "Selector") createOutboundForKind("selector", "proxy");
-      if (kind === "URLTest") createOutboundForKind("urltest", "auto");
-      if (kind === "SOCKS") createOutboundForKind("socks", "proxy-out");
-      if (kind === "DNS Server") createDnsServerForKind("local");
-      if (kind === "DNS Tailscale Server") createDnsServerForKind("tailscale");
-      // Proxy-type chips advertised on selector/urltest map through the creatable-outbound registry, so
-      // each one creates the outbound (and is attached as a member below via the outbound source branch).
-      if (!createdOutboundTag && !createdDnsServerTag && kind !== "Route") {
-        const chipType = outboundTypeForChipLabel(kind);
-        if (chipType) createOutboundForKind(chipType, preferredOutboundTag(chipType));
-      }
-
-      const source = parseNodeId(sourceId);
-      if (createdOutboundTag && source.kind === "route") {
-        const withRoute = ensureRoute(config);
-        config = !withRoute.route?.final
-          ? setRouteFinal(withRoute, createdOutboundTag)
-          : addRouteRule(withRoute, { domain_suffix: ["example"], outbound: createdOutboundTag });
-      }
-      if (createdOutboundTag && source.kind === "route-rule") {
-        const index = Number(source.value);
-        const rule = Number.isInteger(index) ? config.route?.rules?.[index] : undefined;
-        if (Number.isInteger(index) && routeRuleAllowsOutbound(rule)) {
-          config = updateRouteRule(config, index, { outbound: createdOutboundTag });
-        }
-      }
-      if (createdOutboundTag && source.kind === "outbound") {
-        config = connectCreatedOutboundForSelection(config, sourceId, createdOutboundTag);
-      }
-      if (createdOutboundTag && (source.kind === "dns-server" || source.kind === "endpoint" || source.kind === "rule-set")) {
-        config = connectCreatedOutboundForSelection(config, sourceId, createdOutboundTag);
-      }
-      if (createdDnsServerTag && source.kind === "dns") {
-        config = setDnsFinal(config, createdDnsServerTag);
-      }
-      if (createdDnsServerTag && source.kind === "endpoint") {
-        const endpoint = config.endpoints?.find((item) => item.tag === source.value);
-        const server = config.dns?.servers?.find((item) => item.tag === createdDnsServerTag);
-        if (endpoint?.type === "tailscale" && server?.type === "tailscale") {
-          config = updateEntityField(config, { kind: "dns-server", tag: createdDnsServerTag }, "endpoint", source.value);
-        }
-      }
-
-      let layout = state.layout;
-      if (createdOutboundTag) {
-        layout = nextLayout(layout, `outbound:${createdOutboundTag}`, 1050, 140 + (config.outbounds?.length ?? 1) * 110);
-      }
-      if (createdDnsServerTag) {
-        layout = nextLayout(layout, `dns-server:${createdDnsServerTag}`, 850, 560 + (config.dns?.servers?.length ?? 1) * 100);
-      }
-      return { ...sync(config, state.channel, state.version), layout };
     }),
 
   connectOutboundReference: (outboundTag, reference, parentTag) =>
