@@ -200,6 +200,27 @@ export function addHttpClient(config: SingBoxConfig, preferredTag?: string): Sin
   return next;
 }
 
+export function preferredCertificateProviderTag(type: string): string {
+  if (type === "tailscale") return "ts-cert";
+  if (type === "cloudflare-origin-ca") return "cf-cert";
+  return "acme-cert";
+}
+
+// certificate_providers[] is sing-box 1.14+. acme + cloudflare-origin-ca require `domain` (string[]);
+// tailscale reuses a Tailscale endpoint via `endpoint`. Never emit the non-schema type
+// "certificate-provider" (the bare palette item defaults to acme). (C2 / shared/certificate-provider/*)
+export function createCertificateProvider(type: string, tag: string): TaggedConfig {
+  if (type === "tailscale") return { type: "tailscale", tag, endpoint: "" };
+  return { type, tag, domain: [] };
+}
+
+export function addCertificateProvider(config: SingBoxConfig, type = "acme", preferredTag?: string): SingBoxConfig {
+  const next = cloneConfig(config);
+  const tag = getUniqueTag(next, preferredTag ?? preferredCertificateProviderTag(type));
+  next.certificate_providers = [...(next.certificate_providers ?? []), createCertificateProvider(type, tag)];
+  return next;
+}
+
 export function createRuleSet(type: string, tag: string): TaggedConfig {
   const row = schemaRow("rule-set", type);
   if (!row) {
