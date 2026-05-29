@@ -3697,7 +3697,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 <input
                   type="number"
                   value={typeof entity.up_mbps === "number" ? entity.up_mbps : ""}
-                  placeholder="empty = no rate limit"
+                  placeholder="required (Mbps)"
                   onChange={(event) => {
                     const raw = event.target.value;
                     if (!raw) return updateField(ref, "up_mbps", undefined);
@@ -3715,7 +3715,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 <input
                   type="number"
                   value={typeof entity.down_mbps === "number" ? entity.down_mbps : ""}
-                  placeholder="empty = no rate limit"
+                  placeholder="required (Mbps)"
                   onChange={(event) => {
                     const raw = event.target.value;
                     if (!raw) return updateField(ref, "down_mbps", undefined);
