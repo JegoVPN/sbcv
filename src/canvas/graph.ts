@@ -22,7 +22,11 @@ export type SbcNodeData = {
   title: string;
   subtitle: string;
   status: "valid" | "warning" | "error";
-  compatible: string[];
+  // Number of downstream connections wired from this node (selector/urltest members, a route's rules +
+  // final, a rule's targets, …). Counted from the node's outgoing edges in a post-pass, so it matches
+  // the edges actually drawn on the canvas. Replaces the old `compatible` "addable types" count, which
+  // showed e.g. 18 on a 3-member selector and confused users.
+  connections: number;
   connectedPorts?: Partial<Record<PortDirection, string[]>>;
   // Rule action (dns-rule / route-rule), when it gates action-aware ports/affordances.
   action?: string;
@@ -65,7 +69,8 @@ function nodePosition(layout: ProjectLayout, id: string, fallback: { x: number; 
 
 function makeNode(
   id: string,
-  data: SbcNodeData,
+  // `connections` is filled by a post-pass over the edges (see deriveGraph), so callers don't supply it.
+  data: Omit<SbcNodeData, "connections">,
   layout: ProjectLayout,
   fallback: { x: number; y: number },
 ): SbcFlowNode {
@@ -73,7 +78,7 @@ function makeNode(
     id,
     type: "sbc",
     position: nodePosition(layout, id, fallback),
-    data,
+    data: { ...data, connections: 0 },
     deletable: data.kind !== "notice",
   };
 }
@@ -413,7 +418,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: path[0] ? `${path[0].toUpperCase()}${path.slice(1)}` : path,
           subtitle: settingsSubtitle(path, entity as Record<string, unknown>),
           status: diagnosticStatus(`/${path}`, diagnostics),
-          compatible: [],
         },
         layout,
         { x: COLUMNS.settings, y: ROUTE_HUB_Y + index * NODE_SLOT_Y },
@@ -455,7 +459,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: tag,
           subtitle: inboundSubtitle(inbound),
           status: diagnosticStatus(`/inbounds/${index}`, diagnostics),
-          compatible: ["Route"],
         },
         layout,
         {
@@ -486,7 +489,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: "Route",
           subtitle: `${routeRules.length} ordered rules`,
           status: diagnosticStatus("/route", diagnostics),
-          compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
         },
         layout,
         { x: COLUMNS.entry, y: routeY },
@@ -520,7 +522,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               title: `Rule ${index + 1}`,
               subtitle: label,
               status: diagnosticStatus(`/route/rules/${index}`, diagnostics),
-              compatible: ["Direct", "Block", "Selector", "URLTest", "SOCKS"],
             },
             layout,
             { x: COLUMNS.rule, y },
@@ -553,7 +554,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             title: `+${hiddenRouteRules} route rules not visualized`,
             subtitle: `${routeRules.length} ordered route rules stay in the Rules table`,
             status: diagnosticStatus("/route/rules", diagnostics),
-            compatible: [],
           },
           layout,
           { x: COLUMNS.rule, y: columnLayout.reserve("rule", ROUTE_RULE_START_Y) },
@@ -650,29 +650,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                 ? `${outbound.type} ${outbound.server}:${outbound.server_port ?? ""}`
                 : `${outbound.type} outbound`,
           status: diagnosticStatus(`/outbounds/${index}`, diagnostics),
-          compatible:
-            isOutboundGroup(outbound)
-              ? [
-                  "Direct",
-                  "Block",
-                  "SOCKS",
-                  "HTTP",
-                  "Shadowsocks",
-                  "VMess",
-                  "Trojan",
-                  "Naive",
-                  "Hysteria",
-                  "Hysteria2",
-                  "ShadowTLS",
-                  "VLESS",
-                  "TUIC",
-                  "AnyTLS",
-                  "Tor",
-                  "SSH",
-                  "Selector",
-                  "URLTest",
-                ]
-              : [],
         },
         layout,
         { x: COLUMNS[column], y: outboundY.get(tag) ?? ROUTE_HUB_Y + index * NODE_SLOT_Y },
@@ -718,7 +695,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: "DNS",
           subtitle: `${dnsRules.length} ordered rules`,
           status: diagnosticStatus("/dns", diagnostics),
-          compatible: ["DNS Server"],
         },
         layout,
         { x: COLUMNS.entry, y: dnsY },
@@ -739,7 +715,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             title: tag,
             subtitle: dnsServerSubtitle(server),
             status: diagnosticStatus(`/dns/servers/${index}`, diagnostics),
-            compatible: [],
           },
           layout,
           { x: COLUMNS.target, y },
@@ -790,7 +765,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                 "dns match",
               status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
               // Only a server-bearing action (route/evaluate) can attach a DNS server.
-              compatible: dnsRuleAllowsServer(rule) ? ["DNS Server"] : [],
             },
             layout,
             { x: COLUMNS.rule, y },
@@ -823,7 +797,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
             title: `+${hiddenDnsRules} DNS rules not visualized`,
             subtitle: `${dnsRules.length} ordered DNS rules stay in the DNS rules table`,
             status: diagnosticStatus("/dns/rules", diagnostics),
-            compatible: [],
           },
           layout,
           { x: COLUMNS.rule, y: columnLayout.reserve("rule", dnsY) },
@@ -854,7 +827,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
                   ? ruleSet.path
                   : `${ruleSet.type} rule-set`,
             status: diagnosticStatus(`/route/rule_set/${index}`, diagnostics),
-            compatible: [],
           },
           layout,
           {
@@ -894,7 +866,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: tag,
           subtitle: certificateProviderSubtitle(provider),
           status: diagnosticStatus(`/certificate_providers/${index}`, diagnostics),
-          compatible: [],
         },
         layout,
         { x: COLUMNS.target, y },
@@ -928,7 +899,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: tag,
           subtitle: httpClientSubtitle(client),
           status: diagnosticStatus(`/http_clients/${index}`, diagnostics),
-          compatible: [],
         },
         layout,
         { x: COLUMNS.target, y: columnLayout.reserve("target", desiredY) },
@@ -954,7 +924,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: tag,
           subtitle: endpointSubtitle(endpoint),
           status: diagnosticStatus(`/endpoints/${index}`, diagnostics),
-          compatible: endpoint.type === "tailscale" ? ["DNS Tailscale Server"] : [],
         },
         layout,
         { x: COLUMNS.member, y: endpointY.get(tag) ?? DNS_LANE_MIN_Y + index * NODE_SLOT_Y },
@@ -982,7 +951,6 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
           title: tag,
           subtitle: serviceSubtitle(service),
           status: diagnosticStatus(`/services/${index}`, diagnostics),
-          compatible: [],
         },
         layout,
         { x: COLUMNS.entry, y },
@@ -1044,6 +1012,14 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
   centerColumnsVertically(nodes, layout);
 
   annotateConnectedPorts(config, nodes);
+
+  // Count each node's downstream connections from its outgoing edges. Edges run upstream→downstream
+  // (makeEdge(source, target)), so the out-degree is exactly the node's wired downstream count, and it
+  // tracks the visual edge caps (capped edges aren't drawn, so they aren't counted either).
+  const outgoing = new Map<string, number>();
+  for (const edge of edges) outgoing.set(edge.source, (outgoing.get(edge.source) ?? 0) + 1);
+  for (const node of nodes) node.data.connections = outgoing.get(node.id) ?? 0;
+
   return { nodes, edges };
 }
 
