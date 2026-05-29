@@ -995,7 +995,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         selectedId = "settings:experimental";
       }
       const inboundType = inboundTypeForPaletteKind(kind);
-      if (inboundType && inboundType !== "cloudflared") {
+      // cloudflared is sing-box 1.14+ — creatable on testing only (mirrors the hysteria-realm /
+      // http-client testing gates below and the palette's testing-only itemStatus). (C4 / G3)
+      if (inboundType && (inboundType !== "cloudflared" || state.channel === "testing")) {
         config = addInbound(config, inboundType, preferredInboundTag(inboundType));
         const created = config.inbounds?.[config.inbounds.length - 1];
         if (created) selectedId = `inbound:${created.tag}`;

@@ -65,3 +65,57 @@ describe("A21 — cloudflared testing inbound", () => {
     });
   });
 });
+
+// C4 (G3): "Add Cloudflared" on the testing target actually creates a cloudflared inbound (seeded
+// token:"") and selects it, instead of being a dead click. The store gate must agree with the
+// palette's testing-only itemStatus. Source: testing/configuration/inbound/cloudflared.md.
+describe("C4 — cloudflared palette creation", () => {
+  beforeEach(() => {
+    useProjectStore.getState().importJson(JSON.stringify({}));
+  });
+  afterEach(() => {
+    useProjectStore.getState().setChannel("stable");
+    useProjectStore.getState().importJson(JSON.stringify({}));
+  });
+
+  it("creates exactly one cloudflared inbound (token empty) and selects it on testing", () => {
+    useProjectStore.getState().setChannel("testing");
+    useProjectStore.getState().createFromPalette("inbound-cloudflared");
+    const state = useProjectStore.getState();
+    const cloudflared = (state.config.inbounds ?? []).filter((i) => (i as { type?: string }).type === "cloudflared");
+    expect(cloudflared).toHaveLength(1);
+    expect((cloudflared[0] as { tag?: string }).tag).toBe("cloudflared-in");
+    expect((cloudflared[0] as { token?: unknown }).token).toBe("");
+    expect(state.selectedId).toBe("inbound:cloudflared-in");
+  });
+
+  it("creates nothing on stable (still needs 1.14)", () => {
+    useProjectStore.getState().setChannel("stable");
+    useProjectStore.getState().createFromPalette("inbound-cloudflared");
+    const inbounds = useProjectStore.getState().config.inbounds ?? [];
+    expect(inbounds.filter((i) => (i as { type?: string }).type === "cloudflared")).toHaveLength(0);
+  });
+
+  it("does not regress non-cloudflared inbound creation", () => {
+    useProjectStore.getState().setChannel("stable");
+    useProjectStore.getState().createFromPalette("inbound-mixed");
+    const inbounds = useProjectStore.getState().config.inbounds ?? [];
+    expect(inbounds.filter((i) => (i as { type?: string }).type === "mixed")).toHaveLength(1);
+  });
+
+  it("click-through: 'Add Cloudflared' renders a cloudflared node", async () => {
+    useProjectStore.getState().loadMinimal();
+    useProjectStore.getState().setChannel("testing");
+    render(<App />);
+    const palette = within(await screen.findByLabelText("Node palette"));
+    fireEvent.click(palette.getByRole("button", { name: /Library/ }));
+    fireEvent.click(palette.getByRole("button", { name: /^Inbounds/ }));
+    fireEvent.click(palette.getByRole("button", { name: "Add Cloudflared" }));
+    expect(screen.getByTestId("node-inbound:cloudflared-in")).toBeInTheDocument();
+    const cloudflared = (useProjectStore.getState().config.inbounds ?? []).filter(
+      (i) => (i as { type?: string }).type === "cloudflared",
+    );
+    expect(cloudflared).toHaveLength(1);
+    expect((cloudflared[0] as { token?: unknown }).token).toBe("");
+  });
+});
