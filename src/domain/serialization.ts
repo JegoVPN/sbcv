@@ -1,12 +1,14 @@
 import { normalizeDnsRule, normalizeRouteRule } from "./commands";
-import type { RouteConfig, SingBoxConfig } from "./types";
+import type { SingBoxConfig } from "./types";
 
-// A16 declares route.default_network_type / default_fallback_network_type as `string[]`. A legacy
-// pre-release config may carry the raw-string form; coerce it to a single-element array at the import
-// boundary so the model honors the type (and the list control / export stay correct). (A16-norm)
-function coerceRouteNetworkList(route: RouteConfig, key: "default_network_type" | "default_fallback_network_type") {
-  const value: unknown = route[key];
-  if (typeof value === "string") route[key] = value ? [value] : [];
+// A legacy/pre-release config may carry a raw-string value where the model expects a `string[]` list
+// (route.default_network_type / default_fallback_network_type — A16-norm; and the dial-group
+// network_type / fallback_network_type on outbounds/endpoints — A16-norm-rest). Coerce the bare string
+// to a single-element array at the import boundary so the model honors the array shape and the
+// `kind:"list"` control / export stay correct. Non-string values pass through untouched.
+function coerceStringList(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+  if (typeof value === "string") record[key] = value ? [value] : [];
 }
 
 export type ConfigExport = {
@@ -67,8 +69,17 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
   const route = config.route;
   if (route?.rules) route.rules = route.rules.map(normalizeRouteRule);
   if (route) {
-    coerceRouteNetworkList(route, "default_network_type");
-    coerceRouteNetworkList(route, "default_fallback_network_type");
+    coerceStringList(route as Record<string, unknown>, "default_network_type");
+    coerceStringList(route as Record<string, unknown>, "default_fallback_network_type");
+  }
+  // Dial-group siblings on outbounds/endpoints carry the same legacy-string-vs-array hazard.
+  for (const list of [config.outbounds, config.endpoints]) {
+    if (!Array.isArray(list)) continue;
+    for (const item of list) {
+      if (!item || typeof item !== "object") continue;
+      coerceStringList(item as Record<string, unknown>, "network_type");
+      coerceStringList(item as Record<string, unknown>, "fallback_network_type");
+    }
   }
   return config;
 }
