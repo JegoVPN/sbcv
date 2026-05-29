@@ -40,7 +40,7 @@ work, not after.
 - [x] A8-multiedge — multi-edge aggregate-port disconnect (C1-7/8/23): mark the 8 writable array relations aggregate + suppress their ambiguous per-port disconnect (both ends); disconnect via per-edge remove / Inspector list (`multi-edge-disconnect`) — PR #50
 - [x] A8b — confirmed icon set (`../ui-icon-set.md`): one shared type-aware registry across node card / Palette / chip picker / Inspector; v4 monograms + Lucide glyphs; status glyphs reserved (`node-icon-distinctness`) — PR #52
 - [x] A8b-brands — replaced the WG/TO/TS interim monograms with the confirmed brand SVGs (WireGuard/Tor/Tailscale), extracted verbatim from `_icons-preview-v4.html` (`node-brand-svgs`) — PR #86
-- [ ] A8b-ports — expand `PortIconId` + derive the v4 port-relation glyph vocabulary (IC-P2-5: ListOrdered/FlagTriangleRight/Flag/Target/Crosshair/Milestone/CornerDownRight/DownloadCloud/ShieldCheck …) (`port-relation-icons`)
+- [x] A8b-ports — expanded `PortIconId` + applied the v4 port-relation glyph vocabulary (IC-P2-5: ListOrdered/FlagTriangleRight/Flag/Target/Crosshair/Filter/ListChecks/Spline/Milestone/CornerDownRight/DownloadCloud/Cog/ShieldCheck) to each relation's source/action port (`port-relation-icons`) — PR #88
 - [x] A9 — warning glyph + `✓ N` relabel + edge-remove pointer-events (`validity-readability`) — PR #53
 
 ### Phase 2 — Residual node P0/P1
@@ -1529,3 +1529,38 @@ Status: reverted 2026-05-29 in `atomic/remove-edge-legend`; merged in PR #87.
 - Note: this only removes the *legend*. The edge visual language itself (solid lime = configured
   link/reference, animated dashed = traffic path, hover-✕ = disconnect) is unchanged — it was always
   rendered by CanvasEdge, the legend was just a key describing it.
+
+### A8b-ports port-relation-icons — v4 port-relation glyph vocabulary (canvas/domain, IC-P2-5)
+Status: implemented 2026-05-29 in `atomic/port-relation-icons`; merged in PR #88. Sibling of A8b-brands;
+prompted by the user's "核对一下所有 svg 用的都是这个 html 里的" — the node-identity registry already
+matched the v4 HTML, but the port/edge glyphs still used a reused-generic vocabulary.
+- What changed: `PortIconId` gained the 13 semantic glyphs the v4 preview's "port relationship icons"
+  section defines (`list-ordered`, `flag-triangle-right`, `flag`, `target`, `crosshair`, `filter`,
+  `list-checks`, `spline`, `milestone`, `corner-down-right`, `download-cloud`, `cog`, `shield-check`),
+  with matching Lucide entries in SbcNode's `portIconMap`. Each relation's **source/action port** (the
+  one with the connect chip) now carries its semantic glyph instead of a reused `network`/`git-branch`/
+  `server`: route-rule routes-to → `target`, dns-rule → `crosshair`, route/dns rule order →
+  `list-ordered`, route-final → `flag-triangle-right`, dns-final → `flag`, inbound matchers → `filter`,
+  selector/urltest membership → `list-checks`, dial detours (outbound/endpoint/ntp) → `spline`,
+  dns-server detour → `milestone`, service (ccm/ocm) detour → `corner-down-right`, rule-set/clash
+  download → `download-cloud`, ssm-api → `cog`, derp verify → `shield-check`.
+- Assignment rule: glyph on the OUTPUT (source) endpoint only; input/target ports keep deriving from the
+  referenced node-kind (icon-set doc rule 4). NTP detour stays `spline` (not the doc's older `clock`
+  suggestion) because the ntp node icon *is* clock and that would violate the "ports never copy the node
+  icon" invariant — the v4 HTML's generic `dial-detour Spline` is correct here. Out-of-vocabulary
+  relations (rule-set ref, dns-server↔endpoint/cert-provider tailscale refs, dns-server↔resolved service)
+  keep their node-kind-derived icons; brand-in-ports is a separate concern (PortIconId is Lucide-only).
+- Tests: `tests/port-relation-icons.test.ts` — exact source-icon assertions for all 20 v4 relation rows
+  + a no-stale-mapping guard. The existing `sbc-node-ports.test.ts` no-copy invariant and
+  `icon-registry.test.tsx` stay green; tsc enforces `portIconMap` exhaustiveness over the widened union.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, no blockers, no should-fix.
+  Independently re-derived all 20 source-glyph assignments against the v4 HTML "port relationship icons"
+  section (faithful), verified the no-copy invariant for every reassigned source against `nodeIconId`
+  (incl. the ssm port being on the inbound host, and ntp→spline avoiding the clock collision), the 26↔26
+  union/map 1:1 exhaustiveness with all 13 new names being real lucide-react exports, and that the only
+  `.icon` consumer is SbcNode's portIconMap (chip picker / CanvasWorkspace don't read port icons). Two
+  non-blocking nits, both fine as-is: the orphan `"ban"` union member is pre-existing on main; the test
+  leans on sbc-node-ports + tsc for the no-copy / exhaustiveness gaps.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (847 passed), `pnpm build`,
+  `pnpm e2e` (14 passed).
+- Official check: n/a — canvas port glyph rendering.
