@@ -136,6 +136,16 @@ export function validateConfig(
         }
       });
     }
+    // naive is Since sing-box 1.13.0 (absent in 1.12); a 1.12 binary rejects it. Mirrors ccm/ocm.
+    if (outbound.type === "naive" && !atLeast(version, "1.13")) {
+      push(
+        diagnostics,
+        "error",
+        "outbound-naive-version",
+        `/outbounds/${index}/type`,
+        `Outbound "${outbound.tag}" (naive) requires sing-box 1.13+, but the target is ${version}. sing-box ${version} rejects it.`,
+      );
+    }
   });
 
   endpoints.forEach((endpoint, index) => {
