@@ -123,8 +123,12 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     - [x] L2-med-rules-copy — rule match/action copy: "Rule Set" match field → "Match rule-set" (node
       inspector ×2 + table editor ×2) and reject `no_drop` "(only return)" → "(else method falls back to
       drop after 50 hits in 30s)" per upstream's 50-triggers/30s throttle. — PR #118
-    - [ ] L2-med-dns-server-copy — DNS server/cache copy: local `prefer_go` overstatement, dhcp interface
-      placeholder (`auto` is the legacy form), store_rdrc→store_dns banner (distinct caches).
+    - [x] L2-med-dns-server-copy — DNS server/cache copy: local `prefer_go` "bypasses platform-native DNS"
+      → "skips Apple getaddrinfo / Linux systemd-resolved — Android platform DNS and macOS DHCP still
+      apply"; dhcp interface placeholder "auto (system default)" → "(default interface)" (`auto` is the
+      legacy address form); store_rdrc banner rewritten to distinguish the caches (store_rdrc = rejected/
+      address-filter results only; store_dns = full DNS cache) + name the 1.16 removal; toggle label
+      "(DNS cache reasons)" → "(rejected-response cache)". — PR #119
     - [ ] L2-med-banners-copy — protocol/build-tag banner copy: tuic 0-RTT replay wording,
       tailscale/derp "stock binaries omit" → default-build softening (×3), V2Ray API tag citation,
       block-outbound banner (removed in 1.13, rejected on both channels).

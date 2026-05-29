@@ -2539,7 +2539,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 {channel === "testing" && Boolean(cacheFile.store_rdrc) ? (
                   <PlatformBanner
                     kind="deprecated"
-                    text="store_rdrc is deprecated in sing-box 1.14 testing. Migrate to store_dns; both fields round-trip but only store_dns is recommended."
+                    text="store_rdrc (caches only rejected / address-filter DNS results) is deprecated in 1.14 and will be removed in 1.16. Use store_dns, which persists the full DNS cache."
                   />
                 ) : null}
                 <label className="toggle-row">
@@ -2553,7 +2553,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                       })
                     }
                   />
-                  <span>Store RDRC (DNS cache reasons)</span>
+                  <span>Store RDRC (rejected-response cache)</span>
                 </label>
                 {Boolean(cacheFile.store_rdrc) ? (
                   <label className="field">
@@ -4437,7 +4437,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   updateField(ref, "prefer_go", event.target.checked || undefined)
                 }
               />
-              <span>Prefer Go resolver (since sing-box 1.13.0; bypasses platform-native DNS)</span>
+              <span>Prefer Go resolver (1.13+; skips Apple getaddrinfo / Linux systemd-resolved — Android platform DNS and macOS DHCP still apply)</span>
             </label>
           ) : null}
           {entityType === "resolved" ? (
@@ -4686,7 +4686,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
               <span>Interface</span>
               <input
                 value={typeof entity.interface === "string" ? entity.interface : ""}
-                placeholder="auto (system default)"
+                placeholder="(default interface)"
                 onChange={(event) => updateField(ref, "interface", event.target.value || undefined)}
               />
             </label>

@@ -913,7 +913,7 @@ describe("SBC editor shell", () => {
     render(<App />);
     const inspector = within(screen.getByLabelText("Node inspector"));
     const row = inspector.getByTestId("dns-server-local-prefer-go");
-    expect(within(row).getByText(/since sing-box 1\.13/)).toBeInTheDocument();
+    expect(within(row).getByText(/Prefer Go resolver \(1\.13\+/)).toBeInTheDocument();
     const checkbox = within(row).getByRole("checkbox") as HTMLInputElement;
     fireEvent.click(checkbox);
     const dnsServer = useProjectStore
@@ -1651,14 +1651,14 @@ describe("SBC editor shell", () => {
     render(<App />);
 
     const inspector = within(screen.getByLabelText("Node inspector"));
-    const storeRdrc = inspector.getByLabelText("Store RDRC (DNS cache reasons)") as HTMLInputElement;
+    const storeRdrc = inspector.getByLabelText("Store RDRC (rejected-response cache)") as HTMLInputElement;
     expect(storeRdrc).toBeInTheDocument();
     expect(inspector.queryByLabelText("RDRC Timeout")).not.toBeInTheDocument();
     expect(inspector.getByLabelText("Store DNS responses (1.14 testing)")).toBeInTheDocument();
 
     fireEvent.click(storeRdrc);
     expect(inspector.getByLabelText("RDRC Timeout")).toBeInTheDocument();
-    expect(inspector.getByText(/store_rdrc is deprecated in sing-box 1.14/)).toBeInTheDocument();
+    expect(inspector.getByText(/store_rdrc .*is deprecated in 1\.14 and will be removed in 1\.16/)).toBeInTheDocument();
 
     fireEvent.change(inspector.getByLabelText("RDRC Timeout"), { target: { value: "1h" } });
     const cf = (useProjectStore.getState().config.experimental ?? {}) as Record<string, Record<string, unknown>>;
