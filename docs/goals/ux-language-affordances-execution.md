@@ -90,7 +90,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   - [x] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
     createEndpoint seed); was producing invalid exports. (DERP mesh peer correctly keeps server/port.) — PR #103
   - [ ] L2-fix-ss-inbound-ciphers — H3: drop legacy stream ciphers from the shadowsocks INBOUND method list.
-  - [ ] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)`.
+  - [x] L2-fix-shadowtls-version — H7: version default label `(default — 3)` → `(default — 1)` (both
+    inbound + outbound; upstream omitted-version default is v1). — PR #104
   - [ ] L2-fix-hysteria-copy — H4 (required Mbps placeholder) + H5/H6 (drop the false "deprecated"
     banners + remove `hysteria-out` from `deprecatedKinds`).
   - [ ] L2-fix-dns-hints — H8 tailscale `accept_default_resolvers` + the MED dns hint cluster.
@@ -297,3 +298,16 @@ Status: implemented 2026-05-29 in `atomic/l2-fix-wireguard-peer`; merged in PR #
   no other peer `server` reads, and that no import migration is warranted (old exports were already
   invalid; address/port aren't upstream-required).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (877), `pnpm build`, `pnpm e2e` (16).
+
+### L2-fix-shadowtls-version (audit H7) — PR #104
+Status: implemented 2026-05-29 in `atomic/l2-fix-shadowtls-version`; merged in PR #104.
+- What changed: the ShadowTLS Version `<select>` (inbound + outbound) labeled its empty option
+  `(default — 3)`, but per `inbound/outbound shadowtls.md` the version table marks **`1`** as the
+  default when version is omitted. Relabeled both to `(default — 1)`. (The create seed still sets
+  version:3 explicitly, so a new node delivers v3 via the seed; the empty option only shows when a
+  user clears it, where sing-box's omitted default is genuinely v1.)
+- Tests: `tests/shadowtls-version-default.test.tsx` (the empty Version option reads `(default — 1)`).
+- Expert review (one pass): a senior reviewer subagent. Verdict CLEAN/APPROVE, no findings — upstream
+  confirmed, both sites changed, no seed contradiction.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (878), `pnpm build` (label-only; no
+  e2e path).

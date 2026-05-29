@@ -3067,7 +3067,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   updateField(ref, "version", Number.isFinite(parsed) ? parsed : undefined);
                 }}
               >
-                <option value="">(default — 3)</option>
+                <option value="">(default — 1)</option>
                 <option value="1">1 (no auth)</option>
                 <option value="2">2 (single user)</option>
                 <option value="3">3 (multi-user via users[])</option>
@@ -3476,7 +3476,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                   updateField(ref, "version", Number.isFinite(parsed) ? parsed : undefined);
                 }}
               >
-                <option value="">(default — 3)</option>
+                <option value="">(default — 1)</option>
                 <option value="1">1 (no auth)</option>
                 <option value="2">2 (single user)</option>
                 <option value="3">3 (single user, server-side hash)</option>
