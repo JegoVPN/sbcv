@@ -119,6 +119,29 @@ function listItems<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
 }
 
+// A rule is "match conditions + an action" (route/rule_action.md, dns/rule_action.md). The card subtitle
+// must surface the action so a sniff/reject/resolve rule isn't visually identical to a route rule. The
+// default `route` action is omitted — its outbound/server target is already shown by the edge — so only
+// the classifying actions get a label.
+const RULE_ACTION_LABELS: Record<string, string> = {
+  reject: "reject",
+  "route-options": "route-options",
+  sniff: "sniff",
+  resolve: "resolve",
+  "hijack-dns": "hijack-dns",
+  bypass: "bypass",
+  predefined: "predefined",
+};
+function ruleActionString(action: unknown): string | undefined {
+  return typeof action === "string" ? action : undefined;
+}
+function ruleSubtitle(match: string | undefined, action: string | undefined, fallback: string): string {
+  const actionLabel = action && action !== "route" ? RULE_ACTION_LABELS[action] ?? action : undefined;
+  if (match && actionLabel) return `${match} · ${actionLabel}`;
+  if (match) return match;
+  return actionLabel ?? fallback;
+}
+
 function stringRefs(value: string | string[] | undefined): string[] {
   if (Array.isArray(value)) return value;
   return value ? [value] : [];
@@ -499,13 +522,11 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
         const inboundRefs = stringRefs(rule.inbound);
         const ruleSetRefs = stringRefs(rule.rule_set);
         ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
-        const label =
+        const match =
           listLabel(rule.domain_suffix) ??
           listLabel(rule.domain_keyword) ??
           listLabel(rule.domain) ??
-          listLabel(rule.rule_set) ??
-          rule.action ??
-          "match rule";
+          listLabel(rule.rule_set);
         nodes.push(
           makeNode(
             id,
@@ -513,8 +534,9 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               ref: { kind: "route-rule", index },
               kind: "route-rule",
               type: "route-rule",
+              action: ruleActionString(rule.action),
               title: `Rule ${index + 1}`,
-              subtitle: label,
+              subtitle: ruleSubtitle(match, ruleActionString(rule.action), "match rule"),
               status: diagnosticStatus(`/route/rules/${index}`, diagnostics),
             },
             layout,
@@ -748,15 +770,16 @@ export function deriveGraph(config: SingBoxConfig, layout: ProjectLayout, diagno
               ref: { kind: "dns-rule", index },
               kind: "dns-rule",
               type: "dns-rule",
-              action: typeof rule.action === "string" ? rule.action : undefined,
+              action: ruleActionString(rule.action),
               title: `DNS Rule ${index + 1}`,
-              subtitle:
+              subtitle: ruleSubtitle(
                 listLabel(rule.domain_suffix) ??
-                listLabel(rule.domain_keyword) ??
-                listLabel(rule.domain) ??
-                listLabel(rule.rule_set) ??
-                rule.action ??
+                  listLabel(rule.domain_keyword) ??
+                  listLabel(rule.domain) ??
+                  listLabel(rule.rule_set),
+                ruleActionString(rule.action),
                 "dns match",
+              ),
               status: diagnosticStatus(`/dns/rules/${index}`, diagnostics),
             },
             layout,
