@@ -121,6 +121,6 @@ At each milestone, report:
 
 ## Repository Notes
 
-- Current repo: `JegoVPN/SBC`.
+- Current repo: `JegoVPN/sbcv`.
 - Default branch: `main`.
 - Commit author identity: `JegoVPN`.

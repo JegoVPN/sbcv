@@ -5,6 +5,7 @@ import { summarizeDiagnostics } from "../domain/diagnostics";
 import { targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
+import { SbcvLogo } from "./SbcvLogo";
 
 const MobileMenuSheet = lazy(() =>
   import("./MobileMenuSheet").then((module) => ({ default: module.MobileMenuSheet })),
@@ -14,6 +15,9 @@ const MobileNodeSheet = lazy(() =>
 );
 const MobileTemplatesSheet = lazy(() =>
   import("./MobileTemplatesSheet").then((module) => ({ default: module.MobileTemplatesSheet })),
+);
+const ConfigJsonViewerDialog = lazy(() =>
+  import("./ConfigJsonViewerDialog").then((module) => ({ default: module.ConfigJsonViewerDialog })),
 );
 
 export function MobileTopBar() {
@@ -46,6 +50,7 @@ export function MobileTopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [nodeSheetOpen, setNodeSheetOpen] = useState(false);
+  const [jsonViewerOpen, setJsonViewerOpen] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const allDiagnostics = useMemo(
@@ -95,21 +100,7 @@ export function MobileTopBar() {
         aria-label="sbcv.app — reset view (deselect and fit the canvas)"
         data-testid="brand-home"
       >
-        <svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-          <polygon
-            points="16,4 26,10 26,22 16,28 6,22 6,10"
-            fill="#0d1116"
-            stroke="#c7ff00"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-          <circle cx="16" cy="4" r="3.5" fill="#c7ff00" />
-          <circle cx="26" cy="10" r="3.5" fill="#c7ff00" />
-          <circle cx="26" cy="22" r="3.5" fill="#c7ff00" />
-          <circle cx="16" cy="28" r="3.5" fill="#c7ff00" />
-          <circle cx="6" cy="22" r="3.5" fill="#c7ff00" />
-          <circle cx="6" cy="10" r="3.5" fill="#c7ff00" />
-        </svg>
+        <SbcvLogo />
       </button>
 
       <div className="mobile-topbar__center">
@@ -180,6 +171,7 @@ export function MobileTopBar() {
             open={menuOpen}
             onClose={() => setMenuOpen(false)}
             onOpenTemplates={() => setTemplatesOpen(true)}
+            onOpenJson={() => setJsonViewerOpen(true)}
           />
         </Suspense>
       ) : null}
@@ -191,6 +183,11 @@ export function MobileTopBar() {
       {nodeSheetOpen ? (
         <Suspense fallback={null}>
           <MobileNodeSheet open={nodeSheetOpen} onClose={() => setNodeSheetOpen(false)} />
+        </Suspense>
+      ) : null}
+      {jsonViewerOpen ? (
+        <Suspense fallback={null}>
+          <ConfigJsonViewerDialog open={jsonViewerOpen} onClose={() => setJsonViewerOpen(false)} />
         </Suspense>
       ) : null}
     </header>

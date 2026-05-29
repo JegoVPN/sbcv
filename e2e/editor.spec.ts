@@ -34,6 +34,61 @@ test("stable-first visual editor primary path", async ({ page }) => {
   await expect(page.getByTestId("node-outbound:direct")).toBeVisible();
 });
 
+test("brand menu JSON viewer scrolls the canonical config", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("brand-menu-toggle").click();
+
+  const brandLogoBox = await page.locator(".brand-mark").boundingBox();
+  expect(brandLogoBox?.height).toBe(20);
+
+  const brandMenuMetrics = await page.locator(".brand-menu").evaluate((menu) => {
+    const menuLogo = menu.querySelector(".brand-menu__logo");
+    const subtitle = menu.querySelector(".brand-menu__intro span");
+    const staticHex = document.querySelector(".brand-mark .sbcv-logo__hexagon");
+    const menuHex = menu.querySelector(".sbcv-logo__hexagon");
+    const menuLink = menu.querySelector(".sbcv-logo__link");
+    if (!menuLogo || !subtitle || !staticHex || !menuHex || !menuLink) return null;
+    return {
+      menuLogoHeight: menuLogo.getBoundingClientRect().height,
+      menuLogoWidth: menuLogo.getBoundingClientRect().width,
+      subtitleClientWidth: subtitle.clientWidth,
+      subtitleScrollWidth: subtitle.scrollWidth,
+      subtitleWhiteSpace: getComputedStyle(subtitle).whiteSpace,
+      staticHexAnimation: getComputedStyle(staticHex).animationName,
+      staticHexStroke: getComputedStyle(staticHex).stroke,
+      menuHexAnimation: getComputedStyle(menuHex).animationName,
+      menuHexStroke: getComputedStyle(menuHex).stroke,
+      menuLinkAnimation: getComputedStyle(menuLink).animationName,
+    };
+  });
+  expect(brandMenuMetrics).not.toBeNull();
+  expect(brandMenuMetrics?.menuLogoHeight).toBe(45);
+  expect(brandMenuMetrics?.menuLogoWidth).toBe(45);
+  expect(brandMenuMetrics?.subtitleScrollWidth ?? 0).toBeLessThanOrEqual(brandMenuMetrics?.subtitleClientWidth ?? 0);
+  expect(brandMenuMetrics?.subtitleWhiteSpace).toBe("nowrap");
+  expect(brandMenuMetrics?.staticHexAnimation).toBe("none");
+  expect(brandMenuMetrics?.staticHexStroke).toBe("rgb(199, 255, 0)");
+  expect(brandMenuMetrics?.menuHexAnimation).toBe("none");
+  expect(brandMenuMetrics?.menuHexStroke).toBe("rgb(89, 97, 106)");
+  expect(brandMenuMetrics?.menuLinkAnimation).toBe("sbcv-logo-link");
+
+  await page.getByRole("menuitem", { name: "View JSON" }).click();
+  await expect(page.getByRole("dialog", { name: "Current JSON" })).toBeVisible();
+
+  const scroller = page.locator(".json-viewer-editor .cm-scroller");
+  const metrics = await scroller.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
+
+  const scrollTop = await scroller.evaluate((element) => {
+    element.scrollTop = element.scrollHeight;
+    return element.scrollTop;
+  });
+  expect(scrollTop).toBeGreaterThan(0);
+});
+
 test("selecting a node paints its first-degree edges in selection blue", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("node-route:main")).toBeVisible();

@@ -21,7 +21,7 @@ describe("L1-roundtrip-copy — export communicates normalization", () => {
   });
 
   it("mobile Export row caption mentions normalization", () => {
-    render(<MobileMenuSheet open onClose={() => {}} onOpenTemplates={() => {}} />);
+    render(<MobileMenuSheet open onClose={() => {}} onOpenTemplates={() => {}} onOpenJson={() => {}} />);
     const exportRow = screen.getByRole("button", { name: /Export/ });
     expect(within(exportRow).getByText(/normaliz/i)).toBeInTheDocument();
   });

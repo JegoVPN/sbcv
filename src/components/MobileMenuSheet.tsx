@@ -1,10 +1,11 @@
-import { Download, FolderOpen, LayoutTemplate } from "lucide-react";
+import { Braces, Download, ExternalLink, FolderOpen, Github, LayoutTemplate } from "lucide-react";
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import type { SingBoxTargetId } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
+import { GITHUB_REPO_URL } from "./appLinks";
 import { BottomSheet } from "./BottomSheet";
 import { confirmAndExportConfig } from "./exportConfig";
 import { configHasContent } from "./TopBar";
@@ -13,9 +14,10 @@ interface MobileMenuSheetProps {
   open: boolean;
   onClose: () => void;
   onOpenTemplates: () => void;
+  onOpenJson: () => void;
 }
 
-export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSheetProps) {
+export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: MobileMenuSheetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { channel, version, setTarget, importJson } = useProjectStore(
     useShallow((state) => ({
@@ -62,7 +64,8 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
   return (
     <BottomSheet open={open} onClose={onClose} initialSnap="mid" ariaLabel="Top bar menu" testId="mobile-menu-sheet">
       <div className="mobile-sheet-header">
-        <h2>Menu</h2>
+        <h2>sbcv.app</h2>
+        <p className="mobile-sheet-hint">sing-box configuration visualizer</p>
       </div>
 
       <div className="mobile-menu-section">
@@ -91,6 +94,13 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
           </button>
         </li>
         <li>
+          <button type="button" className="mobile-row-button" onClick={() => { onClose(); onOpenJson(); }}>
+            <Braces size={18} />
+            <span className="mobile-row-button__title">View JSON</span>
+            <span className="mobile-row-button__meta">Read-only canonical config</span>
+          </button>
+        </li>
+        <li>
           <button type="button" className="mobile-row-button" onClick={() => fileInputRef.current?.click()}>
             <FolderOpen size={18} />
             <span className="mobile-row-button__title">Import JSON</span>
@@ -103,6 +113,14 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates }: MobileMenuSh
             <span className="mobile-row-button__title">Export</span>
             <span className="mobile-row-button__meta">Normalized .json — empty fields dropped, shorthands expanded</span>
           </button>
+        </li>
+        <li>
+          <a className="mobile-row-button mobile-row-link" href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
+            <Github size={18} />
+            <span className="mobile-row-button__title">GitHub</span>
+            <span className="mobile-row-button__meta">JegoVPN/sbcv</span>
+            <ExternalLink className="mobile-row-button__external" size={14} aria-hidden />
+          </a>
         </li>
       </ul>
 
