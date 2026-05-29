@@ -11,6 +11,8 @@ export type CanvasInteractionStore = {
   setSnapshot: (snapshot: CanvasInteractionSnapshot) => void;
   setDisconnectPort: (disconnectPort: (nodeId: string, handleId: string) => void) => void;
   disconnectPort: (nodeId: string, handleId: string) => void;
+  setOpenPortPicker: (openPortPicker: (nodeId: string, handleId: string) => void) => void;
+  openPortPicker: (nodeId: string, handleId: string) => void;
 };
 
 export const EMPTY_COMPATIBLE_PORT_KEYS = new Set<string>();
@@ -26,12 +28,15 @@ function createNoopStore(): CanvasInteractionStore {
     setSnapshot: () => {},
     setDisconnectPort: () => {},
     disconnectPort: () => {},
+    setOpenPortPicker: () => {},
+    openPortPicker: () => {},
   };
 }
 
 export function createCanvasInteractionStore(): CanvasInteractionStore {
   let snapshot = EMPTY_SNAPSHOT;
   let disconnectPort = (_nodeId: string, _handleId: string) => {};
+  let openPortPicker = (_nodeId: string, _handleId: string) => {};
   const listeners = new Set<() => void>();
 
   return {
@@ -54,6 +59,10 @@ export function createCanvasInteractionStore(): CanvasInteractionStore {
       disconnectPort = nextDisconnectPort;
     },
     disconnectPort: (nodeId, handleId) => disconnectPort(nodeId, handleId),
+    setOpenPortPicker: (nextOpenPortPicker) => {
+      openPortPicker = nextOpenPortPicker;
+    },
+    openPortPicker: (nodeId, handleId) => openPortPicker(nodeId, handleId),
   };
 }
 
@@ -84,6 +93,7 @@ export function useCanvasInteraction(nodeId: string, portKeys: string[]) {
       pendingPortKey: pending || null,
       compatiblePortKeys: new Set(compatible ? compatible.split("\u0001") : []),
       disconnectPort: store.disconnectPort,
+      openPortPicker: store.openPortPicker,
     };
   }, [key, store]);
 }

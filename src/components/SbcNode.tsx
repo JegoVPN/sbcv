@@ -174,7 +174,7 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
     ].map((port) => port.key),
     [data.kind, data.type, data.action],
   );
-  const { compatiblePortKeys, disconnectPort, pendingPortKey } = useCanvasInteraction(id, portKeys);
+  const { compatiblePortKeys, disconnectPort, pendingPortKey, openPortPicker } = useCanvasInteraction(id, portKeys);
   const { setSelectedId, deleteEntity } = useProjectStore(
     useShallow((state) => ({
       setSelectedId: state.setSelectedId,
@@ -239,7 +239,17 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
             <Trash2 size={10} />
           </button>
         ) : port.editable && !connected ? (
-          <span className="sbc-port__action" aria-hidden><Plus size={11} /></span>
+          <button
+            className="sbc-port__action sbc-port__add nodrag"
+            type="button"
+            aria-label={`Add a node to ${port.label} of ${data.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              openPortPicker(id, port.key);
+            }}
+          >
+            <Plus size={11} />
+          </button>
         ) : null}
       </div>
     );
