@@ -1,4 +1,4 @@
-import { buildTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { buildNamespacedTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
 import { proxyOutboundTypes as proxyOutboundTypeSet, requiredFieldsFor, tlsRequiredTypes } from "./schemaRegistry";
 import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
@@ -48,10 +48,13 @@ export function validateConfig(
   version: string = channel === "stable" ? "1.13" : "1.14",
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
-  const tagIndex = buildTagIndex(config);
+  // Namespaced: a tag reused across distinct reference namespaces (inbound vs outbound) never collides
+  // at runtime, so only same-namespace duplicates are flagged. Per-ref path emission is unchanged. (C9)
+  const tagIndex = buildNamespacedTagIndex(config);
 
-  for (const [tag, refs] of tagIndex) {
+  for (const [, refs] of tagIndex) {
     if (refs.length > 1) {
+      const tag = refs[0]!.tag;
       refs.forEach((ref) => {
         push(
           diagnostics,
