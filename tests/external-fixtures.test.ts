@@ -41,7 +41,12 @@ describe("external sing-box fixture corpus", () => {
         expect(roundTrip).toEqual(config);
         expect(exportedConfig.fileName).toBe("config.json");
         expect(exportedConfig.mimeType).toBe("application/json");
-        expect(exportedRoundTrip).toEqual(config);
+        // The download prunes inert empty-string/array noise (L4-export-noise), so it is intentionally
+        // NOT byte-identical to the imported config. Instead assert the D7 guarantee: cleaning changes
+        // no meaning (re-imported export yields the same diagnostics) and is idempotent (re-export is
+        // byte-stable — no progressive loss).
+        expect(validateConfig(exportedRoundTrip, item.channel)).toEqual(diagnostics);
+        expect(createConfigExport(exportedRoundTrip).contents).toBe(exportedConfig.contents);
       } catch (error) {
         failures.push(`${item.id}: ${error instanceof Error ? error.message : String(error)}`);
       }

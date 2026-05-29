@@ -100,9 +100,10 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [ ] L3-drag-affordance — (optional) clearer in-drag visual hint (CSS/interaction).
 
 ### Phase 4 — Mechanical cleanups (bucket 3 — greenlit, no wording) 
-- [ ] L4-export-noise — trim provably-inert empty-string/empty-array export noise. **D7: keep
-  sing-box-usable** — test round-trip + that a representative cleaned config still parses; never strip a
-  meaningful empty.
+- [x] L4-export-noise — the DOWNLOAD (`createConfigExport` only — not the editable draft) prunes inert
+  empty-string/empty-array object keys; keeps empty objects/`false`/`0`/`null` and never drops array
+  elements. Verified semantics-preserving (identical diagnostics) + idempotent across all ≥200 fixtures.
+  **D7 honored.** — PR #93
 - [x] L4-dial-network-type — A16-norm-rest: coerce legacy raw-string `network_type` /
   `fallback_network_type` on outbounds/endpoints (dial group) at import (same shape as A16-norm). — PR #90
 - [ ] L4-dial-network-type-2 — extend the same coercion to the remaining `kind:"list"` network-type
@@ -187,3 +188,30 @@ Status: implemented 2026-05-29 in `atomic/rule-action-field-scrub`; merged in PR
   nit in-pass (cross-field reject-keeps-method-but-drops-stale-rcode test). Logical sub-rule recursion
   remains an explicit future follow-up (matches A10d).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (867), `pnpm build`, `pnpm e2e` (14).
+
+### L4-export-noise export-prune-empty (domain) — PR #93
+Status: implemented 2026-05-29 in `atomic/export-prune-empty`; merged in PR #93.
+- What changed: the downloaded config (`createConfigExport` only) now recursively drops object keys
+  whose value is an empty string `""` or empty array `[]` — sing-box treats both as absent, so the file
+  is cleaner with identical meaning. Conservative per D7: keeps empty objects (`clash_api:{}` etc.),
+  `false`, `0`, `null`, and never drops array *elements* (only object keys). `pruneExportNoise` operates
+  on a fresh copy (no input mutation). Applied ONLY to the download — the editable live JSON draft
+  (`stringifyConfig`/`jsonDraft`) is untouched, so in-editor fidelity is preserved.
+- D7 verification: changed the external-fixtures round-trip assertion from byte-identity
+  (`exportedRoundTrip === config`) to the stronger, meaning-focused pair — re-imported export yields
+  **identical diagnostics** (semantics preserved) AND re-export is **byte-stable** (idempotent, no
+  progressive loss). All ≥200 real fixtures pass both. (The old byte-identity also OOM'd on large-config
+  diffs; the diagnostics/idempotency compare is small.)
+- Tests: `tests/export-prune-empty.test.ts` (drop empties; keep 0/false/{}/non-empty; deep nested prune;
+  never drop array elements; diagnostics-preserving round-trip; no input mutation) + the updated
+  external-fixtures corpus check.
+- Expert review (one pass): a senior reviewer subagent. Verdict APPROVE, clean — no blockers/should-fix.
+  Ran an exhaustive D7 audit against `.tmp/sing-box-docs/**`: no field treats `""`/`[]` as distinct from
+  absent. Checked the scariest candidates — auth `users:[]` ("no auth if empty"), `sniffer:[]` ("all
+  sniffers"), `cipher_suites:[]`/`alpn:[]` ("safe default"/"not negotiated"), clash `access_control_
+  allow_origin:[]` ("* if empty"), `certificate.store`/`derp.home` — all default to permissive/safe ==
+  absent; the genuinely-distinct behaviors use non-empty literal sentinels (`"none"`/`"blank"`/`"deny"`)
+  which are never pruned. No preserve-list needed. Confirmed no input mutation, array-elements never
+  dropped, draft path untouched, and that diagnostics-equivalence + idempotency soundly replaces
+  byte-identity (does not mask a regression).
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (873), `pnpm build`, `pnpm e2e` (14).
