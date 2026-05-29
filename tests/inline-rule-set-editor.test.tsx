@@ -105,3 +105,57 @@ describe("A11 — inline rule-set structured editor", () => {
     expect(ruleSet()?.rules?.[0]?.port).toBeUndefined();
   });
 });
+
+// C12 (G5): a nested logical (and/or) sub-rule is editable with the same structured editor as a
+// top-level rule (mode select + nested rule list), instead of dead-ending at a JSON-mode hint.
+// Beyond MAX_INLINE_RULE_DEPTH (3) it falls back to the JSON escape hatch.
+// Source: stable/.../rule-set/headless-rule.md (Logical Fields: type/mode/rules, recursive).
+describe("C12 — nested logical sub-rule recursion", () => {
+  beforeEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
+  afterEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
+
+  function openInlineLogical(inner: unknown[]) {
+    importInline([{ type: "logical", mode: "and", rules: inner }]);
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-rule-set:inline-rs"));
+  }
+
+  it("edits a nested match field structurally (no JSON-mode dead-end)", () => {
+    openInlineLogical([{ domain_suffix: ["a.com"] }]);
+    expect(screen.queryByText(/nested too deep/i)).toBeNull();
+    const nested = within(screen.getByTestId("inline-rule-0-sub-0"));
+    fireEvent.change(nested.getByLabelText("Domain suffix"), { target: { value: "z.com" } });
+    expect(ruleSet()?.rules?.[0]?.rules?.[0]?.domain_suffix).toEqual(["z.com"]);
+    expect(ruleSet()?.rules?.[0]?.type).toBe("logical");
+    expect(ruleSet()?.rules?.[0]?.mode).toBe("and");
+  });
+
+  it("flips the nested logical mode and → or", () => {
+    openInlineLogical([{ domain_suffix: ["a.com"] }]);
+    const logical = within(screen.getByTestId("inline-rule-0"));
+    fireEvent.change(logical.getByLabelText("Mode"), { target: { value: "or" } });
+    expect(ruleSet()?.rules?.[0]?.mode).toBe("or");
+  });
+
+  it("adds a rule inside the nested group", () => {
+    openInlineLogical([{ domain_suffix: ["a.com"] }]);
+    const logical = within(screen.getByTestId("inline-rule-0"));
+    fireEvent.click(logical.getByRole("button", { name: "Add inline rule" }));
+    expect(ruleSet()?.rules?.[0]?.rules?.length).toBe(2);
+  });
+
+  it("falls back to the JSON hint beyond the depth cap and round-trips the deep structure", () => {
+    const deep = {
+      type: "logical",
+      mode: "and",
+      rules: [
+        { type: "logical", mode: "and", rules: [{ type: "logical", mode: "and", rules: [{ type: "logical", mode: "and", rules: [{ domain_suffix: ["x.com"] }] }] }] },
+      ],
+    };
+    importInline([deep]);
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-rule-set:inline-rs"));
+    expect(screen.getByText(/nested too deep/i)).toBeTruthy();
+    expect(ruleSet()?.rules?.[0]).toEqual(deep);
+  });
+});
