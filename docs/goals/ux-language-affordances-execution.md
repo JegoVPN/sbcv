@@ -85,8 +85,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [x] L2-audit — agent-driven sweep (3 parallel auditors vs `docs/upstream/sing-box/testing/**`).
   Findings table in `docs/ui-copy-audit.md` (9 HIGH incl. invalid-export bugs + a MED list). — PR #101
 - [ ] L2-fix-* — apply corrections, sliced. HIGH queue (from the audit):
-  - [ ] L2-fix-route-strategy — H2: route-options Network Strategy select offers invalid `wifi/cellular/
-    ethernet` → restrict to `default/hybrid/fallback`.
+  - [x] L2-fix-route-strategy — H2: route-options Network Strategy select offered invalid `wifi/cellular/
+    ethernet` → restricted to `default/hybrid/fallback`. — PR #102
   - [ ] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
     commands seed + diagnostics); produces invalid exports today.
   - [ ] L2-fix-ss-inbound-ciphers — H3: drop legacy stream ciphers from the shadowsocks INBOUND method list.
@@ -263,3 +263,18 @@ Status: implemented 2026-05-29 in `atomic/mobile-palette-defer`; merged in PR #1
   harmless instrumentation).
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (874), `pnpm build` (Palette chunk
   split confirmed), `pnpm e2e` (16; one unrelated drag-path flake, 7/7 on isolated re-run).
+
+### L2-fix-route-strategy (audit H2) — PR #102
+Status: implemented 2026-05-29 in `atomic/l2-fix-route-strategy`; merged in PR #102. First L2-fix slice.
+  Expert review APPROVE, clean — upstream confirmed (dial.md: network_strategy = default/hybrid/fallback;
+  wifi/cellular/ethernet are network_type), no data loss (option-list only; existing values not mutated),
+  now consistent with the route-hub/outbound selects.
+- What changed: the route-rule route-options **Network Strategy** `<select>` (Inspector.tsx ~1292)
+  offered `wifi`/`cellular`/`ethernet` — those are `network_type` values; `network_strategy` accepts
+  ONLY `default`/`hybrid`/`fallback` (shared/dial.md). Selecting one wrote an invalid `network_strategy`.
+  Removed the three invalid options (kept unset/default/hybrid/fallback — matching the route-hub +
+  outbound network_strategy selects which already used `networkStrategyOptions`).
+- Tests: `tests/route-options-network-strategy.test.tsx` (the select's option values are exactly
+  `["", default, hybrid, fallback]`; none of wifi/cellular/ethernet).
+- Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (875), `pnpm build`, `pnpm e2e` (16).
