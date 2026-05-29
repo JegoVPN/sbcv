@@ -40,6 +40,15 @@ describe("C11a — detour edges resolve endpoint targets", () => {
     expect(detourEdge?.target).toBe("endpoint:wg-a");
   });
 
+  it("an endpoint detour target reflects its connected state (detour-target input port)", () => {
+    const config = {
+      endpoints: [{ type: "wireguard", tag: "wg-ep" }],
+      outbounds: [{ type: "direct", tag: "o", detour: "wg-ep" }],
+    } as unknown as SingBoxConfig;
+    const endpointNode = deriveGraph(config, layout, []).nodes.find((n) => n.id === "endpoint:wg-ep");
+    expect(endpointNode?.data.connectedPorts?.input ?? []).toContain("detour-target");
+  });
+
   it("a detour at a real outbound still targets outbound:<tag> (no regression)", () => {
     const config = {
       outbounds: [
