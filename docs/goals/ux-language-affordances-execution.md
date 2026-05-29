@@ -97,7 +97,7 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 ### Phase 2 — Per-node copy accuracy audit (bucket 1d / D5)
 - [x] L2-audit — agent-driven sweep (3 parallel auditors vs `docs/upstream/sing-box/testing/**`).
   Findings table in `docs/ui-copy-audit.md` (9 HIGH incl. invalid-export bugs + a MED list). — PR #101
-- [ ] L2-fix-* — apply corrections, sliced. HIGH queue (from the audit):
+- [x] L2-fix-* — apply corrections, sliced. HIGH queue (from the audit):
   - [x] L2-fix-route-strategy — H2: route-options Network Strategy select offered invalid `wifi/cellular/
     ethernet` → restricted to `default/hybrid/fallback`. — PR #102
   - [x] L2-fix-wireguard-peer — H1: peer `server`/`server_port` → upstream `address`/`port` (Inspector +
@@ -116,7 +116,7 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
     chain"/bare. (Other MED dns hints — local `prefer_go`, dhcp placeholder — folded into L2-fix-med-copy.) — PR #107
   - [x] L2-fix-rule-set-deprecation — H9: a deprecation banner now appears when a remote rule-set's
     `download_detour` is set (deprecated 1.14 → `http_client`, removed 1.16). — PR #108
-  - [~] L2-fix-med-copy — the MED list, re-verified vs current code + upstream (agent pass) and sliced
+  - [x] L2-fix-med-copy — the MED list, re-verified vs current code + upstream (agent pass) and sliced
     into copy vs behavior atomics. App has only stable/testing channels (no 1.12), which decides the
     version findings. `accept_default_resolvers` (MED #5) was already fixed under H8. Structural V2Ray
     transport per-type fields (MED #15) are out of the copy remit → deferred as a structural follow-up.
@@ -146,8 +146,14 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
       outbound body: "runs only on Apple platforms, Android, Windows, and certain Linux builds. Linux and
       Windows builds must ship libcronet (libcronet.so / libcronet.dll on the binary's path)" per
       outbound/naive.md's Platform Support warning. — PR #122
-    - [ ] L2-med-dns-rule-actions (BEHAVIOR) — evaluate/respond hints + channel-gate those two options to
-      testing (1.14-only actions).
+    - [x] L2-med-dns-rule-actions (BEHAVIOR) — threaded `channel` into `DnsRuleInspector`; the 1.14-only
+      `evaluate`/`respond` actions are now offered in the Action select only on the testing channel (an
+      already-set value stays selectable so an imported config still displays), and selecting either
+      shows a hint describing its semantics (evaluate: queries + saves, top-level only, non-terminating;
+      respond: returns a preceding evaluate's response, no query, errors if none). — PR #123
+
+  **L2-fix-med-copy complete** — V2Ray transport per-type structural fields (MED #15) remain a deferred
+  structural follow-up (out of the copy remit). **Phase 2 complete.**
 
 ### Phase 3 — Affordance infrastructure (bucket 2 / D6)
 - [ ] L3-toast-infra — a minimal toast/notification host (store slice + a portal component, a11y-live).
