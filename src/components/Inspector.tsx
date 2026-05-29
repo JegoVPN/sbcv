@@ -1741,7 +1741,48 @@ function sharedFieldDefinitions(
       { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
     ];
-    return isServerRole ? [...shared, ...serverOnly] : [...shared, ...clientOnly];
+    // Inline ACME editor (deprecated in 1.14 but still valid) — Inbound server-only in both channels.
+    // domain[] empty disables ACME. provider is free-text so a custom `https://…` directory survives.
+    // dns01_challenge provider-specific fields gate on the chosen provider; the 1.14-added top-level
+    // dns01 fields are channel-gated to testing. (shared/tls.md, shared/dns01_challenge.md)
+    const dns01Provider = (p: string[]) => ({ path: ["tls", "acme", "dns01_challenge", "provider"], in: p });
+    const tlsAcmeFields: SharedFieldDefinition[] =
+      ref.kind === "inbound"
+        ? [
+            { label: "ACME Domain", path: ["tls", "acme", "domain"], kind: "list", hint: "Empty disables ACME." },
+            { label: "ACME Email", path: ["tls", "acme", "email"], kind: "text" },
+            { label: "ACME Provider", path: ["tls", "acme", "provider"], kind: "text", hint: "letsencrypt | zerossl | https://… (custom)" },
+            { label: "ACME Data Directory", path: ["tls", "acme", "data_directory"], kind: "text" },
+            { label: "ACME Default Server Name", path: ["tls", "acme", "default_server_name"], kind: "text" },
+            { label: "ACME Disable HTTP Challenge", path: ["tls", "acme", "disable_http_challenge"], kind: "boolean" },
+            { label: "ACME Disable TLS-ALPN Challenge", path: ["tls", "acme", "disable_tls_alpn_challenge"], kind: "boolean" },
+            { label: "ACME Alternative HTTP Port", path: ["tls", "acme", "alternative_http_port"], kind: "number" },
+            { label: "ACME Alternative TLS Port", path: ["tls", "acme", "alternative_tls_port"], kind: "number" },
+            { label: "ACME EAB Key ID", path: ["tls", "acme", "external_account", "key_id"], kind: "text" },
+            { label: "ACME EAB MAC Key", path: ["tls", "acme", "external_account", "mac_key"], kind: "text" },
+            { label: "DNS01 Provider", path: ["tls", "acme", "dns01_challenge", "provider"], kind: "select", options: ["alidns", "cloudflare", "acmedns"] },
+            { label: "DNS01 Access Key ID", path: ["tls", "acme", "dns01_challenge", "access_key_id"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
+            { label: "DNS01 Access Key Secret", path: ["tls", "acme", "dns01_challenge", "access_key_secret"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
+            { label: "DNS01 Region ID", path: ["tls", "acme", "dns01_challenge", "region_id"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
+            { label: "DNS01 Security Token", path: ["tls", "acme", "dns01_challenge", "security_token"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
+            { label: "DNS01 API Token", path: ["tls", "acme", "dns01_challenge", "api_token"], kind: "text", visibleWhen: dns01Provider(["cloudflare"]) },
+            { label: "DNS01 Zone Token", path: ["tls", "acme", "dns01_challenge", "zone_token"], kind: "text", visibleWhen: dns01Provider(["cloudflare"]) },
+            { label: "DNS01 Username", path: ["tls", "acme", "dns01_challenge", "username"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
+            { label: "DNS01 Password", path: ["tls", "acme", "dns01_challenge", "password"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
+            { label: "DNS01 Subdomain", path: ["tls", "acme", "dns01_challenge", "subdomain"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
+            { label: "DNS01 Server URL", path: ["tls", "acme", "dns01_challenge", "server_url"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
+            ...(channel === "testing"
+              ? ([
+                  { label: "DNS01 TTL", path: ["tls", "acme", "dns01_challenge", "ttl"], kind: "text" },
+                  { label: "DNS01 Propagation Delay", path: ["tls", "acme", "dns01_challenge", "propagation_delay"], kind: "text" },
+                  { label: "DNS01 Propagation Timeout", path: ["tls", "acme", "dns01_challenge", "propagation_timeout"], kind: "text" },
+                  { label: "DNS01 Resolvers", path: ["tls", "acme", "dns01_challenge", "resolvers"], kind: "list" },
+                  { label: "DNS01 Override Domain", path: ["tls", "acme", "dns01_challenge", "override_domain"], kind: "text" },
+                ] as SharedFieldDefinition[])
+              : []),
+          ]
+        : [];
+    return isServerRole ? [...shared, ...serverOnly, ...tlsAcmeFields] : [...shared, ...clientOnly];
   }
 
   if (group === "quic") {
