@@ -106,7 +106,8 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   - [x] L2-fix-dns-hints — H8: tailscale + resolved `accept_default_resolvers` now read as "accept for
     fallback (in addition to MagicDNS/matching domains; off ⇒ NXDOMAIN)" — was "forward to MagicDNS
     chain"/bare. (Other MED dns hints — local `prefer_go`, dhcp placeholder — folded into L2-fix-med-copy.) — PR #107
-  - [ ] L2-fix-rule-set-deprecation — H9: `download_detour` deprecation banner → `http_client`.
+  - [x] L2-fix-rule-set-deprecation — H9: a deprecation banner now appears when a remote rule-set's
+    `download_detour` is set (deprecated 1.14 → `http_client`, removed 1.16). — PR #108
   - [ ] L2-fix-med-copy — the MED list (tuic replay, block removed-in-1.13, domain_strategy removed-1.14,
     rule-set match-field label, network_type value hints, store_rdrc/V2Ray banners, etc.).
 
@@ -365,3 +366,14 @@ Status: implemented 2026-05-29 in `atomic/l2-fix-dns-hints`; merged in PR #107.
   (accept for fallback in addition to MagicDNS/matching; off⇒NXDOMAIN), minimal diff, non-tautological
   test. One NIT (label length) left as-is.
 - Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (883), `pnpm build`.
+
+### L2-fix-rule-set-deprecation (audit H9) — PR #108
+Status: implemented 2026-05-29 in `atomic/l2-fix-rule-set-deprecation`; merged in PR #108. **Clears the
+actionable Phase 2 HIGH queue** (H1–H4, H7, H8, H9 done; H5/H6 deferred as a product decision).
+- What changed: a remote rule-set's `download_detour` is deprecated in sing-box 1.14 (→ `http_client`,
+  removed 1.16; `rule-set/index.md` marks it `:material-delete-clock:`), but the Inspector showed no
+  signal. Added a `PlatformBanner kind="deprecated"` shown when `download_detour` is set (mirrors the
+  store_rdrc banner pattern), pointing to HTTP Client.
+- Tests: `tests/rule-set-download-detour-deprecation.test.tsx` (banner when set; absent when unset).
+- Expert review (one pass): a senior reviewer subagent. Verdict + any in-pass fixes recorded below.
+- Verification: `git diff --check`, `pnpm exec tsc -b`, `pnpm test` (885), `pnpm build`.
