@@ -82,7 +82,9 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
 - [x] L1-brandbtn — relabeled both brand buttons (desktop + mobile) `aria-label` from "…return to home"
   → "sbcv.app — reset view (deselect and fit the canvas)" (goHome only deselects + re-fits). — PR #110
 - [x] L1-target-glossary — target selector tooltip explaining stable 1.13 (released) vs testing 1.14 (newer features). — PR #115
-- [ ] L1-diag-hierarchy — diagnostics read message-first, code secondary (human-readable hierarchy).
+- [x] L1-diag-hierarchy — reordered the diagnostics-popover item body so the human `message` is the
+  headline (bright `#eef2f4`, weight 600, first) and the machine `code`/`path` drop to a muted monospace
+  secondary line (`#8a96a3`, 11px) below it — was code-first/bold with the message buried last. — PR #116
 - [ ] L1-roundtrip-copy — a one-line "import→export normalizes fields" note where round-trip matters.
 
 ### Phase 2 — Per-node copy accuracy audit (bucket 1d / D5)

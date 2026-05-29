@@ -120,6 +120,7 @@ export function DiagnosticsPopover({
               <>
                 <Icon size={14} className="diagnostics-popover__icon" aria-hidden />
                 <div className="diagnostics-popover__body">
+                  <div className="diagnostics-popover__message">{diagnostic.message}</div>
                   <div className="diagnostics-popover__code">
                     <span>{diagnostic.code}</span>
                     {diagnostic.source === "official" ? (
@@ -129,7 +130,6 @@ export function DiagnosticsPopover({
                   <div className="diagnostics-popover__path" title={diagnostic.path}>
                     {diagnostic.path}
                   </div>
-                  <div className="diagnostics-popover__message">{diagnostic.message}</div>
                 </div>
               </>
             );

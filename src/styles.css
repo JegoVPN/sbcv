@@ -469,9 +469,11 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #eef2f4;
-  font-weight: 600;
-  margin-bottom: 4px;
+  color: #8a96a3;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 4px;
   word-break: break-word;
 }
 
@@ -491,14 +493,14 @@ textarea {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   color: #8a96a3;
   font-size: 11px;
-  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .diagnostics-popover__message {
-  color: #b7c2cd;
+  color: #eef2f4;
+  font-weight: 600;
   line-height: 1.45;
   word-wrap: break-word;
 }
