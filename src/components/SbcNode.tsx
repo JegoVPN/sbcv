@@ -342,14 +342,14 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
               <button
                 className="sbc-node-primary"
                 type="button"
-                aria-label={`${data.compatible.length} compatible connections for ${data.title}`}
+                aria-label={`${data.connections} downstream connections for ${data.title}`}
                 onClick={(event) => {
                   event.stopPropagation();
                   setSelectedId(id);
                 }}
               >
                 <CirclePlus size={15} />
-                {data.compatible.length}
+                {data.connections}
               </button>
               {canDelete ? (
                 <button
