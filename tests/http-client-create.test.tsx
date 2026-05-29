@@ -31,11 +31,11 @@ describe("A22-create — http_clients[] is creatable + editable on testing", () 
       useProjectStore.getState().importJson(JSON.stringify({}));
     });
 
-    it("creates an http-client node from the Palette on testing and opens its Inspector", () => {
+    it("creates an http-client node from the Palette on testing and opens its Inspector", async () => {
       useProjectStore.getState().loadMinimal();
       useProjectStore.getState().setChannel("testing");
       render(<App />);
-      const palette = within(screen.getByLabelText("Node palette"));
+      const palette = within(await screen.findByLabelText("Node palette"));
       fireEvent.click(palette.getByRole("button", { name: /Library/ }));
       fireEvent.click(palette.getByRole("button", { name: /^HTTP Clients/ }));
       fireEvent.click(palette.getByRole("button", { name: "Setup HTTP Client" }));

@@ -40,13 +40,14 @@ describe("mobile layout switch", () => {
     expect(toolbarButtons.length).toBe(1);
   });
 
-  it("mounts the desktop shell when viewport >768px", () => {
+  it("mounts the desktop shell when viewport >768px", async () => {
     setMatchMedia(false);
     useProjectStore.getState().loadTemplate();
     render(<App />);
     expect(screen.getByTestId("app-desktop")).toBeInTheDocument();
     expect(screen.queryByTestId("app-mobile")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Node palette")).toBeInTheDocument();
+    // Palette is lazy-loaded (code-split) — await it.
+    expect(await screen.findByLabelText("Node palette")).toBeInTheDocument();
     expect(screen.queryByTestId("mobile-menu-toggle")).not.toBeInTheDocument();
   });
 
