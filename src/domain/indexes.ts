@@ -80,6 +80,24 @@ export function buildTagIndex(config: SingBoxConfig): Map<string, TaggedEntityRe
   return index;
 }
 
+// References resolve per-field/per-namespace, so the same tag in different collections never collides
+// at runtime. Endpoints share the OUTBOUND namespace (endpoint/index.md: "a protocol with inbound and
+// outbound behavior"); every other kind references in its own namespace. (C9)
+export function namespaceForKind(kind: TaggedEntityKind): string {
+  return kind === "endpoint" ? "outbound" : kind;
+}
+
+export function buildNamespacedTagIndex(config: SingBoxConfig): Map<string, TaggedEntityRef[]> {
+  const index = new Map<string, TaggedEntityRef[]>();
+  for (const entity of getTaggedEntities(config)) {
+    const key = `${namespaceForKind(entity.kind)} ${entity.tag}`;
+    const existing = index.get(key) ?? [];
+    existing.push(entity);
+    index.set(key, existing);
+  }
+  return index;
+}
+
 export function getOutboundTags(config: SingBoxConfig): Set<string> {
   const tags = new Set(listItems(config.outbounds).map((item) => item.tag));
   // An endpoint is "a protocol with inbound and outbound behavior" (endpoint/index.md), so its tag shares
