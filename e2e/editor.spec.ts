@@ -34,20 +34,6 @@ test("stable-first visual editor primary path", async ({ page }) => {
   await expect(page.getByTestId("node-outbound:direct")).toBeVisible();
 });
 
-test("node toolbar typography is unified — count pill is not oversized (N3)", async ({ page }) => {
-  await page.goto("/");
-  const node = page.getByTestId("node-route:main");
-  await expect(node).toBeVisible();
-  const fontSizeOf = (selector: string) =>
-    node.locator(selector).first().evaluate((el) => getComputedStyle(el).fontSize);
-  const countSize = await fontSizeOf(".sbc-node-primary");
-  const typeSize = await fontSizeOf(".sbc-node-pill--type");
-  // The "N" count pill used to render 18px/860 — several sizes larger than its 16px-default neighbours.
-  // It now shares the unified 13px secondary scale with the type/status pills.
-  expect(countSize).toBe("13px");
-  expect(countSize).toBe(typeSize);
-});
-
 test("manual zoom is preserved after dragging a node", async ({ page }) => {
   await page.goto("/");
   const canvasBox = await page.getByLabel("SBC visual canvas").boundingBox();

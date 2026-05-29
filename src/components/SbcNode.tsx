@@ -6,7 +6,6 @@ import {
   Ban,
   CheckCircle2,
   CircleAlert,
-  CirclePlus,
   Cog,
   CornerDownRight,
   Crosshair,
@@ -332,53 +331,22 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
           <div className="sbc-node__subtitle">{data.subtitle}</div>
         </div>
 
+        {/* The card chrome is intentionally minimal (see the node-card design review): identity lives in
+            the titlebar, status in the summary glyph + the status-tinted border, type/connections are not
+            repeated here, and clicking the card body is the single Inspector entry. Only the destructive
+            delete affordance remains on the card. */}
         {!isNotice ? (
-          <>
-            <button
-              className="sbc-node__delete"
-              type="button"
-              aria-label={`Delete ${data.title}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                deleteEntity(data.ref);
-              }}
-            >
-              <Trash2 size={14} />
-            </button>
-            <div className="sbc-node__toolbar nodrag" data-testid="node-bottom-toolbar">
-              <span className="sbc-node-pill sbc-node-pill--type">
-                <Icon size={16} />
-                {data.type}
-              </span>
-              <span className={`sbc-node-pill sbc-node-pill--${data.status}`}>
-                <StatusIcon size={14} />
-                {data.status}
-              </span>
-              <button
-                className="node-icon-button"
-                type="button"
-                aria-label={`Open inspector for ${data.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setSelectedId(id);
-                }}
-              >
-                <Settings2 size={15} />
-              </button>
-              <button
-                className="sbc-node-primary"
-                type="button"
-                aria-label={`${data.connections} downstream connections for ${data.title}`}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setSelectedId(id);
-                }}
-              >
-                <CirclePlus size={15} />
-                {data.connections}
-              </button>
-            </div>
-          </>
+          <button
+            className="sbc-node__delete"
+            type="button"
+            aria-label={`Delete ${data.title}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              deleteEntity(data.ref);
+            }}
+          >
+            <Trash2 size={14} />
+          </button>
         ) : null}
       </div>
     </div>
