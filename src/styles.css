@@ -812,8 +812,10 @@ textarea {
   color: #76818c;
 }
 
+/* gated/testing = MUTED + cool (per D2): a node is gated by the build target, not deprecated — so it
+   must read distinctly from the warm, colored `Legacy` quality-bar below, not as a sibling caution. */
 .palette-add--gated small {
-  color: #f5c76b;
+  color: #8794a0;
 }
 
 .palette-add--pending small,

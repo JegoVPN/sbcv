@@ -260,7 +260,7 @@ const groups: PaletteGroup[] = [
       { label: "SSM API", kind: "service-ssm-api", icon: Server, docsUrl: docs("service/ssm-api/"), status: "setup" },
       { label: "CCM", kind: "service-ccm", icon: Server, docsUrl: docs("service/ccm/"), status: "setup" },
       { label: "OCM", kind: "service-ocm", icon: Server, docsUrl: docs("service/ocm/"), status: "setup" },
-      { label: "Hysteria Realm (1.14 testing)", kind: "service-hysteria-realm", icon: Plug, docsUrl: docs("service/hysteria-realm/"), status: "setup" },
+      { label: "Hysteria Realm", kind: "service-hysteria-realm", icon: Plug, docsUrl: docs("service/hysteria-realm/"), status: "setup" },
     ],
   },
   {
