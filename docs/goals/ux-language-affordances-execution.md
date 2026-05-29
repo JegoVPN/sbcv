@@ -169,8 +169,11 @@ Phase 1 must produce its language spec (L1-vocab) before its copy atomics. Phase
   both import handlers (desktop TopBar + mobile MobileMenuSheet) raise a success toast ("Configuration
   imported") or an error toast ("Import failed: …", 8s) — a parse error was previously only visible in
   the diagnostics popover. Programmatic callers/resets ignore the result, so no toast spam. — PR #126
-- [ ] L3-import-undo — one-tap undo after an import overwrite (uses L3-undo-infra; pairs with the
-  existing A26 import-confirm).
+- [x] L3-import-undo — `importJson(value, { snapshot: true })` now captures the pre-import
+  `{config, layout}` into the undo stack *atomically* with the overwrite (only on a successful parse, so
+  a parse error leaves no stray snapshot). Both import handlers pass the flag and the import-success
+  toast carries a one-tap **Undo** action that calls `undo()` to restore the prior config. Pairs with
+  the A26 import-confirm (confirm before clobber, undo to recover). — PR #127
 - [ ] L3-invalid-drop — invalid drag-drop feedback toast (uses L3-toast-infra).
 - [ ] L3-rightclick-disconnect — (optional) right-click an edge/port to disconnect (context menu).
 - [ ] L3-drag-affordance — (optional) clearer in-drag visual hint (CSS/interaction).

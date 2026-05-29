@@ -188,7 +188,7 @@ type ProjectStore = {
   deleteDnsRule: (index: number) => void;
   setJsonDraft: (value: string) => void;
   applyJsonDraft: () => void;
-  importJson: (value: string) => { ok: boolean; error?: string };
+  importJson: (value: string, options?: { snapshot?: boolean }) => { ok: boolean; error?: string };
   refreshJson: () => void;
   validateNow: () => void;
   runOfficialCheck: () => Promise<void>;
@@ -1873,7 +1873,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         };
       }
     }),
-  importJson: (value) => {
+  importJson: (value, options) => {
     // Parse outside set() so the caller learns whether the import succeeded (for user feedback);
     // resets and other programmatic callers simply ignore the result.
     let parsed: SingBoxConfig;
@@ -1888,8 +1888,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }));
       return { ok: false, error: message };
     }
+    // When asked, snapshot the pre-import config/layout into the undo stack *atomically* with the
+    // overwrite — only on a successful parse, so a parse error never leaves a stray snapshot (L3-import-undo).
     set((state) => ({
       ...sync(parsed, state.channel, state.version),
+      history: options?.snapshot
+        ? [...state.history, { config: state.config, layout: state.layout }].slice(-MAX_HISTORY)
+        : state.history,
       selectedId: null,
       ...freshLayoutState(state),
       globalPanelOpen: false,
