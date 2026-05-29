@@ -1,10 +1,5 @@
-import {
-  CREATABLE_DNS_SERVER_TYPES,
-  CREATABLE_ENDPOINT_TYPES,
-  CREATABLE_INBOUND_TYPES,
-  CREATABLE_OUTBOUND_TYPES,
-} from "./protocols";
-import type { EntityRef, SingBoxConfig } from "./types";
+import { schemaRow, sharedGroupsFromTable } from "./schemaRegistry";
+import type { EntityRef } from "./types";
 
 export type SharedFieldGroupId =
   | "listen"
@@ -141,29 +136,14 @@ export const SHARED_DOC_PLACEMENTS: SharedDocPlacement[] = [
   },
 ];
 
-const inboundTlsTypes = new Set(["anytls", "http", "hysteria", "hysteria2", "naive", "trojan", "tuic", "vless", "vmess"]);
-const inboundQuicTypes = new Set(["hysteria", "hysteria2", "tuic"]);
-const inboundMultiplexTypes = new Set(["shadowsocks", "vmess", "trojan", "vless"]);
-const inboundTransportTypes = new Set(["vmess", "trojan", "vless"]);
-const inboundNestedDialTypes = new Set(["shadowtls"]);
-
-const outboundDialTypes = new Set([...CREATABLE_OUTBOUND_TYPES, "wireguard"].filter((type) => type !== "block" && type !== "dns" && type !== "selector" && type !== "urltest"));
-const outboundTlsTypes = new Set(["anytls", "http", "hysteria", "hysteria2", "naive", "shadowtls", "trojan", "tuic", "vless", "vmess"]);
-const outboundQuicTypes = new Set(["hysteria", "hysteria2", "tuic"]);
-const outboundMultiplexTypes = new Set(["shadowsocks", "trojan", "vless", "vmess"]);
-const outboundTransportTypes = new Set(["trojan", "vless", "vmess"]);
-const outboundUdpOverTcpTypes = new Set(["socks", "shadowsocks", "naive"]);
-const dnsServerDialTypes = new Set([...CREATABLE_DNS_SERVER_TYPES, "mdns"].filter((type) => type !== "hosts" && type !== "fakeip" && type !== "tailscale" && type !== "resolved"));
-const dnsServerTlsTypes = new Set(["tls", "quic", "https", "h3"]);
-const serviceListenTypes = new Set(["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
-const serviceTlsTypes = new Set(["derp", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
-
+// Per-(kind,type) shared-group membership lives in the schema registry; a type "supports dial"
+// iff its registry row lists the `dial` group (dial is channel-invariant — never testing-only).
 export function supportsOutboundDialFields(type: string | null | undefined) {
-  return Boolean(type && outboundDialTypes.has(type));
+  return Boolean(type && schemaRow("outbound", type)?.sharedGroups.includes("dial"));
 }
 
 export function supportsDnsServerDialFields(type: string | null | undefined) {
-  return Boolean(type && dnsServerDialTypes.has(type));
+  return Boolean(type && schemaRow("dns-server", type)?.sharedGroups.includes("dial"));
 }
 
 export function sharedGroupsForEntity(
@@ -172,44 +152,22 @@ export function sharedGroupsForEntity(
   channel: "stable" | "testing" = "testing",
 ): SharedFieldGroupId[] {
   const entityType = type ?? "";
+
+  // Typed entity kinds derive their groups from the schema registry (the single source of truth).
+  if (
+    ref.kind === "inbound" ||
+    ref.kind === "outbound" ||
+    ref.kind === "dns-server" ||
+    ref.kind === "endpoint" ||
+    ref.kind === "service" ||
+    ref.kind === "rule-set"
+  ) {
+    return sharedGroupsFromTable(ref.kind, entityType, channel);
+  }
+
+  // Non-typed kinds (route / route-rule / dns-rule / settings / http-client) are not registry rows;
+  // their fixed group sets + channel gating stay inline here.
   const groups: SharedFieldGroupId[] = [];
-
-  if (ref.kind === "inbound") {
-    if ((CREATABLE_INBOUND_TYPES as readonly string[]).includes(entityType)) groups.push("listen");
-    if (inboundTlsTypes.has(entityType)) groups.push("tls");
-    if (inboundQuicTypes.has(entityType)) groups.push("quic");
-    if (inboundMultiplexTypes.has(entityType)) groups.push("multiplex", "tcp-brutal");
-    if (inboundTransportTypes.has(entityType)) groups.push("v2ray-transport");
-    if (inboundNestedDialTypes.has(entityType)) groups.push("dial");
-  }
-
-  if (ref.kind === "outbound") {
-    if (supportsOutboundDialFields(entityType)) groups.push("dial");
-    if (outboundTlsTypes.has(entityType)) groups.push("tls");
-    if (outboundQuicTypes.has(entityType)) groups.push("quic");
-    if (outboundMultiplexTypes.has(entityType)) groups.push("multiplex", "tcp-brutal");
-    if (outboundTransportTypes.has(entityType)) groups.push("v2ray-transport");
-    if (outboundUdpOverTcpTypes.has(entityType)) groups.push("udp-over-tcp");
-  }
-
-  if (ref.kind === "dns-server") {
-    if (supportsDnsServerDialFields(entityType)) groups.push("dial");
-    if (dnsServerTlsTypes.has(entityType)) groups.push("tls");
-    if (entityType === "local") groups.push("neighbor");
-  }
-
-  if (ref.kind === "endpoint") {
-    if ((CREATABLE_ENDPOINT_TYPES as readonly string[]).includes(entityType)) groups.push("dial");
-  }
-
-  if (ref.kind === "service") {
-    if (serviceListenTypes.has(entityType)) groups.push("listen");
-    if (serviceTlsTypes.has(entityType)) groups.push("tls");
-    if (entityType === "hysteria-realm") groups.push("http2");
-  }
-
-  // `http_client` is a sing-box 1.14 field; only surface it for the testing channel.
-  if (ref.kind === "rule-set" && entityType === "remote" && channel === "testing") groups.push("http-client");
   if (ref.kind === "route") {
     groups.push("dial");
     if (channel === "testing") groups.push("http-client", "neighbor");
