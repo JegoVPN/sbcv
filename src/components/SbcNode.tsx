@@ -262,11 +262,15 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
   };
 
   // Connected ports stay in the centered flow column; unconnected ones go to the hover/drag-revealed
-  // overlay. Split per direction so each column centers on just its connected ports.
-  const splitPorts = (ports: PortSpec[], direction: PortDirection) => ({
-    connected: ports.filter((port) => portIsConnected(connectedPorts, direction, port.key)),
-    extra: ports.filter((port) => !portIsConnected(connectedPorts, direction, port.key)),
-  });
+  // overlay. Split the unconnected ports half above / half below the connected group so the whole column
+  // stays vertically centered on the card on hover — without moving the connected ports (which would
+  // re-anchor their edges). `before` renders above the connected group, `after` below.
+  const splitPorts = (ports: PortSpec[], direction: PortDirection) => {
+    const connected = ports.filter((port) => portIsConnected(connectedPorts, direction, port.key));
+    const extra = ports.filter((port) => !portIsConnected(connectedPorts, direction, port.key));
+    const half = Math.floor(extra.length / 2);
+    return { connected, extraBefore: extra.slice(0, half), extraAfter: extra.slice(half) };
+  };
   const leftPorts = splitPorts(inputPorts, "input");
   const rightPorts = splitPorts(outputPorts, "output");
 
@@ -301,16 +305,22 @@ export function SbcNode({ id, data, selected }: NodeProps<SbcFlowNode>) {
         ) : null}
 
         <div className="sbc-node__ports sbc-node__ports--left" data-testid="node-left-ports">
+          <div className="sbc-node__ports-extra sbc-node__ports-extra--before" data-testid="node-left-ports-extra-before">
+            {leftPorts.extraBefore.map((port) => renderPort(port, "input"))}
+          </div>
           {leftPorts.connected.map((port) => renderPort(port, "input"))}
-          <div className="sbc-node__ports-extra" data-testid="node-left-ports-extra">
-            {leftPorts.extra.map((port) => renderPort(port, "input"))}
+          <div className="sbc-node__ports-extra sbc-node__ports-extra--after" data-testid="node-left-ports-extra">
+            {leftPorts.extraAfter.map((port) => renderPort(port, "input"))}
           </div>
         </div>
 
         <div className="sbc-node__ports sbc-node__ports--right" data-testid="node-right-ports">
+          <div className="sbc-node__ports-extra sbc-node__ports-extra--before" data-testid="node-right-ports-extra-before">
+            {rightPorts.extraBefore.map((port) => renderPort(port, "output"))}
+          </div>
           {rightPorts.connected.map((port) => renderPort(port, "output"))}
-          <div className="sbc-node__ports-extra" data-testid="node-right-ports-extra">
-            {rightPorts.extra.map((port) => renderPort(port, "output"))}
+          <div className="sbc-node__ports-extra sbc-node__ports-extra--after" data-testid="node-right-ports-extra">
+            {rightPorts.extraAfter.map((port) => renderPort(port, "output"))}
           </div>
         </div>
 

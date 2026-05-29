@@ -312,6 +312,39 @@ test("node delete sits top-right in red and is revealed only on hover/select", a
   await expect(del).toHaveCSS("color", "rgb(255, 123, 123)");
 });
 
+test("hover-revealed ports stay vertically centered (unconnected split above + below the connected one)", async ({ page }) => {
+  // direct is wired as route.final → its "route" input is connected; its many other input ports are
+  // unconnected. They must reveal split half-above / half-below the connected port so the column stays
+  // centered on the card — not all dumped below it (the old bottom-heavy layout).
+  await importInlineConfig(page, { route: { final: "direct" }, outbounds: [{ type: "direct", tag: "direct" }] });
+  await page.getByTestId("node-outbound:direct").hover();
+
+  const m = await page.evaluate(() => {
+    const card = document
+      .querySelector('[data-testid="node-outbound:direct"] [data-testid="node-card"]')!
+      .getBoundingClientRect();
+    const cardMid = card.y + card.height / 2;
+    const left = document.querySelector('[data-testid="node-outbound:direct"] [data-testid="node-left-ports"]')!;
+    const ports = [...left.querySelectorAll(".sbc-port")].map((p) => {
+      const r = (p as HTMLElement).getBoundingClientRect();
+      return { connected: p.getAttribute("data-connected") === "true", mid: r.y + r.height / 2 - cardMid };
+    });
+    const connected = ports.find((p) => p.connected);
+    return {
+      connectedMid: connected ? connected.mid : null,
+      above: ports.filter((p) => !p.connected && p.mid < 0).length,
+      below: ports.filter((p) => !p.connected && p.mid > 0).length,
+      setMid: ports.reduce((s, p) => s + p.mid, 0) / ports.length,
+    };
+  });
+
+  expect(m.connectedMid).not.toBeNull();
+  expect(Math.abs(m.connectedMid as number)).toBeLessThan(8); // connected port stays at card center
+  expect(m.above).toBeGreaterThan(0); // unconnected ports also sit ABOVE it...
+  expect(m.below).toBeGreaterThan(0); // ...and below it
+  expect(Math.abs(m.setMid)).toBeLessThan(20); // whole revealed column centered on the card
+});
+
 test("clicking a port never starts a React Flow click-connection (connectOnClick disabled)", async ({ page }) => {
   // Regression guard: with React Flow's connectOnClick default (true), a plain click on a source handle
   // started a sticky click-connection — it set pendingPort, lit EVERY compatible port green
