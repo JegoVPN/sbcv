@@ -1505,7 +1505,7 @@ function ModuleCard({
   );
 }
 
-type SharedFieldKind = "text" | "number" | "boolean" | "list" | "select";
+type SharedFieldKind = "text" | "number" | "boolean" | "list" | "select" | "keyvalue";
 
 type SharedFieldDefinition = {
   label: string;
@@ -1516,6 +1516,12 @@ type SharedFieldDefinition = {
   hint?: string;
   /** Hide this field unless the boolean value at this path is true. */
   gatedBy?: string[];
+  /**
+   * Show this field only when the value at `path` equals one of `in` (value-equality gating, e.g.
+   * a V2Ray transport sub-field that applies only to `transport.type === "ws"`). Distinct from
+   * `gatedBy`, which is boolean-truthiness only.
+   */
+  visibleWhen?: { path: string[]; in: string[] };
 };
 
 const networkStrategyOptions = ["default", "hybrid", "fallback"];
@@ -1774,13 +1780,22 @@ function sharedFieldDefinitions(
   }
 
   if (group === "v2ray-transport") {
+    // Per-variant fields, gated by transport.type (shared/v2ray-transport.md). quic has no sub-fields.
+    // HTTP host is a string list; HTTPUpgrade host is a single string — hence two Host definitions.
+    const onType = (types: string[]) => ({ path: ["transport", "type"], in: types });
     return [
       { label: "Type", path: ["transport", "type"], kind: "select", options: transportTypeOptions },
-      { label: "Host", path: ["transport", "host"], kind: "list" },
-      { label: "Path", path: ["transport", "path"], kind: "text" },
-      { label: "Service Name", path: ["transport", "service_name"], kind: "text" },
-      { label: "Idle Timeout", path: ["transport", "idle_timeout"], kind: "text" },
-      { label: "Ping Timeout", path: ["transport", "ping_timeout"], kind: "text" },
+      { label: "Host", path: ["transport", "host"], kind: "list", visibleWhen: onType(["http"]) },
+      { label: "Host", path: ["transport", "host"], kind: "text", visibleWhen: onType(["httpupgrade"]) },
+      { label: "Path", path: ["transport", "path"], kind: "text", visibleWhen: onType(["http", "ws", "httpupgrade"]) },
+      { label: "Method", path: ["transport", "method"], kind: "text", visibleWhen: onType(["http"]) },
+      { label: "Service Name", path: ["transport", "service_name"], kind: "text", visibleWhen: onType(["grpc"]) },
+      { label: "Max Early Data", path: ["transport", "max_early_data"], kind: "number", visibleWhen: onType(["ws"]) },
+      { label: "Early Data Header Name", path: ["transport", "early_data_header_name"], kind: "text", visibleWhen: onType(["ws"]) },
+      { label: "Permit Without Stream", path: ["transport", "permit_without_stream"], kind: "boolean", visibleWhen: onType(["grpc"]) },
+      { label: "Idle Timeout", path: ["transport", "idle_timeout"], kind: "text", visibleWhen: onType(["http", "grpc"]) },
+      { label: "Ping Timeout", path: ["transport", "ping_timeout"], kind: "text", visibleWhen: onType(["http", "grpc"]) },
+      { label: "Headers", path: ["transport", "headers"], kind: "keyvalue", visibleWhen: onType(["http", "ws", "httpupgrade"]) },
     ];
   }
 
@@ -1887,6 +1902,62 @@ function SharedFieldControl({
     );
   }
 
+  if (definition.kind === "keyvalue") {
+    // String→string map editor (e.g. transport.headers), mirroring the protocol headers editor.
+    const map = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+    const entries = Object.entries(map);
+    const noun = definition.label.toLowerCase().replace(/s$/, "");
+    const write = (next: Record<string, unknown>) => applyValue(Object.keys(next).length ? next : undefined);
+    return (
+      <fieldset className="field field--checklist">
+        <legend>{definition.label}</legend>
+        {entries.length === 0 ? <p className="field__hint">No {definition.label.toLowerCase()}.</p> : null}
+        {entries.map(([key, val], index) => (
+          <div key={`${key}-${index}`} className="rule-row">
+            <label className="field">
+              <span>Name</span>
+              <input
+                aria-label={`${definition.label} name ${index}`}
+                value={key}
+                onChange={(event) => {
+                  const newKey = event.target.value;
+                  if (!newKey || newKey === key) return;
+                  const next: Record<string, unknown> = {};
+                  for (const [k, v] of entries) next[k === key ? newKey : k] = v;
+                  write(next);
+                }}
+              />
+            </label>
+            <label className="field">
+              <span>Value</span>
+              <input
+                aria-label={`${definition.label} value ${index}`}
+                value={typeof val === "string" ? val : String(val ?? "")}
+                onChange={(event) => write({ ...map, [key]: event.target.value })}
+              />
+            </label>
+            <button
+              type="button"
+              className="icon-danger"
+              aria-label={`Remove ${noun} ${key}`}
+              onClick={() => {
+                const next = { ...map };
+                delete next[key];
+                write(next);
+              }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
+        ))}
+        <button type="button" className="palette-action" onClick={() => write(withUniqueBlankKey(map, "X-Header"))}>
+          Add {noun}
+        </button>
+        {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
+      </fieldset>
+    );
+  }
+
   return (
     <label className="field">
       <span>{definition.label}</span>
@@ -1935,8 +2006,12 @@ function SharedFieldCards({
           <ModuleCard key={card.group} title={sharedGroupTitles[card.group]} active={active}>
             {card.definitions
               .filter((definition) => {
-                if (!definition.gatedBy) return true;
-                return Boolean(sharedValueAt(entity, definition.gatedBy));
+                if (definition.gatedBy && !sharedValueAt(entity, definition.gatedBy)) return false;
+                if (definition.visibleWhen) {
+                  const current = sharedValueAt(entity, definition.visibleWhen.path);
+                  if (!definition.visibleWhen.in.includes(String(current ?? ""))) return false;
+                }
+                return true;
               })
               .map((definition) => (
                 <SharedFieldControl
