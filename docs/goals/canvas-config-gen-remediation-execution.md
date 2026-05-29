@@ -434,22 +434,22 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 
 - [x] C0-schema-registry (S1–S5) — #152, #153, #154, #155, #156
 - [x] C1-transport-subfields — #157
-- [~] C2-cert-provider-create — A (creation) done #166; **B (per-type Inspector editor) pending**
+- [x] C2-cert-provider-create — A (creation) #166 + B (per-type Inspector editor) #180
 - [x] C3-tls-acme — #161
 - [x] C4-cloudflared-create — #158
 - [x] C5-version-gate-legacy-dns — #159
 - [x] C6-version-gate-naive — #162
-- [~] C7-version-gate-channel-to-version — A (min-version single-source) #172, B (1.13 TLS fields) #174; **C (route bypass / interface_address / local DNS prefer_go) pending**
+- [x] C7-version-gate-channel-to-version — A (min-version single-source) #172, B (1.13 TLS fields) #174, C (route bypass / interface_address / local DNS prefer_go) #176
 - [x] C8-export-gate-unify — #160
 - [x] C9-dup-tag-namespace — #169
 - [x] C10-hysteria-server-ports — #164
-- [ ] C17-no-silent-unreachable-guard
-- [~] C11-detour-endpoint-edges — C11a (detour→endpoint retarget) done #171; **C11b (dial-domain-resolver) / C11c (http_client edges) pending**
+- [x] C17-no-silent-unreachable-guard — #181
+- [x] C11-detour-endpoint-edges — C11a #171 + C11b (dial-domain-resolver) #178 + C11c (http_client edges) #179
 - [x] C12-logical-rule-recursion — #168
 - [ ] C13-registry-driven-portswitch (S1/S2/S3)
 - [ ] C14-inspector-split (S1–S10)
 - [x] C15-ci-binary-check — #163
-- [~] C16-project-save-load — a (domain wrapper) #170 + b-store (loadProject/saveProject) #173 done; **b-UI (TopBar Save/Open) pending**
+- [x] C16-project-save-load — a (domain wrapper) #170 + b-store (loadProject/saveProject) #173 + b-UI (TopBar Save/Open) #177
 - [ ] P3 re-assessment
 
 ## Decision Log
@@ -547,3 +547,23 @@ Mirror of the queue above; tick as merged. (Populated during execution.)
 ### C16-project-save-load slice b (store) — DONE (#173)
 - **What:** store saveProject() (versioned wrapper) + loadProject() (re-hydrates layout positions — no freshLayoutState reset — restores channel/version, snapshots to undo, rejects a bare config); domain/appVersion.ts (APP_VERSION). **Reviewer:** serialization/round-trip + canvas — APPROVE. **Verify:** tsc clean; pnpm test 1293.
 - **Deferred:** slice b-UI (TopBar Save/Open buttons).
+
+<!-- devlog batch 3 (2026-05-30): C7-C / C16-b-UI / C11b / C11c / C2-B / C17 -->
+
+### C7-version-gate slice C (1.13 route/DNS fields) — DONE (#176)
+- **What:** a 1.12 target warns on 1.13-added route `bypass` action / `interface_address` trio / local DNS `prefer_go`; 1.13/1.14 clean. Completes C7. **Reviewer:** version-gating/diagnostics. **Verify:** tsc clean; pnpm test + real-binary release:check green.
+
+### C16-project-save-load slice b-UI (TopBar Save/Open) — DONE (#177)
+- **What:** TopBar "Save project" (downloads the `*.sbcv.json` wrapper) + "Open project" (file input → loadProject, re-hydrates layout/channel); distinct from plain Export/Import (which drop layout). Completes C16. **Verify:** real-binary release:check green.
+
+### C11-detour-endpoint-edges slice b (dial-domain-resolver) — DONE (#178)
+- **What:** dial.md `domain_resolver` (string OR object `.server`; 1.12+, required for domain-named servers since 1.14) modeled as a writable edge from a dial-bearing outbound/endpoint/dns-server into the referenced dns-server. Three relations per source kind (precise dial-group type gate; "tailscale" is dial as endpoint but not dns-server, so one shared nodeTypeExcludes can't serve all three). Inspector select stays the editor; adds canvas port + connect (preserves object siblings) + disconnect (drops string|object); no self-loop edge; no new diagnostics (reuses 1.14 requiredness warnings). **Reviewer:** canvas/React-Flow + reference-port — APPROVE (self-loop guard + object-connect test added). **Verify:** tsc clean; pnpm test 1328; real-binary release:check green (flaky e2e :317 reran).
+
+### C11-detour-endpoint-edges slice c (http_client edges) — DONE (#179)
+- **What:** the three 1.14-only `http_client` string refs (route.default_http_client / remote rule_set.http_client / acme|cloudflare-origin-ca cert-provider.http_client) + the shared HTTP-client object's own dial `detour` modeled as writable edges; the http-client node no longer floats. deriveGraph gains an optional `channel` (default "testing"; CanvasWorkspace threads the live store channel) so a stable target suppresses the edges + connectedPorts; only string form is edged (object form inline, per the C1-20 diagnostic). Reuses referenceRegistry cascade + existing testing-only diagnostics (no duplication); chip-create gains an http-client branch. **Reviewer:** canvas/React-Flow + reference-port/version-gating — APPROVE. **Verify:** tsc clean; pnpm test 1348; real-binary release:check green.
+
+### C2-cert-provider-create slice B (per-type Inspector editor) — DONE (#180)
+- **What:** a selected certificate_providers[] entry opens a per-type structured editor (acme: domain[]/email/provider/data_directory + 1.14 key_type/profile/account_key + EAB; cloudflare-origin-ca: domain[]/api_token/origin_ca_key/request_type/requested_validity; tailscale: endpoint picker) via the shared SharedFieldControl; remaining keys fall to Advanced JSON via certificateProviderHandledFields. testing-only → no in-editor channel gate. Also fixed a round-trip nit: clearing the last leaf of a nested object now drops the parent (hasMeaningfulValue guard in nestedPatch) instead of leaving `external_account: {}` — also cleans the C3 tls.acme path. Completes C2. **Reviewer:** domain schema-correctness — APPROVE (every field/enum/control cross-checked vs the cert-provider docs; the empty-object nit fixed). **Verify:** tsc clean; pnpm test 1336; real-binary release:check green.
+
+### C17-no-silent-unreachable-guard — DONE (#181)
+- **What:** plain-`pnpm test` CI invariant guard (no binary/e2e): exports inbound/outboundHandledFields + `structurallyCoveredKeys` (INLINE_RENDERED_KEYS ∪ shared-group field paths ∪ {tag,type}); asserts each kind's handledFields ⊆ keys covered on some channel (channel-union — the 1.14-removed `domain_strategy` is covered on stable only); synthetic-key negative case + anti-drift check (every inline key maps to a real updateField literal) + positive anchor (`transport` covered). Makes "零回退" an enforceable invariant — prevents reintroducing the C1/C3 silent-unreachable class. Guard/test infra only; per-field fixes stay separate atomics. **Reviewer:** React/perf + domain — APPROVE-WITH-NITS (all 4 applied: ReadonlySet typing, anti-drift test, limitation comment, positive anchor). **Verify:** tsc clean; pnpm test 1359; real-binary release:check green.
