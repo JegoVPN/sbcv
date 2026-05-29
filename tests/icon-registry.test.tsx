@@ -23,8 +23,8 @@ const V4_NODE_ICONS: Array<[kind: string, type: string, id: string]> = [
   ["outbound", "tuic", "mono:TU"],
   ["outbound", "anytls", "mono:AT"],
   ["outbound", "shadowtls", "mono:ST"],
-  ["outbound", "tor", "mono:TO"],
-  ["outbound", "wireguard", "mono:WG"],
+  ["outbound", "tor", "brand:tor"],
+  ["outbound", "wireguard", "brand:wireguard"],
   // Inbound — no longer all RadioTower; proxies reuse the protocol monogram.
   ["inbound", "direct", "log-in"],
   ["inbound", "mixed", "arrow-left-right"],
@@ -41,7 +41,7 @@ const V4_NODE_ICONS: Array<[kind: string, type: string, id: string]> = [
   ["dns-server", "hosts", "list"],
   ["dns-server", "https", "mono:HS"],
   ["dns-server", "quic", "mono:QC"],
-  ["dns-server", "tailscale", "mono:TS"],
+  ["dns-server", "tailscale", "brand:tailscale"],
   // Service — no longer all Server (and distinct from dns-server).
   ["service", "derp", "share2"],
   ["service", "resolved", "server-cog"],
@@ -55,8 +55,8 @@ const V4_NODE_ICONS: Array<[kind: string, type: string, id: string]> = [
   ["route-rule", "route-rule", "git-branch"],
   ["dns-rule", "dns-rule", "filter"],
   ["rule-set", "remote", "layers"],
-  ["endpoint", "wireguard", "mono:WG"],
-  ["endpoint", "tailscale", "mono:TS"],
+  ["endpoint", "wireguard", "brand:wireguard"],
+  ["endpoint", "tailscale", "brand:tailscale"],
   ["certificate-provider", "tailscale", "file-key2"],
   ["http-client", "http-client", "webhook"],
   ["settings", "log", "scroll-text"],
@@ -96,6 +96,22 @@ describe("icon registry — confirmed v4 node identity set", () => {
       // Lucide icons are forwardRef objects; monograms are function components — both truthy/renderable.
       expect(getNodeIcon(kind, type)).toBeTruthy();
     }
+  });
+
+  // A8b-brands: tor / wireguard / tailscale render the real brand logos (a path-based brand SVG),
+  // not the interim 2-letter monogram.
+  it.each([
+    ["outbound", "tor", "brand-icon--tor"],
+    ["endpoint", "wireguard", "brand-icon--wireguard"],
+    ["endpoint", "tailscale", "brand-icon--tailscale"],
+  ])("%s/%s renders the real brand SVG", (kind, type, brandClass) => {
+    const Icon = getNodeIcon(kind, type);
+    const { container } = render(<Icon size={18} />);
+    const svg = container.querySelector(`svg.${brandClass}`);
+    expect(svg).not.toBeNull();
+    expect(svg?.querySelector("path")).not.toBeNull();
+    // not a monogram
+    expect(container.querySelector("[data-monogram]")).toBeNull();
   });
 });
 
@@ -139,7 +155,7 @@ describe("icon registry — single source across surfaces", () => {
       ["dns-hub", "earth"],
       ["dns-rule", "filter"],
       ["settings-ntp", "clock"],
-      ["endpoint-wireguard", "mono:WG"],
+      ["endpoint-wireguard", "brand:wireguard"],
     ];
     for (const [paletteKind, expectedId] of cases) {
       const ref = paletteNodeRef(paletteKind);
