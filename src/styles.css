@@ -1904,6 +1904,17 @@ button.sbc-edge-remove:focus-visible {
   line-height: 1.4;
 }
 
+/* R5 — PEM/line-array editor (tls.certificate/key/ech.*): monospace so pasted PEM lines align, and
+   vertically resizable for long certificate chains. */
+.shared-field-pem {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  resize: vertical;
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
 .field input,
 .field select,
 .field textarea {
