@@ -55,6 +55,7 @@ const connectionLineStyle = {
 const CHIP_PICKER_WIDTH = 320;
 const CHIP_PICKER_MAX_HEIGHT = 360;
 const CHIP_PICKER_MARGIN = 16;
+const HIGHLIGHTED_EDGE_Z_INDEX = 1000;
 
 export type PendingPort = {
   nodeId: string;
@@ -267,17 +268,24 @@ export function CanvasWorkspace() {
   );
   const visibleEdges = useMemo(() => {
     if (!visuallySelectedNodeId) return edges;
-    return edges.map((edge) => {
+    const plainEdges: Edge[] = [];
+    const highlightedEdges: Edge[] = [];
+    for (const edge of edges) {
       const highlighted = edge.source === visuallySelectedNodeId || edge.target === visuallySelectedNodeId;
-      if (!highlighted) return edge;
-      return {
+      if (!highlighted) {
+        plainEdges.push(edge);
+        continue;
+      }
+      highlightedEdges.push({
         ...edge,
+        zIndex: Math.max(edge.zIndex ?? 0, HIGHLIGHTED_EDGE_Z_INDEX),
         data: {
           ...(edge.data as CanvasEdgeData | undefined),
           highlighted: true,
         } satisfies CanvasEdgeData,
-      };
-    });
+      });
+    }
+    return [...plainEdges, ...highlightedEdges];
   }, [edges, visuallySelectedNodeId]);
   const [pendingPort, setPendingPortState] = useState<PendingPort | null>(null);
   const [chipPicker, setChipPicker] = useState<ChipPickerState | null>(null);

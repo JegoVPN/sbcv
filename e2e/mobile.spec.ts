@@ -147,3 +147,48 @@ test("mobile selected node keeps first-degree edge highlight after inspector is 
   await expect(highlighted.first()).toBeVisible();
   expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
 });
+
+test("mobile selected DNS server promotes its highlighted edges above dense green wiring", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+  await expect(page.getByTestId("node-dns-server:remote-doh")).toBeVisible();
+
+  await page.getByTestId("node-dns-server:remote-doh").click();
+
+  const edgeMetrics = await page.evaluate(() => {
+    const edges = Array.from(document.querySelectorAll(".react-flow__edge")).map((edge) => {
+      const path = edge.querySelector("path");
+      return {
+        id: edge.getAttribute("data-id") ?? "",
+        pathClass: path?.getAttribute("class") ?? "",
+        stroke: path ? getComputedStyle(path).stroke : "",
+      };
+    });
+    let lastPlainIndex = -1;
+    edges.forEach((edge, index) => {
+      if (!edge.pathClass.includes("sbc-edge__path--highlighted")) lastPlainIndex = index;
+    });
+    return {
+      edges,
+      lastPlainIndex,
+      remoteEdges: edges
+        .map((edge, index) => ({ ...edge, index }))
+        .filter((edge) => edge.id.includes("remote-doh")),
+    };
+  });
+
+  expect(edgeMetrics.remoteEdges).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: "edge:dns-server-detour:remote-doh:proxy",
+        stroke: "rgb(45, 153, 255)",
+      }),
+      expect.objectContaining({
+        id: "edge:dns-final:remote-doh",
+        stroke: "rgb(45, 153, 255)",
+      }),
+    ]),
+  );
+  expect(edgeMetrics.remoteEdges.every((edge) => edge.pathClass.includes("sbc-edge__path--highlighted"))).toBe(true);
+  expect(edgeMetrics.remoteEdges.every((edge) => edge.index > edgeMetrics.lastPlainIndex)).toBe(true);
+});
