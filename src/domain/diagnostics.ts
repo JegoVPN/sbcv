@@ -1299,10 +1299,10 @@ export function validateConfig(
       if (!atLeast(version, "1.14")) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "inbound-cloudflared-testing-only",
           `/inbounds/${index}`,
-          `Cloudflared inbound "${tag}" is sing-box 1.14+ (testing). The current target is ${version}; stable rejects it.`,
+          `Cloudflared inbound "${tag}" requires sing-box 1.14+ (testing); the target is ${version}. sing-box ${version} rejects it ("unknown inbound type: cloudflared").`,
         );
       }
     }
@@ -1573,19 +1573,19 @@ export function validateConfig(
     if (listItems(config.certificate_providers).length > 0) {
       push(
         diagnostics,
-        "warning",
+        "error",
         "stable-version-gated-certificate-providers",
         "/certificate_providers",
-        "certificate_providers is version-gated for stable targets; verify with sing-box-stable.",
+        `Top-level certificate_providers is sing-box 1.14+ (testing); the target is ${version}. sing-box ${version} rejects it ("unknown field certificate_providers").`,
       );
     }
     if (listItems(config.http_clients).length > 0) {
       push(
         diagnostics,
-        "warning",
+        "error",
         "stable-version-gated-http-clients",
         "/http_clients",
-        "http_clients is version-gated for stable targets; verify with sing-box-stable.",
+        `http_clients is sing-box 1.14+ (testing); the target is ${version}. sing-box ${version} rejects it ("unknown field http_clients").`,
       );
     }
     listItems(config.dns?.servers).forEach((server, index) => {
