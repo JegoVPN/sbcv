@@ -108,7 +108,7 @@ describe("A11 — inline rule-set structured editor", () => {
 
 // C12 (G5): a nested logical (and/or) sub-rule is editable with the same structured editor as a
 // top-level rule (mode select + nested rule list), instead of dead-ending at a JSON-mode hint.
-// Beyond MAX_INLINE_RULE_DEPTH (3) it falls back to the JSON escape hatch.
+// Beyond MAX_INLINE_RULE_DEPTH (5, W6) it falls back to the JSON escape hatch.
 // Source: stable/.../rule-set/headless-rule.md (Logical Fields: type/mode/rules, recursive).
 describe("C12 — nested logical sub-rule recursion", () => {
   beforeEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
@@ -145,13 +145,9 @@ describe("C12 — nested logical sub-rule recursion", () => {
   });
 
   it("falls back to the JSON hint beyond the depth cap and round-trips the deep structure", () => {
-    const deep = {
-      type: "logical",
-      mode: "and",
-      rules: [
-        { type: "logical", mode: "and", rules: [{ type: "logical", mode: "and", rules: [{ type: "logical", mode: "and", rules: [{ domain_suffix: ["x.com"] }] }] }] },
-      ],
-    };
+    // W6: cap raised to 5 — nest 6 logical levels so the innermost exceeds the disclosure cap.
+    let deep: Record<string, unknown> = { domain_suffix: ["x.com"] };
+    for (let i = 0; i < 6; i += 1) deep = { type: "logical", mode: "and", rules: [deep] };
     importInline([deep]);
     render(<App />);
     fireEvent.click(screen.getByTestId("node-rule-set:inline-rs"));

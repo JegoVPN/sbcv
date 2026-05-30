@@ -138,16 +138,29 @@ export const dnsRuleAdvancedFields = [
 // Common headless-rule match fields surfaced as structured inputs (headless-rule.md). Anything outside
 // this set (logical rules, exotic/version-gated fields) is preserved untouched and stays editable via
 // the JSON escape hatch.
+// W6: the full headless-rule match-field set (rule-set/headless-rule.md), so inline + logical rule bodies
+// no longer fall back to JSON for the common geosite/geoip/process/network matchers community templates use.
+// (The two boolean matchers — network_is_expensive/constrained — and the exotic
+// network_interface_address/default_interface_address/process_path_regex stay in the JSON escape hatch.)
 const INLINE_RULE_LIST_FIELDS: Array<{ key: string; label: string; numeric?: boolean }> = [
+  { key: "query_type", label: "DNS query type" },
+  { key: "network", label: "Network (tcp/udp)" },
   { key: "domain", label: "Domain" },
   { key: "domain_suffix", label: "Domain suffix" },
   { key: "domain_keyword", label: "Domain keyword" },
   { key: "domain_regex", label: "Domain regex" },
-  { key: "ip_cidr", label: "IP CIDR" },
   { key: "source_ip_cidr", label: "Source IP CIDR" },
+  { key: "ip_cidr", label: "IP CIDR" },
+  { key: "source_port", label: "Source port", numeric: true },
+  { key: "source_port_range", label: "Source port range (e.g. 1000:2000)" },
   { key: "port", label: "Port", numeric: true },
-  { key: "network", label: "Network (tcp/udp)" },
+  { key: "port_range", label: "Port range (e.g. 1000:2000)" },
   { key: "process_name", label: "Process name" },
+  { key: "process_path", label: "Process path" },
+  { key: "package_name", label: "Package name (Android)" },
+  { key: "network_type", label: "Network type (wifi/cellular/…)" },
+  { key: "wifi_ssid", label: "Wi-Fi SSID" },
+  { key: "wifi_bssid", label: "Wi-Fi BSSID" },
 ];
 
 function isLogicalRule(rule: unknown): boolean {
@@ -156,7 +169,9 @@ function isLogicalRule(rule: unknown): boolean {
 
 // A nested logical sub-rule recurses with the same structured editor; beyond this depth it falls back
 // to the JSON escape hatch (the grammar allows unbounded nesting, but the UI caps disclosure). (C12)
-const MAX_INLINE_RULE_DEPTH = 3;
+// W6: raised 3→5 — real community templates nest logical and/or rules a few levels; 5 covers the
+// practical cases while still bounding disclosure for pathological nesting.
+const MAX_INLINE_RULE_DEPTH = 5;
 
 export function InlineRuleSetEditor({
   value,
