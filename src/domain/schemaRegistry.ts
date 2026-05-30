@@ -805,6 +805,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES). Reference-only, kept for
     // round-trip; its deprecation (1.12→removed 1.14) is enforced by the diagnostics legacy-DNS gate, not here.
     factory: (tag) => ({ type: "legacy", tag, address: "8.8.8.8", strategy: "prefer_ipv4" }),
+    fields: [{ path: ["strategy"], type: "enum", enum: [{ value: "prefer_ipv4" }, { value: "prefer_ipv6" }, { value: "ipv4_only" }, { value: "ipv6_only" }], doc: "dns/server/legacy.md" }],
     sharedGroups: [],
   },
   {
@@ -829,6 +830,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-tcp",
     factory: (tag) => ({ type: "tcp", tag, server: "1.1.1.1", server_port: 53 }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/index.md" }],
     sharedGroups: ["dial"],
   },
   {
@@ -837,6 +839,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-udp",
     factory: (tag) => ({ type: "udp", tag, server: "1.1.1.1", server_port: 53 }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/index.md" }],
     sharedGroups: ["dial"],
   },
   {
@@ -845,6 +848,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-tls",
     factory: (tag) => ({ type: "tls", tag, server: "1.1.1.1", server_port: 853 }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/tls.md" }],
     sharedGroups: ["dial", "tls"],
   },
   {
@@ -853,6 +857,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-quic",
     factory: (tag) => ({ type: "quic", tag, server: "1.1.1.1", server_port: 853 }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/quic.md" }],
     sharedGroups: ["dial", "tls"],
   },
   {
@@ -861,6 +866,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-https",
     factory: (tag) => ({ type: "https", tag, server: "1.1.1.1", server_port: 443, path: "/dns-query" }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/https.md" }],
     sharedGroups: ["dial", "tls"],
   },
   {
@@ -869,6 +875,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "dns-h3",
     factory: (tag) => ({ type: "h3", tag, server: "1.1.1.1", server_port: 443, path: "/dns-query" }),
+    fields: [{ path: ["server_port"], type: "number", doc: "dns/server/http3.md" }],
     sharedGroups: ["dial", "tls"],
   },
   {
@@ -1050,6 +1057,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       url: "https://example.com/rules.json",
       update_interval: "1d",
     }),
+    fields: [{ path: ["format"], type: "enum", enum: [{ value: "source" }, { value: "binary" }], doc: "rule-set/index.md" }],
     sharedGroups: [],
     // http_client is a sing-box 1.14 field; only surfaced on the testing channel.
     testingSharedGroups: ["http-client"],
@@ -1059,6 +1067,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "local",
     creatable: true,
     factory: (tag) => ({ type: "local", tag, format: "source", path: "./rules.json" }),
+    fields: [{ path: ["format"], type: "enum", enum: [{ value: "source" }, { value: "binary" }], doc: "rule-set/index.md" }],
     sharedGroups: [],
   },
   {
