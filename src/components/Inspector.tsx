@@ -15,6 +15,8 @@ import { sharedGroupsForEntity } from "../domain/sharedFieldRegistry";
 import { ModuleCard, PlatformBanner, SensitiveTextField } from "./inspector/controls";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./inspector/advancedFields";
 import { DnsRuleInspector, RouteRuleInspector } from "./inspector/ruleInspectors";
+import { DnsInspector } from "./inspector/dnsInspector";
+import { RouteInspector } from "./inspector/routeInspector";
 import { InboundInspector } from "./inspector/inboundInspector";
 import { OutboundInspector } from "./inspector/outboundInspector";
 import { DnsServerInspector } from "./inspector/dnsServerInspector";
@@ -42,7 +44,6 @@ import {
   withUniqueBlankKey,
 } from "./inspector/helpers";
 import { useProjectStore } from "../state/useProjectStore";
-import { DnsRulesTable, RouteRulesTable } from "./RuleTables";
 
 // Preserve the public API: withUniqueBlankKey moved to inspector/helpers (C14) but is imported by tests
 // from this module.
@@ -189,243 +190,10 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       </div>
 
       {ref.kind === "route" ? (
-        <>
-          <label className="field">
-            <span>Final Outbound</span>
-            <select
-              value={typeof entity.final === "string" ? entity.final : ""}
-              onChange={(event) => updateField(ref, "final", event.target.value || undefined)}
-            >
-              <option value="">First outbound</option>
-              {outboundTags(config).map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.auto_detect_interface)}
-              onChange={(event) =>
-                updateField(ref, "auto_detect_interface", event.target.checked || undefined)
-              }
-            />
-            <span>Auto detect interface</span>
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.override_android_vpn)}
-              onChange={(event) =>
-                updateField(ref, "override_android_vpn", event.target.checked || undefined)
-              }
-            />
-            <span>Override Android VPN</span>
-          </label>
-          <label className="field">
-            <span>Default Interface</span>
-            <input
-              value={typeof entity.default_interface === "string" ? entity.default_interface : ""}
-              placeholder="e.g. eth0 (Linux/macOS, requires permissions)"
-              onChange={(event) =>
-                updateField(ref, "default_interface", event.target.value || undefined)
-              }
-            />
-          </label>
-          <label className="field">
-            <span>Default Routing Mark (Linux)</span>
-            <input
-              type="number"
-              value={typeof entity.default_mark === "number" ? entity.default_mark : ""}
-              placeholder="0..2147483647 (Linux fwmark)"
-              onChange={(event) => {
-                const next = event.target.value;
-                if (!next) {
-                  updateField(ref, "default_mark", undefined);
-                  return;
-                }
-                const parsed = Number(next);
-                updateField(ref, "default_mark", Number.isFinite(parsed) ? parsed : undefined);
-              }}
-            />
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.find_process)}
-              onChange={(event) =>
-                updateField(ref, "find_process", event.target.checked || undefined)
-              }
-            />
-            <span>Find process (process matchers in rules)</span>
-          </label>
-          {/* default_network_strategy / default_network_type are rendered by the shared Dial group
-              (string[] list), so no hardcoded duplicates here (W24). */}
-          <RouteRulesTable />
-        </>
+        <RouteInspector entity={entity} entityRef={ref} config={config} updateField={updateField} />
       ) : null}
       {ref.kind === "dns" ? (
-        <>
-          <label className="field">
-            <span>Final DNS Server</span>
-            <select
-              value={typeof entity.final === "string" ? entity.final : ""}
-              onChange={(event) => updateField(ref, "final", event.target.value || undefined)}
-            >
-              <option value="">First DNS server</option>
-              {(config.dns?.servers ?? [])
-                .map((server) => server.tag)
-                .filter((tag): tag is string => Boolean(tag))
-                .map((tag) => (
-                  <option key={tag} value={tag}>
-                    {tag}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="field">
-            <span>Strategy</span>
-            <select
-              value={typeof entity.strategy === "string" ? entity.strategy : ""}
-              onChange={(event) => updateField(ref, "strategy", event.target.value || undefined)}
-            >
-              <option value="">(default)</option>
-              <option value="prefer_ipv4">prefer_ipv4</option>
-              <option value="prefer_ipv6">prefer_ipv6</option>
-              <option value="ipv4_only">ipv4_only</option>
-              <option value="ipv6_only">ipv6_only</option>
-            </select>
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.disable_cache)}
-              onChange={(event) => updateField(ref, "disable_cache", event.target.checked || undefined)}
-            />
-            <span>Disable cache</span>
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.disable_expire)}
-              onChange={(event) => updateField(ref, "disable_expire", event.target.checked || undefined)}
-            />
-            <span>Disable expire</span>
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.independent_cache)}
-              onChange={(event) =>
-                updateField(ref, "independent_cache", event.target.checked || undefined)
-              }
-            />
-            <span>Independent cache</span>
-          </label>
-          <label className="field">
-            <span>Cache Capacity</span>
-            <input
-              type="number"
-              value={Number(entity.cache_capacity ?? 0)}
-              onChange={(event) => updateField(ref, "cache_capacity", Number(event.target.value) || undefined)}
-            />
-          </label>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.reverse_mapping)}
-              onChange={(event) => updateField(ref, "reverse_mapping", event.target.checked || undefined)}
-            />
-            <span>Reverse mapping</span>
-          </label>
-          <label className="field">
-            <span>Client Subnet</span>
-            <input
-              type="text"
-              value={typeof entity.client_subnet === "string" ? entity.client_subnet : ""}
-              onChange={(event) => updateField(ref, "client_subnet", event.target.value || undefined)}
-            />
-          </label>
-          {(() => {
-            const fakeip = objectField(entity.fakeip);
-            const writeFakeip = (next: InspectorEntity) =>
-              updateField(ref, "fakeip", Object.keys(next).length ? next : undefined);
-            return (
-              <fieldset className="field field--checklist" data-testid="dns-hub-fakeip">
-                <legend>FakeIP</legend>
-                <label className="toggle-row">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(fakeip.enabled)}
-                    onChange={(event) => {
-                      if (event.target.checked) writeFakeip({ ...fakeip, enabled: true });
-                      else {
-                        const { enabled: _e, ...rest } = fakeip as Record<string, unknown>;
-                        writeFakeip(rest);
-                      }
-                    }}
-                  />
-                  <span>FakeIP enabled</span>
-                </label>
-                <label className="field">
-                  <span>IPv4 Range</span>
-                  <input
-                    value={typeof fakeip.inet4_range === "string" ? fakeip.inet4_range : ""}
-                    placeholder="198.18.0.0/15"
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      if (!value) {
-                        const { inet4_range: _v, ...rest } = fakeip as Record<string, unknown>;
-                        writeFakeip(rest);
-                      } else {
-                        writeFakeip({ ...fakeip, inet4_range: value });
-                      }
-                    }}
-                  />
-                </label>
-                <label className="field">
-                  <span>IPv6 Range</span>
-                  <input
-                    value={typeof fakeip.inet6_range === "string" ? fakeip.inet6_range : ""}
-                    placeholder="fc00::/18"
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      if (!value) {
-                        const { inet6_range: _v, ...rest } = fakeip as Record<string, unknown>;
-                        writeFakeip(rest);
-                      } else {
-                        writeFakeip({ ...fakeip, inet6_range: value });
-                      }
-                    }}
-                  />
-                </label>
-              </fieldset>
-            );
-          })()}
-          <PlatformBanner
-            kind="channel"
-            text="The next two fields (Optimistic, Timeout) only take effect on sing-box 1.14+ (testing channel)."
-          />
-          <label className="toggle-row" data-testid="dns-hub-optimistic">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.optimistic)}
-              onChange={(event) => updateField(ref, "optimistic", event.target.checked || undefined)}
-            />
-            <span>Optimistic (testing 1.14+)</span>
-          </label>
-          <label className="field" data-testid="dns-hub-timeout">
-            <span>Timeout (testing 1.14+, e.g. "5s")</span>
-            <input
-              value={typeof entity.timeout === "string" ? entity.timeout : ""}
-              placeholder="5s"
-              onChange={(event) => updateField(ref, "timeout", event.target.value || undefined)}
-            />
-          </label>
-          <DnsRulesTable />
-        </>
+        <DnsInspector entity={entity} entityRef={ref} config={config} channel={channel} updateField={updateField} />
       ) : null}
       {ref.kind === "route-rule" ? (
         <RouteRuleInspector index={ref.index} rule={entity} config={config} updateRouteRule={updateRouteRule} />
