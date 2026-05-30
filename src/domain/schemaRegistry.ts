@@ -120,6 +120,8 @@ const SS_METHOD_ENUM: SchemaEnumOption[] = [
   { value: "chacha20-ietf", deprecated: true },
   { value: "xchacha20", deprecated: true },
 ];
+// inbound/shadowsocks.md method table lists the modern AEAD/2022 set only — no legacy stream ciphers.
+const SS_METHOD_MODERN_ENUM: SchemaEnumOption[] = SS_METHOD_ENUM.filter((option) => !option.deprecated);
 
 const LISTEN_LOCAL = "127.0.0.1";
 
@@ -185,6 +187,10 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       password: "change-me",
     }),
     sharedGroups: ["listen", "multiplex", "tcp-brutal"],
+    fields: [
+      { path: ["method"], type: "enum", enum: SS_METHOD_MODERN_ENUM, doc: "inbound/shadowsocks.md" },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/shadowsocks.md" },
+    ],
   },
   {
     kind: "inbound",
