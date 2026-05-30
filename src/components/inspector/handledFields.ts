@@ -202,7 +202,7 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   "route_exclude_address", "route_exclude_address_set", "rules", "security", "server", "server_port",
   "server_ports", "servers", "service", "set_system_proxy", "stack", "state_directory", "store", "strategy",
   "strict_route",
-  "stun", "system_interface", "system_interface_name", "timeout", "timestamp", "token", "tolerance", "torrc",
+  "stun", "system", "system_interface", "system_interface_name", "timeout", "timestamp", "token", "tolerance", "torrc",
   "udp_over_stream", "udp_relay_mode", "up_mbps", "update_interval", "url", "usages_path", "user", "username",
   "users", "uuid", "verify_client_endpoint", "verify_client_url", "version", "zero_rtt_handshake",
 ]);
@@ -286,6 +286,7 @@ export const endpointHandledFields = new Set([
   "advertise_routes",
   "advertise_tags",
   "auth_key",
+  "system",
   "system_interface",
   "system_interface_name",
   "system_interface_mtu",

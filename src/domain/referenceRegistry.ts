@@ -267,13 +267,24 @@ function visitServiceRefs(config: SingBoxConfig, op: RefOp) {
   config.dns?.servers?.forEach((server) => applyScalarField(server as MutableRecord, "service", op));
 }
 
+// DF5 — a logical rule (`{type:"logical", rules:[…]}`) nests its matchers inside `rules`, so a `rule_set`
+// ref there is invisible to a top-level `rule.rule_set` rewrite. Walk the rule and any nested rules so a
+// rename/delete of a rule-set also rewrites/clears nested refs (keeping the cascade in parity with the
+// canvas, which now draws edges for nested DNS rule_set refs — fixture-node-coverage would otherwise leave
+// a dangling node on delete).
+function applyRuleSetRefsDeep(rule: MutableRecord, op: RefOp) {
+  rule.rule_set = op.list(rule.rule_set as string | string[] | undefined);
+  const nested = rule.rules;
+  if (Array.isArray(nested)) {
+    for (const sub of nested) {
+      if (sub && typeof sub === "object") applyRuleSetRefsDeep(sub as MutableRecord, op);
+    }
+  }
+}
+
 function visitRuleSetRefs(config: SingBoxConfig, op: RefOp) {
-  config.route?.rules?.forEach((rule) => {
-    rule.rule_set = op.list(rule.rule_set);
-  });
-  config.dns?.rules?.forEach((rule) => {
-    rule.rule_set = op.list(rule.rule_set);
-  });
+  config.route?.rules?.forEach((rule) => applyRuleSetRefsDeep(rule as MutableRecord, op));
+  config.dns?.rules?.forEach((rule) => applyRuleSetRefsDeep(rule as MutableRecord, op));
   config.inbounds?.forEach((inbound) => {
     const obj = inbound as MutableRecord;
     if (obj.type !== "tun") return;
