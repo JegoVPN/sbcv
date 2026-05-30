@@ -54,7 +54,12 @@ re-run#5(66-agent,`docs/canvas-config-gen-assessment-2026-05-31-gui90-rerun5.md`
 
 ## 3. Phase VT-P1 — 引用保真
 
-### VT2 — `route.rules[].preferred_by` 纳入 endpoint 引用级联(修 M3)
+### VT2 — `route.rules[].preferred_by` 纳入 endpoint 引用级联(修 M3)— ❌ **误报,不做(WONTFIX)**
+> **裁定(对抗式审查 + 真二进制/上游文档核实,2026-05-31):M3 是误报,与 M1 `find_process` 同类。** `route.rules[].preferred_by`(Since 1.13)**不是 tag 引用**,而是只有两个合法值的**固定枚举** `tailscale` / `wireguard`(`route/rule.md`:"Match specified outbounds' preferred routes" —— `tailscale`=Match MagicDNS domains & peers' allowed IPs,`wireguard`=Match peers' allowed IPs)。仓库自有派生文档已明确:`docs/claude/rule-route-rule.md:224` "Fixed enum, not a tag"、`docs/ui-reviews/rule-route-rule.md:55` "not a tag reference; it is an enum-like list (`tailscale`, `wireguard`)"。
+> **若误把它纳入 endpoint 级联会产生真实数据破坏**:用户有一个**名为 `tailscale` 或 `wireguard` 的 endpoint**(完全合法 —— `tailscale` 正是一种 endpoint type 的常见命名),rename/删除它会把规则里本应是枚举常量的 `preferred_by` 改写/清空 —— 把有效配置改坏。枚举值压根不会"悬空"。**实现 PR #259 已据此关闭撤销。**
+> **真正是 tag 引用的是另一个字段 `dns.rules[].preferred_by`**(1.14-only,**dns-server** tag 列表,见 `dns/rule.md`),与 route 的同名枚举字段无关;若日后要建模须另开一项、目标 dns-server 命名空间,且先确认其 enum/tag 混合语义是否值得建模。
+>
+> 以下原始(错误)方案保留作记录:
 - **Outcome:** 把 `/route/rules/*/preferred_by`(endpoint tag 的 string[])加入 `referenceRegistry` 的 endpoint 访问器,使重命名/删除 endpoint 时该引用被改写/清理;并按 `registry-parity` 规则把它列为**画布边**或显式 `INSPECTOR_ONLY_REFERENCE_PATHS`(它是 string[],与 selector members 类似,倾向 Inspector-only 列表编辑)。
 - **Source of truth:** `docs/upstream/sing-box/testing/configuration/route/rule.md`(`preferred_by`:endpoint tag 数组,选择经哪个 endpoint 出网)。
 - **Touch:** `src/domain/referenceRegistry.ts`(`visitEndpointRefs` 加 `config.route?.rules?.forEach(rule => rule.preferred_by = op.stringArray(rule.preferred_by))`,并把路径加进 endpoint entry 的 `paths`);`INSPECTOR_ONLY_REFERENCE_PATHS`(W10/A3,加 `/route/rules/*/preferred_by` + 理由);若做成边则加 `portRelationRegistry`。
@@ -77,12 +82,13 @@ re-run#5(66-agent,`docs/canvas-config-gen-assessment-2026-05-31-gui90-rerun5.md`
 ## 5. Definition of Done(重跑判据)
 1. version-targeting 维度 **strong**;达成 **6/6 全 strong**。
 2. 任一 testing-only 字段在 stable 目标导出被 error 硬阻断,且**由数据驱动检查兜底**(非纯手写门控)。
-3. `preferred_by` 引用级联完整,无悬空。
+3. ~~`preferred_by` 引用级联完整,无悬空。~~ → **moot:M3 误报**(`route.rules[].preferred_by` 是固定枚举 `tailscale`/`wireguard`,非 tag 引用,无悬空可言;详见 VT2 段与 Decision Log)。
 4. 其余五维无回退;`fixtures/**` 全绿、二进制零误报。
 5. 无未解释的 P0/P1(每个未做项在 Decision Log 写明)。
 
 ## 6. Sequencing / Decision Log
 - **M1 `route.find_process` = 二进制确认的误报(stable exit 0),不 gate** —— 记录在此,防后续重复"修复"一个非缺口。
-- **VT1 → VT3 顺序**:VT1 即时止血(小、确定);VT3 治本(需 spike 验零误报,风险高,后做且独立审查)。
-- **VT2 边 vs Inspector-only**:倾向 Inspector-only(string[] 列表编辑,形态同 selector members);落地前据 `registry-parity` 结果与 UI 取舍最终定夺并记此。
+- **M3 `route.rules[].preferred_by` = 误报,不做(WONTFIX)** —— 它是固定枚举 `tailscale`/`wireguard`(`route/rule.md`),**非 tag 引用**(仓库自有 `docs/claude/rule-route-rule.md:224` "Fixed enum, not a tag")。纳入 endpoint 级联会破坏名为 tailscale/wireguard 的 endpoint 配置(rename/删除时改写枚举常量)。实现 PR #259 已撤销。真正的 tag 引用是 `dns.rules[].preferred_by`(dns-server tag,1.14-only),另当别论。**对抗式审查在此正确拦截了一次会破坏有效配置的"修复"** —— 与 M1 同类教训:看到 tag 旁数组里有字符串就推断是引用,需以上游 prose + 真二进制为准。
+- **VT1 → VT3 顺序**:VT1 即时止血(小、确定);VT3 治本(需 spike 验零误报,风险高,后做且独立审查)。**实际落地:VT1 #257、VT3 #258 均已合并;VT3 的数据驱动门由 13/13 字段真二进制零误报核对 + 全 fixtures/stable 扫描守住,reviewer 另查出并修复了 tun MAC 三重报错(path 对齐)。**
+- ~~**VT2 边 vs Inspector-only**~~ —— moot,VT2/M3 误报不做(见上)。
 - 延续 [[project_canvas_config_gen_assessment]] 的评估脉络。
