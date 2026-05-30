@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -49,11 +49,22 @@ describe("C17 — no silently-unreachable handled fields", () => {
 
   it("INLINE_RENDERED_KEYS claims no coverage without a real inline control (anti-drift)", () => {
     // The hand-maintained inline set is the guard's one drift risk: a fabricated entry would falsely mark
-    // a handled key covered. Assert every entry corresponds to an actual `updateField(ref, "<key>", …)`
+    // a handled key covered. Assert every entry corresponds to an actual `updateField(<ref>, "<key>", …)`
     // literal in the Inspector source, so coverage can never be invented (the set may be a subset — extra
-    // source literals for other kinds are harmless).
-    const source = readFileSync("src/components/Inspector.tsx", "utf8");
-    const literals = new Set([...source.matchAll(/updateField\(ref,\s*"([a-z_]+)"/g)].map((match) => match[1]));
+    // source literals for other kinds are harmless). C14 extracted the per-family blocks into
+    // src/components/inspector/* (where the entity ref is named `entityRef`), so scan the shell AND those
+    // modules, matching either parameter name — a fabricated key still has no literal in ANY of them.
+    const inspectorDir = "src/components/inspector";
+    const files = [
+      "src/components/Inspector.tsx",
+      ...readdirSync(inspectorDir)
+        .filter((name) => name.endsWith(".ts") || name.endsWith(".tsx"))
+        .map((name) => `${inspectorDir}/${name}`),
+    ];
+    const source = files.map((file) => readFileSync(file, "utf8")).join("\n");
+    const literals = new Set(
+      [...source.matchAll(/updateField\((?:ref|entityRef),\s*"([a-z_]+)"/g)].map((match) => match[1]),
+    );
     const fabricated = [...INLINE_RENDERED_KEYS].filter((key) => !literals.has(key)).sort();
     expect(fabricated).toEqual([]);
   });
