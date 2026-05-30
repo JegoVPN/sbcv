@@ -33,6 +33,7 @@ import {
 } from "../domain/commands";
 import { SETTINGS_COLUMN_X } from "../canvas/graph";
 import { adapterConnect } from "../domain/portReferenceAdapter";
+import type { ReferenceKind } from "../domain/referenceRegistry";
 import { dedupeTags } from "../domain/indexes";
 import { validateConfig } from "../domain/diagnostics";
 import {
@@ -178,7 +179,7 @@ type ProjectStore = {
   togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
   updateField: (ref: EntityRef, field: string, value: unknown) => void;
   changeEntityType: (ref: EntityRef, nextType: string) => void;
-  renameTag: (oldTag: string, newTag: string) => void;
+  renameTag: (kind: ReferenceKind, oldTag: string, newTag: string) => void;
   deleteEntity: (ref: EntityRef) => void;
   disconnectEdge: (edgeId: string) => void;
   addRouteRule: () => void;
@@ -1558,9 +1559,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
       return sync(changeEntityType(state.config, ref, nextType), state.channel, state.version);
     }),
-  renameTag: (oldTag, newTag) =>
+  renameTag: (kind, oldTag, newTag) =>
     set((state) => {
-      const config = renameTag(state.config, oldTag, newTag);
+      const config = renameTag(state.config, kind, oldTag, newTag);
       if (config === state.config) return state;
       return {
         ...sync(config, state.channel, state.version),

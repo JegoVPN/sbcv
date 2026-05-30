@@ -29,7 +29,7 @@ function configWithWireguardAsOutboundTarget(): SingBoxConfig {
 
 describe("endpoint outbound-half — WireGuard endpoint in the outbound namespace (A7a)", () => {
   it("rename cascades a WireGuard endpoint tag through route/selector refs", () => {
-    const renamed = renameTag(configWithWireguardAsOutboundTarget(), "wg", "wg2");
+    const renamed = renameTag(configWithWireguardAsOutboundTarget(), "endpoint", "wg", "wg2");
     expect(renamed.endpoints?.[0]?.tag).toBe("wg2");
     expect(renamed.route?.final).toBe("wg2");
     expect(renamed.route?.rules?.[0]?.outbound).toBe("wg2");
