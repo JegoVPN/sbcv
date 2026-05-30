@@ -4,6 +4,7 @@ import {
   formatEdgeId,
   generatedEntityTag,
   parseNodeId,
+  type ParsedNodeId,
   portEndpointsForNode,
   type PortDirection,
   type PortNodeKind,
@@ -963,6 +964,44 @@ export function deriveGraph(
   centerColumnsVertically(nodes, layout);
 
   annotateConnectedPorts(config, nodes, channel);
+
+  // V8-S2: a writable ref to a non-existent tag draws an edge to a node that was never rendered, so React
+  // Flow silently drops it — the dangling reference becomes invisible on the canvas (only the owner's
+  // diagnostic status hints at it). Surface each unresolved endpoint as a distinct port-less "missing
+  // reference" pseudo-node (named with the tag) and flag the edge `dangling`, so the broken wiring is
+  // visible on the canvas itself. Only rules/rule-sets overflow, and their edges are gated when hidden, so
+  // an absent node here always means a genuinely unresolved tag — never an overflow-hidden one.
+  const renderedNodeIds = new Set(nodes.map((node) => node.id));
+  const missingTargets = new Map<string, ParsedNodeId>();
+  for (const edge of edges) {
+    let dangling = false;
+    for (const endpointId of [edge.source, edge.target]) {
+      if (renderedNodeIds.has(endpointId)) continue;
+      const parsed = parseNodeId(endpointId);
+      if (!parsed) continue; // id with a non-PortNodeKind prefix — not a tag reference, leave alone
+      dangling = true;
+      if (!missingTargets.has(endpointId)) missingTargets.set(endpointId, parsed);
+    }
+    if (dangling) edge.data = { ...(edge.data as Record<string, unknown> | undefined), dangling: true };
+  }
+  let danglingRow = 0;
+  for (const [missingId, parsed] of missingTargets) {
+    nodes.push(
+      makeNode(
+        missingId,
+        {
+          ref: { kind: "route", id: "main" }, // informational pseudo-node; selection resolves to nothing
+          kind: "notice",
+          type: "missing-reference",
+          title: `Missing: ${parsed.value}`,
+          subtitle: `Unresolved ${parsed.kind} reference — create the node or remove the link`,
+          status: "error",
+        },
+        layout,
+        { x: COLUMNS.leaf + 720, y: ROUTE_HUB_Y + danglingRow++ * NODE_SLOT_Y },
+      ),
+    );
+  }
 
   return { nodes, edges };
 }
