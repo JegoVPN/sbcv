@@ -43,8 +43,8 @@ describe("C7-C — 1.13 route/DNS field gates", () => {
     expect(c).not.toContain("dns-local-prefer-go-1-13-only");
   });
 
-  it("the gates are warnings", () => {
+  it("the gates are export-blocking errors (V4-S3 / M4: sing-box-1.12 rejects the 1.13 action/fields)", () => {
     const cfg = { route: { rules: [{ action: "bypass" }] } } as unknown as SingBoxConfig;
-    expect(validateConfig(cfg, "stable", "1.12").find((d) => d.code === "route-rule-bypass-1-13-only")?.level).toBe("warning");
+    expect(validateConfig(cfg, "stable", "1.12").find((d) => d.code === "route-rule-bypass-1-13-only")?.level).toBe("error");
   });
 });

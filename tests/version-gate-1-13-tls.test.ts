@@ -42,8 +42,8 @@ describe("C7-B — 1.13 TLS field gates", () => {
     expect(c).not.toContain("tls-client-authentication-1-13-only");
   });
 
-  it("the gates are warnings (not export-blocking errors)", () => {
+  it("the gates are export-blocking errors (V4-S3 / M4: sing-box-1.12 rejects unknown tls fields)", () => {
     const diag = validateConfig(outbound({ kernel_tx: true }), "stable", "1.12").find((d) => d.code === "tls-kernel-tx-1-13-only");
-    expect(diag?.level).toBe("warning");
+    expect(diag?.level).toBe("error");
   });
 });
