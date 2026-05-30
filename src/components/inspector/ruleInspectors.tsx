@@ -102,9 +102,10 @@ export function RouteRuleInspector({
           <span>Outbound</span>
           <select value={String(rule.outbound ?? "")} onChange={(event) => patch({ outbound: event.target.value || undefined })}>
             <option value="">None</option>
-            {(config.outbounds ?? []).map((outbound, outboundIndex) => (
-              <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
-                {outbound.tag ?? `untagged-${outboundIndex + 1}`}
+            {/* R4: route rules may target an endpoint as well as an outbound — offer both. */}
+            {[...(config.outbounds ?? []), ...(config.endpoints ?? [])].map((target, targetIndex) => (
+              <option key={`${target.tag ?? "untagged"}-${targetIndex}`} value={target.tag ?? ""}>
+                {target.tag ?? `untagged-${targetIndex + 1}`}
               </option>
             ))}
           </select>

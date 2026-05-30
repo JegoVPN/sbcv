@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 
+import { defaultFieldKeysFor } from "../../domain/schemaRegistry";
 import { PlatformBanner, SensitiveTextField } from "./controls";
 import { fromList, type InspectorEntity, objectField, toList, withUniqueBlankKey } from "./helpers";
 import { OutboundSectionsB, type OutboundSectionProps } from "./outboundSectionsB";
@@ -11,6 +12,9 @@ import { OutboundSectionsB, type OutboundSectionProps } from "./outboundSections
 
 export function OutboundInspector(props: OutboundSectionProps) {
   const { entity, entityRef, entityType, updateField } = props;
+  // R4: which identity fields THIS type carries, from the schema factory — so a server/server_port
+  // missing from an imported config still renders an editable input (type-driven, not presence-gated).
+  const typeFields = defaultFieldKeysFor("outbound", entityType);
   return (
     <>
           {entityType === "naive" ? (
@@ -151,16 +155,17 @@ export function OutboundInspector(props: OutboundSectionProps) {
               text="Hysteria v1 is legacy — prefer `hysteria2` for new deployments."
             />
           ) : null}
-          {"server" in entity ? (
+          {typeFields.has("server") || "server" in entity ? (
             <label className="field">
               <span>Server</span>
               <input
                 value={String(entity.server ?? "")}
+                placeholder="server address (host or IP)"
                 onChange={(event) => updateField(entityRef, "server", event.target.value)}
               />
             </label>
           ) : null}
-          {"server_port" in entity ? (
+          {typeFields.has("server_port") || "server_port" in entity ? (
             (() => {
               const portDefaultByType: Record<string, number> = {
                 socks: 1080,
