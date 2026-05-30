@@ -1,6 +1,6 @@
 import "@xyflow/react/dist/style.css";
 import { Background, ConnectionMode, ControlButton, Controls, MiniMap, ReactFlow, ViewportPortal, useEdgesState, useNodesState } from "@xyflow/react";
-import type { Connection, Edge, EdgeTypes, NodeTypes, OnConnectEnd, OnConnectStart, ReactFlowInstance } from "@xyflow/react";
+import type { Connection, Edge, EdgeTypes, NodeTypes, OnConnectEnd, OnConnectStart, ProOptions, ReactFlowInstance } from "@xyflow/react";
 import { Hand, Map as MapIcon, MousePointer2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deriveGraph } from "../canvas/graph";
@@ -40,6 +40,10 @@ const nodeTypes: NodeTypes = {
 
 const edgeTypes: EdgeTypes = {
   sbc: CanvasEdge,
+};
+
+const reactFlowProOptions: ProOptions = {
+  hideAttribution: true,
 };
 
 const connectionLineStyle = {
@@ -536,6 +540,7 @@ export function CanvasWorkspace() {
         connectionRadius={54}
         connectionDragThreshold={1}
         connectionLineStyle={connectionLineStyle}
+        proOptions={reactFlowProOptions}
         nodesDraggable={!isMobile}
         edgesFocusable={!isMobile}
         nodesFocusable

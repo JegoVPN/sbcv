@@ -19,6 +19,7 @@ test("mobile shell — Check / Import / Export / node inspector flow", async ({ 
   // Palette is hidden; only fit-view button in the bottom controls
   await expect(page.getByLabel("Node palette")).toHaveCount(0);
   await expect(page.locator(".react-flow__minimap")).toHaveCount(0);
+  await expect(page.locator(".react-flow__attribution")).toHaveCount(0);
   await expect(page.locator(".react-flow__controls-button")).toHaveCount(1);
 
   // Status pill is interactive and Check button is reachable directly
@@ -77,11 +78,12 @@ test("mobile + opens a populated add-node sheet (palette not hidden away)", asyn
 test("mobile topbar controls meet the 36px touch-target minimum (L4)", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("app-mobile")).toBeVisible();
+  await expect(page.getByTestId("mobile-validation-group")).toBeVisible();
   const controls = [
-    page.locator(".mobile-topbar .status-pill"),
     page.getByTestId("brand-home"),
-    page.getByTestId("mobile-add-node"),
     page.getByRole("button", { name: "Run check" }),
+    page.locator(".mobile-topbar .status-pill"),
+    page.getByTestId("mobile-add-node"),
     page.getByTestId("mobile-menu-toggle"),
   ];
   for (const control of controls) {
@@ -89,4 +91,38 @@ test("mobile topbar controls meet the 36px touch-target minimum (L4)", async ({ 
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(36);
   }
+});
+
+test("mobile topbar groups validation action with validation status", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+
+  const metrics = await page.locator(".mobile-topbar").evaluate((topbar) => {
+    const boxFor = (selector: string) => {
+      const element = topbar.querySelector(selector);
+      if (!element) return null;
+      const rect = element.getBoundingClientRect();
+      return { left: rect.left, right: rect.right, width: rect.width };
+    };
+    return {
+      brand: boxFor('[data-testid="brand-home"]'),
+      validation: boxFor('[data-testid="mobile-validation-group"]'),
+      run: boxFor(".mobile-validation-run"),
+      status: boxFor(".mobile-validation-status"),
+      add: boxFor('[data-testid="mobile-add-node"]'),
+      menu: boxFor('[data-testid="mobile-menu-toggle"]'),
+    };
+  });
+
+  expect(metrics.brand).not.toBeNull();
+  expect(metrics.validation).not.toBeNull();
+  expect(metrics.run).not.toBeNull();
+  expect(metrics.status).not.toBeNull();
+  expect(metrics.add).not.toBeNull();
+  expect(metrics.menu).not.toBeNull();
+  expect(metrics.brand!.right).toBeLessThan(metrics.validation!.left);
+  expect(metrics.run!.right).toBeLessThanOrEqual(metrics.status!.left + 1);
+  expect(metrics.validation!.right).toBeLessThan(metrics.add!.left);
+  expect(metrics.add!.right).toBeLessThan(metrics.menu!.left);
+  expect(metrics.validation!.width).toBeGreaterThan(metrics.add!.width);
 });
