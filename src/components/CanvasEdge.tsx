@@ -28,6 +28,7 @@ export const CanvasEdge = memo(function CanvasEdge({
   selected,
   animated,
   deletable,
+  data,
 }: EdgeProps) {
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
   const selectedId = useProjectStore((state) => state.selectedId);
@@ -46,6 +47,9 @@ export const CanvasEdge = memo(function CanvasEdge({
   const canRemove = deletable !== false;
   const removeVisible = hovered || selected;
   const relationLabel = relationLabelForEdge(id);
+  // V8-S2: an edge to/from an unresolved tag (graph.ts flags it + synthesizes a "missing reference" node).
+  const dangling = (data as { dangling?: boolean } | undefined)?.dangling === true;
+  const tooltip = dangling ? `${relationLabel || "Reference"} → missing target` : relationLabel;
   const handleRemove = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -57,19 +61,20 @@ export const CanvasEdge = memo(function CanvasEdge({
       <g
         className="sbc-edge"
         data-relation={relationLabel || undefined}
-        aria-label={relationLabel || undefined}
+        data-dangling={dangling ? "true" : undefined}
+        aria-label={tooltip || undefined}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* Native hover tooltip naming the relation — distinguishes parallel edges between the same pair. */}
-        {relationLabel ? <title>{relationLabel}</title> : null}
+        {/* Native hover tooltip naming the relation (and flagging a dangling target). */}
+        {tooltip ? <title>{tooltip}</title> : null}
         <BaseEdge
           id={id}
           path={edgePath}
           markerEnd={markerEnd}
           style={style}
           interactionWidth={24}
-          className={`${animated ? "sbc-edge__path sbc-edge__path--animated" : "sbc-edge__path"}${highlighted ? " sbc-edge__path--highlighted" : ""}`}
+          className={`${animated ? "sbc-edge__path sbc-edge__path--animated" : "sbc-edge__path"}${highlighted ? " sbc-edge__path--highlighted" : ""}${dangling ? " sbc-edge__path--dangling" : ""}`}
         />
       </g>
       {canRemove ? (
