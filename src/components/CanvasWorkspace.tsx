@@ -486,7 +486,20 @@ export function CanvasWorkspace() {
   }, [openPortPicker]);
 
   useEffect(() => {
-    if (!isNodeDraggingRef.current) setNodes(graph.nodes);
+    if (!isNodeDraggingRef.current) {
+      // Re-deriving the graph replaces the whole nodes array. React Flow keeps its own internal
+      // selection (so the node border stays), but graph.nodes carry no `selected` flag, so the
+      // local array would lose it — desyncing visuallySelectedNodeId's fallback and dropping the
+      // first-degree edge highlight even though the node still reads as selected. Carry the prior
+      // selection forward so the array stays in sync with React Flow's render.
+      setNodes((prev) => {
+        const selectedIds = new Set(prev.filter((node) => node.selected).map((node) => node.id));
+        if (selectedIds.size === 0) return graph.nodes;
+        return graph.nodes.map((node) =>
+          selectedIds.has(node.id) ? { ...node, selected: true } : node,
+        );
+      });
+    }
     setEdges(graph.edges);
   }, [graph.edges, graph.nodes, setEdges, setNodes]);
 

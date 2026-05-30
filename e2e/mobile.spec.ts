@@ -172,6 +172,32 @@ test("mobile selected node keeps first-degree edge highlight after inspector is 
   expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
 });
 
+test("mobile selected node keeps highlight after an edit re-derives the graph, then dismiss", async ({ page }) => {
+  // Regression (#239 follow-up): editing a field re-derives the graph, which replaces the whole
+  // nodes array. graph.nodes carry no `selected` flag, so before the fix the local array lost the
+  // selection — and after dismissing the sheet (selectedId → null) the first-degree highlight
+  // disappeared even though the node still read as selected. Selection must survive the re-derive.
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+
+  await page.getByTestId("node-outbound:proxy").click();
+  await expect(page.getByTestId("mobile-inspector-sheet")).toBeVisible();
+
+  const highlighted = page.locator(".sbc-edge__path--highlighted");
+  await expect(highlighted.first()).toBeVisible();
+
+  // Toggle a checkbox on the selected node — mutates the config and re-derives the graph without
+  // changing the node's id.
+  await page.getByTestId("node-inspector").getByLabel("Interrupt existing connections on switch").click();
+  await expect(highlighted.first()).toBeVisible();
+
+  await page.locator(".bottom-sheet-backdrop").click({ position: { x: 20, y: 160 } });
+  await expect(page.getByTestId("mobile-inspector-sheet")).toHaveCount(0);
+  await expect(page.getByTestId("node-outbound:proxy").locator(".sbc-node.is-selected")).toBeVisible();
+  await expect(highlighted.first()).toBeVisible();
+  expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
+});
+
 test("mobile every default canvas node can be selected and keeps visible first-degree highlights", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("app-mobile")).toBeVisible();
