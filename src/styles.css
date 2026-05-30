@@ -1906,7 +1906,13 @@ button.sbc-edge-remove:focus-visible {
   border-radius: 10px;
   background: #262a2f;
   color: #eef2f4;
-  font-weight: 700;
+  /* R1b — pin the control font explicitly: without a font-size the value inherited the (larger) inspector
+     font, so values rendered bigger + heavier than their 14px labels (and didn't shrink on compact/mobile).
+     Match the label size/weight, with font-family:inherit so it doesn't fall back to the UA monospace. */
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
 }
 
 .field textarea {
@@ -1959,6 +1965,9 @@ button.sbc-edge-remove:focus-visible {
 .field textarea::placeholder {
   color: #717c88;
   opacity: 1;
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 500;
 }
 
 .inspector-section-title {
