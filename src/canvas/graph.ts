@@ -978,7 +978,7 @@ export function deriveGraph(
     for (const endpointId of [edge.source, edge.target]) {
       if (renderedNodeIds.has(endpointId)) continue;
       const parsed = parseNodeId(endpointId);
-      if (!parsed) continue; // unparseable id (e.g. a hub) — leave alone
+      if (!parsed) continue; // id with a non-PortNodeKind prefix — not a tag reference, leave alone
       dangling = true;
       if (!missingTargets.has(endpointId)) missingTargets.set(endpointId, parsed);
     }
