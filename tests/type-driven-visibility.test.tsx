@@ -56,6 +56,21 @@ describe("R4 — Inspector type-driven field repair", () => {
     expect(doh.server_port).toBe(8443);
     expect(doh.path).toBe("/custom-query");
   });
+
+  it("does NOT render a Server input for types that carry no server (selector outbound, local dns-server)", () => {
+    // Negative guard: locks in the type-driven gate against future factory edits — a type whose factory
+    // omits server/server_port must never surface those inputs (would invite an invalid config).
+    importAndSelect(
+      { outbounds: [{ type: "selector", tag: "sel", outbounds: ["a"] }, { type: "direct", tag: "a" }] },
+      "outbound:sel",
+    );
+    const { rerender } = render(<App />);
+    expect(within(screen.getByLabelText("Node inspector")).queryByLabelText("Server")).toBeNull();
+
+    importAndSelect({ dns: { servers: [{ type: "local", tag: "loc" }] } }, "dns-server:loc");
+    rerender(<App />);
+    expect(within(screen.getByLabelText("Node inspector")).queryByLabelText("Server")).toBeNull();
+  });
 });
 
 describe("R4 — route rule table dead-control gating", () => {
