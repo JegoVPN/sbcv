@@ -1,8 +1,22 @@
 import { buildNamespacedTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
 import { typeMinVersion } from "./minVersions";
-import { proxyOutboundTypes as proxyOutboundTypeSet, requiredFieldsFor, tlsRequiredTypes } from "./schemaRegistry";
+import {
+  fieldMetaFor,
+  proxyOutboundTypes as proxyOutboundTypeSet,
+  requiredFieldsFor,
+  tlsRequiredTypes,
+  type SchemaEntityKind,
+  type SchemaEnumOption,
+  type SchemaFieldMeta,
+} from "./schemaRegistry";
 import { atLeast } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
+
+/** Active validation target — the channel + resolved version a config is being checked against. */
+export interface ValidationTarget {
+  channel: SingBoxChannel;
+  version: string;
+}
 
 function listItems<T>(value: T[] | undefined): T[] {
   return Array.isArray(value) ? value : [];
@@ -41,6 +55,102 @@ function push(
   message: string,
 ) {
   diagnostics.push({ level, code, path, message, source: "semantic" });
+}
+
+// ── V1: enum / type validation (data-driven from schemaRegistry field metadata) ──────────────────────
+
+function getAtPath(obj: unknown, path: string[]): unknown {
+  let cur: unknown = obj;
+  for (const key of path) {
+    if (cur === null || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string, unknown>)[key];
+  }
+  return cur;
+}
+
+/** Whether an enum value is allowed for the active (channel, version) target. */
+function enumOptionActive(option: SchemaEnumOption, target: ValidationTarget): boolean {
+  if (option.channel && option.channel !== target.channel) return false;
+  if (option.since && !atLeast(target.version, option.since)) return false;
+  if (option.until && atLeast(target.version, option.until)) return false;
+  return true;
+}
+
+/**
+ * Validate a single scalar field value against its schema metadata for the active target. Returns the
+ * offending diagnostic (code + message) or null when the value is fine. Unset (undefined/null/"") is
+ * always fine — a missing optional field is not an error. Exported for direct unit coverage.
+ */
+export function validateFieldMeta(
+  meta: SchemaFieldMeta,
+  value: unknown,
+  target: ValidationTarget,
+): { code: "enum-invalid" | "type-invalid"; message: string } | null {
+  if (value === undefined || value === null || value === "") return null;
+  const fieldName = meta.path.join(".");
+
+  if (meta.type === "enum") {
+    const options = meta.enum ?? [];
+    const text = String(value);
+    const matched = options.find((option) => option.value === text);
+    if (matched && enumOptionActive(matched, target)) return null;
+    if (matched) {
+      // Known value, but gated off the active target (e.g. hysteria2 obfs "gecko" is testing/1.14).
+      const need = matched.channel ? `the ${matched.channel} channel` : `sing-box ${matched.since}+`;
+      const sinceNote = matched.channel && matched.since ? ` (since ${matched.since})` : "";
+      return {
+        code: "enum-invalid",
+        message: `${fieldName} value "${text}" requires ${need}${sinceNote}, but the target is ${target.channel} ${target.version}.`,
+      };
+    }
+    const allowed = options.filter((option) => enumOptionActive(option, target)).map((option) => option.value);
+    return {
+      code: "enum-invalid",
+      message: `${fieldName} value "${text}" is not valid. Expected one of: ${allowed.join(", ")}.`,
+    };
+  }
+
+  const actual = typeof value;
+  const typeOk =
+    (meta.type === "number" && actual === "number" && Number.isFinite(value as number)) ||
+    (meta.type === "boolean" && actual === "boolean") ||
+    (meta.type === "string" && actual === "string");
+  if (typeOk) return null;
+  return { code: "type-invalid", message: `${fieldName} must be a ${meta.type}, got ${actual}.` };
+}
+
+/**
+ * Per-entity scalar enum/type validation over every typed collection (feeds V2's export hard gate; the
+ * errors are already live in the existing export prompt + node badges, not just V2). Today only
+ * inbound/outbound rows define `fields`, so the dns-server/endpoint/service/rule-set passes (and the
+ * dns-server `legacyType` fallback) are deliberate no-ops, ready for future field metadata.
+ */
+function validateScalarFields(
+  config: SingBoxConfig,
+  diagnostics: Diagnostic[],
+  target: ValidationTarget,
+): void {
+  const collections: Array<{ kind: SchemaEntityKind; items: unknown[]; collection: string; legacyType?: string }> = [
+    { kind: "inbound", items: listItems(config.inbounds), collection: "inbounds" },
+    { kind: "outbound", items: listItems(config.outbounds), collection: "outbounds" },
+    { kind: "dns-server", items: listItems(config.dns?.servers), collection: "dns/servers", legacyType: "legacy" },
+    { kind: "endpoint", items: listItems(config.endpoints), collection: "endpoints" },
+    { kind: "service", items: listItems(config.services), collection: "services" },
+    { kind: "rule-set", items: listItems(config.route?.rule_set), collection: "route/rule_set" },
+  ];
+  for (const { kind, items, collection, legacyType } of collections) {
+    items.forEach((entity, index) => {
+      const rawType = (entity as { type?: unknown }).type;
+      const type = typeof rawType === "string" ? rawType : legacyType;
+      if (!type) return;
+      for (const meta of fieldMetaFor(kind, type)) {
+        const result = validateFieldMeta(meta, getAtPath(entity, meta.path), target);
+        if (result) {
+          push(diagnostics, "error", result.code, `/${collection}/${index}/${meta.path.join("/")}`, result.message);
+        }
+      }
+    });
+  }
 }
 
 export function validateConfig(
@@ -2057,6 +2167,9 @@ export function validateConfig(
       );
     }
   });
+
+  // V1: data-driven enum/type validation of scalar fields (last, so its errors join the export gate).
+  validateScalarFields(config, diagnostics, { channel, version });
 
   return diagnostics;
 }
