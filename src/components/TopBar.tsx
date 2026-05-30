@@ -12,10 +12,11 @@ import {
   Home,
   LoaderCircle,
 } from "lucide-react";
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
 import { blockingExportErrors, exportConfigGated } from "./exportConfig";
+import { LazyLayerBoundary } from "./LazyLayerBoundary";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
@@ -359,9 +360,9 @@ export function TopBar() {
         onChange={handleImport}
       />
       {jsonViewerOpen ? (
-        <Suspense fallback={null}>
+        <LazyLayerBoundary onClose={() => setJsonViewerOpen(false)}>
           <ConfigJsonViewerDialog open={jsonViewerOpen} onClose={() => setJsonViewerOpen(false)} />
-        </Suspense>
+        </LazyLayerBoundary>
       ) : null}
     </header>
   );
