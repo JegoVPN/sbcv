@@ -174,7 +174,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       </div>
 
       {ref.kind === "route" ? (
-        <RouteInspector entity={entity} entityRef={ref} config={config} updateField={updateField} />
+        <RouteInspector entity={entity} entityRef={ref} config={config} channel={channel} updateField={updateField} />
       ) : null}
       {ref.kind === "dns" ? (
         <DnsInspector entity={entity} entityRef={ref} config={config} channel={channel} updateField={updateField} />

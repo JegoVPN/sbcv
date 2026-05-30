@@ -1,6 +1,6 @@
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../../domain/commands";
 import type { SingBoxChannel, SingBoxConfig } from "../../domain/types";
-import { AdvancedScalarFields } from "./advancedFields";
+import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import type { InspectorEntity } from "./helpers";
 import {
   dnsRuleAdvancedFields,
@@ -237,6 +237,7 @@ export function RouteRuleInspector({
       {!isLogical ? <SharedRuleFields rule={rule} onPatch={patch} /> : null}
       {!isLogical ? <RuleAdvancedFields fields={routeRuleAdvancedFields} rule={rule} onPatch={patch} /> : null}
       <AdvancedScalarFields entity={rule} handledFields={routeRulePrimaryFields} entityRef={{ kind: "route-rule", index }} updateField={(_, field, value) => patch({ [field]: value })} />
+      <AdvancedNonScalarFields entity={rule} handledFields={routeRulePrimaryFields} entityRef={{ kind: "route-rule", index }} updateField={(_, field, value) => patch({ [field]: value })} />
     </div>
   );
 }
@@ -385,6 +386,7 @@ export function DnsRuleInspector({
       {!isLogical ? <SharedRuleFields rule={rule} onPatch={patch} /> : null}
       {!isLogical ? <RuleAdvancedFields fields={dnsRuleAdvancedFields} rule={rule} onPatch={patch} /> : null}
       <AdvancedScalarFields entity={rule} handledFields={dnsRulePrimaryFields} entityRef={{ kind: "dns-rule", index }} updateField={(_, field, value) => patch({ [field]: value })} />
+      <AdvancedNonScalarFields entity={rule} handledFields={dnsRulePrimaryFields} entityRef={{ kind: "dns-rule", index }} updateField={(_, field, value) => patch({ [field]: value })} />
     </div>
   );
 }
