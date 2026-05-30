@@ -1801,6 +1801,13 @@ button.sbc-port__action:focus-visible {
   animation: none;
 }
 
+/* V8-S2: a dangling edge (ref to a missing tag) reads as a broken red dashed line into the synthesized
+   "missing reference" node, so unresolved wiring is visible on the canvas, not just in diagnostics. */
+.react-flow__edge-path.sbc-edge__path--dangling {
+  stroke: #ff5470;
+  stroke-dasharray: 5 5;
+}
+
 button.sbc-edge-remove {
   position: absolute;
   z-index: 5;
