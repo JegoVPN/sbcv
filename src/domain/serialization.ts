@@ -82,6 +82,17 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
       coerceStringList(item as Record<string, unknown>, "fallback_network_type");
     }
   }
+  // DF1 — `tun.address` is string | string[]; the Address control reads/writes the array form, so a
+  // string-form value rendered blank and the first edit overwrote the original string with an array of the
+  // typed text (silent data loss). Coerce to the array shape at import — string ↔ single-element array is
+  // sing-box-equivalent (both stable + testing binaries `check` exit 0 on either form).
+  if (Array.isArray(config.inbounds)) {
+    for (const item of config.inbounds) {
+      if (!item || typeof item !== "object") continue;
+      if ((item as Record<string, unknown>).type !== "tun") continue;
+      coerceStringList(item as Record<string, unknown>, "address");
+    }
+  }
   return config;
 }
 
