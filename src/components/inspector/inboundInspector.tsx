@@ -79,6 +79,39 @@ export function InboundInspector(props: InboundSectionProps) {
                   <option value="mixed">mixed</option>
                 </select>
               </label>
+              <label className="field" data-testid="tun-interface-name">
+                <span>Interface name</span>
+                <input
+                  value={typeof entity.interface_name === "string" ? entity.interface_name : ""}
+                  placeholder="auto-selected if empty"
+                  onChange={(event) => {
+                    const next = event.target.value.trim();
+                    updateField(entityRef, "interface_name", next ? next : undefined);
+                  }}
+                />
+              </label>
+              <label className="field" data-testid="tun-mtu">
+                <span>MTU</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={typeof entity.mtu === "number" ? entity.mtu : ""}
+                  placeholder="9000"
+                  onChange={(event) => {
+                    const raw = event.target.value;
+                    const parsed = Number(raw);
+                    updateField(entityRef, "mtu", raw === "" || !Number.isFinite(parsed) ? undefined : parsed);
+                  }}
+                />
+              </label>
+              <label className="toggle-row" data-testid="tun-strict-route">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.strict_route)}
+                  onChange={(event) => updateField(entityRef, "strict_route", event.target.checked || undefined)}
+                />
+                <span>Strict route (enforce strict routing when `auto_route` is enabled)</span>
+              </label>
               <label className="field">
                 <span>Route address (CIDR)</span>
                 <input
