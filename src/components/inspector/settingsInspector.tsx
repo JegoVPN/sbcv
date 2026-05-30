@@ -302,6 +302,15 @@ export function SettingsInspector({
                     <option value="rule">rule</option>
                     <option value="global">global</option>
                     <option value="direct">direct</option>
+                    {/* DF4 — default_mode is a free-form string (matched against the `clash_mode` rule
+                        item; the doc's example is the capitalized `Rule`). Keep an imported value that
+                        isn't one of the canonical modes selectable so it displays as-is and the first
+                        interaction never silently rewrites it. */}
+                    {typeof clashApi.default_mode === "string" &&
+                    clashApi.default_mode &&
+                    !["rule", "global", "direct"].includes(clashApi.default_mode) ? (
+                      <option value={clashApi.default_mode}>{clashApi.default_mode}</option>
+                    ) : null}
                   </select>
                 </label>
                 <label className="field">
