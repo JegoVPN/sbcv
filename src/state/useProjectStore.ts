@@ -58,7 +58,7 @@ import {
   serviceTypeForPaletteKind,
 } from "../domain/protocols";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "../domain/sharedFieldRegistry";
-import { targetById, targetFromVersion } from "../domain/targets";
+import { defaultVersionForChannel, targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
 import type { Diagnostic, EntityRef, ProjectLayout, SbcProject, SingBoxChannel, SingBoxConfig, SingBoxTargetId } from "../domain/types";
@@ -202,10 +202,6 @@ type ProjectStore = {
   captureGraphPositions: (token: number, nodes: Array<{ id: string; position: { x: number; y: number } }>) => void;
   setNodePosition: (id: string, position: { x: number; y: number }) => void;
 };
-
-function defaultVersionForChannel(channel: SingBoxChannel) {
-  return channel === "stable" ? "1.13" : "1.14";
-}
 
 function computeDiagnostics(config: SingBoxConfig, channel: SingBoxChannel, version: string = defaultVersionForChannel(channel)) {
   return validateConfig(config, channel, version);
@@ -709,7 +705,7 @@ const initialConfig = createStableTunSplitConfig();
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   channel: "stable",
-  version: "1.13",
+  version: defaultVersionForChannel("stable"),
   config: initialConfig,
   layout: { positions: {} },
   selectedId: null,
@@ -782,12 +778,17 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       freshLoadToken: state.freshLoadToken + 1,
     })),
   setChannel: (channel) =>
-    set((state) => ({
-      ...resetValidationState(),
-      channel,
-      version: channel === "stable" ? "1.13" : "1.14",
-      diagnostics: computeDiagnostics(state.config, channel),
-    })),
+    set((state) => {
+      // Single source for the channel's default version, and pass it explicitly to the diagnostics
+      // recompute so state.version and the version the diagnostics were computed at can never drift.
+      const version = defaultVersionForChannel(channel);
+      return {
+        ...resetValidationState(),
+        channel,
+        version,
+        diagnostics: computeDiagnostics(state.config, channel, version),
+      };
+    }),
   setTarget: (id) =>
     set((state) => {
       const target = targetById(id);
