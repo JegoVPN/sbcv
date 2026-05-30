@@ -27,3 +27,30 @@ test("TUN Platform HTTP Proxy fields are usable (field--checklist not collapsed)
   await portInput.fill("8080");
   await expect(portInput).toHaveValue("8080");
 });
+
+// R1b — inspector control fonts are pinned to ~14px and don't inherit the (larger) inspector/mobile font,
+// so input/select values no longer render bigger + heavier than their labels (the reported screenshot).
+const computedFontSize = (locator: import("@playwright/test").Locator) =>
+  locator.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+
+for (const view of [
+  { name: "desktop", width: 1280, height: 900 },
+  { name: "mobile", width: 390, height: 844 },
+] as const) {
+  test(`inspector input/select font is pinned (~14px), not oversized — ${view.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: view.width, height: view.height });
+    await page.goto("/");
+    await page.getByTestId("node-inbound:tun-in").click();
+
+    const input = page.getByTestId("tun-mtu").locator("input");
+    const select = page.getByTestId("tun-stack-field").locator("select");
+    const inputFs = await computedFontSize(input);
+    const selectFs = await computedFontSize(select);
+
+    // Pinned to the 14px label scale (not the larger inherited inspector font), on both viewports.
+    expect(inputFs, "input value font-size").toBeGreaterThanOrEqual(13);
+    expect(inputFs).toBeLessThanOrEqual(15);
+    expect(selectFs, "select value font-size").toBeGreaterThanOrEqual(13);
+    expect(selectFs).toBeLessThanOrEqual(15);
+  });
+}
