@@ -19,24 +19,29 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: MobileMenuSheetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { channel, version, setTarget, importJson, diagnostics } = useProjectStore(
-    useShallow((state) => ({
-      channel: state.channel,
-      version: state.version,
-      setTarget: state.setTarget,
-      importJson: state.importJson,
-      diagnostics: state.diagnostics,
-    })),
-  );
+  const { channel, version, setTarget, importJson, diagnostics, runOfficialCheck, officialCheckConfigured } =
+    useProjectStore(
+      useShallow((state) => ({
+        channel: state.channel,
+        version: state.version,
+        setTarget: state.setTarget,
+        importJson: state.importJson,
+        diagnostics: state.diagnostics,
+        runOfficialCheck: state.runOfficialCheck,
+        officialCheckConfigured: state.officialCheckConfigured,
+      })),
+    );
   const target = targetFromVersion(channel, version);
   // V2 hard gate (parity with desktop): structural errors disable Export entirely.
   const exportBlockers = blockingExportErrors(diagnostics);
 
-  function exportConfig() {
-    // Same hard gate as desktop. Read config/diagnostics from the store; only close the sheet when the
-    // export actually proceeded (blocked/cancelled keeps the sheet open).
-    const { config, diagnostics: current, pushToast } = useProjectStore.getState();
-    const outcome = exportConfigGated(config, current);
+  async function exportConfig() {
+    // Same hard gate as desktop, incl. W5: gate on the official binary check's structural errors when an
+    // endpoint is configured. Only close the sheet when the export actually proceeded.
+    if (officialCheckConfigured) await runOfficialCheck();
+    const { config, diagnostics: current, officialDiagnostics, pushToast } = useProjectStore.getState();
+    const gateDiagnostics = officialCheckConfigured ? [...current, ...officialDiagnostics] : current;
+    const outcome = exportConfigGated(config, gateDiagnostics);
     if (outcome.exported) {
       onClose();
     } else if (outcome.reason === "blocked") {

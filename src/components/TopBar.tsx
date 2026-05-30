@@ -78,6 +78,7 @@ export function TopBar() {
     checkNotice,
     isChecking,
     isOfficialChecking,
+    officialCheckConfigured,
   } = useProjectStore(
     useShallow((state) => ({
       channel: state.channel,
@@ -94,6 +95,7 @@ export function TopBar() {
       checkNotice: state.checkNotice,
       isChecking: state.isChecking,
       isOfficialChecking: state.isOfficialChecking,
+      officialCheckConfigured: state.officialCheckConfigured,
     })),
   );
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -176,10 +178,18 @@ export function TopBar() {
     void runOfficialCheck();
   }
 
-  function exportConfig() {
-    // Gate on the synchronous semantic `diagnostics` slice (never cleared mid-flight, unlike
-    // official/binary diagnostics) so the gate can't be raced into letting an invalid config through.
-    const outcome = exportConfigGated(useProjectStore.getState().config, diagnostics);
+  async function exportConfig() {
+    // W5 (M1): when the official sing-box binary check is configured, PROVE validity before export —
+    // run it and gate on its non-platform (structural) errors too, not just the semantic heuristic.
+    // Platform/OS-specific official errors stay advisory (handled in blockingExportErrors), so a config
+    // authored for another target OS is never blocked. Without an endpoint, the semantic gate is the only
+    // one (and the UX says so). The semantic slice is never cleared mid-flight, so the gate can't be raced.
+    let gateDiagnostics = diagnostics;
+    if (officialCheckConfigured) {
+      await runOfficialCheck();
+      gateDiagnostics = [...diagnostics, ...useProjectStore.getState().officialDiagnostics];
+    }
+    const outcome = exportConfigGated(useProjectStore.getState().config, gateDiagnostics);
     if (!outcome.exported && outcome.reason === "blocked") {
       // Belt-and-suspenders if the disabled button is somehow bypassed: surface why + open the list.
       useProjectStore.getState().pushToast({

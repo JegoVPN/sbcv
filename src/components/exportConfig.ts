@@ -37,8 +37,35 @@ export function downloadProject(project: SbcProject): void {
  * platform errors (e.g. "resolved service is only supported on Linux") that are environment-dependent
  * and must not block a config authored for a different target OS (advisory layer handles those).
  */
+/**
+ * W5 (M1): an official sing-box-binary error is a runtime/platform error when it depends on the host OS
+ * or a build tag (e.g. "resolved service is only supported on Linux", "requires ... with_tailscale tag").
+ * Those must NOT block a config authored for a different target OS — they stay advisory. Every other
+ * official error (unknown field, parse failure, missing/invalid value) is a structural rejection that
+ * holds on every platform and SHOULD block, like a semantic error. The regex is intentionally generous at
+ * catching platform phrasings: a missed platform error would wrongly block a cross-OS config, whereas a
+ * missed structural error merely degrades to the (still-present) semantic heuristic.
+ */
+const OFFICIAL_PLATFORM_ERROR_RE =
+  /(only|not) supported on|requires .*\b(tag|build|builds)\b|built with|unavailable on|on (linux|macos|windows|android|darwin|ios)\b|platform/i;
+
+export function isPlatformOfficialError(diagnostic: Diagnostic): boolean {
+  return diagnostic.source === "official" && OFFICIAL_PLATFORM_ERROR_RE.test(diagnostic.message);
+}
+
+/**
+ * Errors that HARD-BLOCK an export: deterministic structural problems sing-box rejects on every platform.
+ * Two sources qualify — the `semantic` heuristic linter (V1 enum/type, V3 missing-tag, references, required
+ * fields, version gates) and, once the official sing-box-binary check has run (W5/M1), its non-platform
+ * `official` errors (the authoritative proof). Platform/OS-specific official errors are excluded (advisory)
+ * so a config authored for a different target OS is never blocked here.
+ */
 export function blockingExportErrors(diagnostics: Diagnostic[]): Diagnostic[] {
-  return diagnostics.filter((diagnostic) => diagnostic.level === "error" && diagnostic.source === "semantic");
+  return diagnostics.filter(
+    (diagnostic) =>
+      diagnostic.level === "error" &&
+      (diagnostic.source === "semantic" || (diagnostic.source === "official" && !isPlatformOfficialError(diagnostic))),
+  );
 }
 
 export type ExportOutcome =
