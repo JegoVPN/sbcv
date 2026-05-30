@@ -19,6 +19,7 @@ test("mobile shell — Check / Import / Export / node inspector flow", async ({ 
   // Palette is hidden; only fit-view button in the bottom controls
   await expect(page.getByLabel("Node palette")).toHaveCount(0);
   await expect(page.locator(".react-flow__minimap")).toHaveCount(0);
+  await expect(page.locator(".react-flow__attribution")).toHaveCount(0);
   await expect(page.locator(".react-flow__controls-button")).toHaveCount(1);
 
   // Status pill is interactive and Check button is reachable directly
