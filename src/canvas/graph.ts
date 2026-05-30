@@ -142,6 +142,19 @@ function stringRefs(value: string | string[] | undefined): string[] {
   return value ? [value] : [];
 }
 
+// DF5 — a logical rule (`{type:"logical", rules:[…]}`) nests its matchers inside `rules`, so a `rule_set`
+// referenced there is invisible to a top-level `rule.rule_set` read. Collect rule_set refs from the rule
+// and any nested rules recursively so logical DNS rules still draw their rule-set edges.
+function collectRuleSetRefs(rule: Record<string, unknown> | undefined): string[] {
+  if (!rule || typeof rule !== "object") return [];
+  const refs = [...stringRefs(rule.rule_set as string | string[] | undefined)];
+  const nested = rule.rules;
+  if (Array.isArray(nested)) {
+    for (const sub of nested) refs.push(...collectRuleSetRefs(sub as Record<string, unknown>));
+  }
+  return refs;
+}
+
 function visualizeRouteRulesCount(count: number) {
   return Math.min(count, MAX_VISUAL_RULE_NODES);
 }
@@ -641,7 +654,8 @@ export function deriveGraph(
         if (rule.server && dnsRuleAllowsServer(rule)) {
           edges.push(makeEdge(formatEdgeId("dns-rule", index, rule.server), id, `dns-server:${rule.server}`, "dns-server", "dns-rule"));
         }
-        const ruleSetRefs = stringRefs(rule.rule_set);
+        // DF5 — collect rule_set refs from nested logical rules too, not just the top-level field.
+        const ruleSetRefs = [...new Set(collectRuleSetRefs(rule as unknown as Record<string, unknown>))];
         ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
@@ -1174,8 +1188,10 @@ function dnsServerSubtitle(server: DnsServerConfig) {
 
 function endpointSubtitle(endpoint: EndpointConfig) {
   if (endpoint.type === "wireguard") {
+    // DF5 — `address` is the LOCAL tunnel interface address, not the peer/server; label it so the subtitle
+    // is not misread as the remote endpoint.
     const address = Array.isArray(endpoint.address) ? endpoint.address.join(", ") : "";
-    return address ? `wireguard ${address}` : "wireguard endpoint";
+    return address ? `wireguard local ${address}` : "wireguard endpoint";
   }
   if (endpoint.type === "tailscale") {
     return typeof endpoint.hostname === "string" && endpoint.hostname

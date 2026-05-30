@@ -170,6 +170,16 @@ export function EndpointInspector({
                   </fieldset>
                 );
               })()}
+              {/* DF5 — `system` selects the system TUN stack (vs the default gVisor userspace stack); it was
+                  a bare, unexplained Advanced toggle. Promote it to a named, annotated control. */}
+              <label className="toggle-row" data-testid="wireguard-system">
+                <input
+                  type="checkbox"
+                  checked={entity.system === true}
+                  onChange={(event) => updateField(entityRef, "system", event.target.checked || undefined)}
+                />
+                <span>System interface (use the system TUN stack instead of gVisor; requires privilege)</span>
+              </label>
             </>
           ) : null}
           {entityType === "tailscale" ? (

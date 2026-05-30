@@ -113,13 +113,14 @@ export function DnsServerInspector({
                 h3: 443,
               };
               const defaultPort = entityType && portDefaultByType[entityType] ? portDefaultByType[entityType] : 53;
-              const portValue = typeof entity.server_port === "number" ? entity.server_port : defaultPort;
+              // DF5 — show the protocol default as a placeholder hint, not as a concrete `value`: an unset
+              // server_port must read as empty (it is not exported) rather than masquerading as a set port.
               return (
                 <label className="field">
                   <span>Port</span>
                   <input
                     type="number"
-                    value={portValue}
+                    value={typeof entity.server_port === "number" ? entity.server_port : ""}
                     onChange={(event) => {
                       const next = Number(event.target.value);
                       updateField(entityRef, "server_port", Number.isFinite(next) && next > 0 ? next : undefined);
