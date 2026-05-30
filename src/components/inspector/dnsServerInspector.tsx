@@ -5,7 +5,7 @@ import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/type
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { PlatformBanner } from "./controls";
 import { dnsServerHandledFieldsForChannel } from "./handledFields";
-import { endpointTags, fromList, type InspectorEntity, objectField, type UpdateField, withUniqueBlankKey } from "./helpers";
+import { endpointTags, fromList, type InspectorEntity, objectField, toList, type UpdateField, withUniqueBlankKey } from "./helpers";
 
 // C14 — the dns-server entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "dns-server"` branch.
@@ -291,6 +291,22 @@ export function DnsServerInspector({
                 value={typeof entity.interface === "string" ? entity.interface : ""}
                 placeholder="(default interface)"
                 onChange={(event) => updateField(entityRef, "interface", event.target.value || undefined)}
+              />
+            </label>
+          ) : null}
+          {entityType === "mdns" ? (
+            // mdns `interface` is a List (string[]) of interface names to send queries on — distinct from
+            // the dhcp single-string control above (DF2: it had no editor for mdns and was excluded from
+            // the Advanced fallback).
+            <label className="field" data-testid="mdns-interface">
+              <span>Interface (mDNS query interfaces)</span>
+              <input
+                value={toList(entity.interface)}
+                placeholder="en0, en1 — all up/multicast interfaces if empty"
+                onChange={(event) => {
+                  const next = fromList(event.target.value);
+                  updateField(entityRef, "interface", next.length ? next : undefined);
+                }}
               />
             </label>
           ) : null}

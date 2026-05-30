@@ -243,6 +243,17 @@ export function EndpointInspector({
                   }}
                 />
               </label>
+              <label className="field">
+                <span>Relay Server Static Endpoints (since sing-box 1.13.0)</span>
+                <input
+                  value={toList(entity.relay_server_static_endpoints)}
+                  placeholder="192.0.2.1:41641, 198.51.100.2:41641"
+                  onChange={(event) => {
+                    const next = fromList(event.target.value);
+                    updateField(entityRef, "relay_server_static_endpoints", next.length ? next : undefined);
+                  }}
+                />
+              </label>
             </>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={endpointHandledFields} entityRef={entityRef} updateField={updateField} />
