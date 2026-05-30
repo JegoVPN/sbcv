@@ -84,6 +84,12 @@ export interface SchemaRow {
    * this is forward-looking metadata that a later slice consumes (the markers test asserts its values).
    */
   channel?: Channel;
+  /**
+   * Minimum sing-box version this TYPE needs (upstream "Since sing-box X"). Single source for both the
+   * diagnostics type-version gate and the canvas "needs X" badge — minVersions.ts derives TYPE_MIN_VERSION
+   * from these rows so the lint and the badge can never disagree. Undefined = available on every target.
+   */
+  minVersion?: string;
   /** Byte-identical factory used by commands.create*(). */
   factory: (tag: string) => Record<string, unknown>;
   /** Channel-invariant shared-field groups for this (kind,type), in render order. */
@@ -369,6 +375,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "anytls",
     creatable: true,
     paletteKind: "inbound-anytls",
+    minVersion: "1.12",
     tlsRequired: true,
     factory: (tag) => ({
       type: "anytls",
@@ -423,6 +430,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "cloudflared",
     creatable: true,
     paletteKind: "inbound-cloudflared",
+    minVersion: "1.14",
     channel: "testing",
     requiredFields: ["token"],
     factory: (tag) => ({ type: "cloudflared", tag, token: "" }),
@@ -558,6 +566,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "naive",
     creatable: true,
     paletteKind: "naive-out",
+    minVersion: "1.13",
     proxy: true,
     tlsRequired: true,
     factory: (tag) => ({
@@ -716,6 +725,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "anytls",
     creatable: true,
     paletteKind: "anytls-out",
+    minVersion: "1.12",
     proxy: true,
     tlsRequired: true,
     factory: (tag) => ({
@@ -902,6 +912,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "mdns",
     creatable: false,
     paletteKind: "dns-mdns",
+    minVersion: "1.14",
     channel: "testing",
     // mdns is 1.14 testing-only (creatable:false → import-only). TYPE_MIN_VERSION gates it: the diagnostics
     // type-version check rejects it on a pre-1.14 target and an imported node badges "needs 1.14" (W3/M5).
@@ -956,6 +967,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "tailscale",
     creatable: true,
     paletteKind: "endpoint-tailscale",
+    minVersion: "1.12",
     factory: (tag) => ({
       type: "tailscale",
       tag,
@@ -1012,6 +1024,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "ccm",
     creatable: true,
     paletteKind: "service-ccm",
+    minVersion: "1.13",
     factory: (tag) => ({ type: "ccm", tag, listen: LISTEN_LOCAL, listen_port: 8080, users: [] }),
     sharedGroups: ["listen", "tls"],
   },
@@ -1020,6 +1033,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "ocm",
     creatable: true,
     paletteKind: "service-ocm",
+    minVersion: "1.13",
     factory: (tag) => ({
       type: "ocm",
       tag,
@@ -1037,6 +1051,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "hysteria-realm",
     creatable: true,
     paletteKind: "service-hysteria-realm",
+    minVersion: "1.14",
     channel: "testing",
     factory: (tag) => ({
       type: "hysteria-realm",

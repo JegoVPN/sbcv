@@ -3,26 +3,18 @@
 // diagnostics TYPE gates (naive / ccm / ocm), so the "needs X" badge and the linter can never disagree.
 // Lives in domain (not canvas) to preserve the no-domain→canvas import layering. (C7)
 //
+// W10/A1 — DERIVED from SCHEMA_ROWS[].minVersion so the version-per-type lives ON the schema row (the
+// single declarative table), not in a parallel hand-maintained map. The 1.12 types are dormant today
+// (the lowest selectable target is 1.12, so atLeast is always true); the 1.13/1.14 entries drive the
+// real badges + gates. (The naive INBOUND predates 1.13, so only the naive OUTBOUND row carries 1.13.)
+//
 // Field-level "Since 1.13.0" gates (kTLS / curve_preferences / route bypass / …) stay as literal
 // `atLeast` calls in diagnostics — this table is TYPE-keyed; those features are type-agnostic.
-export const TYPE_MIN_VERSION: Record<string, string> = {
-  // 1.12 types — dormant today (the lowest selectable target is 1.12, so atLeast is always true), kept
-  // for correctness if a sub-1.12 target is ever added.
-  "inbound:anytls": "1.12",
-  "outbound:anytls": "1.12",
-  "endpoint:tailscale": "1.12",
-  // 1.13 types (only the naive OUTBOUND is new in 1.13; the naive INBOUND predates it).
-  "outbound:naive": "1.13",
-  "service:ccm": "1.13",
-  "service:ocm": "1.13",
-  // 1.14 types (testing-only) — these actually badge "needs 1.14" on the default 1.13 target.
-  "inbound:cloudflared": "1.14",
-  "service:hysteria-realm": "1.14",
-  // mdns DNS-server is 1.14-only (creatable:false, so import-only); gated here so the diagnostics
-  // type-version check rejects it on a pre-1.14 target (W3/M5). It now also badges "needs 1.14" on
-  // an imported node, consistent with the other 1.14 types.
-  "dns-server:mdns": "1.14",
-};
+import { SCHEMA_ROWS } from "./schemaRegistry";
+
+export const TYPE_MIN_VERSION: Record<string, string> = Object.fromEntries(
+  SCHEMA_ROWS.filter((row) => row.minVersion).map((row) => [`${row.kind}:${row.type}`, row.minVersion!]),
+);
 
 export function typeMinVersion(kind: string, type: string): string | undefined {
   return TYPE_MIN_VERSION[`${kind}:${type}`];
