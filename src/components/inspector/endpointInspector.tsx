@@ -138,6 +138,20 @@ export function EndpointInspector({
                             placeholder="25s"
                           />
                         </label>
+                        <label className="field" data-testid={`wireguard-peer-reserved-${index}`}>
+                          <span>Reserved (3 bytes)</span>
+                          <input
+                            value={Array.isArray(peer.reserved) ? (peer.reserved as number[]).join(", ") : ""}
+                            placeholder="0, 0, 0"
+                            onChange={(event) => {
+                              const parts = event.target.value.split(",").map((p) => p.trim()).filter((p) => p !== "");
+                              const nums = parts.map(Number);
+                              patchPeer(index, {
+                                reserved: parts.length && nums.every((n) => Number.isInteger(n)) ? nums : undefined,
+                              });
+                            }}
+                          />
+                        </label>
                         <button
                           type="button"
                           className="icon-danger"
