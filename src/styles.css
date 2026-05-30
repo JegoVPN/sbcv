@@ -1914,6 +1914,53 @@ button.sbc-edge-remove:focus-visible {
   resize: vertical;
 }
 
+/* A fieldset grouping nested controls (object subforms, repeaters, key/value editors). Without a
+   dedicated rule it inherits the .field two-column grid and its legend / nested rows / toggles / buttons
+   collapse into one ~104px column — the TUN Platform HTTP Proxy "server_port shrinks to ~30px / can't
+   type" class of bug. Lay the fieldset out as a single full-width column. */
+.field--checklist {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  min-inline-size: 0;
+  margin-bottom: 12px;
+}
+.field--checklist > legend {
+  color: #8b96a1;
+  font-size: 12px;
+  font-weight: 800;
+}
+/* Nested rows inside a checklist stack label above input, so the input keeps a usable width (a nested
+   two-column .field inside the single-column parent would re-collapse the input). */
+.field--checklist .field {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 4px;
+  margin-bottom: 0;
+}
+/* A repeater row lays its fields side-by-side and wraps on narrow widths; the trailing remove button
+   keeps its intrinsic size. */
+.field--checklist .rule-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 10px;
+}
+.field--checklist .rule-row > .field {
+  flex: 1 1 140px;
+  min-inline-size: 0;
+}
+.field--checklist .rule-row > button {
+  flex: 0 0 auto;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: #717c88;
+  opacity: 1;
+}
+
 .inspector-section-title {
   margin: 18px 0 10px;
   color: #8b96a1;
