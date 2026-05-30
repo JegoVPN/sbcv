@@ -88,7 +88,7 @@ function createReferenceCoverageConfig(): SingBoxConfig {
       final: "proxy",
       default_domain_resolver: { server: "local-dns", strategy: "ipv4_only" },
       default_http_client: "client",
-      rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"] }, { action: "resolve", server: "local-dns" }],
+      rules: [{ inbound: ["tun-in"], outbound: "proxy", rule_set: ["rs"], preferred_by: ["ts-ep"] }, { action: "resolve", server: "local-dns" }],
       rule_set: [
         {
           type: "remote",
@@ -272,17 +272,22 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "endpoint",
     tag: "ts-ep",
     nextTag: "tailnet",
-    paths: ["/dns/servers/*/endpoint", "/services/*/verify_client_endpoint", "/certificate_providers/*/endpoint"],
+    paths: ["/dns/servers/*/endpoint", "/services/*/verify_client_endpoint", "/certificate_providers/*/endpoint", "/route/rules/*/preferred_by"],
     staleDiagnosticCodes: ["missing-dns-server-endpoint", "missing-derp-verify-endpoint"],
     assertRenamed: (config) => {
       expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.endpoint).toBe("tailnet");
       expect(config.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toEqual(["tailnet"]);
       expect(config.certificate_providers?.[0]?.endpoint).toBe("tailnet");
+      // VT2 (M3): route.rules[].preferred_by is an endpoint-tag string[] — rename cascades to it.
+      expect(config.route?.rules?.[0]?.preferred_by).toEqual(["tailnet"]);
     },
     assertDeleted: (config) => {
       expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.endpoint).toBeUndefined();
       expect(config.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toBeUndefined();
       expect(config.certificate_providers?.[0]?.endpoint).toBeUndefined();
+      // Deleting the only referenced endpoint empties the list (op.stringArray drops the tag; the empty
+      // array is export-pruned), matching the route_address_set stringArray cascade — no dangling ref.
+      expect(config.route?.rules?.[0]?.preferred_by).toEqual([]);
     },
   },
   {

@@ -261,6 +261,13 @@ function visitEndpointRefs(config: SingBoxConfig, op: RefOp) {
     service.verify_client_endpoint = op.list(service.verify_client_endpoint as string | string[] | undefined);
   });
   config.certificate_providers?.forEach((provider) => applyScalarField(provider as MutableRecord, "endpoint", op));
+  // VT2 (M3): route.rules[].preferred_by is an endpoint-tag string[] (route/rule.md) — which endpoint to
+  // egress through. Cascade rename/delete to it so a renamed/removed endpoint never leaves it dangling.
+  // Guarded like route_address_set so rules without preferred_by are untouched (no spurious undefined key).
+  config.route?.rules?.forEach((rule) => {
+    const obj = rule as MutableRecord;
+    if (obj.preferred_by !== undefined) obj.preferred_by = op.stringArray(obj.preferred_by);
+  });
 }
 
 function visitServiceRefs(config: SingBoxConfig, op: RefOp) {
@@ -338,7 +345,7 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   ),
   entry(
     "endpoint",
-    ["/dns/servers/*/endpoint", "/services/*/verify_client_endpoint", "/certificate_providers/*/endpoint"],
+    ["/dns/servers/*/endpoint", "/services/*/verify_client_endpoint", "/certificate_providers/*/endpoint", "/route/rules/*/preferred_by"],
     visitEndpointRefs,
   ),
   entry("service", ["/dns/servers/*/service"], visitServiceRefs),
@@ -367,6 +374,7 @@ export const INSPECTOR_ONLY_REFERENCE_PATHS: Record<string, string> = {
   "/route/default_domain_resolver": "route default domain resolver — Inspector dial <select>",
   "/dns/servers/*/address_resolver": "legacy DNS server address_resolver — a dns-server tag (legacy.md); cascade-tracked for rename/delete but Inspector-only (no canvas edge), like other legacy fields",
   "*/tls/certificate_provider": "tls.certificate_provider — Inspector TLS <select>",
+  "/route/rules/*/preferred_by": "route rule preferred_by — endpoint-tag string[] (which endpoint to egress through); Inspector list edit, like selector members, not a canvas edge",
   "/inbounds/*/route_address_set": "tun route_address_set — Inspector CSV of rule-set tags",
   "/inbounds/*/route_exclude_address_set": "tun route_exclude_address_set — Inspector CSV of rule-set tags",
   "/experimental/v2ray_api/stats/inbounds": "v2ray stats — Inspector list of inbound tags",
