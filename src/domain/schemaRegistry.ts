@@ -23,6 +23,44 @@ export type SchemaEntityKind =
   | "service"
   | "rule-set";
 
+/** Control kind for a leaf scalar field — drives the data-driven renderer (V0-S2) and V1 validation. */
+export type ScalarFieldType = "string" | "number" | "boolean" | "enum";
+
+/** One allowed value of an enum field, with optional UI label + version/channel gating. */
+export interface SchemaEnumOption {
+  /** The raw value written to the config (and validated by V1). */
+  value: string;
+  /** UI label when it differs from the raw value (e.g. "1 (no auth)"); the renderer falls back to value. */
+  label?: string;
+  /** Value introduced in this sing-box version (V1/V4 gate creation/import on it). */
+  since?: string;
+  /** Value removed/invalid from this version on. */
+  until?: string;
+  /** Value only valid on this channel (e.g. hysteria2 obfs `gecko` is testing-only, 1.14). */
+  channel?: Channel;
+  /** Legacy value kept for round-trip + validation, but not offered as a fresh choice. */
+  deprecated?: boolean;
+}
+
+/**
+ * Per-field type/enum metadata for a leaf scalar field of a (kind,type). Seeded from the protocol
+ * sub-docs (the `doc` is the single source of truth the markers test pins every value to). This is the
+ * data底座 the V1 enum/type validation and the V0-S2 data-driven renderer both consume.
+ */
+export interface SchemaFieldMeta {
+  /** Field path within the entity object, e.g. ["method"] or ["obfs","type"]. */
+  path: string[];
+  type: ScalarFieldType;
+  /** Allowed values when type==="enum" (a closed set; empty/undefined config value = unset, never invalid). */
+  enum?: SchemaEnumOption[];
+  /** Field introduced in this sing-box version. */
+  since?: string;
+  /** Field only valid on this channel. */
+  channel?: Channel;
+  /** Upstream doc this field's type/enum is transcribed from, relative to `<channel>/configuration/`. */
+  doc: string;
+}
+
 export interface SchemaRow {
   kind: SchemaEntityKind;
   type: string;
@@ -52,7 +90,38 @@ export interface SchemaRow {
   tlsRequired?: boolean;
   /** Baseline required scalar fields beyond the universal type+tag (diagnostics), e.g. cloudflared token. */
   requiredFields?: string[];
+  /** Per-field type/enum metadata for leaf scalar fields (V0-S1) — drives V1 validation + V0-S2 renderer. */
+  fields?: SchemaFieldMeta[];
 }
+
+// Reusable enum option sets (shared by reference — `fields` arrays are read-only metadata).
+const NETWORK_ENUM: SchemaEnumOption[] = [{ value: "tcp" }, { value: "udp" }];
+const PACKET_ENCODING_ENUM: SchemaEnumOption[] = [{ value: "packetaddr" }, { value: "xudp" }];
+const VLESS_FLOW_ENUM: SchemaEnumOption[] = [{ value: "xtls-rprx-vision" }];
+const SHADOWTLS_VERSION_ENUM: SchemaEnumOption[] = [{ value: "1" }, { value: "2" }, { value: "3" }];
+// shared/shadowsocks.md outbound method list: 2022 + AEAD + legacy stream ciphers (all round-trip-valid).
+const SS_METHOD_ENUM: SchemaEnumOption[] = [
+  { value: "2022-blake3-aes-128-gcm" },
+  { value: "2022-blake3-aes-256-gcm" },
+  { value: "2022-blake3-chacha20-poly1305" },
+  { value: "none" },
+  { value: "aes-128-gcm" },
+  { value: "aes-192-gcm" },
+  { value: "aes-256-gcm" },
+  { value: "chacha20-ietf-poly1305" },
+  { value: "xchacha20-ietf-poly1305" },
+  { value: "aes-128-ctr", deprecated: true },
+  { value: "aes-192-ctr", deprecated: true },
+  { value: "aes-256-ctr", deprecated: true },
+  { value: "aes-128-cfb", deprecated: true },
+  { value: "aes-192-cfb", deprecated: true },
+  { value: "aes-256-cfb", deprecated: true },
+  { value: "rc4-md5", deprecated: true },
+  { value: "chacha20-ietf", deprecated: true },
+  { value: "xchacha20", deprecated: true },
+];
+// inbound/shadowsocks.md method table lists the modern AEAD/2022 set only — no legacy stream ciphers.
+const SS_METHOD_MODERN_ENUM: SchemaEnumOption[] = SS_METHOD_ENUM.filter((option) => !option.deprecated);
 
 const LISTEN_LOCAL = "127.0.0.1";
 
@@ -65,6 +134,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     paletteKind: "inbound-direct",
     factory: (tag) => ({ type: "direct", tag, listen: LISTEN_LOCAL, listen_port: 2081 }),
     sharedGroups: ["listen"],
+    fields: [{ path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/direct.md" }],
   },
   {
     kind: "inbound",
@@ -117,6 +187,10 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       password: "change-me",
     }),
     sharedGroups: ["listen", "multiplex", "tcp-brutal"],
+    fields: [
+      { path: ["method"], type: "enum", enum: SS_METHOD_MODERN_ENUM, doc: "inbound/shadowsocks.md" },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/shadowsocks.md" },
+    ],
   },
   {
     kind: "inbound",
@@ -163,6 +237,23 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["listen", "tls"],
+    fields: [
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/naive.md" },
+      {
+        path: ["quic_congestion_control"],
+        type: "enum",
+        since: "1.13",
+        doc: "inbound/naive.md",
+        enum: [
+          { value: "bbr" },
+          { value: "bbr_standard" },
+          { value: "bbr2" },
+          { value: "bbr2_variant" },
+          { value: "cubic" },
+          { value: "reno" },
+        ],
+      },
+    ],
   },
   {
     kind: "inbound",
@@ -197,6 +288,17 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       handshake: { server: "google.com", server_port: 443 },
     }),
     sharedGroups: ["listen", "dial"],
+    fields: [
+      // version is stored numeric (factory `version: 3`); V1 compares String(value) against these.
+      { path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, doc: "inbound/shadowtls.md" },
+      {
+        path: ["wildcard_sni"],
+        type: "enum",
+        since: "1.12",
+        doc: "inbound/shadowtls.md",
+        enum: [{ value: "off" }, { value: "authed" }, { value: "all" }],
+      },
+    ],
   },
   {
     kind: "inbound",
@@ -280,6 +382,14 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       auto_route: true,
     }),
     sharedGroups: ["listen"],
+    fields: [
+      {
+        path: ["stack"],
+        type: "enum",
+        doc: "inbound/tun.md",
+        enum: [{ value: "system" }, { value: "gvisor" }, { value: "mixed" }],
+      },
+    ],
   },
   {
     kind: "inbound",
@@ -296,6 +406,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     paletteKind: "inbound-tproxy",
     factory: (tag) => ({ type: "tproxy", tag, listen: LISTEN_LOCAL, listen_port: 2080 }),
     sharedGroups: ["listen"],
+    fields: [{ path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/tproxy.md" }],
   },
   {
     kind: "inbound",
@@ -335,6 +446,15 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     proxy: true,
     factory: (tag) => ({ type: "socks", tag, server: LISTEN_LOCAL, server_port: 1080 }),
     sharedGroups: ["dial", "udp-over-tcp"],
+    fields: [
+      {
+        path: ["version"],
+        type: "enum",
+        doc: "outbound/socks.md",
+        enum: [{ value: "4" }, { value: "4a" }, { value: "5" }],
+      },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/socks.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -367,6 +487,10 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       password: "change-me",
     }),
     sharedGroups: ["dial", "multiplex", "tcp-brutal", "udp-over-tcp"],
+    fields: [
+      { path: ["method"], type: "enum", enum: SS_METHOD_ENUM, doc: "outbound/shadowsocks.md" },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/shadowsocks.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -384,6 +508,23 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       alter_id: 0,
     }),
     sharedGroups: ["dial", "tls", "multiplex", "tcp-brutal", "v2ray-transport"],
+    fields: [
+      {
+        path: ["security"],
+        type: "enum",
+        doc: "outbound/vmess.md",
+        enum: [
+          { value: "auto" },
+          { value: "none" },
+          { value: "zero" },
+          { value: "aes-128-gcm" },
+          { value: "chacha20-poly1305" },
+          { value: "aes-128-ctr", deprecated: true },
+        ],
+      },
+      { path: ["packet_encoding"], type: "enum", enum: PACKET_ENCODING_ENUM, doc: "outbound/vmess.md" },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/vmess.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -401,6 +542,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "multiplex", "tcp-brutal", "v2ray-transport"],
+    fields: [{ path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/trojan.md" }],
   },
   {
     kind: "outbound",
@@ -420,6 +562,14 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "udp-over-tcp"],
+    fields: [
+      {
+        path: ["quic_congestion_control"],
+        type: "enum",
+        doc: "outbound/naive.md",
+        enum: [{ value: "bbr" }, { value: "bbr2" }, { value: "cubic" }, { value: "reno" }],
+      },
+    ],
   },
   {
     kind: "outbound",
@@ -449,6 +599,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "quic"],
+    fields: [{ path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/hysteria.md" }],
   },
   {
     kind: "outbound",
@@ -467,6 +618,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls"],
+    fields: [{ path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, doc: "outbound/shadowtls.md" }],
   },
   {
     kind: "outbound",
@@ -483,6 +635,11 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "multiplex", "tcp-brutal", "v2ray-transport"],
+    fields: [
+      { path: ["flow"], type: "enum", enum: VLESS_FLOW_ENUM, doc: "outbound/vless.md" },
+      { path: ["packet_encoding"], type: "enum", enum: PACKET_ENCODING_ENUM, doc: "outbound/vless.md" },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/vless.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -503,6 +660,21 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "quic"],
+    fields: [
+      {
+        path: ["congestion_control"],
+        type: "enum",
+        doc: "outbound/tuic.md",
+        enum: [{ value: "cubic" }, { value: "new_reno" }, { value: "bbr" }],
+      },
+      {
+        path: ["udp_relay_mode"],
+        type: "enum",
+        doc: "outbound/tuic.md",
+        enum: [{ value: "native" }, { value: "quic" }],
+      },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/tuic.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -522,6 +694,15 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls", "quic"],
+    fields: [
+      {
+        path: ["obfs", "type"],
+        type: "enum",
+        doc: "outbound/hysteria2.md",
+        enum: [{ value: "salamander" }, { value: "gecko", since: "1.14", channel: "testing" }],
+      },
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "outbound/hysteria2.md" },
+    ],
   },
   {
     kind: "outbound",
@@ -954,4 +1135,9 @@ export function tlsRequiredTypes(kind: SchemaEntityKind): Set<string> {
 /** Baseline required scalar fields for a (kind,type) beyond the universal type+tag (diagnostics). */
 export function requiredFieldsFor(kind: SchemaEntityKind, type: string): string[] {
   return schemaRow(kind, type)?.requiredFields ?? [];
+}
+
+/** Per-field type/enum metadata for a (kind,type) — consumed by V1 validation + V0-S2 renderer. */
+export function fieldMetaFor(kind: SchemaEntityKind, type: string): SchemaFieldMeta[] {
+  return schemaRow(kind, type)?.fields ?? [];
 }
