@@ -254,17 +254,9 @@ export function InboundSectionsB({
           ) : null}
           {entityType === "direct" ? (
             <>
-              <label className="field" data-testid="inbound-direct-network">
-                <span>Network</span>
-                <select
-                  value={typeof entity.network === "string" ? entity.network : ""}
-                  onChange={(event) => updateField(entityRef, "network", event.target.value || undefined)}
-                >
-                  <option value="">(both)</option>
-                  <option value="tcp">tcp</option>
-                  <option value="udp">udp</option>
-                </select>
-              </label>
+              <div data-testid="inbound-direct-network">
+                <SchemaEnumField kind="inbound" type="direct" field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
+              </div>
               <label className="field" data-testid="inbound-direct-override-address">
                 <span>Override Address</span>
                 <input
