@@ -18,6 +18,10 @@ export const TYPE_MIN_VERSION: Record<string, string> = {
   // 1.14 types (testing-only) — these actually badge "needs 1.14" on the default 1.13 target.
   "inbound:cloudflared": "1.14",
   "service:hysteria-realm": "1.14",
+  // mdns DNS-server is 1.14-only (creatable:false, so import-only); gated here so the diagnostics
+  // type-version check rejects it on a pre-1.14 target (W3/M5). It now also badges "needs 1.14" on
+  // an imported node, consistent with the other 1.14 types.
+  "dns-server:mdns": "1.14",
 };
 
 export function typeMinVersion(kind: string, type: string): string | undefined {
