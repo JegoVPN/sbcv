@@ -96,10 +96,13 @@ describe("VT1 — hysteria2 inbound 1.14-only fields are errors on stable (M2)",
         { type: "hysteria2", tag: "h", listen: "::", listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "x" }, ...extra },
       ],
     }) as unknown as SingBoxConfig;
+  // hop_interval_max is intentionally NOT gated here: it is an outbound-only port-hopping field that
+  // testing ALSO rejects on an inbound ("unknown field"), so it is not "testing-only" — the W9
+  // unknown-field linter already errors it on every channel. Gating it would double-report with a
+  // misleading "valid on testing" message (an M1-class false gate).
   const cases: Array<[string, Record<string, unknown>, string]> = [
     ["realm", { realm: { enabled: true } }, "hysteria2-realm-testing-only"],
     ["bbr_profile", { bbr_profile: "normal" }, "hysteria2-bbr-profile-testing-only"],
-    ["hop_interval_max", { hop_interval_max: "30s" }, "hysteria2-hop-interval-max-testing-only"],
   ];
   for (const [label, extra, code] of cases) {
     it(`inbound hysteria2 ${label} errors on stable, ok on testing`, () => {

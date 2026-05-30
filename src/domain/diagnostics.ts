@@ -1504,9 +1504,13 @@ export function validateConfig(
         );
       }
     }
-    // VT1 (M2) — W8 gated these 1.14-only hysteria2 fields on the OUTBOUND branch only; mirror them on the
-    // INBOUND branch (verified: sing-box-stable `check` rejects realm/bbr_profile/hop_interval_max on an
-    // inbound hysteria2 with "unknown field …"; testing recognizes them).
+    // VT1 (M2) — W8 gated these 1.14-only hysteria2 fields on the OUTBOUND branch only; mirror the two that
+    // are genuinely testing-only on the INBOUND branch. Binary-verified: stable `check` rejects realm /
+    // bbr_profile on an inbound hysteria2 ("unknown field …") while testing accepts the field (descends
+    // into it / value-level errors only). NOTE: hop_interval_max is deliberately NOT gated here — it is an
+    // outbound-only port-hopping field that testing ALSO rejects on an inbound, so it is not "testing-only";
+    // the W9 unknown-field linter already errors it on every channel (gating it would double-report with a
+    // misleading "valid on testing" message — an M1-class false gate).
     if (channel === "stable" && inbound.type === "hysteria2") {
       const obj = inbound as Record<string, unknown>;
       const label = `Inbound "${inbound.tag ?? `inbound-${index}`}"`;
@@ -1526,15 +1530,6 @@ export function validateConfig(
           "hysteria2-bbr-profile-testing-only",
           `/inbounds/${index}/bbr_profile`,
           `${label} (hysteria2) sets bbr_profile; this BBR tuning field is testing-only (sing-box 1.14+).`,
-        );
-      }
-      if (obj.hop_interval_max !== undefined) {
-        push(
-          diagnostics,
-          "error",
-          "hysteria2-hop-interval-max-testing-only",
-          `/inbounds/${index}/hop_interval_max`,
-          `${label} (hysteria2) sets hop_interval_max; this randomization field is testing-only (sing-box 1.14+).`,
         );
       }
     }
