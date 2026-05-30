@@ -259,7 +259,7 @@ function sweepGraphEntityMutations(source: MutationSource) {
     if (isTaggedRef(renameRef) && canRenameGraphNode(node)) {
       const oldTag = renameRef.tag;
       const newTag = `${oldTag}-renamed-pr12`;
-      const renamed = renameConfigTag(source.config, oldTag, newTag);
+      const renamed = renameConfigTag(source.config, renameRef.kind, oldTag, newTag);
       const renamedGraph = deriveGraph(renamed, { positions: {} }, validateConfig(renamed, source.channel));
       expect(
         renamedGraph.nodes.some((candidate) => candidate.id === node.id),
@@ -272,7 +272,7 @@ function sweepGraphEntityMutations(source: MutationSource) {
       assertNoMissingReferenceToTag(source, renamed, oldTag, `rename ${node.id}`);
 
       importConfigWithPinnedNode(source.config, node.id);
-      useProjectStore.getState().renameTag(oldTag, newTag);
+      useProjectStore.getState().renameTag(renameRef.kind, oldTag, newTag);
       const state = useProjectStore.getState();
       const newId = `${node.data.kind}:${newTag}`;
       expect(state.selectedId, `${source.name} rename ${node.id} did not remap selectedId`).toBe(newId);

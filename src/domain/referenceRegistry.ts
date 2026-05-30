@@ -1,3 +1,4 @@
+import { namespaceForKind } from "./indexes";
 import type { DnsServerConfig, EndpointConfig, OutboundConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "./types";
 
 export type ReferenceKind =
@@ -419,6 +420,23 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
 
 export function replaceRegisteredTagReferences(config: SingBoxConfig, oldTag: string, newTag: string) {
   referenceRegistry.forEach((entry) => entry.replace(config, oldTag, newTag));
+}
+
+/**
+ * V10-S0 (M3): rewrite tag references only within a single reference NAMESPACE. A namespace-blind rename
+ * corrupts a legitimately same-named entity in another namespace (inbound "foo" + outbound "foo" coexist
+ * — renaming one must not rewrite the other's refs). endpoint shares the outbound namespace, so renaming
+ * an endpoint rewrites the outbound-namespace refs (detour/final/…) too.
+ */
+export function replaceNamespacedTagReferences(
+  config: SingBoxConfig,
+  namespace: string,
+  oldTag: string,
+  newTag: string,
+) {
+  referenceRegistry.forEach((entry) => {
+    if (namespaceForKind(entry.kind) === namespace) entry.replace(config, oldTag, newTag);
+  });
 }
 
 export function removeRegisteredTagReferences(config: SingBoxConfig, kind: ReferenceKind, tag: string) {

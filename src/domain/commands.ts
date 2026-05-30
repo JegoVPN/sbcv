@@ -1,8 +1,8 @@
-import { buildTagIndex, getUniqueTag } from "./indexes";
+import { buildNamespacedTagIndex, getUniqueTag, namespaceForKind } from "./indexes";
 import { preferredDnsServerTag, preferredEndpointTag, preferredInboundTag, preferredServiceTag } from "./protocols";
 import {
   removeRegisteredTagReferences,
-  replaceRegisteredTagReferences,
+  replaceNamespacedTagReferences,
   type ReferenceKind,
 } from "./referenceRegistry";
 import { adapterDisconnect } from "./portReferenceAdapter";
@@ -536,33 +536,57 @@ export function removeTagRef(value: string | string[] | undefined, tag: string) 
   return value === tag ? undefined : value;
 }
 
-export function renameTag(config: SingBoxConfig, oldTag: string, newTag: string): SingBoxConfig {
-  if (!newTag.trim() || oldTag === newTag) return config;
-  const existing = buildTagIndex(config).get(newTag);
-  if (existing?.length) return config;
-  const next = cloneConfig(config);
+// Rename the tag on ONLY the collection that holds entities of `kind` (each kind has its own array).
+function renameEntityInCollection(config: SingBoxConfig, kind: ReferenceKind, oldTag: string, newTag: string) {
+  const rename = <T extends { tag?: string }>(items: T[] | undefined) =>
+    items?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
+  switch (kind) {
+    case "inbound":
+      config.inbounds = rename(config.inbounds);
+      break;
+    case "outbound":
+      config.outbounds = rename(config.outbounds);
+      break;
+    case "dns-server":
+      if (config.dns) config.dns = { ...config.dns, servers: rename(config.dns.servers) };
+      break;
+    case "endpoint":
+      config.endpoints = rename(config.endpoints);
+      break;
+    case "service":
+      config.services = rename(config.services);
+      break;
+    case "rule-set":
+      if (config.route) config.route = { ...config.route, rule_set: rename(config.route.rule_set) };
+      break;
+    case "certificate-provider":
+      config.certificate_providers = rename(config.certificate_providers);
+      break;
+    case "http-client":
+      config.http_clients = rename(config.http_clients);
+      break;
+  }
+}
 
-  next.inbounds = next.inbounds?.map((item) =>
-    item.tag === oldTag ? { ...item, tag: newTag } : item,
-  );
-  next.outbounds = next.outbounds?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
-  next.dns = next.dns
-    ? {
-        ...next.dns,
-        servers: next.dns.servers?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item)),
-      }
-    : next.dns;
-  next.endpoints = next.endpoints?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
-  next.services = next.services?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
-  next.route = next.route
-    ? {
-        ...next.route,
-        rule_set: next.route.rule_set?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item)),
-      }
-    : next.route;
-  next.certificate_providers = next.certificate_providers?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
-  next.http_clients = next.http_clients?.map((item) => (item.tag === oldTag ? { ...item, tag: newTag } : item));
-  replaceRegisteredTagReferences(next, oldTag, newTag);
+/**
+ * Rename a taggable entity's tag, NAMESPACE-SCOPED (V10-S0 / assessment M3). A bare-string rename across
+ * all collections corrupts a legitimately same-named entity in a different reference namespace (inbound
+ * "foo" + outbound "foo" coexist). We rename only `kind`'s own collection, guard uniqueness within the
+ * namespace, and rewrite references only within that namespace (endpoint shares the outbound namespace).
+ */
+export function renameTag(
+  config: SingBoxConfig,
+  kind: ReferenceKind,
+  oldTag: string,
+  newTag: string,
+): SingBoxConfig {
+  if (!newTag.trim() || oldTag === newTag) return config;
+  const namespace = namespaceForKind(kind);
+  // Conflict guard scoped to the same namespace (cross-namespace same-name is legal).
+  if (buildNamespacedTagIndex(config).get(`${namespace} ${newTag}`)?.length) return config;
+  const next = cloneConfig(config);
+  renameEntityInCollection(next, kind, oldTag, newTag);
+  replaceNamespacedTagReferences(next, namespace, oldTag, newTag);
   return next;
 }
 

@@ -1071,7 +1071,7 @@ describe("SBC editor shell", () => {
       useProjectStore.getState().setSelectedId("outbound:proxy");
       useProjectStore.getState().focusNode("outbound:proxy");
       useProjectStore.getState().setNodePosition("outbound:proxy", { x: 123, y: 456 });
-      useProjectStore.getState().renameTag("proxy", "main-proxy");
+      useProjectStore.getState().renameTag("outbound", "proxy", "main-proxy");
     });
 
     expect(useProjectStore.getState().selectedId).toBe("outbound:main-proxy");
@@ -1080,7 +1080,7 @@ describe("SBC editor shell", () => {
     expect(useProjectStore.getState().layout.positions["outbound:proxy"]).toBeUndefined();
 
     act(() => {
-      useProjectStore.getState().renameTag("main-proxy", "direct");
+      useProjectStore.getState().renameTag("outbound", "main-proxy", "direct");
     });
 
     expect(useProjectStore.getState().selectedId).toBe("outbound:main-proxy");
