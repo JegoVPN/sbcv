@@ -1,7 +1,17 @@
 import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from "@xyflow/react";
 import { X } from "lucide-react";
 import { memo, useCallback, useState, type MouseEvent } from "react";
+import { parseEdgeId, relationForId } from "../domain/portRelationRegistry";
 import { useProjectStore } from "../state/useProjectStore";
+
+// V8-S1: the human name of the relation an edge represents, derived from its id (formatEdgeId encodes the
+// relationId). Two edges between the same node pair (e.g. an outbound that is BOTH a route-rule target and a
+// selector member) are otherwise visually identical; this names each on hover. Falls back to "" for the
+// readonly/decorative order edges (no registry relation), which then get no tooltip.
+export function relationLabelForEdge(edgeId: string): string {
+  const relationId = parseEdgeId(edgeId)?.relationId;
+  return (relationId && relationForId(relationId)?.source.label) || "";
+}
 
 export const CanvasEdge = memo(function CanvasEdge({
   id,
@@ -35,6 +45,7 @@ export const CanvasEdge = memo(function CanvasEdge({
   });
   const canRemove = deletable !== false;
   const removeVisible = hovered || selected;
+  const relationLabel = relationLabelForEdge(id);
   const handleRemove = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -45,9 +56,13 @@ export const CanvasEdge = memo(function CanvasEdge({
     <>
       <g
         className="sbc-edge"
+        data-relation={relationLabel || undefined}
+        aria-label={relationLabel || undefined}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
+        {/* Native hover tooltip naming the relation — distinguishes parallel edges between the same pair. */}
+        {relationLabel ? <title>{relationLabel}</title> : null}
         <BaseEdge
           id={id}
           path={edgePath}
