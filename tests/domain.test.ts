@@ -111,6 +111,22 @@ function createReferenceCoverageConfig(): SingBoxConfig {
   };
 }
 
+// W7: produce a DANGLING config by removing the referenced entity (no rename/delete cascade), so every
+// reference to `tag` is left pointing at a now-absent entity — the state the diagnostics layer must flag.
+function danglingByRemoving(kind: ReferenceKind, tag: string): SingBoxConfig {
+  const config = createReferenceCoverageConfig();
+  const drop = <T extends { tag?: unknown }>(items?: T[]) => items?.filter((item) => item?.tag !== tag);
+  if (kind === "inbound") config.inbounds = drop(config.inbounds);
+  else if (kind === "outbound") config.outbounds = drop(config.outbounds);
+  else if (kind === "dns-server" && config.dns) config.dns.servers = drop(config.dns.servers);
+  else if (kind === "endpoint") config.endpoints = drop(config.endpoints);
+  else if (kind === "service") config.services = drop(config.services);
+  else if (kind === "rule-set" && config.route) config.route.rule_set = drop(config.route.rule_set);
+  else if (kind === "http-client") config.http_clients = drop(config.http_clients);
+  else if (kind === "certificate-provider") config.certificate_providers = drop(config.certificate_providers);
+  return config;
+}
+
 const referenceCoverageCases: ReferenceCoverageCase[] = [
   {
     kind: "inbound",
@@ -411,6 +427,25 @@ describe("canonical sing-box domain model", () => {
     expect([...casePaths.keys()].sort()).toEqual([...registryPaths.keys()].sort());
     for (const [kind, paths] of registryPaths) {
       expect(casePaths.get(kind)).toEqual(paths);
+    }
+  });
+
+  it.each(referenceCoverageCases)("diagnostics flag every dangling $kind reference (3rd registry-parity binding)", (testCase) => {
+    // W7: the reference graph is enumerated in THREE places — referenceRegistry (cascade), portRelation-
+    // Registry (canvas edges, parity-bound above), and the diagnostics missing-* checks. This binds that
+    // THIRD enumeration to the catalog: with the referenced entity removed, every dangling ref of this kind
+    // must surface a missing-* error. http-client / certificate-provider declare NO codes because sing-box
+    // TOLERATES their dangling refs (binary-verified), so the empty list is intentional — not a coverage gap.
+    const errors = new Set(
+      validateConfig(danglingByRemoving(testCase.kind, testCase.tag), "testing")
+        .filter((d) => d.level === "error")
+        .map((d) => d.code),
+    );
+    for (const code of testCase.staleDiagnosticCodes) {
+      expect(errors.has(code), `dangling ${testCase.kind} ref should emit ${code}`).toBe(true);
+    }
+    if (testCase.staleDiagnosticCodes.length === 0) {
+      expect(["http-client", "certificate-provider"]).toContain(testCase.kind);
     }
   });
 
