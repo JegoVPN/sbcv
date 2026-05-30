@@ -29,14 +29,13 @@ describe("W2 — enum/type validation for dns-server + rule-set", () => {
     }
   });
 
-  it("errors an invalid legacy DNS strategy but accepts the full binary-valid set incl. as_is (1.12)", () => {
+  it("does NOT enum-gate legacy DNS strategy (the whole legacy server is already hard-gated; as_is is binary-valid)", () => {
+    // The legacy `strategy` is intentionally not enum-validated (W4): the binary accepts `as_is` (the
+    // DomainStrategy default) which the stable doc's 4-value list omits, so gating it would false-block a
+    // valid import. The legacy `address` form is already flagged by its own deprecation diagnostic.
     const strat = (s: string) =>
       validateConfig({ dns: { servers: [{ tag: "d", address: "8.8.8.8", strategy: s }] } } as unknown as SingBoxConfig, "stable", "1.12")
         .filter((d) => d.level === "error" && d.path.endsWith("/strategy"));
-    expect(strat("bogus").length).toBeGreaterThan(0);
-    // as_is is binary-valid on the legacy DNS server (verified) — must NOT be flagged (was a false positive).
-    for (const ok of ["as_is", "prefer_ipv4", "prefer_ipv6", "ipv4_only", "ipv6_only"]) {
-      expect(strat(ok)).toEqual([]);
-    }
+    for (const v of ["as_is", "prefer_ipv4", "bogus"]) expect(strat(v)).toEqual([]);
   });
 });

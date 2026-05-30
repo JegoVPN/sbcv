@@ -726,6 +726,25 @@ export function deriveGraph(
         );
       }
     });
+  } else if (ruleSets.length > 0) {
+    // W4 (m2): past the canvas cap the whole rule-set block is hidden — previously SILENTLY (a 1.14
+    // community template has 30 rule_sets, all dropped with no hint). Surface an overflow notice like the
+    // route/dns-rule ones; the rule-sets still serialize and edit in the Rules table / Inspector.
+    nodes.push(
+      makeNode(
+        "notice:rule-sets-overflow",
+        {
+          ref: { kind: "route", id: "main" },
+          kind: "notice",
+          type: "rule-sets",
+          title: `${ruleSets.length} rule-sets not visualized`,
+          subtitle: `Over the ${MAX_VISUAL_RULE_SET_NODES}-node canvas cap — they still serialize and edit in the Rules table / Inspector`,
+          status: diagnosticStatus("/route/rule_set", diagnostics),
+        },
+        layout,
+        { x: COLUMNS.member, y: columnLayout.reserve("member", DNS_LANE_MIN_Y) },
+      ),
+    );
   }
 
   certificateProviders.forEach((provider, index) => {

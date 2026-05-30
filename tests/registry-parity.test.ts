@@ -16,6 +16,7 @@ import { portRelations } from "../src/domain/portRelationRegistry";
 const INSPECTOR_ONLY: Record<string, string> = {
   "/outbounds/*/default": "selector default — a <select> of the node's own candidates, not a cross-node edge",
   "/route/default_domain_resolver": "route default domain resolver — Inspector dial <select>",
+  "/dns/servers/*/address_resolver": "legacy DNS server address_resolver — a dns-server tag (legacy.md); cascade-tracked for rename/delete but Inspector-only (no canvas edge), like other legacy fields",
   "*/tls/certificate_provider": "tls.certificate_provider — Inspector TLS <select>",
   "/inbounds/*/route_address_set": "tun route_address_set — Inspector CSV of rule-set tags",
   "/inbounds/*/route_exclude_address_set": "tun route_exclude_address_set — Inspector CSV of rule-set tags",

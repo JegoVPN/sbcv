@@ -805,7 +805,10 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES). Reference-only, kept for
     // round-trip; its deprecation (1.12→removed 1.14) is enforced by the diagnostics legacy-DNS gate, not here.
     factory: (tag) => ({ type: "legacy", tag, address: "8.8.8.8", strategy: "prefer_ipv4" }),
-    fields: [{ path: ["strategy"], type: "enum", enum: [{ value: "as_is" }, { value: "prefer_ipv4" }, { value: "prefer_ipv6" }, { value: "ipv4_only" }, { value: "ipv6_only" }], doc: "dns/server/legacy.md" }],
+    // No strategy enum validation: the legacy DNS server is already hard-gated (the legacy `address` form
+    // errors on 1.13/1.14, warns on 1.12), so validating its strategy is marginal — and the binary accepts
+    // `as_is` (the DomainStrategy default) which the stable doc's curated 4-value list omits, so enum-gating
+    // it would both break the doc-citation invariant and false-block a binary-valid `as_is` import. (W4)
     sharedGroups: [],
   },
   {
