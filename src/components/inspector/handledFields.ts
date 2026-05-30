@@ -1,4 +1,10 @@
-import { CREATABLE_INBOUND_TYPES, CREATABLE_OUTBOUND_TYPES } from "../../domain/protocols";
+import {
+  CREATABLE_DNS_SERVER_TYPES,
+  CREATABLE_ENDPOINT_TYPES,
+  CREATABLE_INBOUND_TYPES,
+  CREATABLE_OUTBOUND_TYPES,
+  CREATABLE_SERVICE_TYPES,
+} from "../../domain/protocols";
 import { sharedGroupsForEntity } from "../../domain/sharedFieldRegistry";
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { sharedFieldDefinitions } from "./sharedFields";
@@ -169,6 +175,12 @@ export const outboundHandledFields: ReadonlySet<string> = new Set([
 // yet have no editor (the C1 transport / C3 tls.acme failure). Keep in sync with the inline controls;
 // the guard's coverage check (structurallyCoveredKeys) unions this with the shared-group field paths.
 export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
+  // DF2 — dns-server / endpoint inline controls the cross-kind set previously omitted (the C17 guard only
+  // ran on inbound/outbound before, so these never needed listing): accept_default_resolvers /
+  // accept_search_domain / inet4_range / inet6_range (dns-server) + relay_server_static_endpoints /
+  // system_interface_mtu (tailscale endpoint). All have real `updateField(…)` literals (anti-drift test).
+  "accept_default_resolvers", "accept_search_domain", "inet4_range", "inet6_range",
+  "relay_server_static_endpoints", "system_interface_mtu",
   "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auto_detect_interface",
   "auto_redirect", "auto_route", "brutal_debug", "cache_capacity", "cache_file", "cache_path", "certificate",
   "certificate_directory_path", "certificate_path", "cipher", "client_subnet", "client_version", "clash_api",
@@ -203,13 +215,24 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
 // that it renders a *working* control, and INLINE_RENDERED_KEYS is a single cross-kind set — so it does
 // not replace per-control coverage atomics (C1 transport, C3 tls.acme) and is a superset signal, not a
 // full reachability proof. It catches the "handled key with no editor anywhere" class.
+// DF2 — the guard now spans all five typed entity kinds (was inbound/outbound only). endpoint /
+// dns-server / service have the same "handled key with no editor" hazard, so structurally proving their
+// handledFields ⊆ covered closes that regression surface too.
+export type C17CoverageKind = "inbound" | "outbound" | "endpoint" | "dns-server" | "service";
+const CREATABLE_TYPES_BY_KIND: Record<C17CoverageKind, readonly string[]> = {
+  inbound: CREATABLE_INBOUND_TYPES,
+  outbound: CREATABLE_OUTBOUND_TYPES,
+  endpoint: CREATABLE_ENDPOINT_TYPES,
+  "dns-server": CREATABLE_DNS_SERVER_TYPES,
+  service: CREATABLE_SERVICE_TYPES,
+};
 export function structurallyCoveredKeys(
-  kind: "inbound" | "outbound",
+  kind: C17CoverageKind,
   channel: SingBoxChannel,
 ): Set<string> {
   const covered = new Set<string>(["tag", "type"]);
   for (const key of INLINE_RENDERED_KEYS) covered.add(key);
-  const types = kind === "inbound" ? CREATABLE_INBOUND_TYPES : CREATABLE_OUTBOUND_TYPES;
+  const types = CREATABLE_TYPES_BY_KIND[kind];
   const probeConfig = {} as SingBoxConfig;
   for (const type of types) {
     const ref = { kind, tag: "__probe__" } as EntityRef;

@@ -8,6 +8,12 @@ import {
   outboundHandledFields,
   structurallyCoveredKeys,
 } from "../src/components/Inspector";
+import {
+  dnsServerHandledFieldsForChannel,
+  endpointHandledFields,
+  serviceHandledFields,
+  type C17CoverageKind,
+} from "../src/components/inspector/handledFields";
 
 // C17 — silent-unreachable guard. A key in inbound/outbound `handledFields` is excluded from the Advanced
 // JSON fallback (editableScalarFields/editableNonScalarFields skip it), on the assumption a structured
@@ -20,21 +26,41 @@ import {
 // A handled key is reachable if a control covers it on EITHER channel — channel-gated fields (e.g. the
 // 1.14-removed `domain_strategy`, rendered only on stable; or 1.14-added fields, only on testing) are
 // legitimately covered on just one channel. Unreachable = covered on neither.
-function coveredOnAnyChannel(kind: "inbound" | "outbound"): Set<string> {
+function coveredOnAnyChannel(kind: C17CoverageKind): Set<string> {
   return new Set([
     ...structurallyCoveredKeys(kind, "stable"),
     ...structurallyCoveredKeys(kind, "testing"),
   ]);
 }
 
-function uncoveredKeys(kind: "inbound" | "outbound"): string[] {
-  const handled = kind === "inbound" ? inboundHandledFields : outboundHandledFields;
+// DF2 — handledFields per kind (dns-server is channel-gated, so union both channels). The union is the
+// correct "ever handled" set: a field handled only on one channel must still be covered on that channel.
+function handledFieldsForKind(kind: C17CoverageKind): Set<string> {
+  switch (kind) {
+    case "inbound":
+      return new Set(inboundHandledFields);
+    case "outbound":
+      return new Set(outboundHandledFields);
+    case "endpoint":
+      return new Set(endpointHandledFields);
+    case "dns-server":
+      return new Set([
+        ...dnsServerHandledFieldsForChannel("stable"),
+        ...dnsServerHandledFieldsForChannel("testing"),
+      ]);
+    case "service":
+      return new Set(serviceHandledFields);
+  }
+}
+
+function uncoveredKeys(kind: C17CoverageKind): string[] {
+  const handled = handledFieldsForKind(kind);
   const covered = coveredOnAnyChannel(kind);
   return [...handled].filter((key) => !covered.has(key)).sort();
 }
 
 describe("C17 — no silently-unreachable handled fields", () => {
-  for (const kind of ["inbound", "outbound"] as const) {
+  for (const kind of ["inbound", "outbound", "endpoint", "dns-server", "service"] as const) {
     it(`${kind} handledFields are all structurally covered on some channel`, () => {
       expect(uncoveredKeys(kind)).toEqual([]);
     });
@@ -62,13 +88,16 @@ describe("C17 — no silently-unreachable handled fields", () => {
         .map((name) => `${inspectorDir}/${name}`),
     ];
     const source = files.map((file) => readFileSync(file, "utf8")).join("\n");
+    // DF2: keys can contain digits (inet4_range / inet6_range), so the literal-scan char classes include
+    // 0-9 — `[a-z_]+` would silently truncate `inet4_range` to `inet` and miss the real control.
+    // `\(\s*` also matches the multi-line `updateField(\n  entityRef,\n  "key",` form (system_interface_mtu).
     const literals = new Set<string>(
-      [...source.matchAll(/updateField\((?:ref|entityRef),\s*"([a-z_]+)"/g)].map((match) => match[1]!),
+      [...source.matchAll(/updateField\(\s*(?:ref|entityRef),\s*"([a-z0-9_]+)"/g)].map((match) => match[1]!),
     );
     // V0/M5: an enum field rendered by `<SchemaEnumField field="x" …>` is a real (data-driven) control —
     // its write goes through updateField inside schemaEnumField.tsx via a variable, so recognize the
     // field prop literal instead. Nested fields (field="obfs.type") map to their top-level handled key.
-    for (const match of source.matchAll(/field="([a-z_.]+)"/g)) literals.add(match[1]!.split(".")[0]!);
+    for (const match of source.matchAll(/field="([a-z0-9_.]+)"/g)) literals.add(match[1]!.split(".")[0]!);
     const fabricated = [...INLINE_RENDERED_KEYS].filter((key) => !literals.has(key)).sort();
     expect(fabricated).toEqual([]);
   });
