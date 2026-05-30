@@ -70,8 +70,9 @@ describe("schemaRegistry — type metadata (channel / creatable / required); ver
     expect(schemaRow("service", "hysteria-realm")?.channel).toBe("testing");
     expect(typeMinVersion("service", "hysteria-realm")).toBe("1.14");
     expect(schemaRow("dns-server", "mdns")?.channel).toBe("testing");
-    // mdns is deliberately NOT in TYPE_MIN_VERSION (palette-gated, not canvas-badged) — keep that contract.
-    expect(typeMinVersion("dns-server", "mdns")).toBeUndefined();
+    // W3/M5: mdns is now in TYPE_MIN_VERSION (1.14) so the diagnostics type-version gate rejects an
+    // imported mdns server on a pre-1.14 target (it also badges "needs 1.14", consistent with the others).
+    expect(typeMinVersion("dns-server", "mdns")).toBe("1.14");
   });
   it("naive outbound / ccm / ocm are 1.13 types (version source)", () => {
     expect(typeMinVersion("outbound", "naive")).toBe("1.13");
