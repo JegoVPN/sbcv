@@ -1,0 +1,13 @@
+{
+  "outbounds": [
+    {
+      "type": "shadowsocks",
+      "tag": "ss-out",
+      "server": "1.2.3.4",
+      "server_port": 8080,
+      "method": "totally-bogus-cipher",
+      "password": "x"
+    },
+    { "type": "direct", "tag": "direct" }
+  ]
+}

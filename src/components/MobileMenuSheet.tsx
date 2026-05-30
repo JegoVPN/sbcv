@@ -7,7 +7,7 @@ import type { SingBoxTargetId } from "../domain/types";
 import { useProjectStore } from "../state/useProjectStore";
 import { GITHUB_REPO_URL } from "./appLinks";
 import { BottomSheet } from "./BottomSheet";
-import { confirmAndExportConfig } from "./exportConfig";
+import { blockingExportErrors, exportConfigGated } from "./exportConfig";
 import { configHasContent } from "./TopBar";
 
 interface MobileMenuSheetProps {
@@ -19,21 +19,32 @@ interface MobileMenuSheetProps {
 
 export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: MobileMenuSheetProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { channel, version, setTarget, importJson } = useProjectStore(
+  const { channel, version, setTarget, importJson, diagnostics } = useProjectStore(
     useShallow((state) => ({
       channel: state.channel,
       version: state.version,
       setTarget: state.setTarget,
       importJson: state.importJson,
+      diagnostics: state.diagnostics,
     })),
   );
   const target = targetFromVersion(channel, version);
+  // V2 hard gate (parity with desktop): structural errors disable Export entirely.
+  const exportBlockers = blockingExportErrors(diagnostics);
 
   function exportConfig() {
-    // Same error-diagnostics gate as desktop. diagnostics isn't selected here, so read it from the
-    // store alongside config; only close the sheet when the export actually proceeded.
-    const { config, diagnostics } = useProjectStore.getState();
-    if (confirmAndExportConfig(config, diagnostics)) onClose();
+    // Same hard gate as desktop. Read config/diagnostics from the store; only close the sheet when the
+    // export actually proceeded (blocked/cancelled keeps the sheet open).
+    const { config, diagnostics: current, pushToast } = useProjectStore.getState();
+    const outcome = exportConfigGated(config, current);
+    if (outcome.exported) {
+      onClose();
+    } else if (outcome.reason === "blocked") {
+      pushToast({
+        message: `Fix ${outcome.errors.length} structural error${outcome.errors.length === 1 ? "" : "s"} before exporting.`,
+        tone: "error",
+      });
+    }
   }
 
   async function handleImport(event: ChangeEvent<HTMLInputElement>) {
@@ -108,10 +119,20 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: 
           </button>
         </li>
         <li>
-          <button type="button" className="mobile-row-button" onClick={exportConfig}>
+          <button
+            type="button"
+            className="mobile-row-button"
+            onClick={exportConfig}
+            disabled={exportBlockers.length > 0}
+            aria-disabled={exportBlockers.length > 0}
+          >
             <Download size={18} />
             <span className="mobile-row-button__title">Export</span>
-            <span className="mobile-row-button__meta">Normalized .json — empty fields dropped, shorthands expanded</span>
+            <span className="mobile-row-button__meta">
+              {exportBlockers.length > 0
+                ? `Fix ${exportBlockers.length} structural error${exportBlockers.length === 1 ? "" : "s"} first`
+                : "Normalized .json — empty fields dropped, shorthands expanded"}
+            </span>
           </button>
         </li>
         <li>

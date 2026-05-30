@@ -20,9 +20,10 @@ function setMatchMedia(matches: boolean) {
   });
 }
 
-// A2b (pre-export validation gate): exporting a config that has error-level diagnostics must prompt for
-// confirmation first, so an invalid config is never silently downloaded (W9). jsdom does not implement
-// URL.createObjectURL, so we stub it to detect whether the download actually proceeded.
+// V2 — export HARD gate: a config with error-level semantic diagnostics is structurally invalid and can
+// NEVER be exported (no bypassable confirm) — the Export button is disabled and nothing is downloaded.
+// (Replaces the old A2b "confirm to bypass" contract.) jsdom does not implement URL.createObjectURL, so
+// we stub it to detect whether the download actually proceeded.
 
 let createObjectURL: ReturnType<typeof vi.fn>;
 let originalCreate: typeof URL.createObjectURL;
@@ -42,34 +43,39 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("pre-export validation gate (A2b)", () => {
-  it("confirms before exporting a config with errors and aborts the download on cancel", () => {
+describe("V2 — desktop export hard gate", () => {
+  it("disables Export and never downloads when the config has structural errors (no bypass)", () => {
     useProjectStore.getState().loadTemplate();
     act(() => {
-      // route.final referencing a missing outbound is an error-level diagnostic.
+      // route.final referencing a missing outbound is an error-level semantic diagnostic.
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
     });
     render(<App />);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const button = screen.getByTestId("export-button");
+    expect(button).toBeDisabled();
 
-    fireEvent.click(screen.getByTestId("export-button"));
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    fireEvent.click(button);
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
-    expect(confirmSpy.mock.calls[0]?.[0]).toMatch(/error/i);
+    // Disabled button fires no onClick; there is no confirm to bypass and nothing is downloaded.
+    expect(confirmSpy).not.toHaveBeenCalled();
     expect(createObjectURL).not.toHaveBeenCalled();
   });
 
-  it("downloads after the user confirms past the error gate", () => {
+  it("re-enables Export and downloads once the structural error is fixed", () => {
     useProjectStore.getState().loadTemplate();
     act(() => {
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
     });
     render(<App />);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    expect(screen.getByTestId("export-button")).toBeDisabled();
 
+    // Clear the bad reference → gate releases.
+    act(() => {
+      useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "");
+    });
+    expect(screen.getByTestId("export-button")).not.toBeDisabled();
     fireEvent.click(screen.getByTestId("export-button"));
-
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
     expect(createObjectURL).toHaveBeenCalledTimes(1);
   });
 
@@ -85,17 +91,12 @@ describe("pre-export validation gate (A2b)", () => {
   });
 });
 
-// C8: the mobile (MobileMenuSheet) export path now routes through the same shared
-// confirmAndExportConfig gate as desktop, so an invalid config can't be silently downloaded from
-// the mobile sheet either.
-describe("C8 — mobile export gate parity", () => {
+describe("V2 — mobile export hard gate parity", () => {
   afterEach(() => {
     // @ts-expect-error matchMedia is not part of jsdom by default
     delete window.matchMedia;
   });
 
-  // MobileMenuSheet is lazy-loaded behind Suspense, so the sheet resolves asynchronously after the
-  // toggle click — await it.
   async function openMobileExport() {
     setMatchMedia(true);
     render(<App />);
@@ -104,31 +105,20 @@ describe("C8 — mobile export gate parity", () => {
     return sheet.getByRole("button", { name: /export/i });
   }
 
-  it("prompts on error-level diagnostics and aborts the download + keeps the sheet open on cancel", async () => {
+  it("disables Export and never downloads on structural errors; sheet stays open", async () => {
     useProjectStore.getState().loadTemplate();
     act(() => {
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
     });
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    fireEvent.click(await openMobileExport());
+    const button = await openMobileExport();
+    expect(button).toBeDisabled();
+    fireEvent.click(button);
 
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
-    expect(confirmSpy.mock.calls[0]?.[0]).toMatch(/error/i);
+    expect(confirmSpy).not.toHaveBeenCalled();
     expect(createObjectURL).not.toHaveBeenCalled();
     expect(screen.getByTestId("mobile-menu-sheet")).toBeInTheDocument();
-  });
-
-  it("downloads after the user confirms past the error gate", async () => {
-    useProjectStore.getState().loadTemplate();
-    act(() => {
-      useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
-    });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    fireEvent.click(await openMobileExport());
-
-    expect(createObjectURL).toHaveBeenCalledTimes(1);
   });
 
   it("exports a valid config without prompting", async () => {

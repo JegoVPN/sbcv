@@ -30,27 +30,48 @@ export function downloadProject(project: SbcProject): void {
 }
 
 /**
- * The single export path for both the desktop (TopBar) and mobile (MobileMenuSheet) entry points.
- * Gates on error-level *semantic* diagnostics (recomputed synchronously, never cleared mid-flight —
- * unlike official/binary diagnostics), prompts once on errors, and on confirm streams the pruned
- * config to a download. Returns whether the export actually proceeded (false = user cancelled), so
- * callers can react (e.g. the mobile sheet only closes on a proceeded export).
+ * Error-level *semantic* diagnostics — the deterministic, platform-independent structural problems
+ * (V1 enum/type, V3 missing-tag, references, duplicate tags, required fields, version gates). These are
+ * what hard-block an export: a config with any of them is structurally invalid and sing-box would reject
+ * it on every platform. Official/binary-check diagnostics are excluded here — they may carry runtime/
+ * platform errors (e.g. "resolved service is only supported on Linux") that are environment-dependent
+ * and must not block a config authored for a different target OS (advisory layer handles those).
  */
-export function confirmAndExportConfig(config: SingBoxConfig, diagnostics: Diagnostic[]): boolean {
-  const errorCount = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
-  if (errorCount > 0) {
+export function blockingExportErrors(diagnostics: Diagnostic[]): Diagnostic[] {
+  return diagnostics.filter((diagnostic) => diagnostic.level === "error" && diagnostic.source === "semantic");
+}
+
+export type ExportOutcome =
+  | { exported: true }
+  /** Hard-blocked: structurally-invalid config can never be exported (no bypass). */
+  | { exported: false; reason: "blocked"; errors: Diagnostic[] }
+  /** User declined the (warnings-only) confirmation. */
+  | { exported: false; reason: "cancelled" };
+
+/**
+ * The single export path for both the desktop (TopBar) and mobile (MobileMenuSheet) entry points (V2).
+ *
+ * HARD GATE: when there are error-level semantic diagnostics the config is structurally invalid and the
+ * export is *blocked outright* — no bypassable confirm, nothing is downloaded. This makes "you cannot
+ * export a structurally-invalid config" a hard guarantee. Warnings still allow export behind a one-time
+ * confirm. The UI additionally disables the Export button while blocked, so this function is the
+ * belt-and-suspenders backstop (programmatic / keyboard paths can't slip an invalid config through).
+ */
+export function exportConfigGated(config: SingBoxConfig, diagnostics: Diagnostic[]): ExportOutcome {
+  const errors = blockingExportErrors(diagnostics);
+  if (errors.length > 0) return { exported: false, reason: "blocked", errors };
+
+  const warnings = diagnostics.filter(
+    (diagnostic) => diagnostic.level === "warning" && diagnostic.source === "semantic",
+  );
+  if (warnings.length > 0) {
     const proceed = window.confirm(
-      `This config has ${errorCount} error${errorCount === 1 ? "" : "s"} that sing-box may reject. Export anyway?`,
+      `This config has ${warnings.length} warning${warnings.length === 1 ? "" : "s"} that sing-box may flag. Export anyway?`,
     );
-    if (!proceed) return false;
+    if (!proceed) return { exported: false, reason: "cancelled" };
   }
+
   const exportedConfig = createConfigExport(config);
-  const blob = new Blob([exportedConfig.contents], { type: exportedConfig.mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = createSbcvFileName();
-  link.click();
-  URL.revokeObjectURL(url);
-  return true;
+  downloadBlob(exportedConfig.contents, exportedConfig.mimeType, createSbcvFileName());
+  return { exported: true };
 }
