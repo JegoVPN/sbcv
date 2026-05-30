@@ -1504,6 +1504,40 @@ export function validateConfig(
         );
       }
     }
+    // VT1 (M2) — W8 gated these 1.14-only hysteria2 fields on the OUTBOUND branch only; mirror them on the
+    // INBOUND branch (verified: sing-box-stable `check` rejects realm/bbr_profile/hop_interval_max on an
+    // inbound hysteria2 with "unknown field …"; testing recognizes them).
+    if (channel === "stable" && inbound.type === "hysteria2") {
+      const obj = inbound as Record<string, unknown>;
+      const label = `Inbound "${inbound.tag ?? `inbound-${index}`}"`;
+      if (obj.realm !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-testing-only",
+          `/inbounds/${index}/realm`,
+          `${label} (hysteria2) sets realm; the realm rendezvous field is testing-only (sing-box 1.14+) and will be rejected by stable builds.`,
+        );
+      }
+      if (obj.bbr_profile !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-bbr-profile-testing-only",
+          `/inbounds/${index}/bbr_profile`,
+          `${label} (hysteria2) sets bbr_profile; this BBR tuning field is testing-only (sing-box 1.14+).`,
+        );
+      }
+      if (obj.hop_interval_max !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-hop-interval-max-testing-only",
+          `/inbounds/${index}/hop_interval_max`,
+          `${label} (hysteria2) sets hop_interval_max; this randomization field is testing-only (sing-box 1.14+).`,
+        );
+      }
+    }
     checkQuic114Fields(diagnostics, channel, inbound.type, inbound as Record<string, unknown>, `/inbounds/${index}`, `Inbound "${inbound.tag ?? `inbound-${index}`}"`);
     const tls = (inbound as Record<string, unknown>).tls;
     if (tls && typeof tls === "object" && !Array.isArray(tls)) {

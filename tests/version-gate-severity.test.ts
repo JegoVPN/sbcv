@@ -84,3 +84,27 @@ describe("W8 — 1.14-only field gates are errors on stable (M2 + M3)", () => {
     expect(codes(svc, "stable").has("quic-shared-field-testing-only")).toBe(false);
   });
 });
+
+// VT1 (M2) — W8 gated these 1.14-only fields on the OUTBOUND hysteria2 branch only; the INBOUND branch
+// just called checkQuic114Fields and missed realm / bbr_profile / hop_interval_max. Verified against the
+// real binary: sing-box-stable `check` rejects each on an inbound hysteria2 ("unknown field …"); testing
+// recognizes them. So they must be stable-errors on the inbound branch too, mirroring the outbound gate.
+describe("VT1 — hysteria2 inbound 1.14-only fields are errors on stable (M2)", () => {
+  const inbound = (extra: Record<string, unknown>) =>
+    ({
+      inbounds: [
+        { type: "hysteria2", tag: "h", listen: "::", listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "x" }, ...extra },
+      ],
+    }) as unknown as SingBoxConfig;
+  const cases: Array<[string, Record<string, unknown>, string]> = [
+    ["realm", { realm: { enabled: true } }, "hysteria2-realm-testing-only"],
+    ["bbr_profile", { bbr_profile: "normal" }, "hysteria2-bbr-profile-testing-only"],
+    ["hop_interval_max", { hop_interval_max: "30s" }, "hysteria2-hop-interval-max-testing-only"],
+  ];
+  for (const [label, extra, code] of cases) {
+    it(`inbound hysteria2 ${label} errors on stable, ok on testing`, () => {
+      expect(codes(inbound(extra), "stable").has(code)).toBe(true);
+      expect(codes(inbound(extra), "testing").has(code)).toBe(false);
+    });
+  }
+});
