@@ -235,6 +235,13 @@ export function routeRuleAllowsOutbound(rule: Pick<RouteRule, "action"> | undefi
   return action === "" || action === "route" || action === "bypass";
 }
 
+// Route-rule `server` (a DNS-server tag) is valid ONLY for the `resolve` action — it picks the DNS server
+// used to resolve the destination domain (route/rule_action.md "resolve" block). Single source of truth for
+// the resolve-server canvas edge gate (V7-S3) and the normalizer scrub.
+export function routeRuleAllowsServer(rule: Pick<RouteRule, "action"> | undefined): boolean {
+  return (typeof rule?.action === "string" ? rule.action : "") === "resolve";
+}
+
 // Return a copy of `rule` without the named keys (only those actually present), or `rule` unchanged
 // when there is nothing to drop — so the no-op fast path keeps its identity.
 function dropRuleKeys<T extends object>(rule: T, keys: string[]): T {
@@ -250,6 +257,8 @@ export function normalizeRouteRule(rule: RouteRule): RouteRule {
   const drop = routeRuleAllowsOutbound(rule) ? [] : ["outbound"];
   // `method`/`no_drop` are reject-only (sing-box route rule_action); scrub on any other action.
   if (action !== "reject") drop.push("method", "no_drop");
+  // `server` is resolve-only — scrub it on any other action (mirrors the dns-rule server scrub).
+  if (!routeRuleAllowsServer(rule)) drop.push("server");
   return dropRuleKeys(rule, drop);
 }
 

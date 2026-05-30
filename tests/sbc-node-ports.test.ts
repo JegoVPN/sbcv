@@ -14,15 +14,15 @@ const cases: PortCase[] = [
   // C11c: route exposes a `default-http-client` output (registry-ordered at the end); the port is
   // channel-agnostic (only the edge/connectedPorts are testing-gated in deriveGraph).
   { kind: "route", type: "route", inputKeys: ["inbound"], outputKeys: ["route-rule", "outbound", "default-http-client"] },
-  { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set"] },
+  { kind: "route-rule", type: "route-rule", inputKeys: ["route", "inbound"], outputKeys: ["outbound", "rule-set", "resolve-server"] },
   { kind: "dns", type: "dns", inputKeys: [], outputKeys: ["dns-rule", "dns-server"] },
   { kind: "dns-rule", type: "dns-rule", inputKeys: ["dns", "inbound"], outputKeys: ["dns-server", "rule-set"] },
   // C11b: every dns-server is a valid domain_resolver target (input `domain-resolver-target`); only dial
   // dns-server types (https here) also expose the `domain-resolver` output. New relations sit at the end
   // of the registry, so their ports trail the existing keys.
-  { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["outbound", "domain-resolver"] },
-  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["endpoint"] },
-  { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule", "domain-resolver-target"], outputKeys: ["service"] },
+  { kind: "dns-server", type: "https", inputKeys: ["dns", "dns-rule", "domain-resolver-target", "route-rule-resolve"], outputKeys: ["outbound", "domain-resolver"] },
+  { kind: "dns-server", type: "tailscale", inputKeys: ["dns", "dns-rule", "domain-resolver-target", "route-rule-resolve"], outputKeys: ["endpoint"] },
+  { kind: "dns-server", type: "resolved", inputKeys: ["dns", "dns-rule", "domain-resolver-target", "route-rule-resolve"], outputKeys: ["service"] },
   { kind: "endpoint", type: "wireguard", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "service-detour", "rule-set-download", "clash-download-detour"], outputKeys: ["dial-detour", "domain-resolver"] },
   { kind: "endpoint", type: "tailscale", inputKeys: ["route", "route-rule", "selector-group", "urltest-group", "dns-detour", "detour-target", "dns-server", "service-detour", "rule-set-download", "clash-download-detour", "derp-service", "certificate-provider"], outputKeys: ["dial-detour", "domain-resolver"] },
   // C11c: a remote rule-set exposes an `http-client` output (1.14 downloader); local/inline do not.

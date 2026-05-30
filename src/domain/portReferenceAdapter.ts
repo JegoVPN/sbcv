@@ -3,6 +3,7 @@ import {
   dnsRuleAllowsServer,
   removeTagRef,
   routeRuleAllowsOutbound,
+  routeRuleAllowsServer,
   setDnsFinal,
   setRouteFinal,
   updateDnsRule,
@@ -201,6 +202,7 @@ function ownerKindForPath(canonicalPath: string): string | undefined {
 // `legacy`, which supportsDnsServerDialFields correctly rejects — so these are load-bearing, not redundant).
 const CONNECT_GATES: Record<string, (config: SingBoxConfig, ownerValue: string) => boolean> = {
   "route-rule": (config, ownerValue) => routeRuleAllowsOutbound(config.route?.rules?.[Number(ownerValue)]),
+  "route-rule-resolve": (config, ownerValue) => routeRuleAllowsServer(config.route?.rules?.[Number(ownerValue)]),
   "dns-rule": (config, ownerValue) => dnsRuleAllowsServer(config.dns?.rules?.[Number(ownerValue)]),
   "outbound-detour": (config, ownerValue) =>
     supportsOutboundDialFields(config.outbounds?.find((item) => item.tag === ownerValue)?.type),

@@ -150,6 +150,10 @@ export const portRelations: PortRelation[] = [
   relation("rule-set-http-client", "writable", endpoint("output", "rule-set", "http-client", "HTTP client", "globe", "remote"), endpoint("input", "http-client", "http-client-ref", "Upstream HTTP client", "globe"), "/route/rule_set/*/http_client", ["http-client"]),
   relation("certificate-provider-http-client", "writable", endpoint("output", "certificate-provider", "http-client", "HTTP client", "globe", undefined, ["tailscale"]), endpoint("input", "http-client", "http-client-ref", "Upstream HTTP client", "globe"), "/certificate_providers/*/http_client", ["http-client"]),
   relation("http-client-detour", "writable", endpoint("output", "http-client", "dial-detour", "Dial detour outbound", "spline"), endpoint("input", "outbound", "detour-target", "Upstream Dial detour target", "network", undefined, ["block", "dns"], ["endpoint"]), "/http_clients/*/detour", ["outbound"]),
+  // V7-S3: the route-rule `resolve` action dials a DNS server (route/rule_action.md), mirroring the dns-rule
+  // server edge. Action-gated (CONNECT_GATES.route-rule-resolve = routeRuleAllowsServer). Appended at the
+  // end of the registry so its ports trail the existing keys on route-rule (output) and dns-server (input).
+  relation("route-rule-resolve", "writable", endpoint("output", "route-rule", "resolve-server", "Resolve server", "crosshair"), endpoint("input", "dns-server", "route-rule-resolve", "Route rule (resolve)", "git-branch"), "/route/rules/*/server", ["dns-server"]),
 ];
 
 export function isPortNodeKind(value: string): value is PortNodeKind {
