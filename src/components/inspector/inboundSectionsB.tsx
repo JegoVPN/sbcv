@@ -5,6 +5,7 @@ import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields"
 import { JsonField, SensitiveTextField } from "./controls";
 import { inboundHandledFields } from "./handledFields";
 import { type InspectorEntity, objectField, parseOptionalNumber, type UpdateField } from "./helpers";
+import { SchemaEnumField } from "./schemaEnumField";
 
 // C14 — the second half of the inbound per-protocol inspector (shadowtls / anytls / shadowsocks / the
 // per-type user-credential editor / tproxy / cloudflared / direct / trojan / hysteria2 / naive / ... +
@@ -188,33 +189,9 @@ export function InboundSectionsB({
             </label>
           ) : null}
           {entityType === "shadowsocks" ? (
-            <label className="field">
-              <span>Method</span>
-              <select
-                value={typeof entity.method === "string" ? entity.method : ""}
-                onChange={(event) => updateField(entityRef, "method", event.target.value || undefined)}
-              >
-                <option value="">(none)</option>
-                <optgroup label="Shadowsocks 2022">
-                  <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-                  <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
-                  <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
-                </optgroup>
-                <optgroup label="AEAD">
-                  <option value="aes-128-gcm">aes-128-gcm</option>
-                  <option value="aes-192-gcm">aes-192-gcm</option>
-                  <option value="aes-256-gcm">aes-256-gcm</option>
-                  <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
-                  <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
-                </optgroup>
-                {/* Shadowsocks INBOUND accepts only 2022 + AEAD + `none` (inbound/shadowsocks.md);
-                    stream ciphers (aes-*-ctr/cfb, rc4-md5, chacha20-ietf, xchacha20) are outbound-only
-                    and the inbound rejects them. (L2-fix-ss-inbound-ciphers, audit H3) */}
-                <optgroup label="Other">
-                  <option value="none">none (no encryption)</option>
-                </optgroup>
-              </select>
-            </label>
+            // INBOUND uses the modern method set (2022 + AEAD + none); stream ciphers are outbound-only
+            // and rejected by the inbound (inbound/shadowsocks.md). The set lives in SS_METHOD_MODERN_ENUM.
+            <SchemaEnumField kind="inbound" type="shadowsocks" field="method" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "mixed" || entityType === "http" || entityType === "socks" ? (
             <label className="toggle-row" data-testid="inbound-set-system-proxy">
@@ -229,17 +206,9 @@ export function InboundSectionsB({
             </label>
           ) : null}
           {entityType === "tproxy" ? (
-            <label className="field" data-testid="inbound-tproxy-network">
-              <span>Network</span>
-              <select
-                value={typeof entity.network === "string" ? entity.network : ""}
-                onChange={(event) => updateField(entityRef, "network", event.target.value || undefined)}
-              >
-                <option value="">(both)</option>
-                <option value="tcp">tcp</option>
-                <option value="udp">udp</option>
-              </select>
-            </label>
+            <div data-testid="inbound-tproxy-network">
+              <SchemaEnumField kind="inbound" type="tproxy" field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
+            </div>
           ) : null}
           {entityType === "cloudflared" ? (
             <>
@@ -285,17 +254,9 @@ export function InboundSectionsB({
           ) : null}
           {entityType === "direct" ? (
             <>
-              <label className="field" data-testid="inbound-direct-network">
-                <span>Network</span>
-                <select
-                  value={typeof entity.network === "string" ? entity.network : ""}
-                  onChange={(event) => updateField(entityRef, "network", event.target.value || undefined)}
-                >
-                  <option value="">(both)</option>
-                  <option value="tcp">tcp</option>
-                  <option value="udp">udp</option>
-                </select>
-              </label>
+              <div data-testid="inbound-direct-network">
+                <SchemaEnumField kind="inbound" type="direct" field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
+              </div>
               <label className="field" data-testid="inbound-direct-override-address">
                 <span>Override Address</span>
                 <input
@@ -499,34 +460,12 @@ export function InboundSectionsB({
           ) : null}
           {entityType === "naive" ? (
             <>
-              <label className="field" data-testid="inbound-naive-network">
-                <span>Network</span>
-                <select
-                  value={typeof entity.network === "string" ? entity.network : ""}
-                  onChange={(event) => updateField(entityRef, "network", event.target.value || undefined)}
-                >
-                  <option value="">(both)</option>
-                  <option value="tcp">tcp</option>
-                  <option value="udp">udp</option>
-                </select>
-              </label>
-              <label className="field" data-testid="inbound-naive-quic-congestion-control">
-                <span>QUIC Congestion Control</span>
-                <select
-                  value={typeof entity.quic_congestion_control === "string" ? entity.quic_congestion_control : ""}
-                  onChange={(event) =>
-                    updateField(entityRef, "quic_congestion_control", event.target.value || undefined)
-                  }
-                >
-                  <option value="">(default — bbr)</option>
-                  <option value="bbr">bbr</option>
-                  <option value="bbr_standard">bbr_standard</option>
-                  <option value="bbr2">bbr2</option>
-                  <option value="bbr2_variant">bbr2_variant</option>
-                  <option value="cubic">cubic</option>
-                  <option value="reno">reno</option>
-                </select>
-              </label>
+              <div data-testid="inbound-naive-network">
+                <SchemaEnumField kind="inbound" type="naive" field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
+              </div>
+              <div data-testid="inbound-naive-quic-congestion-control">
+                <SchemaEnumField kind="inbound" type="naive" field="quic_congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
+              </div>
             </>
           ) : null}
           {(() => {

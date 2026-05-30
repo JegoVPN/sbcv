@@ -62,9 +62,13 @@ describe("C17 — no silently-unreachable handled fields", () => {
         .map((name) => `${inspectorDir}/${name}`),
     ];
     const source = files.map((file) => readFileSync(file, "utf8")).join("\n");
-    const literals = new Set(
-      [...source.matchAll(/updateField\((?:ref|entityRef),\s*"([a-z_]+)"/g)].map((match) => match[1]),
+    const literals = new Set<string>(
+      [...source.matchAll(/updateField\((?:ref|entityRef),\s*"([a-z_]+)"/g)].map((match) => match[1]!),
     );
+    // V0/M5: an enum field rendered by `<SchemaEnumField field="x" …>` is a real (data-driven) control —
+    // its write goes through updateField inside schemaEnumField.tsx via a variable, so recognize the
+    // field prop literal instead. Nested fields (field="obfs.type") map to their top-level handled key.
+    for (const match of source.matchAll(/field="([a-z_.]+)"/g)) literals.add(match[1]!.split(".")[0]!);
     const fabricated = [...INLINE_RENDERED_KEYS].filter((key) => !literals.has(key)).sort();
     expect(fabricated).toEqual([]);
   });
