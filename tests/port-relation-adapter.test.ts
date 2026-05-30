@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { adapterConnect, adapterDisconnect } from "../src/domain/portReferenceAdapter";
+import { adapterConnect, adapterDisconnect, adapterIsConnected } from "../src/domain/portReferenceAdapter";
 import { relationForId } from "../src/domain/portRelationRegistry";
 import type { PortRelation } from "../src/domain/portRelationRegistry";
 import type { SingBoxConfig } from "../src/domain/types";
@@ -62,5 +62,46 @@ describe("C13 — port reference adapter", () => {
     const cleared = structuredClone(connected!);
     adapterDisconnect(cleared, "dial-domain-resolver", ["px", "boot"]);
     expect((cleared.outbounds?.[0] as Record<string, unknown>).domain_resolver).toBeUndefined();
+  });
+
+  describe("adapterIsConnected (read path)", () => {
+    const cfg = {
+      route: { final: "px", rules: [{ inbound: "tun-in", outbound: "direct" }] },
+      inbounds: [{ type: "tun", tag: "tun-in" }],
+      outbounds: [{ type: "trojan", tag: "px", server: "e.com" }, { type: "direct", tag: "direct" }],
+    } as unknown as SingBoxConfig;
+
+    it("forward: route's outbound output lights when route.final is set", () => {
+      expect(adapterIsConnected(cfg, "route", "route", "main", "output", "outbound", "stable")).toBe(true);
+    });
+    it("reverse: an outbound's route input lights only for the route.final target", () => {
+      expect(adapterIsConnected(cfg, "outbound", "trojan", "px", "input", "route", "stable")).toBe(true);
+      expect(adapterIsConnected(cfg, "outbound", "direct", "direct", "input", "route", "stable")).toBe(false);
+    });
+    it("matcher reverse: an inbound's route-rule-match output lights when a rule references it", () => {
+      expect(adapterIsConnected(cfg, "inbound", "tun", "tun-in", "output", "route-rule-match", "stable")).toBe(true);
+    });
+    it("matcher forward: a route-rule's inbound input lights when the rule has an inbound", () => {
+      expect(adapterIsConnected(cfg, "route-rule", "route-rule", "0", "input", "inbound", "stable")).toBe(true);
+    });
+    it("returns undefined for a non-writable (readonly/hub) port so the caller falls through", () => {
+      expect(adapterIsConnected(cfg, "route-rule", "route-rule", "0", "input", "route", "stable")).toBeUndefined();
+      expect(adapterIsConnected(cfg, "route", "route", "main", "output", "route-rule", "stable")).toBeUndefined();
+    });
+    it("legacy parity: an empty rule tag-array (inbound: []) keeps the dot lit; service verify [] is dark", () => {
+      // The index-bound rule fields used Boolean() pre-refactor (empty array is truthy → lit), while the
+      // tag-bound service verify_client_endpoint used a length check (empty → dark). Both reachable by
+      // disconnecting the last ref (commands' removeTagRef leaves an empty array).
+      const ruleEmpty = { route: { rules: [{ inbound: [] }] } } as unknown as SingBoxConfig;
+      expect(adapterIsConnected(ruleEmpty, "route-rule", "route-rule", "0", "input", "inbound", "stable")).toBe(true);
+      const verifyEmpty = { services: [{ type: "derp", tag: "d", verify_client_endpoint: [] }] } as unknown as SingBoxConfig;
+      expect(adapterIsConnected(verifyEmpty, "service", "derp", "d", "output", "verify-client-endpoint", "stable")).toBe(false);
+    });
+
+    it("channel-gates http_client: a stable target never lights the http-client-ref input", () => {
+      const withHttp = { route: { default_http_client: "hc" }, http_clients: [{ tag: "hc" }] } as unknown as SingBoxConfig;
+      expect(adapterIsConnected(withHttp, "http-client", "http-client", "hc", "input", "http-client-ref", "testing")).toBe(true);
+      expect(adapterIsConnected(withHttp, "http-client", "http-client", "hc", "input", "http-client-ref", "stable")).toBe(false);
+    });
   });
 });

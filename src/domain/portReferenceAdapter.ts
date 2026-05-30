@@ -9,11 +9,49 @@ import {
   updateEntityField,
   updateRouteRule,
 } from "./commands";
-import { AGGREGATE_RELATION_IDS, type PortRelation, relationForId } from "./portRelationRegistry";
+import {
+  AGGREGATE_RELATION_IDS,
+  endpointMatchesNode,
+  type PortDirection,
+  type PortNodeKind,
+  type PortRelation,
+  portRelations,
+  relationForId,
+} from "./portRelationRegistry";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "./sharedFieldRegistry";
 import type { SingBoxConfig } from "./types";
 
 type PortNode = { kind: string; value: string };
+
+// Relations whose edges/dots are 1.14-only (http_client). The read path suppresses them on a stable target,
+// matching the channel-gated graph rendering.
+const CHANNEL_GATED_RELATIONS = new Set([
+  "route-default-http-client",
+  "rule-set-http-client",
+  "certificate-provider-http-client",
+  "http-client-detour",
+]);
+
+function stringRefs(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  return typeof value === "string" && value ? [value] : [];
+}
+
+// shared/dial.md domain_resolver: a string tag, or an object whose `server` is the tag. (moved from graph
+// so both the edge renderer and the read adapter share one definition.)
+export function domainResolverTag(value: unknown): string | undefined {
+  if (typeof value === "string") return value.trim() ? value : undefined;
+  if (isRecord(value)) {
+    const server = value.server;
+    return typeof server === "string" && server.trim() ? server : undefined;
+  }
+  return undefined;
+}
+
+// http-client.md: only the string form (a top-level http_clients[] tag) is an edge; the object form is inline.
+export function httpClientRefTag(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
 
 // C13 — one registry-driven adapter behind the three hand-written port switches (isPortConnected /
 // connectDirectedPortReference / disconnectEdge). A writable PortRelation's `canonicalPath` (+ a derived
@@ -345,4 +383,143 @@ function disconnectBespoke(next: SingBoxConfig, relationId: string, parts: strin
   if (!collection) return;
   const owners = next[collection] as MutableRecord[] | undefined;
   clearDomainResolver(owners?.find((owner) => owner.tag === ownerTag), resolverTag);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Read path (C13 slice S2): isPortConnected for writable relations resolves here. Returns a boolean when a
+// writable relation owns the (kind, direction, portKey); returns undefined when none does, so the caller
+// (graph.ts) falls through to the readonly / hub / decorative cases it still owns.
+// ---------------------------------------------------------------------------------------------------------
+
+function ownerCollection(config: SingBoxConfig, ownerKind: string): MutableRecord[] | undefined {
+  switch (ownerKind) {
+    case "route-rule":
+      return config.route?.rules as MutableRecord[] | undefined;
+    case "dns-rule":
+      return config.dns?.rules as MutableRecord[] | undefined;
+    case "outbound":
+      return config.outbounds as MutableRecord[] | undefined;
+    case "endpoint":
+      return config.endpoints as MutableRecord[] | undefined;
+    case "dns-server":
+      return config.dns?.servers as MutableRecord[] | undefined;
+    case "service":
+      return config.services as MutableRecord[] | undefined;
+    case "certificate-provider":
+      return config.certificate_providers as MutableRecord[] | undefined;
+    case "rule-set":
+      return config.route?.rule_set as MutableRecord[] | undefined;
+    case "http-client":
+      return config.http_clients as MutableRecord[] | undefined;
+    default:
+      return undefined;
+  }
+}
+
+// Read the value at a no-`*` canonicalPath (route.final, dns.final, ntp.detour, route.default_http_client,
+// experimental.clash_api.external_ui_download_detour).
+function singletonValue(config: SingBoxConfig, canonicalPath: string): unknown {
+  let cursor: unknown = config;
+  for (const segment of canonicalPath.split("/").filter(Boolean)) {
+    if (!isRecord(cursor)) return undefined;
+    cursor = cursor[segment];
+  }
+  return cursor;
+}
+
+const DOMAIN_RESOLVER_RELATIONS = new Set(["dial-domain-resolver", "endpoint-domain-resolver", "dns-server-domain-resolver"]);
+
+// Does THIS owner (identified by `value`) hold the reference? (output dot on the owner side.)
+function forwardConnected(config: SingBoxConfig, relation: PortRelation, value: string, channel: "stable" | "testing"): boolean {
+  const relationId = relation.id;
+  if (CHANNEL_GATED_RELATIONS.has(relationId) && channel !== "testing") return false;
+  const canonicalPath = relation.canonicalPath!;
+  const segments = canonicalPath.split("/").filter(Boolean);
+  const leaf = segments[segments.length - 1]!;
+  const ownerKind = ownerKindForPath(canonicalPath);
+
+  if (segments.indexOf("*") === -1) {
+    // Singleton owner (route / dns / settings): the field is set (value identifies the hub node, not the ref).
+    return Boolean(singletonValue(config, canonicalPath));
+  }
+
+  const indexBound = ownerKind === "route-rule" || ownerKind === "dns-rule";
+  const owner = indexBound
+    ? ownerCollection(config, ownerKind!)?.[Number(value)]
+    : ownerCollection(config, ownerKind!)?.find((item) => item.tag === value);
+  if (!owner) return false;
+
+  if (DOMAIN_RESOLVER_RELATIONS.has(relationId)) return Boolean(domainResolverTag(owner.domain_resolver));
+  if (CHANNEL_GATED_RELATIONS.has(relationId)) return Boolean(httpClientRefTag(owner[leaf]));
+  // Legacy parity: the index-bound rule fields (inbound/rule_set/server/outbound) used Boolean() — so an
+  // empty `inbound: []`/`rule_set: []` (reachable by disconnecting both refs) keeps its dot lit, matching
+  // pre-refactor behaviour. Tag-bound tag-arrays (service verify_client_endpoint) used the length check.
+  if (indexBound) return Boolean(owner[leaf]);
+  return refShapeFor(relationId) === "tag-array" ? stringRefs(owner[leaf]).length > 0 : Boolean(owner[leaf]);
+}
+
+// Does SOME owner reference `value`? (input dot on the referenced side.)
+function reverseConnected(config: SingBoxConfig, relation: PortRelation, value: string, channel: "stable" | "testing"): boolean {
+  const relationId = relation.id;
+  if (CHANNEL_GATED_RELATIONS.has(relationId) && channel !== "testing") return false;
+  const canonicalPath = relation.canonicalPath!;
+  const segments = canonicalPath.split("/").filter(Boolean);
+  const leaf = segments[segments.length - 1]!;
+  const ownerKind = ownerKindForPath(canonicalPath);
+
+  if (DOMAIN_RESOLVER_RELATIONS.has(relationId)) {
+    return ownerCollection(config, ownerKind!)?.some((item) => domainResolverTag(item.domain_resolver) === value) ?? false;
+  }
+  if (segments.indexOf("*") === -1) {
+    // Singleton reference (route.final, dns.final, ntp.detour, route.default_http_client, clash …).
+    const current = singletonValue(config, canonicalPath);
+    return (CHANNEL_GATED_RELATIONS.has(relationId) ? httpClientRefTag(current) : current) === value;
+  }
+
+  const shape = refShapeFor(relationId);
+  // Honour the OWNER endpoint's type filter (owner = source for most; target for the matcher relations
+  // route-rule-inbound / dns-rule-inbound, whose owner is the rule). e.g. dns-server-endpoint scans only
+  // tailscale servers; route-rule-inbound scans all rules (no rule type constraint).
+  const ownerEndpoint = relation.source.nodeKind === ownerKind ? relation.source : relation.target;
+  return (
+    ownerCollection(config, ownerKind!)?.some((item) => {
+      if (!endpointMatchesNode(ownerEndpoint, ownerKind as PortNodeKind, typeof item.type === "string" ? item.type : undefined)) {
+        return false;
+      }
+      // outbound-detour is outbound→outbound: an outbound never counts as its own detour target.
+      if (relationId === "outbound-detour" && item.tag === value) return false;
+      const field = CHANNEL_GATED_RELATIONS.has(relationId) ? httpClientRefTag(item[leaf]) : item[leaf];
+      return shape === "tag-array" ? stringRefs(field).includes(value) : field === value;
+    }) ?? false
+  );
+}
+
+/**
+ * Resolve the connected state of a port for any writable relation, or undefined if no writable relation
+ * owns it (caller handles readonly / hub / decorative ports).
+ */
+export function adapterIsConnected(
+  config: SingBoxConfig,
+  kind: string,
+  type: string,
+  value: string,
+  direction: PortDirection,
+  portKey: string,
+  channel: "stable" | "testing",
+): boolean | undefined {
+  const matches = portRelations.filter((relation) => {
+    if (relation.mode !== "writable" || !relation.canonicalPath) return false;
+    const endpoint = direction === "output" ? relation.source : relation.target;
+    return endpoint.portKey === portKey && endpointMatchesNode(endpoint, kind as PortNodeKind, type);
+  });
+  if (matches.length === 0) return undefined;
+
+  return matches.some((relation) => {
+    const ownerKind = ownerKindForPath(relation.canonicalPath!);
+    const isOwner =
+      direction === "output"
+        ? relation.source.nodeKind === ownerKind
+        : relation.target.nodeKind === ownerKind && relation.source.nodeKind !== ownerKind;
+    return isOwner ? forwardConnected(config, relation, value, channel) : reverseConnected(config, relation, value, channel);
+  });
 }
