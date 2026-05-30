@@ -390,14 +390,14 @@ describe("canonical sing-box domain model", () => {
   });
 
   it("renames tags and cascades route and selector references", () => {
-    const renamed = renameTag(createStableTunSplitConfig(), "proxy", "main-proxy");
+    const renamed = renameTag(createStableTunSplitConfig(), "outbound", "proxy", "main-proxy");
     expect(renamed.route?.final).toBe("main-proxy");
     expect(renamed.outbounds?.find((item) => item.tag === "main-proxy")).toBeTruthy();
   });
 
   it("rejects duplicate tag renames before mutating config", () => {
     const config = createStableTunSplitConfig();
-    const renamed = renameTag(config, "proxy", "direct");
+    const renamed = renameTag(config, "outbound", "proxy", "direct");
 
     expect(renamed).toBe(config);
     expect(renamed.outbounds?.filter((item) => item.tag === "direct")).toHaveLength(1);
@@ -415,7 +415,7 @@ describe("canonical sing-box domain model", () => {
   });
 
   it.each(referenceCoverageCases)("renames $kind references through the canonical registry", (testCase) => {
-    const renamed = renameTag(createReferenceCoverageConfig(), testCase.tag, testCase.nextTag);
+    const renamed = renameTag(createReferenceCoverageConfig(), testCase.kind, testCase.tag, testCase.nextTag);
     testCase.assertRenamed(renamed);
   });
 
@@ -471,7 +471,7 @@ describe("canonical sing-box domain model", () => {
       },
     } as ReturnType<typeof createStableTunSplitConfig>;
 
-    const outboundRenamed = renameTag(config, "proxy", "proxy-2");
+    const outboundRenamed = renameTag(config, "outbound", "proxy", "proxy-2");
     expect(outboundRenamed.route?.final).toBe("proxy-2");
     expect(outboundRenamed.route?.rules?.[0]?.outbound).toBe("proxy-2");
     expect(outboundRenamed.outbounds?.find((item) => item.tag === "auto")?.outbounds).toEqual(["proxy-2"]);
@@ -484,7 +484,7 @@ describe("canonical sing-box domain model", () => {
     expect((outboundRenamed.experimental as Record<string, unknown>).clash_api).toMatchObject({ external_ui_download_detour: "proxy-2" });
     expect(((outboundRenamed.experimental as Record<string, unknown>).v2ray_api as Record<string, unknown>).stats).toMatchObject({ outbounds: ["proxy-2"] });
 
-    const dnsRenamed = renameTag(outboundRenamed, "local-dns", "bootstrap-dns");
+    const dnsRenamed = renameTag(outboundRenamed, "dns-server", "local-dns", "bootstrap-dns");
     expect(dnsRenamed.dns?.final).toBe("bootstrap-dns");
     expect(dnsRenamed.dns?.rules?.[0]?.server).toBe("bootstrap-dns");
     expect(dnsRenamed.route?.default_domain_resolver).toBe("bootstrap-dns");
@@ -492,19 +492,19 @@ describe("canonical sing-box domain model", () => {
     expect(dnsRenamed.route?.rule_set?.[0]?.domain_resolver).toBe("bootstrap-dns");
     expect((dnsRenamed.ntp as Record<string, unknown>).domain_resolver).toBe("bootstrap-dns");
 
-    const httpRenamed = renameTag(dnsRenamed, "client", "client-2");
+    const httpRenamed = renameTag(dnsRenamed, "http-client", "client", "client-2");
     expect(httpRenamed.route?.default_http_client).toBe("client-2");
     expect(httpRenamed.route?.rule_set?.[0]?.http_client).toBe("client-2");
     expect(httpRenamed.certificate_providers?.[0]?.http_client).toBe("client-2");
 
-    const certRenamed = renameTag(httpRenamed, "cert", "cert-2");
+    const certRenamed = renameTag(httpRenamed, "certificate-provider", "cert", "cert-2");
     expect(((certRenamed.http_clients?.[0] as Record<string, unknown>).tls as Record<string, unknown>).certificate_provider).toBe("cert-2");
 
-    const endpointRenamed = renameTag(certRenamed, "ts-ep", "tailnet");
+    const endpointRenamed = renameTag(certRenamed, "endpoint", "ts-ep", "tailnet");
     expect(endpointRenamed.services?.find((item) => item.tag === "derp")?.verify_client_endpoint).toBe("tailnet");
     expect(endpointRenamed.certificate_providers?.[0]?.endpoint).toBe("tailnet");
 
-    const serviceRenamed = renameTag(endpointRenamed, "resolved-svc", "systemd-resolved");
+    const serviceRenamed = renameTag(endpointRenamed, "service", "resolved-svc", "systemd-resolved");
     expect(serviceRenamed.dns?.servers?.find((server) => server.tag === "resolved-dns")?.service).toBe("systemd-resolved");
   });
 
@@ -1611,7 +1611,7 @@ describe("canonical sing-box domain model", () => {
       servers: [{ type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", accept_default_resolvers: false }],
     };
 
-    const renamed = renameTag(config, "ts-ep", "tailnet");
+    const renamed = renameTag(config, "endpoint", "ts-ep", "tailnet");
     expect(renamed.endpoints?.[0]?.tag).toBe("tailnet");
     expect(renamed.dns?.servers?.[0]?.endpoint).toBe("tailnet");
 
@@ -1661,7 +1661,7 @@ describe("canonical sing-box domain model", () => {
     const withRuleSet = updateRouteRule(addRuleSet(createStableTunSplitConfig(), "remote", "ads-rules"), 0, {
       rule_set: "ads-rules",
     });
-    const renamed = renameTag(withRuleSet, "ads-rules", "privacy-rules");
+    const renamed = renameTag(withRuleSet, "rule-set", "ads-rules", "privacy-rules");
 
     expect(renamed.route?.rule_set?.[0]?.tag).toBe("privacy-rules");
     expect(renamed.route?.rules?.[0]?.rule_set).toBe("privacy-rules");
@@ -2529,6 +2529,7 @@ describe("canonical sing-box domain model", () => {
         },
         experimental: { clash_api: { external_ui_download_detour: "direct" } },
       } as unknown as ReturnType<typeof createStableTunSplitConfig>,
+      "outbound",
       "direct",
       "lan",
     );

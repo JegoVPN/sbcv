@@ -195,7 +195,9 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
             onChange={(event) => setTagDraft(event.target.value)}
             onBlur={() => {
               setTagDraftFocused(false);
-              renameTag(tagValue, tagDraft);
+              // The Tag field only renders for taggable entities; narrow ref.kind to a ReferenceKind so
+              // the rename is namespace-scoped (V10-S0 / M3).
+              if (ref && "tag" in ref) renameTag(ref.kind, ref.tag, tagDraft);
             }}
           />
         </label>
