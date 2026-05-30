@@ -239,6 +239,10 @@ function visitDnsServerRefs(config: SingBoxConfig, op: RefOp) {
   applyScalarField(config.dns as MutableRecord | undefined, "final", op);
   config.dns?.rules?.forEach((rule) => applyScalarField(rule as MutableRecord, "server", op));
   config.route?.rules?.forEach((rule) => applyScalarField(rule as MutableRecord, "server", op));
+  // W4 (m1): legacy DNS server `address_resolver` is a dns-server tag (resolves the server's own domain
+  // address; dns/server/legacy.md). Track it in the rename/delete cascade so renaming the referenced
+  // resolver rewrites it and deleting it scrubs the dangling ref (it was previously untracked → silent break).
+  config.dns?.servers?.forEach((server) => applyScalarField(server as MutableRecord, "address_resolver", op));
   applyResolverField(config.route as MutableRecord | undefined, "default_domain_resolver", op);
   const dialOwners: Array<OutboundConfig | DnsServerConfig | EndpointConfig | TaggedConfig | TaggedResourceConfig | Record<string, unknown>> = [
     ...(config.outbounds ?? []),
@@ -318,7 +322,7 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   ),
   entry(
     "dns-server",
-    ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
+    ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
     visitDnsServerRefs,
   ),
   entry(

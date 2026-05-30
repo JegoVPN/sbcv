@@ -225,7 +225,7 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "dns-server",
     tag: "local-dns",
     nextTag: "dns-renamed",
-    paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver"],
+    paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
     staleDiagnosticCodes: ["missing-dns-final", "missing-dns-rule-server"],
     assertRenamed: (config) => {
       expect(config.dns?.final).toBe("dns-renamed");
