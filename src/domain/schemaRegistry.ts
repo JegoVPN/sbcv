@@ -1,15 +1,17 @@
 // Declarative per-type schema table — the single place to edit when adding a protocol/field.
 //
 // This table is seeded verbatim from today's hand-written sources (protocols.ts palette/CREATABLE
-// lists, commands.ts create*() factories, sharedFieldRegistry.ts group membership, nodeLabels.ts
-// version markers, diagnostics.ts proxy/tls/required Sets). Each consumer is then flipped, one slice
-// at a time, to derive from this table with a byte-identical snapshot test — so a future field add is
-// one row edit, not a sweep across 8-9 files.
+// lists, commands.ts create*() factories, sharedFieldRegistry.ts group membership, diagnostics.ts
+// proxy/tls/required Sets). Each consumer is then flipped, one slice at a time, to derive from this
+// table with a byte-identical snapshot test — so a future field add is one row edit, not a sweep
+// across 8-9 files.
 //
-// Faithful transcription only: version/deprecation markers mirror what the code encodes today
-// (reconciling code vs docs/upstream is correctness work owned by the version-gating atomics, not this
-// refactor). Enums are intentionally out of scope here — no C0 consumer (protocols/commands/
-// sharedFieldRegistry/diagnostics) reads them; the data-driven scalar renderer atomic adds them later.
+// Type version-gating is NOT carried here: per-type minimum versions live in the curated minVersions.ts
+// TYPE_MIN_VERSION table (which deliberately differs from a raw "since" — e.g. mDNS is gated in the
+// palette but not badged on canvas), and whole-type deprecations live in nodeLabels NODE_BADGES +
+// diagnostics. The old dead row-level versionAdded/deprecatedIn/removedIn markers (read by nothing but a
+// tautological test) were removed in V10/G5 to leave those curated sources as the single source. Per-
+// FIELD enum value gating still lives on SchemaFieldMeta.since/channel + SchemaEnumOption (V1 consumes it).
 
 import type { SharedFieldGroupId } from "./sharedFieldRegistry";
 
@@ -74,10 +76,6 @@ export interface SchemaRow {
    * this is forward-looking metadata that a later slice consumes (the markers test asserts its values).
    */
   channel?: Channel;
-  /** Upstream "Since sing-box X". */
-  versionAdded?: string;
-  deprecatedIn?: string;
-  removedIn?: string;
   /** Byte-identical factory used by commands.create*(). */
   factory: (tag: string) => Record<string, unknown>;
   /** Channel-invariant shared-field groups for this (kind,type), in render order. */
@@ -358,7 +356,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "anytls",
     creatable: true,
     paletteKind: "inbound-anytls",
-    versionAdded: "1.12",
     tlsRequired: true,
     factory: (tag) => ({
       type: "anytls",
@@ -414,7 +411,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "inbound-cloudflared",
     channel: "testing",
-    versionAdded: "1.14",
     requiredFields: ["token"],
     factory: (tag) => ({ type: "cloudflared", tag, token: "" }),
     sharedGroups: ["listen"],
@@ -434,7 +430,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "block",
     creatable: true,
     paletteKind: "block",
-    deprecatedIn: "1.11",
     factory: (tag) => ({ type: "block", tag }),
     sharedGroups: [],
   },
@@ -549,7 +544,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "naive",
     creatable: true,
     paletteKind: "naive-out",
-    versionAdded: "1.13",
     proxy: true,
     tlsRequired: true,
     factory: (tag) => ({
@@ -576,8 +570,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "wireguard",
     creatable: false,
     paletteKind: "wireguard-out",
-    deprecatedIn: "1.11",
-    removedIn: "1.13",
     factory: (tag) => ({ type: "wireguard", tag }),
     sharedGroups: ["dial"],
   },
@@ -709,7 +701,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "anytls",
     creatable: true,
     paletteKind: "anytls-out",
-    versionAdded: "1.12",
     proxy: true,
     tlsRequired: true,
     factory: (tag) => ({
@@ -761,8 +752,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "dns",
     creatable: false,
     paletteKind: "dns-out",
-    deprecatedIn: "1.11",
-    removedIn: "1.13",
     factory: (tag) => ({ type: "dns", tag }),
     sharedGroups: [],
   },
@@ -798,10 +787,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "legacy",
     creatable: false,
     paletteKind: "dns-legacy",
-    // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES); the version numbers
-    // are docs-sourced (upstream dns/server/legacy.md: deprecated 1.12, removed 1.14) — no nodeLabels entry.
-    deprecatedIn: "1.12",
-    removedIn: "1.14",
+    // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES). Reference-only, kept for
+    // round-trip; its deprecation (1.12→removed 1.14) is enforced by the diagnostics legacy-DNS gate, not here.
     factory: (tag) => ({ type: "legacy", tag, address: "8.8.8.8", strategy: "prefer_ipv4" }),
     sharedGroups: [],
   },
@@ -891,8 +878,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: false,
     paletteKind: "dns-mdns",
     channel: "testing",
-    // versionAdded is docs-sourced (upstream dns/server/index.md: mdns added 1.14) — no nodeLabels entry.
-    versionAdded: "1.14",
+    // mdns is 1.14 testing-only; it is gated in the palette (TESTING_RESOURCE_MIN_VERSION) but deliberately
+    // NOT in TYPE_MIN_VERSION, so it carries no canvas "needs 1.14" badge (see minVersions.ts).
     factory: (tag) => ({ type: "mdns", tag, interface: [] }),
     sharedGroups: ["dial"],
   },
@@ -944,7 +931,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "tailscale",
     creatable: true,
     paletteKind: "endpoint-tailscale",
-    versionAdded: "1.12",
     factory: (tag) => ({
       type: "tailscale",
       tag,
@@ -1001,7 +987,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "ccm",
     creatable: true,
     paletteKind: "service-ccm",
-    versionAdded: "1.13",
     factory: (tag) => ({ type: "ccm", tag, listen: LISTEN_LOCAL, listen_port: 8080, users: [] }),
     sharedGroups: ["listen", "tls"],
   },
@@ -1010,7 +995,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "ocm",
     creatable: true,
     paletteKind: "service-ocm",
-    versionAdded: "1.13",
     factory: (tag) => ({
       type: "ocm",
       tag,
@@ -1029,7 +1013,6 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     paletteKind: "service-hysteria-realm",
     channel: "testing",
-    versionAdded: "1.14",
     factory: (tag) => ({
       type: "hysteria-realm",
       tag,
