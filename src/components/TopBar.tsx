@@ -15,7 +15,7 @@ import {
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
-import { confirmAndExportConfig } from "./exportConfig";
+import { blockingExportErrors, exportConfigGated } from "./exportConfig";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
@@ -103,6 +103,8 @@ export function TopBar() {
     () => [...diagnostics, ...officialDiagnostics],
     [diagnostics, officialDiagnostics],
   );
+  // V2 hard gate: structurally-invalid configs disable Export entirely (no bypass).
+  const exportBlockers = useMemo(() => blockingExportErrors(diagnostics), [diagnostics]);
   const resolveFocusTarget = useCallback(
     (diagnostic: Diagnostic) => nodeIdForDiagnosticPath(diagnostic.path, useProjectStore.getState().config),
     [],
@@ -176,7 +178,15 @@ export function TopBar() {
   function exportConfig() {
     // Gate on the synchronous semantic `diagnostics` slice (never cleared mid-flight, unlike
     // official/binary diagnostics) so the gate can't be raced into letting an invalid config through.
-    confirmAndExportConfig(useProjectStore.getState().config, diagnostics);
+    const outcome = exportConfigGated(useProjectStore.getState().config, diagnostics);
+    if (!outcome.exported && outcome.reason === "blocked") {
+      // Belt-and-suspenders if the disabled button is somehow bypassed: surface why + open the list.
+      useProjectStore.getState().pushToast({
+        message: `Fix ${outcome.errors.length} structural error${outcome.errors.length === 1 ? "" : "s"} before exporting.`,
+        tone: "error",
+      });
+      setPopoverOpen(true);
+    }
   }
 
   async function handleImport(event: ChangeEvent<HTMLInputElement>) {
@@ -328,7 +338,13 @@ export function TopBar() {
           type="button"
           onClick={exportConfig}
           data-testid="export-button"
-          title="Downloads a normalized config: empty fields are dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may differ textually from your original but sing-box reads it identically."
+          disabled={exportBlockers.length > 0}
+          aria-disabled={exportBlockers.length > 0}
+          title={
+            exportBlockers.length > 0
+              ? `Fix ${exportBlockers.length} structural error${exportBlockers.length === 1 ? "" : "s"} before exporting — open the status pill to see them.`
+              : "Downloads a normalized config: empty fields are dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may differ textually from your original but sing-box reads it identically."
+          }
         >
           <Download size={15} />
           Export
