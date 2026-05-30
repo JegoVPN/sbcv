@@ -91,8 +91,12 @@ type CreateNodeAndConnectCandidate = {
   handleId: string;
 };
 
-const BROWSER_VALIDATION_MESSAGE =
-  "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.";
+// W5: the official sing-box binary check gates exports only when an endpoint is configured. State this
+// honestly so the user knows whether export is PROVEN valid (binary) or only heuristically linted.
+const OFFICIAL_CHECK_CONFIGURED = Boolean((import.meta.env.VITE_OFFICIAL_CHECK_URL ?? "").trim());
+const BROWSER_VALIDATION_MESSAGE = OFFICIAL_CHECK_CONFIGURED
+  ? "Validation runs the semantic linter, then gates export on the target-matched sing-box binary (platform-specific errors stay advisory)."
+  : "Validation is heuristic (semantic linter) only — exports are NOT verified against the sing-box binary. Set VITE_OFFICIAL_CHECK_URL to gate exports on the real binary.";
 
 let semanticValidationTimer: ReturnType<typeof globalThis.setTimeout> | null = null;
 let semanticValidationToken = 0;
@@ -143,6 +147,9 @@ type ProjectStore = {
   diagnostics: Diagnostic[];
   officialDiagnostics: Diagnostic[];
   officialValidationMessage: string;
+  /** W5: whether VITE_OFFICIAL_CHECK_URL is configured — when true the official sing-box binary check is
+   *  an authoritative pre-export gate; when false validation is the heuristic semantic linter only. */
+  officialCheckConfigured: boolean;
   checkNotice: string;
   isChecking: boolean;
   isOfficialChecking: boolean;
@@ -716,6 +723,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   diagnostics: computeDiagnostics(initialConfig, "stable"),
   officialDiagnostics: [],
   officialValidationMessage: BROWSER_VALIDATION_MESSAGE,
+  officialCheckConfigured: OFFICIAL_CHECK_CONFIGURED,
   checkNotice: "",
   isChecking: false,
   isOfficialChecking: false,

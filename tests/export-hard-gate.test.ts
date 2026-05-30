@@ -4,8 +4,9 @@ import { blockingExportErrors, exportConfigGated } from "../src/components/expor
 import type { Diagnostic, SingBoxConfig } from "../src/domain/types";
 
 // V2 — exportConfigGated is the single hard gate. Error-level *semantic* diagnostics block the export
-// outright (no bypass, nothing downloaded). Warnings allow export behind one confirm. Official/binary
-// diagnostics (source !== "semantic") never block — they may carry platform/runtime errors.
+// outright (no bypass, nothing downloaded). Warnings allow export behind one confirm. W5: official-binary
+// errors now block too WHEN STRUCTURAL (unknown field / parse / missing); platform/OS-specific official
+// errors (classified by message) stay advisory so a config authored for another target OS isn't blocked.
 
 const config = { outbounds: [{ type: "direct", tag: "d" }] } as unknown as SingBoxConfig;
 
@@ -33,13 +34,14 @@ afterEach(() => {
 });
 
 describe("V2 — blockingExportErrors", () => {
-  it("counts only error-level semantic diagnostics", () => {
+  it("counts semantic errors + structural official errors; excludes platform official errors and warnings", () => {
     const diagnostics = [
       diag("error", "semantic", "enum-invalid"),
       diag("warning", "semantic", "soft"),
-      diag("error", "official", "platform"), // official errors are NOT structural blockers
+      diag("error", "official", "only supported on Linux"), // platform → advisory (message-classified)
+      diag("error", "official", 'json: unknown field "x"'), // structural → blocks (W5)
     ];
-    expect(blockingExportErrors(diagnostics).map((d) => d.code)).toEqual(["enum-invalid"]);
+    expect(blockingExportErrors(diagnostics).map((d) => d.code).sort()).toEqual(['json: unknown field "x"', "enum-invalid"].sort());
   });
 });
 
@@ -50,10 +52,17 @@ describe("V2 — exportConfigGated", () => {
     expect(createObjectURL).not.toHaveBeenCalled();
   });
 
-  it("does NOT block on an official/platform error (advisory, not structural)", () => {
-    const outcome = exportConfigGated(config, [diag("error", "official", "resolved-linux-only")]);
+  it("does NOT block on an official PLATFORM error (advisory, not structural)", () => {
+    const outcome = exportConfigGated(config, [diag("error", "official", "resolved service is only supported on Linux")]);
     expect(outcome).toEqual({ exported: true });
     expect(createObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it("W5: blocks on a STRUCTURAL official error (unknown field — proof the binary rejects it)", () => {
+    const structural = diag("error", "official", 'json: unknown field "frob"');
+    const outcome = exportConfigGated(config, [structural]);
+    expect(outcome).toEqual({ exported: false, reason: "blocked", errors: [structural] });
+    expect(createObjectURL).not.toHaveBeenCalled();
   });
 
   it("confirms on warnings; cancel aborts the download", () => {

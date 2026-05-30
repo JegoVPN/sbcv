@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useProjectStore } from "../src/state/useProjectStore";
 
+// W5: the validation message is now honest about heuristic-vs-binary. Tests run with no
+// VITE_OFFICIAL_CHECK_URL configured, so the message is the heuristic-only variant.
 const BROWSER_VALIDATION_MESSAGE =
-  "Browser validation is semantic. Official fixture checks use the target-matched sing-box binary.";
+  "Validation is heuristic (semantic linter) only — exports are NOT verified against the sing-box binary. Set VITE_OFFICIAL_CHECK_URL to gate exports on the real binary.";
 
 const MINIMAL_JSON = JSON.stringify({
   log: { level: "info" },

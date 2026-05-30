@@ -30,15 +30,39 @@ export function downloadProject(project: SbcProject): void {
 }
 
 /**
- * Error-level *semantic* diagnostics — the deterministic, platform-independent structural problems
- * (V1 enum/type, V3 missing-tag, references, duplicate tags, required fields, version gates). These are
- * what hard-block an export: a config with any of them is structurally invalid and sing-box would reject
- * it on every platform. Official/binary-check diagnostics are excluded here — they may carry runtime/
- * platform errors (e.g. "resolved service is only supported on Linux") that are environment-dependent
- * and must not block a config authored for a different target OS (advisory layer handles those).
+ * W5 (M1): an official sing-box-binary error is a runtime/platform error when it depends on the host OS
+ * or a build tag (e.g. "resolved service is only supported on Linux", "requires sing-box built with the
+ * with_tailscale tag"). Those must NOT block a config authored for a different target OS — they stay
+ * advisory. Every other official error (unknown field, parse failure, missing/invalid value) is a
+ * structural rejection that holds on every platform and SHOULD block, like a semantic error.
+ *
+ * The alternatives are deliberately phrase-anchored, NOT bare keywords, to avoid false positives that
+ * would let an INVALID config export (the dangerous direction): a bare `platform` would match the genuine
+ * `tun.platform` field path embedded in a structural error, and a bare `requires …(tag)` would match a
+ * structural "missing tag" rejection. "built with" already covers the build-tag (with_X) messages, and
+ * platform-context is gated to "this/current platform". A missed platform phrasing merely over-blocks a
+ * cross-OS config (annoying, recoverable); a missed structural error here would silently ship an invalid one.
+ */
+const OFFICIAL_PLATFORM_ERROR_RE =
+  /(only|not) supported on|built with|unavailable on|on (linux|macos|windows|android|darwin|ios)\b|\b(this|current) platform\b/i;
+
+export function isPlatformOfficialError(diagnostic: Diagnostic): boolean {
+  return diagnostic.source === "official" && OFFICIAL_PLATFORM_ERROR_RE.test(diagnostic.message);
+}
+
+/**
+ * Errors that HARD-BLOCK an export: deterministic structural problems sing-box rejects on every platform.
+ * Two sources qualify — the `semantic` heuristic linter (V1 enum/type, V3 missing-tag, references, required
+ * fields, version gates) and, once the official sing-box-binary check has run (W5/M1), its non-platform
+ * `official` errors (the authoritative proof). Platform/OS-specific official errors are excluded (advisory)
+ * so a config authored for a different target OS is never blocked here.
  */
 export function blockingExportErrors(diagnostics: Diagnostic[]): Diagnostic[] {
-  return diagnostics.filter((diagnostic) => diagnostic.level === "error" && diagnostic.source === "semantic");
+  return diagnostics.filter(
+    (diagnostic) =>
+      diagnostic.level === "error" &&
+      (diagnostic.source === "semantic" || (diagnostic.source === "official" && !isPlatformOfficialError(diagnostic))),
+  );
 }
 
 export type ExportOutcome =
