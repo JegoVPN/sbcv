@@ -27,9 +27,13 @@ const INSPECTOR_ONLY: Record<string, string> = {
   "/inbounds/*/handshake_for_server_name/*/detour": "shadowtls handshake_for_server_name[].detour — Inspector-only",
   "/inbounds/*/control_dialer/detour": "cloudflared control_dialer.detour — Inspector dial <select>",
   "/inbounds/*/tunnel_dialer/detour": "cloudflared tunnel_dialer.detour — Inspector dial <select>",
-  // ── candidates for promotion to canvas edges ──────────────────────────────────────────────────────
-  "/inbounds/*/detour": "inbound detour (inbound→inbound) — V7-S2 will promote to a writable edge",
-  "/route/rules/*/server": "route-rule resolve action server — V7-S3 will promote to a writable edge",
+  // inbound `detour` is NOT a field of any current sing-box inbound (verified absent from
+  // docs/upstream/.../inbound/*.md, stable + testing) — the referenceRegistry entry is a legacy vestige.
+  // It is correctly never edged; left here (not promoted) since the cascade still tag-tracks a legacy import.
+  "/inbounds/*/detour": "legacy/removed inbound detour — vestigial referenceRegistry entry, never edged",
+  // route-rule resolve action `server` is Inspector-editable today (a dns-server <select>, action-gated to
+  // resolve), so it is reachable pure-GUI; promoting it to a canvas edge (V7-S3) is graph-fidelity polish.
+  "/route/rules/*/server": "route-rule resolve server — Inspector dns-server <select> (edge = V7-S3 polish)",
 };
 
 const relationPaths = new Set(
