@@ -2311,6 +2311,27 @@ button.sbc-edge-remove:focus-visible {
   font-weight: 760;
 }
 
+/* W11: faithful read-only per-rule summary (action + actual match) so an action/logical rule is never
+   a blank card. */
+.rule-card__summary {
+  margin: -2px 0 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #0c1116;
+  border: 1px solid #222b34;
+  color: #c4ccd4;
+  font-size: 11.5px;
+  font-weight: 680;
+  word-break: break-word;
+}
+
+.rule-card__hint {
+  margin: 0;
+  color: #8f9aa5;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
 .rule-field {
   display: grid;
   gap: 5px;
