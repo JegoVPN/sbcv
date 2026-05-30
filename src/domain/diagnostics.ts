@@ -153,7 +153,11 @@ function validateScalarFields(
   }
 }
 
-/** A tag is "present" only if it's a non-empty, non-whitespace string. */
+/**
+ * A tag is "present" only if it's a non-empty, non-whitespace string. (Intentionally one notch stricter
+ * than sing-box's decoder, which accepts a whitespace-only tag: such a tag is unreferenceable garbage,
+ * and import dedup self-heals it. Matches getUniqueTag/taggedNodeId blank-handling elsewhere.)
+ */
 function tagIsBlank(tag: unknown): boolean {
   return typeof tag !== "string" || tag.trim() === "";
 }
