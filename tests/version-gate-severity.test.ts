@@ -33,3 +33,17 @@ describe("V4-S1 — testing-only sections are errors on stable", () => {
     expect(codes(config, "testing").has("stable-version-gated-http-clients")).toBe(false);
   });
 });
+
+describe("V4-S3 — removed-type outbounds are errors (sing-box rejects by default)", () => {
+  it("legacy dns / wireguard outbounds error on every target; block stays a warning", () => {
+    const dnsOut = { outbounds: [{ type: "dns", tag: "d" }] } as unknown as SingBoxConfig;
+    const wgOut = { outbounds: [{ type: "wireguard", tag: "w" }] } as unknown as SingBoxConfig;
+    const blockOut = { outbounds: [{ type: "block", tag: "b" }] } as unknown as SingBoxConfig;
+    for (const channel of ["stable", "testing"] as const) {
+      expect(codes(dnsOut, channel).has("outbound-dns-legacy-deprecated")).toBe(true);
+      expect(codes(wgOut, channel).has("outbound-wireguard-legacy-deprecated")).toBe(true);
+      // block is accepted by sing-box (1.12 + 1.13) — must NOT be an export-blocking error.
+      expect(validateConfig(blockOut, channel).find((d) => d.code === "outbound-block-deprecated")?.level).toBe("warning");
+    }
+  });
+});
