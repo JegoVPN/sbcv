@@ -103,6 +103,14 @@ const cases: SymmetryCase[] = [
     candidate: { nodeKind: "rule-set", nodeType: "remote", handleId: "route-rule" },
   },
   {
+    relationId: "route-rule-resolve",
+    name: "route rule resolve server",
+    base: { route: { rules: [{ action: "resolve" }] }, dns: { servers: [] } },
+    sourceId: "route-rule:0",
+    sourceHandle: "resolve-server",
+    candidate: { nodeKind: "dns-server", nodeType: "local", handleId: "route-rule-resolve" },
+  },
+  {
     relationId: "dns-final",
     name: "dns final server",
     base: { dns: { servers: [] } },

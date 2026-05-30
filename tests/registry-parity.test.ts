@@ -31,9 +31,9 @@ const INSPECTOR_ONLY: Record<string, string> = {
   // docs/upstream/.../inbound/*.md, stable + testing) — the referenceRegistry entry is a legacy vestige.
   // It is correctly never edged; left here (not promoted) since the cascade still tag-tracks a legacy import.
   "/inbounds/*/detour": "legacy/removed inbound detour — vestigial referenceRegistry entry, never edged",
-  // route-rule resolve action `server` is Inspector-editable today (a dns-server <select>, action-gated to
-  // resolve), so it is reachable pure-GUI; promoting it to a canvas edge (V7-S3) is graph-fidelity polish.
-  "/route/rules/*/server": "route-rule resolve server — Inspector dns-server <select> (edge = V7-S3 polish)",
+  // NOTE: /route/rules/*/server (route-rule resolve server) was promoted to a canvas edge in V7-S3
+  // (relation "route-rule-resolve"), so it is now edged and intentionally absent from this allowlist —
+  // the "no redundant entries" assertion below would fail if it were re-added.
 };
 
 const relationPaths = new Set(
