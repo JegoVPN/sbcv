@@ -104,7 +104,8 @@ export function EndpointInspector({
                           <span>Port</span>
                           <input
                             type="number"
-                            value={Number(peer.port ?? 51820)}
+                            value={typeof peer.port === "number" ? peer.port : ""}
+                            placeholder="51820"
                             onChange={(event) => patchPeer(index, { port: parseOptionalPort(event.target.value) })}
                           />
                         </label>
