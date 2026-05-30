@@ -85,9 +85,25 @@ export function validateFieldMeta(
   meta: SchemaFieldMeta,
   value: unknown,
   target: ValidationTarget,
-): { code: "enum-invalid" | "type-invalid"; message: string } | null {
+): { code: "enum-invalid" | "type-invalid" | "version-invalid"; message: string } | null {
   if (value === undefined || value === null || value === "") return null;
   const fieldName = meta.path.join(".");
+
+  // W3 (M4): a field whose own `since`/`channel` outranks the target is rejected by that binary even
+  // when its value is otherwise valid (e.g. naive inbound `quic_congestion_control`, since 1.13, on a
+  // 1.12 Legacy target). The per-OPTION gate below only covers enum VALUES; this covers the FIELD itself.
+  if (meta.since && !atLeast(target.version, meta.since)) {
+    return {
+      code: "version-invalid",
+      message: `${fieldName} requires sing-box ${meta.since}+, but the target is ${target.channel} ${target.version}. sing-box ${target.version} rejects it.`,
+    };
+  }
+  if (meta.channel && meta.channel !== target.channel) {
+    return {
+      code: "version-invalid",
+      message: `${fieldName} requires the ${meta.channel} channel, but the target is ${target.channel}.`,
+    };
+  }
 
   if (meta.type === "enum") {
     const options = meta.enum ?? [];
@@ -314,6 +330,23 @@ export function validateConfig(
       }
     });
   }
+
+  // W3 (M5): DNS-server TYPE min-version gate, driven by the single-source TYPE_MIN_VERSION (mirrors the
+  // naive/ccm/cloudflared type gates). Covers the 1.14-only `mdns` type, previously ungated — an imported
+  // mdns server on a 1.12/1.13 target passed clean but the binary rejects it ("unknown dns server type").
+  listItems(config.dns?.servers).forEach((server, index) => {
+    const type = (server as Record<string, unknown>).type;
+    const min = typeof type === "string" ? typeMinVersion("dns-server", type) : undefined;
+    if (min && !atLeast(version, min)) {
+      push(
+        diagnostics,
+        "error",
+        "dns-server-version",
+        `/dns/servers/${index}/type`,
+        `DNS server "${server.tag ?? `dns-server-${index}`}" (${type}) requires sing-box ${min}+, but the target is ${version}. sing-box ${version} rejects it.`,
+      );
+    }
+  });
 
   outbounds.forEach((outbound, index) => {
     if ((outbound.type === "selector" || outbound.type === "urltest") && Array.isArray(outbound.outbounds)) {
@@ -1531,12 +1564,14 @@ export function validateConfig(
         );
       }
       if (certificate.store === "chrome" && !atLeast(version, "1.13")) {
+        // W3: hard error, not a bypassable warning — 1.12 rejects the `chrome` system-cert store
+        // ("unknown certificate store"), so a config that sets it must not pass the export gate.
         push(
           diagnostics,
-          "warning",
+          "error",
           "settings-certificate-store-chrome-testing-only",
           "/certificate/store",
-          "certificate.store=chrome requires sing-box 1.13+ and is unavailable on this target.",
+          "certificate.store=chrome requires sing-box 1.13+; sing-box 1.12 rejects it.",
         );
       }
     }
