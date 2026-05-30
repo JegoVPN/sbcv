@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import { useProjectStore } from "../state/useProjectStore";
 
 const RULE_PAGE_SIZE = 100;
@@ -67,9 +68,10 @@ function RulePager({
 
 export function RouteRulesTable() {
   const [routePage, setRoutePage] = useState(0);
-  const { outbounds, ruleSets, rules, addRouteRule, updateRouteRule, moveRouteRule, deleteRouteRule } = useProjectStore(
+  const { outbounds, endpoints, ruleSets, rules, addRouteRule, updateRouteRule, moveRouteRule, deleteRouteRule } = useProjectStore(
     useShallow((state) => ({
       outbounds: state.config.outbounds,
+      endpoints: state.config.endpoints,
       ruleSets: state.config.route?.rule_set,
       rules: state.config.route?.rules,
       addRouteRule: state.addRouteRule,
@@ -78,7 +80,9 @@ export function RouteRulesTable() {
       deleteRouteRule: state.deleteRouteRule,
     })),
   );
-  const routeOutbounds = listItems(outbounds);
+  // R4: route rules can target an endpoint as well as an outbound (sing-box outbound target semantics),
+  // so the select offers both. Order: outbounds first, then endpoints.
+  const routeOutbounds = [...listItems(outbounds), ...listItems(endpoints)];
   const routeRuleSets = listItems(ruleSets);
   const routeRules = listItems(rules);
   const routeBounds = pageBounds(routeRules.length, routePage);
@@ -131,21 +135,26 @@ export function RouteRulesTable() {
                   onChange={(event) => updateRouteRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
                 />
               </label>
-              <label className="rule-field">
-                <span>Outbound</span>
-                <select
-                  aria-label={`Route rule ${ruleIndex + 1} outbound`}
-                  value={rule.outbound ?? ""}
-                  onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
-                >
-                  <option value="">Missing</option>
-                  {routeOutbounds.map((outbound, outboundIndex) => (
-                    <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
-                      {outbound.tag ?? `untagged-${outboundIndex + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* R4: hide the target select for actions that scrub `outbound` (reject / hijack-dns /
+                  sniff / resolve / route-options) — it would be a dead control. Action is set in the
+                  Inspector; gating mirrors the domain normalizer (routeRuleAllowsOutbound). */}
+              {routeRuleAllowsOutbound(rule) ? (
+                <label className="rule-field">
+                  <span>Outbound</span>
+                  <select
+                    aria-label={`Route rule ${ruleIndex + 1} outbound`}
+                    value={rule.outbound ?? ""}
+                    onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
+                  >
+                    <option value="">Missing</option>
+                    {routeOutbounds.map((outbound, outboundIndex) => (
+                      <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
+                        {outbound.tag ?? `untagged-${outboundIndex + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label className="rule-field">
                 <span>Match rule-set</span>
                 <input
@@ -237,21 +246,25 @@ export function DnsRulesTable() {
                   onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
                 />
               </label>
-              <label className="rule-field">
-                <span>Server</span>
-                <select
-                  aria-label={`DNS rule ${ruleIndex + 1} server`}
-                  value={rule.server ?? ""}
-                  onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
-                >
-                  <option value="">Missing</option>
-                  {dnsServers.map((server, serverIndex) => (
-                    <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
-                      {server.tag ?? `untagged-${serverIndex + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* R4: hide the server select for actions that scrub `server` (predefined / reject /
+                  respond) — dead control otherwise. Gating mirrors the domain normalizer (dnsRuleAllowsServer). */}
+              {dnsRuleAllowsServer(rule) ? (
+                <label className="rule-field">
+                  <span>Server</span>
+                  <select
+                    aria-label={`DNS rule ${ruleIndex + 1} server`}
+                    value={rule.server ?? ""}
+                    onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
+                  >
+                    <option value="">Missing</option>
+                    {dnsServers.map((server, serverIndex) => (
+                      <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
+                        {server.tag ?? `untagged-${serverIndex + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label className="rule-field">
                 <span>Match rule-set</span>
                 <input

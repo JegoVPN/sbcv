@@ -1141,3 +1141,20 @@ export function requiredFieldsFor(kind: SchemaEntityKind, type: string): string[
 export function fieldMetaFor(kind: SchemaEntityKind, type: string): SchemaFieldMeta[] {
   return schemaRow(kind, type)?.fields ?? [];
 }
+
+/**
+ * R4: the canonical top-level field keys a freshly-created (kind,type) entity carries, derived from
+ * its factory. This is the single source for type-driven Inspector visibility — render a required
+ * identity field (e.g. server / server_port / path) even when an IMPORTED config omitted it, so it
+ * can be repaired from the GUI instead of forcing a JSON edit. Falls back to an empty set for unknown
+ * types or a throwing factory.
+ */
+export function defaultFieldKeysFor(kind: SchemaEntityKind, type: string | null | undefined): Set<string> {
+  const row = type ? schemaRow(kind, type) : undefined;
+  if (!row) return new Set();
+  try {
+    return new Set(Object.keys(row.factory("_") as Record<string, unknown>));
+  } catch {
+    return new Set();
+  }
+}

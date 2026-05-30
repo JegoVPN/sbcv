@@ -1,5 +1,6 @@
 import { Trash2 } from "lucide-react";
 
+import { defaultFieldKeysFor } from "../../domain/schemaRegistry";
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { PlatformBanner } from "./controls";
@@ -24,6 +25,9 @@ export function DnsServerInspector({
   entityType: string | null;
   updateField: UpdateField;
 }) {
+  // R4: type-driven field visibility — render server/server_port/path for a type that carries them
+  // (per the schema factory) even when an imported config omitted the value, so it stays repairable.
+  const typeFields = defaultFieldKeysFor("dns-server", entityType);
   return (
         <>
           {entityType === "local" ? (
@@ -87,16 +91,17 @@ export function DnsServerInspector({
               />
             </label>
           ) : null}
-          {"server" in entity ? (
+          {typeFields.has("server") || "server" in entity ? (
             <label className="field">
               <span>Server</span>
               <input
                 value={String(entity.server ?? "")}
+                placeholder="resolver address (host or IP)"
                 onChange={(event) => updateField(entityRef, "server", event.target.value)}
               />
             </label>
           ) : null}
-          {"server_port" in entity ? (
+          {typeFields.has("server_port") || "server_port" in entity ? (
             (() => {
               const portDefaultByType: Record<string, number> = {
                 tcp: 53,
@@ -125,7 +130,7 @@ export function DnsServerInspector({
               );
             })()
           ) : null}
-          {"path" in entity ? (
+          {typeFields.has("path") || "path" in entity ? (
             entityType === "hosts" ? (
               <label className="field">
                 <span>Path(s)</span>
