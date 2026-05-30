@@ -344,6 +344,34 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   entry("certificate-provider", ["*/tls/certificate_provider"], visitCertificateProviderRefs),
 ];
 
+// W10/A3 — the canvas SURFACE classification of every reference path, declared ON the domain model (the
+// single source) rather than buried in the parity test. A path is either drawn as a canvas edge (a
+// portRelation canonicalPath) or edited only through the Inspector (a <select> / CSV / nested list); this
+// map names the Inspector-only ones with the reason. registry-parity.test.ts now consumes THIS — so the
+// reference model self-describes how each pointer reaches the user, and the test only verifies the canvas
+// view (portRelations) matches. As paths are promoted to edges they move OUT of this map (the test flags a
+// promoted-but-not-removed entry as "redundant", a removed-but-not-edged path as "uncovered").
+export const INSPECTOR_ONLY_REFERENCE_PATHS: Record<string, string> = {
+  "/outbounds/*/default": "selector default — a <select> of the node's own candidates, not a cross-node edge",
+  "/route/default_domain_resolver": "route default domain resolver — Inspector dial <select>",
+  "/dns/servers/*/address_resolver": "legacy DNS server address_resolver — a dns-server tag (legacy.md); cascade-tracked for rename/delete but Inspector-only (no canvas edge), like other legacy fields",
+  "*/tls/certificate_provider": "tls.certificate_provider — Inspector TLS <select>",
+  "/inbounds/*/route_address_set": "tun route_address_set — Inspector CSV of rule-set tags",
+  "/inbounds/*/route_exclude_address_set": "tun route_exclude_address_set — Inspector CSV of rule-set tags",
+  "/experimental/v2ray_api/stats/inbounds": "v2ray stats — Inspector list of inbound tags",
+  "/experimental/v2ray_api/stats/outbounds": "v2ray stats — Inspector list of outbound tags",
+  "/services/*/mesh_with/*/detour": "derp mesh_with[].detour — nested-array detour, Inspector-only",
+  "/services/*/verify_client_url/*/detour": "derp verify_client_url[].detour — nested-array detour, Inspector-only",
+  "/inbounds/*/handshake/detour": "shadowtls handshake.detour — Inspector dial <select>",
+  "/inbounds/*/handshake_for_server_name/*/detour": "shadowtls handshake_for_server_name[].detour — Inspector-only",
+  "/inbounds/*/control_dialer/detour": "cloudflared control_dialer.detour — Inspector dial <select>",
+  "/inbounds/*/tunnel_dialer/detour": "cloudflared tunnel_dialer.detour — Inspector dial <select>",
+  // inbound `detour` is NOT a field of any current sing-box inbound (verified absent from
+  // docs/upstream/.../inbound/*.md, stable + testing) — the referenceRegistry entry is a legacy vestige.
+  // It is correctly never edged; left here (not promoted) since the cascade still tag-tracks a legacy import.
+  "/inbounds/*/detour": "legacy/removed inbound detour — vestigial referenceRegistry entry, never edged",
+};
+
 export function replaceRegisteredTagReferences(config: SingBoxConfig, oldTag: string, newTag: string) {
   referenceRegistry.forEach((entry) => entry.replace(config, oldTag, newTag));
 }

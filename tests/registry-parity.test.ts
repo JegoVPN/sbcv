@@ -1,41 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { referenceRegistry } from "../src/domain/referenceRegistry";
+import { INSPECTOR_ONLY_REFERENCE_PATHS, referenceRegistry } from "../src/domain/referenceRegistry";
 import { portRelations } from "../src/domain/portRelationRegistry";
 
-// V7-S1 — registry parity guard. referenceRegistry is the FULL reference cascade (every tag pointer, used
-// for rename/remove); portRelationRegistry is the subset connectable as canvas edges. Two hand-maintained
-// registries drift silently — a new reference path can be added to one and forgotten in the other. This
-// test asserts every writable referenceRegistry path is EITHER edged (a portRelation canonicalPath) OR in
-// an explicit Inspector-only allowlist, and that the allowlist has no stale/redundant entries.
-
-// Paths a user edits only through the Inspector (a select / CSV / nested list), never as a canvas edge —
-// each with the reason. As V7-S2/S3 promote paths to edges, they move OUT of this list (the test keeps it
-// honest: a promoted-but-not-removed entry becomes "redundant", a removed-but-not-edged path becomes
-// "uncovered").
-const INSPECTOR_ONLY: Record<string, string> = {
-  "/outbounds/*/default": "selector default — a <select> of the node's own candidates, not a cross-node edge",
-  "/route/default_domain_resolver": "route default domain resolver — Inspector dial <select>",
-  "/dns/servers/*/address_resolver": "legacy DNS server address_resolver — a dns-server tag (legacy.md); cascade-tracked for rename/delete but Inspector-only (no canvas edge), like other legacy fields",
-  "*/tls/certificate_provider": "tls.certificate_provider — Inspector TLS <select>",
-  "/inbounds/*/route_address_set": "tun route_address_set — Inspector CSV of rule-set tags",
-  "/inbounds/*/route_exclude_address_set": "tun route_exclude_address_set — Inspector CSV of rule-set tags",
-  "/experimental/v2ray_api/stats/inbounds": "v2ray stats — Inspector list of inbound tags",
-  "/experimental/v2ray_api/stats/outbounds": "v2ray stats — Inspector list of outbound tags",
-  "/services/*/mesh_with/*/detour": "derp mesh_with[].detour — nested-array detour, Inspector-only",
-  "/services/*/verify_client_url/*/detour": "derp verify_client_url[].detour — nested-array detour, Inspector-only",
-  "/inbounds/*/handshake/detour": "shadowtls handshake.detour — Inspector dial <select>",
-  "/inbounds/*/handshake_for_server_name/*/detour": "shadowtls handshake_for_server_name[].detour — Inspector-only",
-  "/inbounds/*/control_dialer/detour": "cloudflared control_dialer.detour — Inspector dial <select>",
-  "/inbounds/*/tunnel_dialer/detour": "cloudflared tunnel_dialer.detour — Inspector dial <select>",
-  // inbound `detour` is NOT a field of any current sing-box inbound (verified absent from
-  // docs/upstream/.../inbound/*.md, stable + testing) — the referenceRegistry entry is a legacy vestige.
-  // It is correctly never edged; left here (not promoted) since the cascade still tag-tracks a legacy import.
-  "/inbounds/*/detour": "legacy/removed inbound detour — vestigial referenceRegistry entry, never edged",
-  // NOTE: /route/rules/*/server (route-rule resolve server) was promoted to a canvas edge in V7-S3
-  // (relation "route-rule-resolve"), so it is now edged and intentionally absent from this allowlist —
-  // the "no redundant entries" assertion below would fail if it were re-added.
-};
+// V7-S1 / W10-A3 — registry parity guard. referenceRegistry is the FULL reference cascade (every tag
+// pointer, used for rename/remove) AND now declares each path's canvas surface on the model via
+// INSPECTOR_ONLY_REFERENCE_PATHS; portRelationRegistry is the subset connectable as canvas edges. Two
+// hand-maintained registries drift silently — a new reference path can be added to one and forgotten in
+// the other. This test verifies the canvas view matches the model: every writable referenceRegistry path
+// is EITHER edged (a portRelation canonicalPath) OR declared Inspector-only on the model, with no
+// stale/redundant allowlist entries. (The allowlist + reasons now live in the domain, not this test, so a
+// path's surface classification is single-sourced with the reference model it describes.)
+const INSPECTOR_ONLY = INSPECTOR_ONLY_REFERENCE_PATHS;
 
 const relationPaths = new Set(
   portRelations.map((relation) => relation.canonicalPath).filter((path): path is string => Boolean(path)),
