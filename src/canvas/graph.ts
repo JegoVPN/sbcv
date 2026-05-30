@@ -11,6 +11,7 @@ import {
 } from "../domain/portRelationRegistry";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound, routeRuleAllowsServer } from "../domain/commands";
 import { adapterIsConnected, domainResolverTag, httpClientRefTag } from "../domain/portReferenceAdapter";
+import { ruleActionLabel, ruleMatchSummary } from "../domain/ruleSummary";
 import { supportsDialFields, supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -124,21 +125,13 @@ function listItems<T>(value: T[] | undefined): T[] {
 // A rule is "match conditions + an action" (route/rule_action.md, dns/rule_action.md). The card subtitle
 // must surface the action so a sniff/reject/resolve rule isn't visually identical to a route rule. The
 // default `route` action is omitted — its outbound/server target is already shown by the edge — so only
-// the classifying actions get a label.
-const RULE_ACTION_LABELS: Record<string, string> = {
-  reject: "reject",
-  "route-options": "route-options",
-  sniff: "sniff",
-  resolve: "resolve",
-  "hijack-dns": "hijack-dns",
-  bypass: "bypass",
-  predefined: "predefined",
-};
+// the classifying actions get a label. The match summary (incl. non-domain matchers + logical groups) and
+// the action labels are single-sourced in domain/ruleSummary so the table (RuleTables) can't disagree.
 function ruleActionString(action: unknown): string | undefined {
   return typeof action === "string" ? action : undefined;
 }
 function ruleSubtitle(match: string | undefined, action: string | undefined, fallback: string): string {
-  const actionLabel = action && action !== "route" ? RULE_ACTION_LABELS[action] ?? action : undefined;
+  const actionLabel = ruleActionLabel(action);
   if (match && actionLabel) return `${match} · ${actionLabel}`;
   if (match) return match;
   return actionLabel ?? fallback;
@@ -383,11 +376,8 @@ export function deriveGraph(
         const inboundRefs = stringRefs(rule.inbound);
         const ruleSetRefs = stringRefs(rule.rule_set);
         ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
-        const match =
-          listLabel(rule.domain_suffix) ??
-          listLabel(rule.domain_keyword) ??
-          listLabel(rule.domain) ??
-          listLabel(rule.rule_set);
+        const matchSummary = ruleMatchSummary(rule as unknown as Record<string, unknown>);
+        const match = matchSummary ? truncateLabel(matchSummary) : undefined;
         nodes.push(
           makeNode(
             id,
@@ -630,10 +620,10 @@ export function deriveGraph(
               action: ruleActionString(rule.action),
               title: `DNS Rule ${index + 1}`,
               subtitle: ruleSubtitle(
-                listLabel(rule.domain_suffix) ??
-                  listLabel(rule.domain_keyword) ??
-                  listLabel(rule.domain) ??
-                  listLabel(rule.rule_set),
+                (() => {
+                  const summary = ruleMatchSummary(rule as unknown as Record<string, unknown>);
+                  return summary ? truncateLabel(summary) : undefined;
+                })(),
                 ruleActionString(rule.action),
                 "dns match",
               ),
