@@ -787,8 +787,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     type: "legacy",
     creatable: false,
     paletteKind: "dns-legacy",
-    // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES); the version numbers
-    // are docs-sourced (upstream dns/server/legacy.md: deprecated 1.12, removed 1.14) — no nodeLabels entry.
+    // creatable:false is code-encoded (absent from CREATABLE_DNS_SERVER_TYPES). Reference-only, kept for
+    // round-trip; its deprecation (1.12→removed 1.14) is enforced by the diagnostics legacy-DNS gate, not here.
     factory: (tag) => ({ type: "legacy", tag, address: "8.8.8.8", strategy: "prefer_ipv4" }),
     sharedGroups: [],
   },
@@ -878,7 +878,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: false,
     paletteKind: "dns-mdns",
     channel: "testing",
-    // versionAdded is docs-sourced (upstream dns/server/index.md: mdns added 1.14) — no nodeLabels entry.
+    // mdns is 1.14 testing-only; it is gated in the palette (TESTING_RESOURCE_MIN_VERSION) but deliberately
+    // NOT in TYPE_MIN_VERSION, so it carries no canvas "needs 1.14" badge (see minVersions.ts).
     factory: (tag) => ({ type: "mdns", tag, interface: [] }),
     sharedGroups: ["dial"],
   },
