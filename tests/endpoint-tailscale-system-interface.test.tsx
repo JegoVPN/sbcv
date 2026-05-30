@@ -58,6 +58,22 @@ describe("A14 — endpoint-tailscale system_interface", () => {
       fireEvent.change(mtu, { target: { value: "" } });
       expect(useProjectStore.getState().config.endpoints?.[0]?.system_interface_mtu).toBeUndefined();
     });
+
+    // DF2 — relay_server_static_endpoints (string[], since 1.13) was in endpointHandledFields with no
+    // control, so an imported value was excluded from the Advanced fallback yet had no editor anywhere.
+    it("edits relay_server_static_endpoints as a list (since sing-box 1.13.0)", () => {
+      importTailscale({ relay_server_static_endpoints: ["192.0.2.1:41641"] });
+      render(<App />);
+      fireEvent.click(screen.getByTestId("node-endpoint:ts"));
+
+      const input = screen.getByLabelText(/Relay Server Static Endpoints/i) as HTMLInputElement;
+      expect(input.value).toBe("192.0.2.1:41641");
+      fireEvent.change(input, { target: { value: "192.0.2.1:41641, 198.51.100.2:41641" } });
+      expect(useProjectStore.getState().config.endpoints?.[0]?.relay_server_static_endpoints).toEqual([
+        "192.0.2.1:41641",
+        "198.51.100.2:41641",
+      ]);
+    });
   });
 
   describe("version gate (1.13+)", () => {
