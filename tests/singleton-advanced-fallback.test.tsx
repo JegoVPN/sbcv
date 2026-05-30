@@ -46,6 +46,19 @@ describe("M2 — singleton Advanced fallback", () => {
     expect(editorTextarea, "v2ray_api JSON editor should be present").toBeTruthy();
   });
 
+  it("keeps route.default_http_client reachable on STABLE (its control is testing-only)", () => {
+    // default_http_client's only control is the http-client shared card, added to route only on testing.
+    // On the default stable channel an imported value must still be reachable via the Advanced fallback.
+    selectNode(
+      { route: { final: "direct", default_http_client: "hc1" }, outbounds: [{ type: "direct", tag: "direct" }] },
+      "route:main",
+    );
+    render(<App />);
+    const inspector = within(screen.getByLabelText("Node inspector"));
+    expect(inspector.getByText(/Default Http Client/i)).toBeInTheDocument();
+    expect((useProjectStore.getState().config.route as Record<string, unknown>).default_http_client).toBe("hc1");
+  });
+
   it("surfaces an unmodeled route key in the Advanced fallback", () => {
     selectNode({ route: { final: "direct", some_unmodeled_flag: true }, outbounds: [{ type: "direct", tag: "direct" }] }, "route:main");
     render(<App />);
