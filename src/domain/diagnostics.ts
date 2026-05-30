@@ -1,4 +1,5 @@
 import { buildNamespacedTagIndex, getDnsServerTags, getEndpointTags, getHttpClientTags, getInboundTags, getOutboundTags, getRuleSetTags } from "./indexes";
+import { knownFieldsFor } from "./knownFieldsRegistry";
 import { typeMinVersion } from "./minVersions";
 import {
   fieldMetaFor,
@@ -212,6 +213,32 @@ function validateScalarFields(
               `/${collection}/${index}/${field}`,
               `${owner} of type ${type} requires \`${field}\`.`,
             );
+          }
+        }
+      }
+      // W9 (serialization → strong): unknown-field linter. A top-level key that is not a sing-box field
+      // for this (kind, type) on ANY channel is rejected by the strict decoder ("unknown field"). The
+      // heuristic linter previously missed these (typos, Clash.Meta filter/providers/use_all_providers,
+      // Xray streamSettings/mux/settings, removed legacy fields), so a structurally-fine config exported
+      // clean yet the binary FATAL-rejected it. Allowlist = upstream docs (both channels) ∪ shared groups
+      // ∪ a binary-verified supplement (knownFieldsRegistry); only entities with a real string type are
+      // linted (typeless legacy forms are caught by their own diagnostic). Validated zero-false-positive
+      // against the binary-valid fixtures + real configs.
+      if (typeof rawType === "string" && rawType && entity && typeof entity === "object") {
+        const known = knownFieldsFor(kind, rawType);
+        if (known) {
+          const tag = (entity as { tag?: unknown }).tag;
+          const owner = `${kind[0]!.toUpperCase()}${kind.slice(1)} "${typeof tag === "string" && tag ? tag : `${kind}-${index}`}"`;
+          for (const key of Object.keys(entity as Record<string, unknown>)) {
+            if (!known.has(key)) {
+              push(
+                diagnostics,
+                "error",
+                "unknown-field",
+                `/${collection}/${index}/${key}`,
+                `${owner} (${rawType}) has unrecognized field \`${key}\` — sing-box's strict decoder rejects it ("unknown field"). Remove it, or it may belong under a nested object.`,
+              );
+            }
           }
         }
       }
