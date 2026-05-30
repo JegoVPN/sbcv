@@ -153,6 +153,44 @@ function validateScalarFields(
   }
 }
 
+/**
+ * A tag is "present" only if it's a non-empty, non-whitespace string. (Intentionally one notch stricter
+ * than sing-box's decoder, which accepts a whitespace-only tag: such a tag is unreferenceable garbage,
+ * and import dedup self-heals it. Matches getUniqueTag/taggedNodeId blank-handling elsewhere.)
+ */
+function tagIsBlank(tag: unknown): boolean {
+  return typeof tag !== "string" || tag.trim() === "";
+}
+
+/**
+ * V3: entity-missing-tag. `sing-box check` rejects a MISSING tag only for `route.rule_set[]`
+ * ("missing tag") and `http_clients[]` ("missing http client tag") — verified against the real binary.
+ * Tagless inbounds/outbounds/dns-servers/endpoints/certificate-providers are ACCEPTED by sing-box (and
+ * common in real-world configs), so flagging them would block a valid export and break the done-bar
+ * ("保证能过 sing-box check"). The error is therefore scoped to exactly the two kinds sing-box rejects,
+ * and feeds the V2 export hard gate. (GUI create/rename never produces a blank tag — getUniqueTag — so
+ * this bites imported / hand-edited JSON, and import dedup auto-repairs it.)
+ */
+function validateRequiredTags(config: SingBoxConfig, diagnostics: Diagnostic[]): void {
+  const required: Array<{ items: unknown[]; collection: string; label: string }> = [
+    { items: listItems(config.route?.rule_set), collection: "route/rule_set", label: "Rule-set" },
+    { items: listItems(config.http_clients), collection: "http_clients", label: "HTTP client" },
+  ];
+  for (const { items, collection, label } of required) {
+    items.forEach((entity, index) => {
+      if (tagIsBlank((entity as { tag?: unknown }).tag)) {
+        push(
+          diagnostics,
+          "error",
+          "entity-missing-tag",
+          `/${collection}/${index}/tag`,
+          `${label} at index ${index} is missing a tag; sing-box requires a tag here.`,
+        );
+      }
+    });
+  }
+}
+
 export function validateConfig(
   config: SingBoxConfig,
   channel: SingBoxChannel,
@@ -2170,6 +2208,8 @@ export function validateConfig(
 
   // V1: data-driven enum/type validation of scalar fields (last, so its errors join the export gate).
   validateScalarFields(config, diagnostics, { channel, version });
+  // V3: structurally-required tags (rule_set / http_clients) — sing-box rejects these when blank.
+  validateRequiredTags(config, diagnostics);
 
   return diagnostics;
 }
