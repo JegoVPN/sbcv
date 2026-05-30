@@ -81,3 +81,23 @@ export function inboundTags(config: SingBoxConfig, type?: string) {
     .map((inbound) => inbound.tag)
     .filter((tag): tag is string => Boolean(tag));
 }
+
+// The cross-entity references that point at a given endpoint tag (tailscale dns-server `endpoint`, derp
+// service `verify_client_endpoint`, certificate-provider `endpoint`). Surfaced read-only in the endpoint
+// inspector so a user can see what depends on it before editing. (C14: moved out of the Inspector shell so
+// both the shell — which computes it — and the endpoint inspector — which needs its type — can share it.)
+export function endpointReferences(config: SingBoxConfig, tag: string) {
+  return {
+    tailscaleDnsServers: config.dns?.servers?.filter((server) => server.type === "tailscale" && server.endpoint === tag).map((server) => server.tag) ?? [],
+    derpServices:
+      config.services
+        ?.filter((service) => {
+          const refs = service.verify_client_endpoint;
+          return Array.isArray(refs) ? refs.includes(tag) : refs === tag;
+        })
+        .map((service) => service.tag ?? service.type) ?? [],
+    certificateProviders: config.certificate_providers?.filter((provider) => provider.endpoint === tag).map((provider) => provider.tag) ?? [],
+  };
+}
+
+export type EndpointReferences = ReturnType<typeof endpointReferences>;
