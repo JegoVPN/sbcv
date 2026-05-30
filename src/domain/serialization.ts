@@ -11,6 +11,15 @@ function coerceStringList(record: Record<string, unknown>, key: string) {
   if (typeof value === "string") record[key] = value ? [value] : [];
 }
 
+// DF3 — sing-box `udp_over_tcp` accepts a boolean shorthand (`true` ≡ `{enabled:true}`, version defaults
+// to 2; shared/udp-over-tcp.md). The Enabled control reads `udp_over_tcp.enabled`, so the boolean form
+// rendered OFF even when the config meant ON. Coerce the shorthand to the object form at import — both
+// forms are accepted by stable + testing `check`, so it is equivalent.
+function coerceUdpOverTcp(record: Record<string, unknown>) {
+  const value = record.udp_over_tcp;
+  if (typeof value === "boolean") record.udp_over_tcp = { enabled: value };
+}
+
 export type ConfigExport = {
   // "config.json" for a bare sing-box config; "project.sbcv.json" for the C16 project wrapper.
   fileName: string;
@@ -80,6 +89,7 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
       if (!item || typeof item !== "object") continue;
       coerceStringList(item as Record<string, unknown>, "network_type");
       coerceStringList(item as Record<string, unknown>, "fallback_network_type");
+      coerceUdpOverTcp(item as Record<string, unknown>);
     }
   }
   // DF1 — `tun.address` is string | string[]; the Address control reads/writes the array form, so a
