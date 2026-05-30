@@ -119,7 +119,12 @@ export function validateFieldMeta(
   return { code: "type-invalid", message: `${fieldName} must be a ${meta.type}, got ${actual}.` };
 }
 
-/** Per-entity scalar enum/type validation over every typed collection (drives V2's export hard gate). */
+/**
+ * Per-entity scalar enum/type validation over every typed collection (feeds V2's export hard gate; the
+ * errors are already live in the existing export prompt + node badges, not just V2). Today only
+ * inbound/outbound rows define `fields`, so the dns-server/endpoint/service/rule-set passes (and the
+ * dns-server `legacyType` fallback) are deliberate no-ops, ready for future field metadata.
+ */
 function validateScalarFields(
   config: SingBoxConfig,
   diagnostics: Diagnostic[],
