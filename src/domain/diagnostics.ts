@@ -277,10 +277,10 @@ export function validateConfig(
     if (!atLeast(version, "1.13")) {
       const ruleObj = rule as Record<string, unknown>;
       if (ruleObj.action === "bypass") {
-        push(diagnostics, "warning", "route-rule-bypass-1-13-only", `/route/rules/${index}/action`, `Route rule ${index + 1} uses action "bypass", which requires sing-box 1.13+, but the target is ${version}.`);
+        push(diagnostics, "error", "route-rule-bypass-1-13-only", `/route/rules/${index}/action`, `Route rule ${index + 1} uses action "bypass", which is sing-box 1.13+; ${version} rejects it ("unknown rule action: bypass").`);
       }
       if (ruleObj.interface_address !== undefined || ruleObj.network_interface_address !== undefined || ruleObj.default_interface_address !== undefined) {
-        push(diagnostics, "warning", "route-rule-interface-address-1-13-only", `/route/rules/${index}`, `Route rule ${index + 1} sets interface_address / network_interface_address / default_interface_address, which require sing-box 1.13+, but the target is ${version}.`);
+        push(diagnostics, "error", "route-rule-interface-address-1-13-only", `/route/rules/${index}`, `Route rule ${index + 1} sets interface_address / network_interface_address / default_interface_address, which are sing-box 1.13+; ${version} rejects them ("unknown field").`);
       }
     }
   });
@@ -290,7 +290,7 @@ export function validateConfig(
     listItems(config.dns?.servers).forEach((server, index) => {
       const obj = server as Record<string, unknown>;
       if (obj.type === "local" && obj.prefer_go !== undefined) {
-        push(diagnostics, "warning", "dns-local-prefer-go-1-13-only", `/dns/servers/${index}/prefer_go`, `Local DNS server "${server.tag ?? `dns-server-${index}`}" sets prefer_go, which requires sing-box 1.13+, but the target is ${version}.`);
+        push(diagnostics, "error", "dns-local-prefer-go-1-13-only", `/dns/servers/${index}/prefer_go`, `Local DNS server "${server.tag ?? `dns-server-${index}`}" sets prefer_go, which is sing-box 1.13+; ${version} rejects it ("unknown field").`);
       }
     });
   }
@@ -744,21 +744,25 @@ export function validateConfig(
   outbounds.forEach((outbound, index) => {
     const tag = outbound.tag ?? `outbound-${index}`;
     if (outbound.type === "dns") {
+      // sing-box rejects the legacy `type:"dns"` special outbound by default (1.12 needs
+      // ENABLE_DEPRECATED_SPECIAL_OUTBOUNDS; removed thereafter), so it hard-blocks export. (V4-S3 / M4)
       push(
         diagnostics,
-        "warning",
+        "error",
         "outbound-dns-legacy-deprecated",
         `/outbounds/${index}/type`,
-        `Outbound "${tag}" uses the legacy \`type: "dns"\` outbound (sing-box ≤1.10). Migrate to a route rule with \`action: "hijack-dns"\`.`,
+        `Outbound "${tag}" uses the legacy \`type: "dns"\` outbound — sing-box rejects it by default. Migrate to a route rule with \`action: "hijack-dns"\`.`,
       );
     }
     if (outbound.type === "wireguard") {
+      // sing-box rejects the legacy `type:"wireguard"` outbound by default (1.12 needs
+      // ENABLE_DEPRECATED_WIREGUARD_OUTBOUND; removed in 1.13), so it hard-blocks export. (V4-S3 / M4)
       push(
         diagnostics,
-        "warning",
+        "error",
         "outbound-wireguard-legacy-deprecated",
         `/outbounds/${index}/type`,
-        `Outbound "${tag}" uses the legacy \`type: "wireguard"\` outbound (sing-box 1.11). Migrate to \`endpoints[]\` with \`type: "wireguard"\`.`,
+        `Outbound "${tag}" uses the legacy \`type: "wireguard"\` outbound — sing-box rejects it by default (removed in 1.13). Migrate to \`endpoints[]\` with \`type: "wireguard"\`.`,
       );
     }
   });
@@ -867,8 +871,10 @@ export function validateConfig(
     const checkTls113Fields = (tlsValue: unknown, pathPrefix: string, label: string, isServer: boolean) => {
       if (!tlsValue || typeof tlsValue !== "object" || Array.isArray(tlsValue)) return;
       const tls = tlsValue as Record<string, unknown>;
+      // sing-box rejects these unknown tls fields on a pre-1.13 target ("unknown field"), so they
+      // hard-block export (V4-S3 / M4) rather than passing the gate on a confirm.
       const warn = (field: string, code: string) =>
-        push(diagnostics, "warning", code, `${pathPrefix}/tls/${field}`, `${label} uses tls.${field}, which requires sing-box 1.13+, but the target is ${version}.`);
+        push(diagnostics, "error", code, `${pathPrefix}/tls/${field}`, `${label} uses tls.${field}, which is sing-box 1.13+; ${version} rejects it ("unknown field").`);
       if (tls.kernel_tx === true) warn("kernel_tx", "tls-kernel-tx-1-13-only");
       if (tls.kernel_rx === true) warn("kernel_rx", "tls-kernel-rx-1-13-only");
       if (Array.isArray(tls.curve_preferences) && tls.curve_preferences.length > 0) warn("curve_preferences", "tls-curve-preferences-1-13-only");
@@ -1608,10 +1614,10 @@ export function validateConfig(
       if (Array.isArray(obj.advertise_tags) && obj.advertise_tags.length > 0 && !atLeast(version, "1.13")) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "endpoint-tailscale-advertise-tags-1-13-only",
           `/endpoints/${index}/advertise_tags`,
-          `Endpoint "${tag}" (tailscale) sets advertise_tags; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
+          `Endpoint "${tag}" (tailscale) sets advertise_tags, which is sing-box 1.13+; ${version} rejects it ("unknown field").`,
         );
       }
       // system_interface (bool), system_interface_name (string), system_interface_mtu (number) are all
