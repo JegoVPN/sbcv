@@ -419,7 +419,30 @@ export function OutboundInspector(props: OutboundSectionProps) {
             <SchemaEnumField kind="outbound" type="vless" field="flow" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "naive" ? (
-            <SchemaEnumField kind="outbound" type="naive" field="quic_congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
+            <>
+              <SchemaEnumField kind="outbound" type="naive" field="quic_congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.quic)}
+                  onChange={(event) => updateField(entityRef, "quic", event.target.checked || undefined)}
+                />
+                <span>Enable QUIC transport (quic)</span>
+              </label>
+              <label className="field">
+                <span>Insecure concurrency</span>
+                <input
+                  type="number"
+                  min={0}
+                  value={typeof entity.insecure_concurrency === "number" ? entity.insecure_concurrency : ""}
+                  placeholder="0"
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    updateField(entityRef, "insecure_concurrency", Number.isFinite(next) && next > 0 ? next : undefined);
+                  }}
+                />
+              </label>
+            </>
           ) : null}
       <OutboundSectionsB {...props} />
     </>
