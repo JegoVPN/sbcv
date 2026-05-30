@@ -13,7 +13,8 @@ import {
 } from "../domain/protocols";
 import type { SharedFieldGroupId } from "../domain/sharedFieldRegistry";
 import { sharedGroupsForEntity } from "../domain/sharedFieldRegistry";
-import { isSensitiveFieldName, JsonField, ModuleCard, PlatformBanner, SensitiveTextField } from "./inspector/controls";
+import { JsonField, ModuleCard, PlatformBanner, SensitiveTextField } from "./inspector/controls";
+import { AdvancedNonScalarFields, AdvancedScalarFields } from "./inspector/advancedFields";
 import {
   certificateProviderFields,
   SharedFieldCards,
@@ -32,8 +33,6 @@ import {
 // Preserve the public API the C17 guard test imports from this module (moved to inspector/handledFields).
 export { INLINE_RENDERED_KEYS, inboundHandledFields, outboundHandledFields, structurallyCoveredKeys } from "./inspector/handledFields";
 import {
-  editableNonScalarFields,
-  editableScalarFields,
   endpointTags,
   fromList,
   type InspectorEntity,
@@ -357,64 +356,6 @@ const INBOUND_USER_SCHEMAS: Record<string, InboundUserSchema> = {
   },
 };
 
-function AdvancedScalarFields({
-  entity,
-  handledFields,
-  entityRef,
-  updateField,
-}: {
-  entity: InspectorEntity;
-  handledFields: ReadonlySet<string>;
-  entityRef: EntityRef;
-  updateField: UpdateField;
-}) {
-  const fields = editableScalarFields(entity, handledFields);
-  if (!fields.length) return null;
-  return (
-    <details className="advanced-fields">
-      <summary>Advanced fields <span>{fields.length}</span></summary>
-      <div className="advanced-fields__body">
-        {fields.map(([field, value]) => {
-          if (typeof value === "boolean") {
-            return (
-              <label className="toggle-row" key={field}>
-                <input
-                  type="checkbox"
-                  checked={value}
-                  onChange={(event) => updateField(entityRef, field, event.target.checked)}
-                />
-                <span>{labelForField(field)}</span>
-              </label>
-            );
-          }
-          if (typeof value === "string" && isSensitiveFieldName(field)) {
-            return (
-              <SensitiveTextField
-                key={field}
-                label={labelForField(field)}
-                value={value}
-                onChange={(next) => updateField(entityRef, field, next)}
-              />
-            );
-          }
-          return (
-            <label className="field" key={field}>
-              <span>{labelForField(field)}</span>
-              <input
-                type={typeof value === "number" ? "number" : "text"}
-                value={String(value)}
-                onChange={(event) =>
-                  updateField(entityRef, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
-                }
-              />
-            </label>
-          );
-        })}
-      </div>
-    </details>
-  );
-}
-
 // Common headless-rule match fields surfaced as structured inputs (headless-rule.md). Anything outside
 // this set (logical rules, exotic/version-gated fields) is preserved untouched and stays editable via
 // the JSON escape hatch.
@@ -613,37 +554,6 @@ function InlineRulesJsonField({ value, onChange }: { value: unknown[]; onChange:
         </span>
       ) : null}
     </label>
-  );
-}
-
-function AdvancedNonScalarFields({
-  entity,
-  handledFields,
-  entityRef,
-  updateField,
-}: {
-  entity: InspectorEntity;
-  handledFields: ReadonlySet<string>;
-  entityRef: EntityRef;
-  updateField: UpdateField;
-}) {
-  const fields = editableNonScalarFields(entity, handledFields);
-  if (!fields.length) return null;
-  const refKey = JSON.stringify(entityRef);
-  return (
-    <details className="advanced-fields advanced-fields--non-scalar">
-      <summary>Advanced JSON fields <span>{fields.length}</span></summary>
-      <div className="advanced-fields__body">
-        {fields.map(([field, value]) => (
-          <JsonField
-            key={`${refKey}:${field}`}
-            label={labelForField(field)}
-            value={value}
-            onChange={(next) => updateField(entityRef, field, next)}
-          />
-        ))}
-      </div>
-    </details>
   );
 }
 
