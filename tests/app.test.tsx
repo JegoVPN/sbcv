@@ -2071,8 +2071,8 @@ describe("SBC editor shell", () => {
 
     // server + shared fields present
     expect(inspector.getByLabelText("Key Path")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Key (PEM lines or list)")).toBeInTheDocument();
-    expect(inspector.getByLabelText("Certificate (PEM lines or list)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Key (PEM)")).toBeInTheDocument();
+    expect(inspector.getByLabelText("Certificate (PEM)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Client Authentication")).toBeInTheDocument();
     expect(inspector.getByLabelText("Curve Preferences (1.13+)")).toBeInTheDocument();
     expect(inspector.getByLabelText("Reality Enabled")).toBeInTheDocument();

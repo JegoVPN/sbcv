@@ -19,7 +19,7 @@ import {
 // certificate-provider per-type fields, and their pure path/value helpers. Imported by the Inspector
 // shell + the per-family components; depends only on the leaf controls + helpers (no cycle).
 
-export type SharedFieldKind = "text" | "number" | "boolean" | "list" | "select" | "keyvalue";
+export type SharedFieldKind = "text" | "number" | "boolean" | "list" | "lines" | "select" | "keyvalue";
 
 export type SharedFieldDefinition = {
   label: string;
@@ -225,10 +225,10 @@ export function sharedFieldDefinitions(
       // server_name/certificate/certificate_path/ech here (outbound/naive.md).
       return [
         { label: "Server Name", path: ["tls", "server_name"], kind: "text" },
-        { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
+        { label: "Certificate (PEM)", path: ["tls", "certificate"], kind: "lines" },
         { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
         { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
-        { label: "ECH Config (PEM/lines)", path: ["tls", "ech", "config"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+        { label: "ECH Config (PEM)", path: ["tls", "ech", "config"], kind: "lines", gatedBy: ["tls", "ech", "enabled"] },
         { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
         { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
       ];
@@ -241,12 +241,12 @@ export function sharedFieldDefinitions(
       { label: "Max Version", path: ["tls", "max_version"], kind: "select", options: tlsVersionOptions },
       { label: "Cipher Suites", path: ["tls", "cipher_suites"], kind: "list" },
       { label: "Curve Preferences (1.13+)", path: ["tls", "curve_preferences"], kind: "list" },
-      { label: "Certificate (PEM lines or list)", path: ["tls", "certificate"], kind: "list" },
+      { label: "Certificate (PEM)", path: ["tls", "certificate"], kind: "lines" },
       { label: "Certificate Path", path: ["tls", "certificate_path"], kind: "text" },
       { label: "ECH Enabled", path: ["tls", "ech", "enabled"], kind: "boolean" },
     ];
     const serverOnly: SharedFieldDefinition[] = [
-      { label: "Key (PEM lines or list)", path: ["tls", "key"], kind: "list" },
+      { label: "Key (PEM)", path: ["tls", "key"], kind: "lines" },
       { label: "Key Path", path: ["tls", "key_path"], kind: "text" },
       { label: "Client Authentication", path: ["tls", "client_authentication"], kind: "select", options: ["no", "request", "require-any", "verify-if-given", "require-and-verify"] },
       { label: "Certificate Provider", path: ["tls", "certificate_provider"], kind: "select", options: certificateProviderOptions },
@@ -256,7 +256,7 @@ export function sharedFieldDefinitions(
       { label: "Reality Private Key", path: ["tls", "reality", "private_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Short ID", path: ["tls", "reality", "short_id"], kind: "list", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Max Time Difference", path: ["tls", "reality", "max_time_difference"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "ECH Key (PEM/lines)", path: ["tls", "ech", "key"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Key (PEM)", path: ["tls", "ech", "key"], kind: "lines", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Key Path", path: ["tls", "ech", "key_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
     ];
     const clientOnly: SharedFieldDefinition[] = [
@@ -271,7 +271,7 @@ export function sharedFieldDefinitions(
       { label: "Reality Enabled", path: ["tls", "reality", "enabled"], kind: "boolean" },
       { label: "Reality Public Key", path: ["tls", "reality", "public_key"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
       { label: "Reality Short ID", path: ["tls", "reality", "short_id"], kind: "text", gatedBy: ["tls", "reality", "enabled"] },
-      { label: "ECH Config (PEM/lines)", path: ["tls", "ech", "config"], kind: "list", gatedBy: ["tls", "ech", "enabled"] },
+      { label: "ECH Config (PEM)", path: ["tls", "ech", "config"], kind: "lines", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Config Path", path: ["tls", "ech", "config_path"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
       { label: "ECH Query Server Name", path: ["tls", "ech", "query_server_name"], kind: "text", gatedBy: ["tls", "ech", "enabled"] },
     ];
@@ -416,6 +416,14 @@ function coerceSharedFieldValue(kind: SharedFieldKind, rawValue: string | boolea
   if (kind === "boolean") return Boolean(rawValue);
   if (kind === "number") return rawValue === "" ? undefined : Number(rawValue);
   if (kind === "list") return fromList(String(rawValue));
+  // R5: a PEM/line array (tls.certificate/key/ech.*) is split on NEWLINES, not commas — a pasted PEM
+  // block round-trips intact as the `string[]` of lines sing-box expects. Trailing blank lines (from a
+  // trailing newline) are trimmed; internal blanks (between chained certs) are preserved.
+  if (kind === "lines") {
+    const lines = String(rawValue).split("\n");
+    while (lines.length && lines[lines.length - 1] === "") lines.pop();
+    return lines.length ? lines : undefined;
+  }
   return rawValue === "" ? undefined : rawValue;
 }
 
@@ -617,6 +625,23 @@ export function SharedFieldControl({
         </button>
         {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
       </fieldset>
+    );
+  }
+
+  if (definition.kind === "lines") {
+    // R5: PEM/line-array editor — a multi-line textarea (newline-delimited), not a comma CSV input.
+    return (
+      <label className="field">
+        <span>{definition.label}</span>
+        <textarea
+          className="shared-field-pem"
+          rows={4}
+          value={Array.isArray(value) ? value.join("\n") : String(value ?? "")}
+          placeholder={"-----BEGIN CERTIFICATE-----\n…paste PEM here…\n-----END CERTIFICATE-----"}
+          onChange={(event) => applyValue(coerceSharedFieldValue("lines", event.target.value))}
+        />
+        {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
+      </label>
     );
   }
 
