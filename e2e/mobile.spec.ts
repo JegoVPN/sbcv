@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 test.use({ viewport: { width: 390, height: 844 } });
 
@@ -8,6 +8,30 @@ test.beforeEach(async ({ page }) => {
     void dialog.accept();
   });
 });
+
+async function readEdgeMetrics(page: Page) {
+  return page.evaluate(() => {
+    const edges = Array.from(document.querySelectorAll(".react-flow__edge")).map((edge) => {
+      const path = edge.querySelector("path");
+      return {
+        id: edge.getAttribute("data-id") ?? "",
+        pathClass: path?.getAttribute("class") ?? "",
+        stroke: path ? getComputedStyle(path).stroke : "",
+      };
+    });
+    let lastPlainIndex = -1;
+    edges.forEach((edge, index) => {
+      if (!edge.pathClass.includes("sbc-edge__path--highlighted")) lastPlainIndex = index;
+    });
+    return {
+      edges,
+      highlightedEdges: edges
+        .map((edge, index) => ({ ...edge, index }))
+        .filter((edge) => edge.pathClass.includes("sbc-edge__path--highlighted")),
+      lastPlainIndex,
+    };
+  });
+}
 
 test("mobile shell — Check / Import / Export / node inspector flow", async ({ page }) => {
   await page.goto("/");
@@ -146,4 +170,79 @@ test("mobile selected node keeps first-degree edge highlight after inspector is 
   await expect(page.getByTestId("node-route:main").locator(".sbc-node.is-selected")).toBeVisible();
   await expect(highlighted.first()).toBeVisible();
   expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
+});
+
+test("mobile every default canvas node can be selected and keeps visible first-degree highlights", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+  await expect(page.locator(".sbc-node-shell").first()).toBeVisible();
+
+  const expectedNodeIds = [
+    "node-settings:log",
+    "node-inbound:tun-in",
+    "node-route:main",
+    "node-route-rule:0",
+    "node-route-rule:1",
+    "node-outbound:direct",
+    "node-outbound:hk",
+    "node-outbound:jp",
+    "node-outbound:auto",
+    "node-outbound:proxy",
+    "node-dns:main",
+    "node-dns-server:local-dns",
+    "node-dns-server:remote-doh",
+    "node-dns-rule:0",
+  ];
+  const standaloneNodeIds = new Set(["node-settings:log"]);
+  const nodeIds = await page.locator('.sbc-node-shell[data-testid^="node-"]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("data-testid")).filter((id): id is string => Boolean(id)),
+  );
+  expect(nodeIds).toEqual(expectedNodeIds);
+
+  for (const nodeId of nodeIds) {
+    await expect(page.getByTestId(nodeId)).toBeVisible();
+    await page.getByTestId(nodeId).click();
+    await expect(page.getByTestId("mobile-inspector-sheet"), `${nodeId} should open the mobile inspector`).toBeVisible();
+    await expect(page.getByTestId(nodeId).locator(".sbc-node.is-selected"), `${nodeId} should become selected`).toBeVisible();
+
+    const edgeMetrics = await readEdgeMetrics(page);
+    if (standaloneNodeIds.has(nodeId)) {
+      expect(edgeMetrics.highlightedEdges, `${nodeId} should not highlight unrelated edges`).toHaveLength(0);
+    } else {
+      expect(edgeMetrics.highlightedEdges.length, `${nodeId} should highlight first-degree edges`).toBeGreaterThan(0);
+      expect(edgeMetrics.highlightedEdges.every((edge) => edge.stroke === "rgb(45, 153, 255)")).toBe(true);
+      expect(edgeMetrics.highlightedEdges.every((edge) => edge.index > edgeMetrics.lastPlainIndex)).toBe(true);
+    }
+
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("mobile-inspector-sheet")).toHaveCount(0);
+  }
+});
+
+test("mobile selected DNS server promotes its highlighted edges above dense green wiring", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+  await expect(page.getByTestId("node-dns-server:remote-doh")).toBeVisible();
+
+  await page.getByTestId("node-dns-server:remote-doh").click();
+
+  const edgeMetrics = await readEdgeMetrics(page);
+  const remoteEdges = edgeMetrics.edges
+    .map((edge, index) => ({ ...edge, index }))
+    .filter((edge) => edge.id.includes("remote-doh"));
+
+  expect(remoteEdges).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        id: "edge:dns-server-detour:remote-doh:proxy",
+        stroke: "rgb(45, 153, 255)",
+      }),
+      expect.objectContaining({
+        id: "edge:dns-final:remote-doh",
+        stroke: "rgb(45, 153, 255)",
+      }),
+    ]),
+  );
+  expect(remoteEdges.every((edge) => edge.pathClass.includes("sbc-edge__path--highlighted"))).toBe(true);
+  expect(remoteEdges.every((edge) => edge.index > edgeMetrics.lastPlainIndex)).toBe(true);
 });
