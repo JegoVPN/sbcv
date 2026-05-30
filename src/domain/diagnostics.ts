@@ -1540,13 +1540,17 @@ export function validateConfig(
           `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_address; this field is testing-only (sing-box 1.14+).`,
         );
       }
-      if (obj.include_mac_address !== undefined || obj.exclude_mac_address !== undefined) {
+      // Field-level paths (not entity-level) so the data-driven VT3 gate dedups against this friendlier
+      // message instead of stacking a second error on the same field.
+      const macLabel = `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun)`;
+      for (const macField of ["include_mac_address", "exclude_mac_address"] as const) {
+        if (obj[macField] === undefined) continue;
         push(
           diagnostics,
           "error",
           "tun-mac-address-filter-testing-only",
-          `/inbounds/${index}`,
-          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) uses MAC address filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
+          `/inbounds/${index}/${macField}`,
+          `${macLabel} uses ${macField} filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
         );
       }
     }

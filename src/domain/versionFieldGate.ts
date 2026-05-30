@@ -39,7 +39,11 @@ export function testingOnlyFields(kind: string, type: unknown): Set<string> {
 }
 
 // Full catalog (only non-empty entries), for the snapshot test — so a doc regen that changes the gated set
-// is reviewed rather than silently shifting which configs are blocked.
+// is reviewed rather than silently shifting which configs are blocked. NOTE: a few keys here are doc-schema
+// pseudo-types, not runtime entity types — e.g. `rule-set/headless-rule` (a rule_set entity's `.type` is
+// inline/local/remote, never "headless-rule"), so `checkTestingOnlyFields` never matches it and that entry
+// is NOT actually gated at runtime. Such nested-schema fields (package_name_regex lives in rule_set.rules[])
+// remain the W9 unknown-field linter's concern; they are listed here only for catalog completeness.
 export function allTestingOnlyFields(): Record<string, Record<string, string[]>> {
   const out: Record<string, Record<string, string[]>> = {};
   for (const kind of Object.keys(DOC.testing?.byKind ?? {})) {

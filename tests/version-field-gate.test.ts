@@ -19,10 +19,11 @@ function hasCode(config: SingBoxConfig, channel: "stable" | "testing", code: str
 }
 
 describe("VT3 — data-driven testing-only field gate", () => {
-  // neighbor_domain (dns-server local) is 1.14-only and NOT covered by any hand-written gate, so it is the
-  // clean witness that the data-driven backstop fires. Binary-verified: stable rejects `unknown field
+  // neighbor_domain (dns-server local) is 1.14-only. A hand gate flags it only at WARNING level (too weak —
+  // stable's binary FATAL-rejects it), so VT3 (which dedups only against ERRORs) is not suppressed and
+  // correctly adds the export-blocking error. Binary-verified: stable rejects `unknown field
   // "neighbor_domain"`, testing accepts the field.
-  it("flags a 1.14-only field that no hand gate covers (dns-server local neighbor_domain)", () => {
+  it("adds an error for a 1.14-only field only weakly (warning-)gated by hand (dns-server local neighbor_domain)", () => {
     const config = { dns: { servers: [{ type: "local", tag: "l", neighbor_domain: [".lan"] }] } } as unknown as SingBoxConfig;
     expect(hasCode(config, "stable", "field-testing-only")).toBe(true);
     expect(hasCode(config, "testing", "field-testing-only")).toBe(false);
