@@ -57,6 +57,36 @@ function push(
   diagnostics.push({ level, code, path, message, source: "semantic" });
 }
 
+// W8 (M2): the shared QUIC tuning block is sing-box 1.14+ (testing/.../shared/quic.md "Since 1.14.0";
+// stable has no such file). Binary-verified: sing-box-1.13 FATAL-rejects each key ("unknown field
+// initial_packet_size" …) on hysteria / hysteria2 / tuic (the only types carrying the `quic` shared
+// group). Previously rendered with no channel gate AND no diagnostic — an invalid config exported clean
+// on the default stable target. These are errors on a stable (<1.14) target so the V2 export hard gate
+// blocks them, matching the V4-S1 testing-only-section policy.
+const QUIC_SHARED_TUNING_FIELDS = ["initial_packet_size", "disable_path_mtu_discovery", "idle_timeout", "keep_alive_period"];
+const QUIC_GROUP_TYPES = new Set(["hysteria", "hysteria2", "tuic"]);
+function checkQuic114Fields(
+  diagnostics: Diagnostic[],
+  channel: SingBoxChannel,
+  type: unknown,
+  obj: Record<string, unknown>,
+  pathPrefix: string,
+  label: string,
+) {
+  if (channel === "testing" || typeof type !== "string" || !QUIC_GROUP_TYPES.has(type)) return;
+  for (const key of QUIC_SHARED_TUNING_FIELDS) {
+    if (obj[key] !== undefined) {
+      push(
+        diagnostics,
+        "error",
+        "quic-shared-field-testing-only",
+        `${pathPrefix}/${key}`,
+        `${label} (${type}) sets ${key}; the QUIC tuning block is sing-box 1.14+ and stable builds reject it ("unknown field "${key}"").`,
+      );
+    }
+  }
+}
+
 // ── V1: enum / type validation (data-driven from schemaRegistry field metadata) ──────────────────────
 
 function getAtPath(obj: unknown, path: string[]): unknown {
@@ -1241,7 +1271,7 @@ export function validateConfig(
       if (obj.cipher !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "ssh-cipher-testing-only",
           `/outbounds/${index}/cipher`,
           `Outbound "${tag}" (ssh) sets cipher; this allow-list is testing-only (sing-box 1.14+).`,
@@ -1250,7 +1280,7 @@ export function validateConfig(
       if (obj.mac !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "ssh-mac-testing-only",
           `/outbounds/${index}/mac`,
           `Outbound "${tag}" (ssh) sets mac; this allow-list is testing-only (sing-box 1.14+).`,
@@ -1259,7 +1289,7 @@ export function validateConfig(
       if (obj.kex_algorithm !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "ssh-kex-algorithm-testing-only",
           `/outbounds/${index}/kex_algorithm`,
           `Outbound "${tag}" (ssh) sets kex_algorithm; this allow-list is testing-only (sing-box 1.14+).`,
@@ -1285,7 +1315,7 @@ export function validateConfig(
       if (obj.realm !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "hysteria2-realm-testing-only",
           `/outbounds/${index}/realm`,
           `Outbound "${tag}" (hysteria2) sets realm; the realm rendezvous field is testing-only (sing-box 1.14+) and will be rejected by stable builds.`,
@@ -1294,7 +1324,7 @@ export function validateConfig(
       if (obj.bbr_profile !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "hysteria2-bbr-profile-testing-only",
           `/outbounds/${index}/bbr_profile`,
           `Outbound "${tag}" (hysteria2) sets bbr_profile; this BBR tuning field is testing-only (sing-box 1.14+).`,
@@ -1303,13 +1333,14 @@ export function validateConfig(
       if (obj.hop_interval_max !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "hysteria2-hop-interval-max-testing-only",
           `/outbounds/${index}/hop_interval_max`,
           `Outbound "${tag}" (hysteria2) sets hop_interval_max; this randomization field is testing-only (sing-box 1.14+).`,
         );
       }
     }
+    checkQuic114Fields(diagnostics, channel, outbound.type, outbound as Record<string, unknown>, `/outbounds/${index}`, `Outbound "${tag}"`);
     const tls = (outbound as Record<string, unknown>).tls;
     if (tls && typeof tls === "object" && !Array.isArray(tls)) {
       const reality = (tls as Record<string, unknown>).reality;
@@ -1421,7 +1452,7 @@ export function validateConfig(
       if (obj.dns_mode !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "tun-dns-mode-testing-only",
           `/inbounds/${index}/dns_mode`,
           `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_mode; this field is testing-only (sing-box 1.14+).`,
@@ -1430,7 +1461,7 @@ export function validateConfig(
       if (obj.dns_address !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "tun-dns-address-testing-only",
           `/inbounds/${index}/dns_address`,
           `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_address; this field is testing-only (sing-box 1.14+).`,
@@ -1439,13 +1470,14 @@ export function validateConfig(
       if (obj.include_mac_address !== undefined || obj.exclude_mac_address !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "tun-mac-address-filter-testing-only",
           `/inbounds/${index}`,
           `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) uses MAC address filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
         );
       }
     }
+    checkQuic114Fields(diagnostics, channel, inbound.type, inbound as Record<string, unknown>, `/inbounds/${index}`, `Inbound "${inbound.tag ?? `inbound-${index}`}"`);
     const tls = (inbound as Record<string, unknown>).tls;
     if (tls && typeof tls === "object" && !Array.isArray(tls)) {
       const reality = (tls as Record<string, unknown>).reality;
