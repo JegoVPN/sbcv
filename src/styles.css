@@ -2691,18 +2691,117 @@ button.sbc-edge-remove:focus-visible {
   background: #232629;
 }
 
-.mobile-topbar__center {
+.mobile-topbar__spacer {
   flex: 1;
   min-width: 0;
-  display: flex;
+}
+
+.mobile-validation-group {
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 36px;
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #343d48;
+  border-radius: 999px;
+  background: #202327;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.mobile-validation-group--valid {
+  border-color: rgba(199, 255, 0, 0.34);
+}
+
+.mobile-validation-group--warning {
+  border-color: rgba(242, 188, 75, 0.42);
+}
+
+.mobile-validation-group--error {
+  border-color: rgba(227, 75, 75, 0.52);
+}
+
+.mobile-validation-group--checking {
+  border-color: rgba(137, 151, 168, 0.36);
+}
+
+.mobile-validation-run {
+  flex: 0 0 38px;
+  width: 38px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid #333537;
+  border-radius: 999px 0 0 999px;
+  background: transparent;
+  color: #e6edf3;
+  cursor: pointer;
+}
+
+.mobile-validation-run:hover:not(:disabled) {
+  background: #292b2d;
+  color: #ffffff;
+}
+
+.mobile-validation-run:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.mobile-validation-status-host {
+  min-width: 0;
+}
+
+.mobile-validation-status {
+  max-width: 132px;
+  min-width: 84px;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: 0 999px 999px 0;
+  background: transparent;
+  color: #eef2f4;
+  /* L4-mobile-touch: ≥36px tap target (was 30px); the brand + icon buttons are already 36px. */
+  min-height: 36px;
   justify-content: center;
 }
 
-.mobile-topbar__center .status-pill {
-  font-size: 11px;
-  padding: 0 10px;
-  /* L4-mobile-touch: ≥36px tap target (was 30px); the brand + icon buttons are already 36px. */
-  min-height: 36px;
+.mobile-validation-status:hover:not(:disabled) {
+  background: #292b2d;
+}
+
+.mobile-validation-status.status-pill--valid > svg {
+  color: #c7ff00;
+}
+
+.mobile-validation-status.status-pill--warning > svg {
+  color: #f2bc4b;
+}
+
+.mobile-validation-status.status-pill--error > svg {
+  color: #ff7777;
+}
+
+.mobile-validation-status.status-pill--checking > svg {
+  color: #aeb9c6;
+}
+
+.mobile-validation-status__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-validation-status-host .diagnostics-popover {
+  position: fixed;
+  top: 70px;
+  left: 16px;
+  right: 16px;
+  width: auto;
+  max-height: min(70vh, 540px);
 }
 
 .mobile-topbar__icon-btn {

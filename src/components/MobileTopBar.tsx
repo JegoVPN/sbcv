@@ -104,12 +104,27 @@ export function MobileTopBar() {
         <SbcvLogo />
       </button>
 
-      <div className="mobile-topbar__center">
-        <div className="status-pill-host">
+      <div
+        className={`mobile-validation-group mobile-validation-group--${pillState}`}
+        role="group"
+        aria-label="Validation"
+        data-testid="mobile-validation-group"
+      >
+        <button
+          type="button"
+          className="mobile-validation-run"
+          onClick={runCheck}
+          disabled={busy}
+          aria-label="Run check"
+          title={busy ? statusTitle : "Run validation checks"}
+        >
+          <FileCheck2 size={17} />
+        </button>
+        <div className="status-pill-host mobile-validation-status-host">
           <button
             key={busy ? `checking-${checkingPhase}` : checkNotice || pillState}
             type="button"
-            className={`status-pill status-pill--${pillState} ${checkNotice && !busy && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
+            className={`status-pill mobile-validation-status status-pill--${pillState} ${checkNotice && !busy && pillState === "valid" ? "status-pill--checked" : ""} ${pillInteractive ? "status-pill--interactive" : ""}`}
             title={statusTitle}
             aria-label={statusLabel}
             aria-haspopup={pillInteractive ? "dialog" : undefined}
@@ -120,7 +135,7 @@ export function MobileTopBar() {
             }}
           >
             <StatusIcon className={pillState === "checking" ? "status-pill__spinner" : undefined} size={13} />
-            {statusLabel}
+            <span className="mobile-validation-status__label">{statusLabel}</span>
           </button>
           {popoverOpen && pillInteractive ? (
             <DiagnosticsPopover
@@ -131,6 +146,7 @@ export function MobileTopBar() {
           ) : null}
         </div>
       </div>
+      <div className="mobile-topbar__spacer" aria-hidden />
 
       <button
         type="button"
@@ -142,16 +158,6 @@ export function MobileTopBar() {
         data-testid="mobile-add-node"
       >
         <Plus size={20} />
-      </button>
-
-      <button
-        type="button"
-        className="mobile-topbar__icon-btn"
-        onClick={runCheck}
-        disabled={busy}
-        aria-label="Run check"
-      >
-        <FileCheck2 size={18} />
       </button>
 
       <button
