@@ -7,11 +7,11 @@
 // across 8-9 files.
 //
 // Type version-gating is NOT carried here: per-type minimum versions live in the curated minVersions.ts
-// TYPE_MIN_VERSION table (which deliberately differs from a raw "since" — e.g. mDNS is gated in the
-// palette but not badged on canvas), and whole-type deprecations live in nodeLabels NODE_BADGES +
-// diagnostics. The old dead row-level versionAdded/deprecatedIn/removedIn markers (read by nothing but a
-// tautological test) were removed in V10/G5 to leave those curated sources as the single source. Per-
-// FIELD enum value gating still lives on SchemaFieldMeta.since/channel + SchemaEnumOption (V1 consumes it).
+// TYPE_MIN_VERSION table (the single source for both the diagnostics type-version gate and the canvas
+// "needs X" badge), and whole-type deprecations live in nodeLabels NODE_BADGES + diagnostics. The old dead
+// row-level versionAdded/deprecatedIn/removedIn markers (read by nothing but a tautological test) were
+// removed in V10/G5 to leave those curated sources as the single source. Per-FIELD gating lives on
+// SchemaFieldMeta.since/channel + SchemaEnumOption — V1 consumes it (field-level since enforced in W3/M4).
 
 import type { SharedFieldGroupId } from "./sharedFieldRegistry";
 
@@ -893,8 +893,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: false,
     paletteKind: "dns-mdns",
     channel: "testing",
-    // mdns is 1.14 testing-only; it is gated in the palette (TESTING_RESOURCE_MIN_VERSION) but deliberately
-    // NOT in TYPE_MIN_VERSION, so it carries no canvas "needs 1.14" badge (see minVersions.ts).
+    // mdns is 1.14 testing-only (creatable:false → import-only). TYPE_MIN_VERSION gates it: the diagnostics
+    // type-version check rejects it on a pre-1.14 target and an imported node badges "needs 1.14" (W3/M5).
     factory: (tag) => ({ type: "mdns", tag, interface: [] }),
     sharedGroups: ["dial"],
   },

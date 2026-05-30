@@ -29,8 +29,8 @@ export function typeMinVersion(kind: string, type: string): string | undefined {
 }
 
 // The sing-box version that INTRODUCED the testing-only resource families (http_clients[],
-// certificate_providers[]) and other 1.14-gated palette items that have no node TYPE in
-// TYPE_MIN_VERSION (e.g. the mDNS DNS server). This is an introduction version — a permanent fact, not
-// "the latest release": `atLeast(target, INTRODUCED)` keeps working as 1.15/1.16 ship. Single source so
-// the value isn't duplicated as a magic string across the palette/diagnostics.
+// certificate_providers[]) — collection-level palette gates that have no per-type node in TYPE_MIN_VERSION.
+// This is an introduction version — a permanent fact, not "the latest release": `atLeast(target,
+// INTRODUCED)` keeps working as 1.15/1.16 ship. Single source so the value isn't duplicated as a magic
+// string across the palette/diagnostics. (mDNS, once a member here, now has a real TYPE_MIN_VERSION entry.)
 export const TESTING_RESOURCE_MIN_VERSION = "1.14";
