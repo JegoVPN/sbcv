@@ -327,7 +327,38 @@ export function InboundSectionsB({
               const fallbackPort = typeof fallback.server_port === "number" ? fallback.server_port : "";
               const writeFallback = (next: InspectorEntity) =>
                 updateField(entityRef, "fallback", Object.keys(next).length ? next : undefined);
+              // fallback_for_alpn is a map { "<alpn>": { server, server_port } }. Rows are keyed by index
+              // (stable across key edits); the ALPN key input is uncontrolled + committed on blur, so the
+              // map isn't rebuilt mid-keystroke (no focus loss, no empty-key churn).
+              const alpnMap = objectField(entity.fallback_for_alpn);
+              const alpnEntries = Object.entries(alpnMap);
+              const writeAlpn = (next: Array<[string, unknown]>) => {
+                const obj: InspectorEntity = {};
+                for (const [key, value] of next) if (key) obj[key] = value;
+                updateField(entityRef, "fallback_for_alpn", Object.keys(obj).length ? obj : undefined);
+              };
+              const commitAlpnKey = (index: number, key: string) =>
+                writeAlpn(alpnEntries.map((entry, i) => (i === index ? [key, entry[1]] : entry)));
+              const patchAlpnTarget = (index: number, patch: InspectorEntity) =>
+                writeAlpn(
+                  alpnEntries.map((entry, i) =>
+                    i === index ? [entry[0], { ...objectField(entry[1]), ...patch }] : entry,
+                  ),
+                );
+              const removeAlpn = (index: number) => writeAlpn(alpnEntries.filter((_, i) => i !== index));
+              const addAlpn = () => {
+                const used = new Set(alpnEntries.map(([key]) => key));
+                const preferred = ["h2", "http/1.1"].find((candidate) => !used.has(candidate));
+                let key = preferred;
+                if (!key) {
+                  let n = 1;
+                  while (used.has(`alpn-${n}`)) n += 1;
+                  key = `alpn-${n}`;
+                }
+                writeAlpn([...alpnEntries, [key, { server: "", server_port: 443 }]]);
+              };
               return (
+                <>
                 <fieldset className="field field--checklist" data-testid="inbound-trojan-fallback">
                   <legend>Fallback Server (optional)</legend>
                   <label className="field">
@@ -366,10 +397,67 @@ export function InboundSectionsB({
                       }}
                     />
                   </label>
-                  <p className="field__hint">
-                    Disabled when both Server and Port are empty. Use Advanced JSON for fallback_for_alpn.
-                  </p>
+                  <p className="field__hint">Disabled when both Server and Port are empty.</p>
                 </fieldset>
+                <fieldset className="field field--checklist" data-testid="inbound-trojan-fallback-for-alpn">
+                  <legend>Fallback for ALPN (optional)</legend>
+                  {alpnEntries.length === 0 ? (
+                    <p className="field__hint">
+                      Per-ALPN fallback servers. A TLS request whose ALPN is not listed here is rejected.
+                    </p>
+                  ) : null}
+                  {alpnEntries.map(([alpn, rawTarget], index) => {
+                    const target = objectField(rawTarget);
+                    return (
+                      <div key={index} className="rule-row">
+                        <label className="field">
+                          <span>ALPN</span>
+                          <input
+                            key={`alpn-key-${index}-${alpn}`}
+                            defaultValue={alpn}
+                            placeholder="h2"
+                            onBlur={(event) => commitAlpnKey(index, event.target.value.trim())}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Server</span>
+                          <input
+                            value={typeof target.server === "string" ? target.server : ""}
+                            placeholder="127.0.0.1"
+                            onChange={(event) => patchAlpnTarget(index, { server: event.target.value || undefined })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Server Port</span>
+                          <input
+                            type="number"
+                            value={typeof target.server_port === "number" ? target.server_port : ""}
+                            placeholder="8081"
+                            onChange={(event) => {
+                              const parsed = Number(event.target.value);
+                              patchAlpnTarget(index, {
+                                server_port:
+                                  event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed,
+                              });
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="icon-danger"
+                          onClick={() => removeAlpn(index)}
+                          aria-label={`Remove ALPN fallback ${index + 1}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button type="button" className="palette-action" onClick={addAlpn}>
+                    Add ALPN fallback
+                  </button>
+                </fieldset>
+                </>
               );
             })()
           ) : null}
