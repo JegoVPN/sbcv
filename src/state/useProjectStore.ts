@@ -33,6 +33,7 @@ import {
 } from "../domain/commands";
 import { SETTINGS_COLUMN_X } from "../canvas/graph";
 import { adapterConnect } from "../domain/portReferenceAdapter";
+import { dedupeTags } from "../domain/indexes";
 import { validateConfig } from "../domain/diagnostics";
 import {
   formatEdgeId,
@@ -1690,6 +1691,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }));
       return { ok: false, error: message };
     }
+    // V3: repair duplicate / structurally-required-but-missing tags before they hit the canvas, so an
+    // imported messy config doesn't land with blocking duplicate-tag / missing-tag errors (mutates the
+    // fresh parse in place). Feedback is raised below so the user knows their config was normalized.
+    const { renamed, assigned } = dedupeTags(parsed);
     // When asked, snapshot the pre-import config/layout into the undo stack *atomically* with the
     // overwrite — only on a successful parse, so a parse error never leaves a stray snapshot (L3-import-undo).
     set((state) => ({
@@ -1702,6 +1707,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       globalPanelOpen: false,
       focusedNodeId: null,
     }));
+    if (renamed + assigned > 0) {
+      const parts: string[] = [];
+      if (renamed > 0) parts.push(`renamed ${renamed} duplicate tag${renamed === 1 ? "" : "s"}`);
+      if (assigned > 0) parts.push(`assigned ${assigned} missing tag${assigned === 1 ? "" : "s"}`);
+      get().pushToast({ message: `Normalized on import: ${parts.join(", ")}.`, tone: "info" });
+    }
     return { ok: true };
   },
   saveProject: () => {
