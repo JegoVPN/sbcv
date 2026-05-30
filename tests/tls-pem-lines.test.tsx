@@ -42,6 +42,23 @@ describe("R5 — TLS PEM line-array editor", () => {
     expect((inspector.getByLabelText("Certificate (PEM)") as HTMLTextAreaElement).value).toBe(PEM.join("\n"));
   });
 
+  it("displays an imported single-string certificate and converts it to a line array on edit", () => {
+    // sing-box accepts both string and string[] for these fields (Listable[string]); an imported single
+    // string must display intact, and editing normalizes to the canonical line array.
+    const single = PEM.join("\n");
+    useProjectStore.getState().importJson(
+      JSON.stringify({ inbounds: [{ type: "http", tag: "in", tls: { enabled: true, certificate: single } }] }),
+    );
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-inbound:in"));
+    const inspector = within(screen.getByTestId("node-inspector"));
+    const textarea = inspector.getByLabelText("Certificate (PEM)") as HTMLTextAreaElement;
+    expect(textarea.value).toBe(single);
+    fireEvent.change(textarea, { target: { value: `${single}\nMIIextra==` } });
+    const tls = (useProjectStore.getState().config.inbounds![0] as Record<string, any>).tls;
+    expect(tls.certificate).toEqual([...PEM, "MIIextra=="]);
+  });
+
   it("clears to undefined when emptied (no empty-string / empty-array noise)", () => {
     useProjectStore.getState().importJson(
       JSON.stringify({ inbounds: [{ type: "http", tag: "in", tls: { enabled: true, certificate: PEM } }] }),
