@@ -27,6 +27,11 @@ describe("W5 — official-check authoritative export gate", () => {
       'json: unknown field "frobnicate"',
       "missing password",
       "invalid uuid: incorrect UUID length",
+      // regression (W5 review): a structural error on the genuine `tun.platform` field path must NOT be
+      // mis-classed as platform-advisory (a bare `platform` keyword would have let this invalid config out).
+      'inbounds[0].tun.platform.http_proxy: json: unknown field "foo"',
+      // and a structural "missing tag" rejection must not be swallowed by a build-tag pattern.
+      "rule_set entry requires a tag",
     ]) {
       expect(isPlatformOfficialError(d({ source: "official", message }))).toBe(false);
     }
