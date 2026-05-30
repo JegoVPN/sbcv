@@ -13,6 +13,7 @@ import {
   OUTBOUND_PALETTE_TYPES,
   SERVICE_PALETTE_TYPES,
 } from "../src/domain/protocols";
+import { typeMinVersion } from "../src/domain/minVersions";
 import { creatableTypes, paletteTypeMap, schemaRow } from "../src/domain/schemaRegistry";
 
 describe("schemaRegistry — matches today's CREATABLE lists (order-preserving)", () => {
@@ -54,44 +55,37 @@ describe("schemaRegistry — matches today's palette maps", () => {
   });
 });
 
-describe("schemaRegistry — version / deprecation markers (faithful to nodeLabels today)", () => {
-  it("cloudflared is testing-only, 1.14, creatable, token-required", () => {
+describe("schemaRegistry — type metadata (channel / creatable / required); version via the live source", () => {
+  // V10/G5: the dead row-level versionAdded/deprecatedIn/removedIn markers were removed. Per-type minimum
+  // versions are asserted against the curated single source (minVersions.TYPE_MIN_VERSION) — which
+  // intentionally differs from a raw "since" (e.g. mDNS is gated only in the palette, not on canvas).
+  it("cloudflared is testing-only, creatable, token-required (1.14 via the version source)", () => {
     const row = schemaRow("inbound", "cloudflared");
     expect(row?.creatable).toBe(true);
     expect(row?.channel).toBe("testing");
-    expect(row?.versionAdded).toBe("1.14");
     expect(row?.requiredFields).toEqual(["token"]);
+    expect(typeMinVersion("inbound", "cloudflared")).toBe("1.14");
   });
   it("hysteria-realm + mdns are 1.14 testing types", () => {
-    expect(schemaRow("service", "hysteria-realm")?.versionAdded).toBe("1.14");
     expect(schemaRow("service", "hysteria-realm")?.channel).toBe("testing");
-    expect(schemaRow("dns-server", "mdns")?.versionAdded).toBe("1.14");
+    expect(typeMinVersion("service", "hysteria-realm")).toBe("1.14");
     expect(schemaRow("dns-server", "mdns")?.channel).toBe("testing");
+    // mdns is deliberately NOT in TYPE_MIN_VERSION (palette-gated, not canvas-badged) — keep that contract.
+    expect(typeMinVersion("dns-server", "mdns")).toBeUndefined();
   });
-  it("naive outbound / ccm / ocm are 1.13 types", () => {
-    expect(schemaRow("outbound", "naive")?.versionAdded).toBe("1.13");
-    expect(schemaRow("service", "ccm")?.versionAdded).toBe("1.13");
-    expect(schemaRow("service", "ocm")?.versionAdded).toBe("1.13");
+  it("naive outbound / ccm / ocm are 1.13 types (version source)", () => {
+    expect(typeMinVersion("outbound", "naive")).toBe("1.13");
+    expect(typeMinVersion("service", "ccm")).toBe("1.13");
+    expect(typeMinVersion("service", "ocm")).toBe("1.13");
   });
-  it("anytls (in/out) and tailscale endpoint are 1.12 types", () => {
-    expect(schemaRow("inbound", "anytls")?.versionAdded).toBe("1.12");
-    expect(schemaRow("outbound", "anytls")?.versionAdded).toBe("1.12");
-    expect(schemaRow("endpoint", "tailscale")?.versionAdded).toBe("1.12");
+  it("anytls (in/out) and tailscale endpoint are 1.12 types (version source)", () => {
+    expect(typeMinVersion("inbound", "anytls")).toBe("1.12");
+    expect(typeMinVersion("outbound", "anytls")).toBe("1.12");
+    expect(typeMinVersion("endpoint", "tailscale")).toBe("1.12");
   });
-  it("wireguard / dns outbounds are reference-only (creatable=false) with deprecated+removed markers", () => {
-    const wg = schemaRow("outbound", "wireguard");
-    expect(wg?.creatable).toBe(false);
-    expect(wg?.deprecatedIn).toBe("1.11");
-    expect(wg?.removedIn).toBe("1.13");
-    const dns = schemaRow("outbound", "dns");
-    expect(dns?.creatable).toBe(false);
-    expect(dns?.deprecatedIn).toBe("1.11");
-    expect(dns?.removedIn).toBe("1.13");
-  });
-  it("legacy DNS server is reference-only with deprecated 1.12 / removed 1.14", () => {
-    const legacy = schemaRow("dns-server", "legacy");
-    expect(legacy?.creatable).toBe(false);
-    expect(legacy?.deprecatedIn).toBe("1.12");
-    expect(legacy?.removedIn).toBe("1.14");
+  it("wireguard / dns outbounds and legacy DNS server are reference-only (creatable=false)", () => {
+    expect(schemaRow("outbound", "wireguard")?.creatable).toBe(false);
+    expect(schemaRow("outbound", "dns")?.creatable).toBe(false);
+    expect(schemaRow("dns-server", "legacy")?.creatable).toBe(false);
   });
 });
