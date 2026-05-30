@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
+import { isLogicalRule, ruleSummaryLine } from "../domain/ruleSummary";
 import { useProjectStore } from "../state/useProjectStore";
 
 const RULE_PAGE_SIZE = 100;
@@ -119,54 +120,67 @@ export function RouteRulesTable() {
                   </button>
                 </div>
               </div>
-              <label className="rule-field">
-                <span>Domain suffix</span>
-                <input
-                  aria-label={`Route rule ${ruleIndex + 1} domain suffix`}
-                  value={listToText(rule.domain_suffix)}
-                  onChange={(event) => updateRouteRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
-                />
-              </label>
-              <label className="rule-field">
-                <span>Keyword</span>
-                <input
-                  aria-label={`Route rule ${ruleIndex + 1} keyword`}
-                  value={listToText(rule.domain_keyword)}
-                  onChange={(event) => updateRouteRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
-                />
-              </label>
-              {/* R4: hide the target select for actions that scrub `outbound` (reject / hijack-dns /
-                  sniff / resolve / route-options) — it would be a dead control. Action is set in the
-                  Inspector; gating mirrors the domain normalizer (routeRuleAllowsOutbound). */}
-              {routeRuleAllowsOutbound(rule) ? (
-                <label className="rule-field">
-                  <span>Outbound</span>
-                  <select
-                    aria-label={`Route rule ${ruleIndex + 1} outbound`}
-                    value={rule.outbound ?? ""}
-                    onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
-                  >
-                    <option value="">Missing</option>
-                    {routeOutbounds.map((outbound, outboundIndex) => (
-                      <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
-                        {outbound.tag ?? `untagged-${outboundIndex + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              <label className="rule-field">
-                <span>Match rule-set</span>
-                <input
-                  aria-label={`Route rule ${ruleIndex + 1} rule set`}
-                  list="route-rule-set-tags"
-                  value={listToText(rule.rule_set)}
-                  onChange={(event) => {
-                    const ruleSet = textToList(event.target.value);
-                    updateRouteRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
-                  }}
-                />
-              </label>
+              {/* W11: faithful read-only summary (action + the rule's actual match conditions, incl.
+                  clash_mode / protocol / ip_is_private / logical) so an action-rule is never a blank card. */}
+              <p className="rule-card__summary" aria-label={`Route rule ${ruleIndex + 1} summary`}>
+                {ruleSummaryLine(rule as Record<string, unknown>)}
+              </p>
+              {isLogicalRule(rule) ? (
+                // A logical (and/or) rule's matchers live in its nested rules[] — editing flat fields here
+                // would inject an illegal top-level matcher. Send the user to the rule node's full editor.
+                <p className="rule-card__hint">Logical group — open the rule node to edit its nested conditions.</p>
+              ) : (
+                <>
+                  <label className="rule-field">
+                    <span>Domain suffix</span>
+                    <input
+                      aria-label={`Route rule ${ruleIndex + 1} domain suffix`}
+                      value={listToText(rule.domain_suffix)}
+                      onChange={(event) => updateRouteRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
+                    />
+                  </label>
+                  <label className="rule-field">
+                    <span>Keyword</span>
+                    <input
+                      aria-label={`Route rule ${ruleIndex + 1} keyword`}
+                      value={listToText(rule.domain_keyword)}
+                      onChange={(event) => updateRouteRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
+                    />
+                  </label>
+                  {/* R4: hide the target select for actions that scrub `outbound` (reject / hijack-dns /
+                      sniff / resolve / route-options) — it would be a dead control. Action is set in the
+                      Inspector; gating mirrors the domain normalizer (routeRuleAllowsOutbound). */}
+                  {routeRuleAllowsOutbound(rule) ? (
+                    <label className="rule-field">
+                      <span>Outbound</span>
+                      <select
+                        aria-label={`Route rule ${ruleIndex + 1} outbound`}
+                        value={rule.outbound ?? ""}
+                        onChange={(event) => updateRouteRule(ruleIndex, { outbound: event.target.value || undefined })}
+                      >
+                        <option value="">Missing</option>
+                        {routeOutbounds.map((outbound, outboundIndex) => (
+                          <option key={`${outbound.tag ?? "untagged"}-${outboundIndex}`} value={outbound.tag ?? ""}>
+                            {outbound.tag ?? `untagged-${outboundIndex + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <label className="rule-field">
+                    <span>Match rule-set</span>
+                    <input
+                      aria-label={`Route rule ${ruleIndex + 1} rule set`}
+                      list="route-rule-set-tags"
+                      value={listToText(rule.rule_set)}
+                      onChange={(event) => {
+                        const ruleSet = textToList(event.target.value);
+                        updateRouteRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
+                      }}
+                    />
+                  </label>
+                </>
+              )}
             </article>
           );
         })}
@@ -230,53 +244,64 @@ export function DnsRulesTable() {
                   </button>
                 </div>
               </div>
-              <label className="rule-field">
-                <span>Domain suffix</span>
-                <input
-                  aria-label={`DNS rule ${ruleIndex + 1} domain suffix`}
-                  value={listToText(rule.domain_suffix)}
-                  onChange={(event) => updateDnsRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
-                />
-              </label>
-              <label className="rule-field">
-                <span>Keyword</span>
-                <input
-                  aria-label={`DNS rule ${ruleIndex + 1} keyword`}
-                  value={listToText(rule.domain_keyword)}
-                  onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
-                />
-              </label>
-              {/* R4: hide the server select for actions that scrub `server` (predefined / reject /
-                  respond) — dead control otherwise. Gating mirrors the domain normalizer (dnsRuleAllowsServer). */}
-              {dnsRuleAllowsServer(rule) ? (
-                <label className="rule-field">
-                  <span>Server</span>
-                  <select
-                    aria-label={`DNS rule ${ruleIndex + 1} server`}
-                    value={rule.server ?? ""}
-                    onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
-                  >
-                    <option value="">Missing</option>
-                    {dnsServers.map((server, serverIndex) => (
-                      <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
-                        {server.tag ?? `untagged-${serverIndex + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-              <label className="rule-field">
-                <span>Match rule-set</span>
-                <input
-                  aria-label={`DNS rule ${ruleIndex + 1} rule set`}
-                  list="dns-rule-set-tags"
-                  value={listToText(rule.rule_set)}
-                  onChange={(event) => {
-                    const ruleSet = textToList(event.target.value);
-                    updateDnsRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
-                  }}
-                />
-              </label>
+              {/* W11: faithful read-only summary (action + actual match conditions, incl. query_type /
+                  clash_mode / logical) so a predefined/reject/logical DNS rule is never a blank card. */}
+              <p className="rule-card__summary" aria-label={`DNS rule ${ruleIndex + 1} summary`}>
+                {ruleSummaryLine(rule as Record<string, unknown>)}
+              </p>
+              {isLogicalRule(rule) ? (
+                <p className="rule-card__hint">Logical group — open the rule node to edit its nested conditions.</p>
+              ) : (
+                <>
+                  <label className="rule-field">
+                    <span>Domain suffix</span>
+                    <input
+                      aria-label={`DNS rule ${ruleIndex + 1} domain suffix`}
+                      value={listToText(rule.domain_suffix)}
+                      onChange={(event) => updateDnsRule(ruleIndex, { domain_suffix: textToList(event.target.value) })}
+                    />
+                  </label>
+                  <label className="rule-field">
+                    <span>Keyword</span>
+                    <input
+                      aria-label={`DNS rule ${ruleIndex + 1} keyword`}
+                      value={listToText(rule.domain_keyword)}
+                      onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
+                    />
+                  </label>
+                  {/* R4: hide the server select for actions that scrub `server` (predefined / reject /
+                      respond) — dead control otherwise. Gating mirrors the domain normalizer (dnsRuleAllowsServer). */}
+                  {dnsRuleAllowsServer(rule) ? (
+                    <label className="rule-field">
+                      <span>Server</span>
+                      <select
+                        aria-label={`DNS rule ${ruleIndex + 1} server`}
+                        value={rule.server ?? ""}
+                        onChange={(event) => updateDnsRule(ruleIndex, { server: event.target.value || undefined })}
+                      >
+                        <option value="">Missing</option>
+                        {dnsServers.map((server, serverIndex) => (
+                          <option key={`${server.tag ?? "untagged"}-${serverIndex}`} value={server.tag ?? ""}>
+                            {server.tag ?? `untagged-${serverIndex + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                  <label className="rule-field">
+                    <span>Match rule-set</span>
+                    <input
+                      aria-label={`DNS rule ${ruleIndex + 1} rule set`}
+                      list="dns-rule-set-tags"
+                      value={listToText(rule.rule_set)}
+                      onChange={(event) => {
+                        const ruleSet = textToList(event.target.value);
+                        updateDnsRule(ruleIndex, { rule_set: ruleSet.length ? ruleSet : undefined });
+                      }}
+                    />
+                  </label>
+                </>
+              )}
             </article>
           );
         })}
