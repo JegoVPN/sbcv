@@ -15,6 +15,10 @@ describe("V8-S1 — per-relation edge label", () => {
     expect(relationLabelForEdge(formatEdgeId("dns-rule", 0, "doh"))).toBe("DNS server");
   });
 
+  it("survives a hyphenated relationId AND a hyphenated tag value (':'-delimited, encoded parts)", () => {
+    expect(relationLabelForEdge(formatEdgeId("certificate-provider-http-client", "prov-1", "client-a-b"))).toBe("HTTP client");
+  });
+
   it("distinguishes two different relations that could share a node pair", () => {
     // An outbound that is both a route-rule target and a selector member: the two edges carry distinct labels.
     expect(relationLabelForEdge(formatEdgeId("route-rule", 0, "px"))).not.toBe(
