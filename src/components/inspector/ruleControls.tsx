@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import { JsonField } from "./controls";
 import { fromList, type InspectorEntity, labelForField } from "./helpers";
 
 // C14 — the rule editing controls extracted from the Inspector monolith and shared by both rule
@@ -23,10 +22,6 @@ function textToRuleList(value: string, currentValue: unknown) {
     return nums.length ? nums : undefined;
   }
   return items;
-}
-
-function ruleFieldValue(rule: InspectorEntity, field: string) {
-  return listishToText(rule[field]);
 }
 
 export const routeRulePrimaryFields = new Set([

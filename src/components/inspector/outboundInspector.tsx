@@ -10,7 +10,7 @@ import { OutboundSectionsB, type OutboundSectionProps } from "./outboundSections
 // fallback. Behaviour-frozen; rendered unchanged by the shell's `ref.kind === "outbound"` branch.
 
 export function OutboundInspector(props: OutboundSectionProps) {
-  const { entity, entityRef, channel, entityType, updateField } = props;
+  const { entity, entityRef, entityType, updateField } = props;
   return (
     <>
           {entityType === "naive" ? (
