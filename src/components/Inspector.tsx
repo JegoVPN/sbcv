@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import { getNodeIcon } from "../canvas/iconRegistry";
-import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../domain/types";
+import type { EntityRef, SingBoxConfig } from "../domain/types";
 import {
   CREATABLE_DNS_SERVER_TYPES,
   CREATABLE_ENDPOINT_TYPES,
@@ -267,7 +267,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       ) : null}
 
       {ref.kind === "outbound" ? (
-        <OutboundInspector entity={entity} entityRef={ref} config={config} channel={channel} entityType={entityType} tagValue={tagValue} updateField={updateField} />
+        <OutboundInspector entity={entity} entityRef={ref} config={config} entityType={entityType} tagValue={tagValue} updateField={updateField} />
       ) : null}
 
       {ref.kind === "dns-server" ? (

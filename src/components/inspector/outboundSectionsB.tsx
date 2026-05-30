@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 
-import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
+import type { EntityRef, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { SensitiveTextField } from "./controls";
 import { outboundHandledFields } from "./handledFields";
@@ -14,7 +14,6 @@ export type OutboundSectionProps = {
   entity: InspectorEntity;
   entityRef: EntityRef;
   config: SingBoxConfig;
-  channel: SingBoxChannel;
   entityType: string | null;
   tagValue: string | null;
   updateField: UpdateField;
