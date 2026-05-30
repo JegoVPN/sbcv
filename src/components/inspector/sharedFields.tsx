@@ -36,9 +36,17 @@ export type SharedFieldDefinition = {
    * `gatedBy`, which is boolean-truthiness only.
    */
   visibleWhen?: { path: string[]; in: string[] };
+  /**
+   * For tag-or-object shared fields (domain_resolver): when the value is an OBJECT, render a structured
+   * subform (server + strategy + siblings) instead of the raw JSON fallback. Other object-valued select
+   * fields (http_client, a full client config) keep the JSON editor.
+   */
+  objectForm?: "domain-resolver";
 };
 
 const networkStrategyOptions = ["default", "hybrid", "fallback"];
+// domain_resolver object form uses the DNS rule-action `route` shape minus `action` (shared/dial.md).
+const domainResolverStrategyOptions = ["", "prefer_ipv4", "prefer_ipv6", "ipv4_only", "ipv6_only"];
 const tlsVersionOptions = ["1.0", "1.1", "1.2", "1.3"];
 const transportTypeOptions = ["http", "ws", "quic", "grpc", "httpupgrade"];
 
@@ -153,7 +161,7 @@ export function sharedFieldDefinitions(
 
   if (group === "dial" && ref.kind === "route") {
     return [
-      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "select", options: ["", ...dnsServerOptions] },
+      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver" },
       { label: "Default Network Strategy", path: ["default_network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Default Network Type", path: ["default_network_type"], kind: "list" },
       { label: "Default Fallback Network", path: ["default_fallback_network_type"], kind: "list" },
@@ -187,7 +195,7 @@ export function sharedFieldDefinitions(
       { label: "TCP Keep Alive (1.13+)", path: ["tcp_keep_alive"], kind: "text" },
       { label: "TCP Keep Alive Interval (1.13+)", path: ["tcp_keep_alive_interval"], kind: "text" },
       { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
-      { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions] },
+      { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver" },
       { label: "Network Strategy", path: ["network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Network Type", path: ["network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
       { label: "Fallback Network", path: ["fallback_network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
@@ -444,12 +452,90 @@ export function SharedFieldControl({
 
   if (definition.kind === "select") {
     // Some shared fields (http_client / default_http_client / domain_resolver) may hold a tag string
-    // OR an inline object. The tag <select> can't represent an object — rendering it as "None" and
-    // writing a string would silently destroy the object. Fall back to the parse-safe JSON editor so
-    // the object form is preserved and editable.
-    if (value !== null && typeof value === "object") {
+    // OR an inline object. The tag <select> can't represent an object.
+    const isObject = value !== null && typeof value === "object" && !Array.isArray(value);
+
+    // V6: domain_resolver object form gets a structured subform (server + strategy + siblings) instead
+    // of the raw JSON fallback. Unknown keys are preserved via spread, so editing never drops data.
+    if (isObject && definition.objectForm === "domain-resolver") {
+      const obj = value as Record<string, unknown>;
+      const writeObj = (patch: Record<string, unknown>) => {
+        const next: Record<string, unknown> = { ...obj, ...patch };
+        for (const key of Object.keys(next)) {
+          if (next[key] === undefined || next[key] === "") delete next[key];
+        }
+        applyValue(Object.keys(next).length ? next : undefined);
+      };
+      const serverValue = typeof obj.server === "string" ? obj.server : "";
+      return (
+        <fieldset className="field field--checklist" data-testid="domain-resolver-object">
+          <legend>{definition.label}</legend>
+          <label className="field">
+            <span>Server (DNS)</span>
+            <select value={serverValue} onChange={(event) => writeObj({ server: event.target.value })}>
+              {(definition.options ?? [""]).map((option) => (
+                <option key={option} value={option}>
+                  {option || "None"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Strategy</span>
+            <select
+              value={typeof obj.strategy === "string" ? obj.strategy : ""}
+              onChange={(event) => writeObj({ strategy: event.target.value })}
+            >
+              {domainResolverStrategyOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option || "(default)"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(obj.disable_cache)}
+              onChange={(event) => writeObj({ disable_cache: event.target.checked || undefined })}
+            />
+            <span>Disable Cache</span>
+          </label>
+          <label className="field">
+            <span>Rewrite TTL</span>
+            <input
+              type="number"
+              value={typeof obj.rewrite_ttl === "number" ? obj.rewrite_ttl : ""}
+              onChange={(event) => {
+                const parsed = Number(event.target.value);
+                writeObj({ rewrite_ttl: event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed });
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Client Subnet</span>
+            <input
+              value={typeof obj.client_subnet === "string" ? obj.client_subnet : ""}
+              placeholder="1.2.3.0/24"
+              onChange={(event) => writeObj({ client_subnet: event.target.value })}
+            />
+          </label>
+          <button
+            type="button"
+            className="palette-action"
+            onClick={() => applyValue(serverValue || undefined)}
+          >
+            Collapse to tag only
+          </button>
+        </fieldset>
+      );
+    }
+
+    // Other object-valued select fields (http_client: a full client config) keep the JSON editor.
+    if (isObject) {
       return <JsonField label={definition.label} value={value} onChange={applyValue} />;
     }
+
     return (
       <label className="field">
         <span>{definition.label}</span>
@@ -465,6 +551,15 @@ export function SharedFieldControl({
           ))}
         </select>
         {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
+        {definition.objectForm === "domain-resolver" && typeof value === "string" && value ? (
+          <button
+            type="button"
+            className="palette-action"
+            onClick={() => applyValue({ server: value })}
+          >
+            Add resolver options
+          </button>
+        ) : null}
       </label>
     );
   }
