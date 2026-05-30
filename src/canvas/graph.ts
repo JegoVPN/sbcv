@@ -9,6 +9,7 @@ import {
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
+import { adapterIsConnected, domainResolverTag, httpClientRefTag } from "../domain/portReferenceAdapter";
 import { supportsDialFields, supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -162,20 +163,7 @@ function outboundDetourTag(outbound: OutboundConfig) {
 // dial.md domain_resolver is "A string or an object": the string is a dns-server tag; the object form
 // (DomainResolveOptions, reuses the route DNS rule action minus `action`) carries that tag under `server`.
 // Returns the referenced dns-server tag, or undefined when absent/blank. (C11b)
-function domainResolverTag(value: unknown): string | undefined {
-  if (typeof value === "string") return value.trim() ? value : undefined;
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    const server = (value as Record<string, unknown>).server;
-    return typeof server === "string" && server.trim() ? server : undefined;
-  }
-  return undefined;
-}
 
-// http-client.md: an `http_client` value is "a string or an object". Only the string form (a top-level
-// http_clients[] tag) is an edge; the object form is inline (no tag) and intentionally not edged. (C11c)
-function httpClientRefTag(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value : undefined;
-}
 
 function entityTag(tag: string | undefined, kind: string, index: number) {
   return tag && tag.trim() ? tag : generatedEntityTag(kind as Parameters<typeof generatedEntityTag>[0], index);
@@ -210,11 +198,6 @@ function nodeValueFromId(id: string) {
   return parseNodeId(id)?.value ?? "";
 }
 
-function ruleIndexFromId(id: string) {
-  const index = Number(nodeValueFromId(id));
-  return Number.isInteger(index) ? index : -1;
-}
-
 function isPortConnected(
   config: SingBoxConfig,
   id: string,
@@ -225,220 +208,20 @@ function isPortConnected(
   channel: "stable" | "testing",
 ) {
   const value = nodeValueFromId(id);
+  // Writable-relation ports resolve through the registry-driven adapter (C13); it returns undefined for
+  // the readonly / hub / decorative ports below, which are not writable relations and stay here.
+  const fromAdapter = adapterIsConnected(config, kind, type, value, direction, portKey, channel);
+  if (fromAdapter !== undefined) return fromAdapter;
 
   if (direction === "input") {
-    if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0;
-    if (kind === "route-rule" && portKey === "route") return true;
-    if (kind === "route-rule" && portKey === "inbound") {
-      const index = ruleIndexFromId(id);
-      return Boolean(config.route?.rules?.[index]?.inbound);
-    }
-    if (kind === "dns-rule" && portKey === "dns") return true;
-    if (kind === "dns-rule" && portKey === "inbound") {
-      const index = ruleIndexFromId(id);
-      return Boolean(config.dns?.rules?.[index]?.inbound);
-    }
-    if (kind === "dns-server" && portKey === "dns-rule") {
-      return config.dns?.rules?.some((rule) => rule.server === value) ?? false;
-    }
-    if (kind === "dns-server" && portKey === "dns") return config.dns?.final === value;
-    // domain_resolver target: any dial-bearing entity (outbound/endpoint/dns-server) resolving its server
-    // name through this dns-server lights its input dot (C11b).
-    if (kind === "dns-server" && portKey === "domain-resolver-target") {
-      const references = (entity: Record<string, unknown>) => domainResolverTag(entity.domain_resolver) === value;
-      return Boolean(
-        config.outbounds?.some((item) => references(item as Record<string, unknown>)) ||
-          config.endpoints?.some((item) => references(item as Record<string, unknown>)) ||
-          config.dns?.servers?.some((item) => references(item as Record<string, unknown>)),
-      );
-    }
-    if (kind === "endpoint" && portKey === "dns-server") {
-      return config.dns?.servers?.some((server) => server.type === "tailscale" && server.endpoint === value) ?? false;
-    }
-    if (kind === "endpoint" && portKey === "derp-service") {
-      return (
-        config.services?.some((service) => {
-          const refs = stringRefs(service.verify_client_endpoint as string | string[] | undefined);
-          return service.type === "derp" && refs.includes(value);
-        }) ?? false
-      );
-    }
-    // These outbound-target ports are also exposed on endpoint nodes (A7b + C11a extraNodeKinds), so an
-    // endpoint wired as a route/selector/dns/detour target reflects its connected state too.
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "route") return config.route?.final === value;
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "route-rule") {
-      return config.route?.rules?.some((rule) => rule.outbound === value) ?? false;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "selector-group") {
-      return config.outbounds?.some((outbound) => outbound.type === "selector" && outbound.outbounds?.includes(value)) ?? false;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "urltest-group") {
-      return config.outbounds?.some((outbound) => outbound.type === "urltest" && outbound.outbounds?.includes(value)) ?? false;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "dns-detour") {
-      return config.dns?.servers?.some((server) => server.detour === value) ?? false;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "detour-target") {
-      return Boolean(
-        config.outbounds?.some((outbound) => outbound.tag !== value && outbound.detour === value) ||
-          config.endpoints?.some((endpoint) => endpoint.detour === value) ||
-          config.ntp?.detour === value ||
-          // The shared HTTP-client object's own dial detour (C11c) — testing-gated, matching the edge.
-          (channel === "testing" &&
-            (config.http_clients?.some((client) => (client as Record<string, unknown>).detour === value) ?? false)),
-      );
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "clash-download-detour") {
-      const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
-      return clashApi?.external_ui_download_detour === value;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "service-detour") {
-      return config.services?.some((service) => service.detour === value) ?? false;
-    }
-    if ((kind === "outbound" || kind === "endpoint") && portKey === "rule-set-download") {
-      return config.route?.rule_set?.some((ruleSet) => ruleSet.download_detour === value) ?? false;
-    }
-    if (kind === "service" && portKey === "managed-inbound") {
-      const service = config.services?.find((item) => item.tag === value);
-      return Boolean(service?.servers && Object.values(service.servers).length > 0);
-    }
-    if (kind === "service" && portKey === "dns-server") {
-      return config.dns?.servers?.some((server) => server.type === "resolved" && server.service === value) ?? false;
-    }
-    if (kind === "endpoint" && portKey === "certificate-provider") {
-      return config.certificate_providers?.some((provider) => provider.type === "tailscale" && provider.endpoint === value) ?? false;
-    }
-    if (kind === "rule-set" && portKey === "route-rule") {
-      return (
-        config.route?.rules?.some((rule) => {
-          if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
-          return rule.rule_set === value;
-        }) ?? false
-      );
-    }
-    if (kind === "rule-set" && portKey === "dns-rule") {
-      return (
-        config.dns?.rules?.some((rule) => {
-          if (Array.isArray(rule.rule_set)) return rule.rule_set.includes(value);
-          return rule.rule_set === value;
-        }) ?? false
-      );
-    }
-    // http_client target (C11c): the node lights when route.default_http_client / a remote rule_set's
-    // http_client / an acme|cloudflare-origin-ca provider's http_client names it (string form only).
-    // Testing-gated — http_client is 1.14-only, matching the suppressed edge on stable.
-    if (kind === "http-client" && portKey === "http-client-ref") {
-      if (channel !== "testing") return false;
-      return Boolean(
-        httpClientRefTag((config.route as Record<string, unknown> | undefined)?.default_http_client) === value ||
-          config.route?.rule_set?.some((ruleSet) => httpClientRefTag((ruleSet as Record<string, unknown>).http_client) === value) ||
-          config.certificate_providers?.some((provider) => httpClientRefTag((provider as Record<string, unknown>).http_client) === value),
-      );
-    }
+    if (kind === "route" && portKey === "inbound") return (config.inbounds?.length ?? 0) > 0; // decorative
+    if (kind === "route-rule" && portKey === "route") return true; // route-rule order
+    if (kind === "dns-rule" && portKey === "dns") return true; // dns-rule order
     return false;
   }
-
-  if (kind === "inbound" && portKey === "route") return Boolean(config.route);
-  if (kind === "inbound" && portKey === "route-rule-match") {
-    return config.route?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
-  }
-  if (kind === "inbound" && portKey === "dns-rule-match") {
-    return config.dns?.rules?.some((rule) => stringRefs(rule.inbound).includes(value)) ?? false;
-  }
-  if (kind === "inbound" && portKey === "service") {
-    return (
-      config.services?.some(
-        (service) =>
-          service.type === "ssm-api" &&
-          service.servers &&
-          Object.values(service.servers).includes(value),
-      ) ?? false
-    );
-  }
-  if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0;
-  if (kind === "route" && portKey === "outbound") return Boolean(config.route?.final);
-  if (kind === "route-rule" && portKey === "outbound") {
-    const index = ruleIndexFromId(id);
-    return Boolean(config.route?.rules?.[index]?.outbound);
-  }
-  if (kind === "route-rule" && portKey === "rule-set") {
-    const index = ruleIndexFromId(id);
-    return Boolean(config.route?.rules?.[index]?.rule_set);
-  }
-  if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0;
-  if (kind === "dns" && portKey === "dns-server") return Boolean(config.dns?.final);
-  if (kind === "dns-rule" && portKey === "dns-server") {
-    const index = ruleIndexFromId(id);
-    return Boolean(config.dns?.rules?.[index]?.server);
-  }
-  if (kind === "dns-rule" && portKey === "rule-set") {
-    const index = ruleIndexFromId(id);
-    return Boolean(config.dns?.rules?.[index]?.rule_set);
-  }
-  if (kind === "rule-set" && portKey === "download-detour") {
-    return Boolean(config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value)?.download_detour);
-  }
-  if (kind === "dns-server" && portKey === "outbound") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.detour);
-  }
-  // domain_resolver source: the output dot lights when this entity points its domain_resolver at a
-  // dns-server (string or object `.server` form). Shared output handle across the three source kinds (C11b).
-  if (portKey === "domain-resolver") {
-    const owner =
-      kind === "outbound"
-        ? config.outbounds?.find((item) => item.tag === value)
-        : kind === "endpoint"
-          ? config.endpoints?.find((item) => item.tag === value)
-          : kind === "dns-server"
-            ? config.dns?.servers?.find((item) => item.tag === value)
-            : undefined;
-    return Boolean(domainResolverTag((owner as { domain_resolver?: unknown } | undefined)?.domain_resolver));
-  }
-  if (kind === "dns-server" && portKey === "endpoint") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.endpoint);
-  }
-  if (kind === "dns-server" && portKey === "service") {
-    return Boolean(config.dns?.servers?.find((server) => server.tag === value)?.service);
-  }
-  if (kind === "endpoint" && portKey === "dial-detour") {
-    return Boolean(config.endpoints?.find((endpoint) => endpoint.tag === value)?.detour);
-  }
-  if (kind === "certificate-provider" && portKey === "endpoint") {
-    return Boolean(config.certificate_providers?.find((provider) => provider.tag === value)?.endpoint);
-  }
-  if (kind === "settings" && type === "ntp" && portKey === "dial-detour") {
-    return Boolean(config.ntp?.detour);
-  }
-  if (kind === "settings" && type === "experimental" && portKey === "clash-download-detour") {
-    const clashApi = config.experimental?.clash_api as Record<string, unknown> | undefined;
-    return Boolean(clashApi?.external_ui_download_detour);
-  }
-  if (kind === "outbound" && (type === "selector" || type === "urltest") && portKey === "outbound-member") {
-    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.outbounds?.length);
-  }
-  if (kind === "outbound" && portKey === "dial-detour") {
-    return Boolean(config.outbounds?.find((outbound) => outbound.tag === value)?.detour);
-  }
-  if (kind === "service" && portKey === "verify-client-endpoint") {
-    const service = config.services?.find((item) => item.tag === value);
-    return stringRefs(service?.verify_client_endpoint as string | string[] | undefined).length > 0;
-  }
-  if (kind === "service" && portKey === "detour") {
-    return Boolean(config.services?.find((service) => service.tag === value)?.detour);
-  }
-  // http_client source dots (C11c) — testing-gated, string form only (object form is inline, not edged).
-  if (channel === "testing" && kind === "route" && portKey === "default-http-client") {
-    return Boolean(httpClientRefTag((config.route as Record<string, unknown> | undefined)?.default_http_client));
-  }
-  if (channel === "testing" && kind === "rule-set" && portKey === "http-client") {
-    return Boolean(httpClientRefTag((config.route?.rule_set?.find((ruleSet) => ruleSet.tag === value) as Record<string, unknown> | undefined)?.http_client));
-  }
-  if (channel === "testing" && kind === "certificate-provider" && portKey === "http-client") {
-    return Boolean(httpClientRefTag((config.certificate_providers?.find((provider) => provider.tag === value) as Record<string, unknown> | undefined)?.http_client));
-  }
-  if (channel === "testing" && kind === "http-client" && portKey === "dial-detour") {
-    return Boolean((config.http_clients?.find((client) => client.tag === value) as Record<string, unknown> | undefined)?.detour);
-  }
+  if (kind === "inbound" && portKey === "route") return Boolean(config.route); // decorative
+  if (kind === "route" && portKey === "route-rule") return (config.route?.rules?.length ?? 0) > 0; // route-rule order
+  if (kind === "dns" && portKey === "dns-rule") return (config.dns?.rules?.length ?? 0) > 0; // dns-rule order
   return false;
 }
 
