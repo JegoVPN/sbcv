@@ -1,6 +1,26 @@
 import type { EntityRef, SingBoxConfig } from "../../domain/types";
 import { type InspectorEntity, outboundTags, type UpdateField } from "./helpers";
+import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { RouteRulesTable } from "../RuleTables";
+
+// Keys the route node already renders (here + the shared Dial card + the Rules table + rule_set nodes),
+// so the Advanced fallback below surfaces only genuinely-unmodeled route keys (M2: restore the
+// "no field silently unreachable" invariant for the route singleton).
+const routeHandledFields: ReadonlySet<string> = new Set([
+  "final",
+  "auto_detect_interface",
+  "override_android_vpn",
+  "default_interface",
+  "default_mark",
+  "find_process",
+  "default_domain_resolver",
+  "default_network_strategy",
+  "default_network_type",
+  "default_fallback_network_type",
+  "default_http_client",
+  "rules",
+  "rule_set",
+]);
 
 // C14 — the route (singleton) inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "route"` branch.
@@ -91,6 +111,8 @@ export function RouteInspector({
           </label>
           {/* default_network_strategy / default_network_type are rendered by the shared Dial group
               (string[] list), so no hardcoded duplicates here (W24). */}
+          <AdvancedScalarFields entity={entity} handledFields={routeHandledFields} entityRef={entityRef} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={routeHandledFields} entityRef={entityRef} updateField={updateField} />
           <RouteRulesTable />
         </>
   );

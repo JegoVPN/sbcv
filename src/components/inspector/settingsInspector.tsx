@@ -1,6 +1,18 @@
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
+import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { ModuleCard, PlatformBanner, SensitiveTextField } from "./controls";
 import { fromList, type InspectorEntity, objectField, outboundTags, toList, type UpdateField } from "./helpers";
+
+// Keys each settings section already renders, so the Advanced fallback surfaces only genuinely-unmodeled
+// keys (M2: e.g. experimental.v2ray_api becomes visible/editable instead of JSON-only). Too-small a set
+// only duplicates a shared-card key (harmless) — it never hides one.
+const settingsHandledByPath: Record<string, ReadonlySet<string>> = {
+  log: new Set(["disabled", "level", "output", "timestamp"]),
+  ntp: new Set(["enabled", "server", "server_port", "interval", "detour"]),
+  certificate: new Set(["store", "certificate", "certificate_path", "certificate_directory_path"]),
+  experimental: new Set(["cache_file", "clash_api"]),
+};
+const EMPTY_HANDLED: ReadonlySet<string> = new Set();
 
 // C14 — the settings inspector (the log / ntp / certificate / experimental singleton "settings" entities,
 // keyed by entityRef.path) extracted from the Inspector monolith. Behaviour-frozen move: rendered
@@ -436,6 +448,22 @@ export function SettingsInspector({
             </div>
           );
         })()
+      ) : null}
+      {entityRef.kind === "settings" ? (
+        <>
+          <AdvancedScalarFields
+            entity={entity}
+            handledFields={settingsHandledByPath[String(entityRef.path)] ?? EMPTY_HANDLED}
+            entityRef={entityRef}
+            updateField={updateField}
+          />
+          <AdvancedNonScalarFields
+            entity={entity}
+            handledFields={settingsHandledByPath[String(entityRef.path)] ?? EMPTY_HANDLED}
+            entityRef={entityRef}
+            updateField={updateField}
+          />
+        </>
       ) : null}
     </>
   );
