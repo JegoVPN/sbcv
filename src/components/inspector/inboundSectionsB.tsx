@@ -2,7 +2,7 @@ import { Trash2 } from "lucide-react";
 
 import type { EntityRef } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
-import { SensitiveTextField } from "./controls";
+import { JsonField, SensitiveTextField } from "./controls";
 import { inboundHandledFields } from "./handledFields";
 import { type InspectorEntity, objectField, type UpdateField } from "./helpers";
 
@@ -463,14 +463,28 @@ export function InboundSectionsB({
           ) : null}
           {entityType === "hysteria2" ? (
             <>
-              <label className="field" data-testid="inbound-hysteria2-masquerade">
-                <span>Masquerade (URL)</span>
-                <input
-                  value={typeof entity.masquerade === "string" ? entity.masquerade : ""}
-                  placeholder="http://127.0.0.1:8080 or file:///var/www"
-                  onChange={(event) => updateField(entityRef, "masquerade", event.target.value || undefined)}
-                />
-              </label>
+              {/* masquerade is string | object ({type:file|proxy|string,…}) (hysteria2.md). The object form
+                  was handled-but-unrendered → invisible AND destroyed on string-input edits (M1 data loss).
+                  Render the URL input for string/unset, and a parse-safe JSON editor for the object form so
+                  it round-trips and stays editable. */}
+              {entity.masquerade !== null && typeof entity.masquerade === "object" ? (
+                <div data-testid="inbound-hysteria2-masquerade">
+                  <JsonField
+                    label="Masquerade (object)"
+                    value={entity.masquerade}
+                    onChange={(next) => updateField(entityRef, "masquerade", next)}
+                  />
+                </div>
+              ) : (
+                <label className="field" data-testid="inbound-hysteria2-masquerade">
+                  <span>Masquerade (URL)</span>
+                  <input
+                    value={typeof entity.masquerade === "string" ? entity.masquerade : ""}
+                    placeholder="http://127.0.0.1:8080 or file:///var/www"
+                    onChange={(event) => updateField(entityRef, "masquerade", event.target.value || undefined)}
+                  />
+                </label>
+              )}
               <label className="toggle-row" data-testid="inbound-hysteria2-brutal-debug">
                 <input
                   type="checkbox"
