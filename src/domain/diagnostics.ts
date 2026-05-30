@@ -12,6 +12,52 @@ import {
 } from "./schemaRegistry";
 import { atLeast, defaultVersionForChannel } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
+import { testingOnlyFields } from "./versionFieldGate";
+
+// VT3 — the data-driven testing-only field backstop. For each typed entity, any top-level field that is
+// 1.14-only (present on testing's per-(kind,type) doc set but not stable's; see versionFieldGate) is an
+// export-blocking error on a stable target. Deduped by path so the friendlier hand-written gates (W8 / VT1)
+// own the message where they exist; this closed set catches every other 1.14-only field, current or future.
+const VERSION_GATE_SECTIONS: Array<{ kind: string; get: (c: SingBoxConfig) => unknown[]; path: (i: number) => string }> = [
+  { kind: "inbound", get: (c) => c.inbounds ?? [], path: (i) => `/inbounds/${i}` },
+  { kind: "outbound", get: (c) => c.outbounds ?? [], path: (i) => `/outbounds/${i}` },
+  { kind: "endpoint", get: (c) => c.endpoints ?? [], path: (i) => `/endpoints/${i}` },
+  { kind: "dns-server", get: (c) => c.dns?.servers ?? [], path: (i) => `/dns/servers/${i}` },
+  { kind: "service", get: (c) => c.services ?? [], path: (i) => `/services/${i}` },
+  { kind: "rule-set", get: (c) => c.route?.rule_set ?? [], path: (i) => `/route/rule_set/${i}` },
+  { kind: "certificate-provider", get: (c) => c.certificate_providers ?? [], path: (i) => `/certificate_providers/${i}` },
+];
+
+function checkTestingOnlyFields(config: SingBoxConfig, channel: SingBoxChannel, diagnostics: Diagnostic[]) {
+  if (channel !== "stable") return; // stable = the <1.14 targets; testing (1.14) accepts these fields
+  // Dedup only against existing ERROR-level diagnostics: a hand gate (W8 / VT1) that already export-blocks
+  // this exact path owns the friendlier message. A pre-existing WARNING (e.g. an older, too-weak gate) is
+  // not export-blocking, so VT3 must still add its error — these fields are binary-rejected by stable.
+  const flagged = new Set(diagnostics.filter((d) => d.level === "error").map((d) => d.path));
+  for (const section of VERSION_GATE_SECTIONS) {
+    section.get(config).forEach((entity, index) => {
+      if (!entity || typeof entity !== "object") return;
+      const obj = entity as Record<string, unknown>;
+      const onlyTesting = testingOnlyFields(section.kind, obj.type);
+      if (onlyTesting.size === 0) return;
+      const base = section.path(index);
+      for (const field of Object.keys(obj)) {
+        if (!onlyTesting.has(field)) continue;
+        const path = `${base}/${field}`;
+        if (flagged.has(path)) continue; // a hand gate already owns this path with a friendlier message
+        const tag = typeof obj.tag === "string" ? obj.tag : `${section.kind}-${index}`;
+        push(
+          diagnostics,
+          "error",
+          "field-testing-only",
+          path,
+          `${section.kind} "${tag}" (${String(obj.type)}) sets "${field}", a testing-only field (sing-box 1.14+) that stable builds reject at decode.`,
+        );
+        flagged.add(path);
+      }
+    });
+  }
+}
 
 /** Active validation target — the channel + resolved version a config is being checked against. */
 export interface ValidationTarget {
@@ -1494,13 +1540,17 @@ export function validateConfig(
           `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) sets dns_address; this field is testing-only (sing-box 1.14+).`,
         );
       }
-      if (obj.include_mac_address !== undefined || obj.exclude_mac_address !== undefined) {
+      // Field-level paths (not entity-level) so the data-driven VT3 gate dedups against this friendlier
+      // message instead of stacking a second error on the same field.
+      const macLabel = `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun)`;
+      for (const macField of ["include_mac_address", "exclude_mac_address"] as const) {
+        if (obj[macField] === undefined) continue;
         push(
           diagnostics,
           "error",
           "tun-mac-address-filter-testing-only",
-          `/inbounds/${index}`,
-          `Inbound "${inbound.tag ?? `inbound-${index}`}" (tun) uses MAC address filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
+          `/inbounds/${index}/${macField}`,
+          `${macLabel} uses ${macField} filtering; this field is testing-only (sing-box 1.14+, Linux only).`,
         );
       }
     }
@@ -2382,6 +2432,8 @@ export function validateConfig(
   validateScalarFields(config, diagnostics, { channel, version });
   // V3: structurally-required tags (rule_set / http_clients) — sing-box rejects these when blank.
   validateRequiredTags(config, diagnostics);
+  // VT3: data-driven testing-only field backstop (runs last so it can dedup against the hand-written gates).
+  checkTestingOnlyFields(config, channel, diagnostics);
 
   return diagnostics;
 }

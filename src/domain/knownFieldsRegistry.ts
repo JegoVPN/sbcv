@@ -12,7 +12,9 @@ import { schemaRow, type SchemaEntityKind } from "./schemaRegistry";
 // The docs' `#### header` lists occasionally omit a field the binary actually accepts; SUPPLEMENT carries
 // those (each verified against .tools/bin/sing-box-*). Keyed by kind → type ("*" = every type of the kind).
 
-const SUPPLEMENT: Record<string, Record<string, readonly string[]>> = {
+// Exported so the VT3 data-driven version gate (versionFieldGate.ts) can reuse it as an EXEMPTION set:
+// a field stable accepts but the stable doc omits would otherwise look "testing-only" in the byKind diff.
+export const STABLE_DOC_FIELD_SUPPLEMENT: Record<string, Record<string, readonly string[]>> = {
   outbound: {
     "*": ["domain_strategy", "fallback_delay", "udp_over_tcp"],
     tuic: ["zero_rtt_handshake"],
@@ -87,7 +89,7 @@ export function knownFieldsFor(kind: string, type: unknown): Set<string> | null 
   const row = schemaRow(kind as SchemaEntityKind, type);
   for (const g of [...(row?.sharedGroups ?? []), ...(row?.testingSharedGroups ?? [])]) for (const f of sharedFields(g)) set.add(f);
   for (const f of (row?.fields ?? []).map((field) => field.path[0]).filter(Boolean) as string[]) set.add(f);
-  for (const f of SUPPLEMENT[kind]?.[type] ?? []) set.add(f);
-  for (const f of SUPPLEMENT[kind]?.["*"] ?? []) set.add(f);
+  for (const f of STABLE_DOC_FIELD_SUPPLEMENT[kind]?.[type] ?? []) set.add(f);
+  for (const f of STABLE_DOC_FIELD_SUPPLEMENT[kind]?.["*"] ?? []) set.add(f);
   return set;
 }
