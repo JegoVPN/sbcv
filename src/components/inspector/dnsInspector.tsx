@@ -1,7 +1,26 @@
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { PlatformBanner } from "./controls";
+import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { type InspectorEntity, objectField, type UpdateField } from "./helpers";
 import { DnsRulesTable } from "../RuleTables";
+
+// Keys the DNS hub already renders (here + the Rules table + servers as nodes), so the Advanced fallback
+// surfaces only genuinely-unmodeled dns root keys (M2: no field silently unreachable on the dns singleton).
+const dnsHandledFields: ReadonlySet<string> = new Set([
+  "final",
+  "strategy",
+  "disable_cache",
+  "disable_expire",
+  "independent_cache",
+  "cache_capacity",
+  "reverse_mapping",
+  "client_subnet",
+  "fakeip",
+  "optimistic",
+  "timeout",
+  "rules",
+  "servers",
+]);
 
 // C14 — the dns (singleton) inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "dns"` branch.
@@ -177,6 +196,8 @@ export function DnsInspector({
               onChange={(event) => updateField(entityRef, "timeout", event.target.value || undefined)}
             />
           </label>
+          <AdvancedScalarFields entity={entity} handledFields={dnsHandledFields} entityRef={entityRef} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={dnsHandledFields} entityRef={entityRef} updateField={updateField} />
           <DnsRulesTable />
         </>
   );
