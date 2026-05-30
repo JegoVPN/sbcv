@@ -26,17 +26,30 @@ const SUPPLEMENT: Record<string, Record<string, readonly string[]>> = {
   "dns-server": {
     fakeip: ["inet4_range", "inet6_range"],
   },
+  endpoint: {
+    // binary-verified valid on stable + testing; omitted from the `#### header` list in endpoint/wireguard.md
+    wireguard: ["listen_port"],
+  },
 };
 
+// Shared-group id (as used in SCHEMA_ROWS sharedGroups / testingSharedGroups) → generated `shared` doc key
+// (the doc basename). Must cover EVERY group any row carries, incl. testing-only groups (http2 / http-client
+// / quic / neighbor are 1.14), or that group's fields would be wrongly flagged as unknown.
 const SHARED_GROUP_DOC_KEY: Record<string, string> = {
   dial: "dial",
   listen: "listen",
   tls: "tls",
+  "http-client": "http-client",
+  http2: "http2",
+  quic: "quic",
   multiplex: "multiplex",
   "v2ray-transport": "v2ray-transport",
-  quic: "quic",
   "udp-over-tcp": "udp-over-tcp",
   "tcp-brutal": "tcp-brutal",
+  "wifi-state": "wifi-state",
+  neighbor: "neighbor",
+  "dns01-challenge": "dns01_challenge",
+  "pre-match": "pre-match",
 };
 
 function docFields(kind: string, type: string): { fields: string[]; found: boolean } {
@@ -72,7 +85,7 @@ export function knownFieldsFor(kind: string, type: unknown): Set<string> | null 
   if (!found) return null;
   const set = new Set<string>(["tag", "type", ...fields]);
   const row = schemaRow(kind as SchemaEntityKind, type);
-  for (const g of row?.sharedGroups ?? []) for (const f of sharedFields(g)) set.add(f);
+  for (const g of [...(row?.sharedGroups ?? []), ...(row?.testingSharedGroups ?? [])]) for (const f of sharedFields(g)) set.add(f);
   for (const f of (row?.fields ?? []).map((field) => field.path[0]).filter(Boolean) as string[]) set.add(f);
   for (const f of SUPPLEMENT[kind]?.[type] ?? []) set.add(f);
   for (const f of SUPPLEMENT[kind]?.["*"] ?? []) set.add(f);

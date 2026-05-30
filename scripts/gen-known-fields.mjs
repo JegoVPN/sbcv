@@ -20,9 +20,12 @@ const KIND_DIR = {
   endpoint: "endpoint",
   service: "service",
 };
+// All shared-field-group docs (filenames; note dns01_challenge uses an underscore). Spans both channels
+// — channel-only groups (http2 / http-client / quic / neighbor are 1.14) simply have no stable file.
 const SHARED_DOCS = [
-  "dial", "listen", "tls", "multiplex", "v2ray-transport", "quic",
-  "udp-over-tcp", "tcp-brutal", "dns01_challenge",
+  "dial", "listen", "tls", "http-client", "http2", "quic", "multiplex",
+  "v2ray-transport", "udp-over-tcp", "tcp-brutal", "wifi-state", "neighbor",
+  "dns01_challenge", "pre-match",
 ];
 
 function fieldsFrom(file) {

@@ -619,6 +619,11 @@ export const DOC_FIELD_NAMES = {
       "tcp-brutal": [
         "enabled",
         "up_mbps"
+      ],
+      "pre-match": [
+        "reject",
+        "route",
+        "bypass"
       ]
     }
   },
@@ -1248,6 +1253,23 @@ export const DOC_FIELD_NAMES = {
         "short_id",
         "max_time_difference"
       ],
+      "http-client": [
+        "engine",
+        "version",
+        "disable_version_fallback",
+        "headers"
+      ],
+      "http2": [
+        "idle_timeout",
+        "keep_alive_period",
+        "stream_receive_window",
+        "connection_receive_window",
+        "max_concurrent_streams"
+      ],
+      "quic": [
+        "initial_packet_size",
+        "disable_path_mtu_discovery"
+      ],
       "multiplex": [
         "enabled",
         "padding",
@@ -1269,10 +1291,6 @@ export const DOC_FIELD_NAMES = {
         "service_name",
         "permit_without_stream"
       ],
-      "quic": [
-        "initial_packet_size",
-        "disable_path_mtu_discovery"
-      ],
       "udp-over-tcp": [
         "enabled",
         "version"
@@ -1288,6 +1306,11 @@ export const DOC_FIELD_NAMES = {
         "resolvers",
         "override_domain",
         "provider"
+      ],
+      "pre-match": [
+        "reject",
+        "route",
+        "bypass"
       ]
     }
   }

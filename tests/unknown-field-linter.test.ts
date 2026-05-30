@@ -42,6 +42,17 @@ describe("W9 — unknown-field linter flags strict-decoder rejections", () => {
     expect(unknownFieldCodes(config)).toEqual([]);
   });
 
+  it("does NOT flag a wireguard endpoint listen_port (doc-list omits it; binary accepts it) — review FP #1", () => {
+    const config = { endpoints: [{ type: "wireguard", tag: "w", address: ["10.0.0.2/32"], private_key: "k", listen_port: 51820, peers: [] }] } as unknown as SingBoxConfig;
+    expect(unknownFieldCodes(config, "stable")).toEqual([]);
+    expect(unknownFieldCodes(config, "testing")).toEqual([]);
+  });
+
+  it("does NOT flag hysteria-realm http2 tuning fields (the http2 shared group must be wired) — review FP #2", () => {
+    const config = { services: [{ type: "hysteria-realm", tag: "hr", listen: "::", listen_port: 443, idle_timeout: "30s", keep_alive_period: "10s", stream_receive_window: 1, connection_receive_window: 1, max_concurrent_streams: 1 }] } as unknown as SingBoxConfig;
+    expect(unknownFieldCodes(config, "testing")).toEqual([]);
+  });
+
   it("skips entities with no upstream doc / no string type (no false positive, legacy form handled elsewhere)", () => {
     expect(knownFieldsFor("dns-server", undefined)).toBeNull();
     const typeless = { dns: { servers: [{ tag: "legacy", address: "1.1.1.1", address_resolver: "x", strategy: "prefer_ipv4" }] } } as unknown as SingBoxConfig;
