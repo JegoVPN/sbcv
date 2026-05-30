@@ -4,6 +4,11 @@ import { memo, useCallback, useState, type MouseEvent } from "react";
 import { parseEdgeId, relationForId } from "../domain/portRelationRegistry";
 import { useProjectStore } from "../state/useProjectStore";
 
+export type CanvasEdgeData = {
+  dangling?: boolean;
+  highlighted?: boolean;
+};
+
 // V8-S1: the human name of the relation an edge represents, derived from its id (formatEdgeId encodes the
 // relationId). Two edges between the same node pair (e.g. an outbound that is BOTH a route-rule target and a
 // selector member) are otherwise visually identical; this names each on hover. Falls back to "" for the
@@ -31,10 +36,8 @@ export const CanvasEdge = memo(function CanvasEdge({
   data,
 }: EdgeProps) {
   const disconnectEdge = useProjectStore((state) => state.disconnectEdge);
-  const selectedId = useProjectStore((state) => state.selectedId);
-  // A selected node lights its first-degree edges (the ones it is an endpoint of) in the card's
-  // selection blue, so its immediate up/downstream chain stands out from the rest of the green graph.
-  const highlighted = selectedId != null && (source === selectedId || target === selectedId);
+  const edgeData = data as CanvasEdgeData | undefined;
+  const highlighted = edgeData?.highlighted === true;
   const [hovered, setHovered] = useState(false);
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -48,7 +51,7 @@ export const CanvasEdge = memo(function CanvasEdge({
   const removeVisible = hovered || selected;
   const relationLabel = relationLabelForEdge(id);
   // V8-S2: an edge to/from an unresolved tag (graph.ts flags it + synthesizes a "missing reference" node).
-  const dangling = (data as { dangling?: boolean } | undefined)?.dangling === true;
+  const dangling = edgeData?.dangling === true;
   const tooltip = dangling ? `${relationLabel || "Reference"} → missing target` : relationLabel;
   const handleRemove = useCallback((event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

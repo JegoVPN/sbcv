@@ -24,7 +24,7 @@ import {
 } from "../domain/protocols";
 import { useProjectStore } from "../state/useProjectStore";
 import { ChipPickerPopover, type ChipPickerCandidate } from "./ChipPickerPopover";
-import { CanvasEdge } from "./CanvasEdge";
+import { CanvasEdge, type CanvasEdgeData } from "./CanvasEdge";
 import {
   CanvasInteractionContext,
   EMPTY_COMPATIBLE_PORT_KEYS,
@@ -261,6 +261,24 @@ export function CanvasWorkspace() {
   const selectedTitle = selectedId ? nodeById.get(selectedId)?.data.title ?? selectedId : null;
   const [nodes, setNodes, onNodesChange] = useNodesState(graph.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(graph.edges);
+  const visuallySelectedNodeId = useMemo(
+    () => selectedId ?? nodes.find((node) => node.selected)?.id ?? null,
+    [nodes, selectedId],
+  );
+  const visibleEdges = useMemo(() => {
+    if (!visuallySelectedNodeId) return edges;
+    return edges.map((edge) => {
+      const highlighted = edge.source === visuallySelectedNodeId || edge.target === visuallySelectedNodeId;
+      if (!highlighted) return edge;
+      return {
+        ...edge,
+        data: {
+          ...(edge.data as CanvasEdgeData | undefined),
+          highlighted: true,
+        } satisfies CanvasEdgeData,
+      };
+    });
+  }, [edges, visuallySelectedNodeId]);
   const [pendingPort, setPendingPortState] = useState<PendingPort | null>(null);
   const [chipPicker, setChipPicker] = useState<ChipPickerState | null>(null);
   const { isMobile } = useViewport();
@@ -492,7 +510,7 @@ export function CanvasWorkspace() {
       <CanvasInteractionContext.Provider value={interactionStoreRef.current}>
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={visibleEdges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}

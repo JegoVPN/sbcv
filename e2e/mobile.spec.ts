@@ -126,3 +126,24 @@ test("mobile topbar groups validation action with validation status", async ({ p
   expect(metrics.add!.right).toBeLessThan(metrics.menu!.left);
   expect(metrics.validation!.width).toBeGreaterThan(metrics.add!.width);
 });
+
+test("mobile selected node keeps first-degree edge highlight after inspector is dismissed", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("app-mobile")).toBeVisible();
+  await expect(page.getByTestId("node-route:main")).toBeVisible();
+
+  await expect(page.locator(".sbc-edge__path--highlighted")).toHaveCount(0);
+
+  await page.getByTestId("node-route:main").click();
+  await expect(page.getByTestId("mobile-inspector-sheet")).toBeVisible();
+
+  const highlighted = page.locator(".sbc-edge__path--highlighted");
+  await expect(highlighted.first()).toBeVisible();
+  expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
+
+  await page.locator(".bottom-sheet-backdrop").click({ position: { x: 20, y: 160 } });
+  await expect(page.getByTestId("mobile-inspector-sheet")).toHaveCount(0);
+  await expect(page.getByTestId("node-route:main").locator(".sbc-node.is-selected")).toBeVisible();
+  await expect(highlighted.first()).toBeVisible();
+  expect(await highlighted.first().evaluate((el) => getComputedStyle(el).stroke)).toBe("rgb(45, 153, 255)");
+});
