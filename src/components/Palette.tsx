@@ -310,6 +310,8 @@ const statusLabel: Record<PaletteStatus, string> = {
   table: "List",
   inspector: "In parent",
   docs: "Reference",
+  // `gated` is rendered via displayStatusLabel() which substitutes the item's actual required version
+  // ("Needs 1.13"/"Needs 1.14"); this static entry is the fallback shape only.
   gated: "Needs 1.14",
   pending: "Soon",
   deprecated: "Legacy",
