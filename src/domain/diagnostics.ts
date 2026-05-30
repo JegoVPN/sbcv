@@ -696,20 +696,24 @@ export function validateConfig(
     const obj = server as Record<string, unknown>;
     if (typeof obj.address === "string" && obj.address.trim() !== "") {
       // V4-S4 / G2: ANY `address` field is the legacy DNS server form (bare IP, `local`, `fakeip`, or
-      // a scheme:// URL) — the typed form uses `type` + `server`. sing-box removed ALL legacy formats in
-      // 1.14 ("legacy DNS server formats are removed"), so on a 1.14 target it's a hard error regardless
-      // of whether the address is scheme-prefixed (the old regex missed bare IPs). Deprecated (warning)
-      // on 1.12/1.13, which still accept it.
+      // a scheme:// URL) — the typed form uses `type` + `server`. The old regex only matched scheme://
+      // and missed bare IPs. Binary-verified rejection ladder (PR #223 review): 1.12 still accepts it
+      // (warning); 1.13 rejects it by default — `check` FATALs unless ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true;
+      // 1.14 removed the formats entirely. So it hard-blocks export on BOTH stable (1.13, the default
+      // stable target) and testing (1.14), and is only a soft warning on the legacy 1.12 target.
       const tag = (obj.tag as string | undefined) ?? `dns-server-${index}`;
       const removed = atLeast(version, "1.14");
+      const rejected = atLeast(version, "1.13");
       push(
         diagnostics,
-        removed ? "error" : "warning",
+        rejected ? "error" : "warning",
         "dns-server-legacy-address-deprecated",
         `/dns/servers/${index}/address`,
         removed
           ? `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"), removed in sing-box 1.14.0 — sing-box rejects this. Migrate to the typed form: split into \`type\` + \`server\`.`
-          : `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
+          : rejected
+            ? `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"). sing-box 1.13 rejects this by default (requires ENABLE_DEPRECATED_LEGACY_DNS_SERVERS) and 1.14 removes it. Migrate to the typed form: split into \`type\` + \`server\`.`
+            : `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
       );
     }
     if (server.detour && !outboundTags.has(server.detour)) {
@@ -1424,16 +1428,21 @@ export function validateConfig(
   if (dnsTop && typeof dnsTop === "object") {
     const legacyFakeip = (dnsTop as Record<string, unknown>).fakeip;
     if (legacyFakeip && typeof legacyFakeip === "object" && !Array.isArray(legacyFakeip)) {
-      // Top-level dns.fakeip: deprecated 1.12, removed 1.14 → error once the target is 1.14.
+      // Top-level dns.fakeip: deprecated 1.12, but 1.13 already rejects it by default (binary-verified,
+      // PR #223 review — `check` ERRORs out) and 1.14 removed it. Only 1.12 still accepts it → warning
+      // there, hard error on the default stable target (1.13) and on testing (1.14).
       const removed = atLeast(version, "1.14");
+      const rejected = atLeast(version, "1.13");
       push(
         diagnostics,
-        removed ? "error" : "warning",
+        rejected ? "error" : "warning",
         "legacy-fakeip-deprecated",
         "/dns/fakeip",
         removed
           ? "Top-level dns.fakeip was removed in sing-box 1.14.0 — sing-box rejects this. Migrate to a dns.servers[] entry with type=fakeip."
-          : "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
+          : rejected
+            ? "Top-level dns.fakeip is rejected by sing-box 1.13 (deprecated since 1.12.0, removed in 1.14.0). Migrate to a dns.servers[] entry with type=fakeip."
+            : "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
       );
     }
   }
