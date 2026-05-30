@@ -140,3 +140,70 @@ export function getUniqueTag(config: SingBoxConfig, base: string): string {
   }
   return `${base}-${counter}`;
 }
+
+function tagIsBlank(tag: unknown): boolean {
+  return typeof tag !== "string" || tag.trim() === "";
+}
+
+/**
+ * V3 import dedup: repair tags on an imported config IN PLACE (the caller passes a fresh parse).
+ * Namespace-aware (matches the duplicate-tag diagnostic): within each reference namespace the first
+ * use of a tag wins and every later collision gets a `-N` suffix. Blank tags are only assigned for the
+ * kinds sing-box *requires* a tag (rule_set / http_clients) — tagless inbounds/outbounds/etc. are valid
+ * and left untouched. Renaming a duplicate never breaks a reference: refs already resolved to the first
+ * holder, and the newly-suffixed entity was previously unreachable-as-distinct. Returns the repair tally.
+ */
+export function dedupeTags(config: SingBoxConfig): { renamed: number; assigned: number } {
+  const used = new Map<string, Set<string>>();
+  const isUsed = (ns: string, tag: string) => used.get(ns)?.has(tag) ?? false;
+  const markUsed = (ns: string, tag: string) => {
+    const set = used.get(ns) ?? new Set<string>();
+    set.add(tag);
+    used.set(ns, set);
+  };
+  const uniqueIn = (ns: string, base: string) => {
+    if (!isUsed(ns, base)) return base;
+    let counter = 2;
+    while (isUsed(ns, `${base}-${counter}`)) counter += 1;
+    return `${base}-${counter}`;
+  };
+
+  const collections: Array<{ items: unknown[]; kind: TaggedEntityKind; base: string; required: boolean }> = [
+    { items: listItems(config.inbounds), kind: "inbound", base: "inbound", required: false },
+    { items: listItems(config.outbounds), kind: "outbound", base: "outbound", required: false },
+    { items: listItems(config.dns?.servers), kind: "dns-server", base: "dns", required: false },
+    { items: listItems(config.endpoints), kind: "endpoint", base: "endpoint", required: false },
+    { items: listItems(config.services), kind: "service", base: "service", required: false },
+    { items: listItems(config.certificate_providers), kind: "certificate-provider", base: "cert", required: false },
+    { items: listItems(config.http_clients), kind: "http-client", base: "http-client", required: true },
+    { items: listItems(config.route?.rule_set), kind: "rule-set", base: "rule-set", required: true },
+  ];
+
+  let renamed = 0;
+  let assigned = 0;
+  for (const { items, kind, base, required } of collections) {
+    const ns = namespaceForKind(kind);
+    for (const raw of items) {
+      const item = raw as { tag?: unknown };
+      if (tagIsBlank(item.tag)) {
+        if (required) {
+          const tag = uniqueIn(ns, base);
+          item.tag = tag;
+          markUsed(ns, tag);
+          assigned += 1;
+        }
+        continue;
+      }
+      const tag = item.tag as string;
+      if (isUsed(ns, tag)) {
+        const next = uniqueIn(ns, tag);
+        item.tag = next;
+        markUsed(ns, next);
+        renamed += 1;
+      } else {
+        markUsed(ns, tag);
+      }
+    }
+  }
+  return { renamed, assigned };
+}
