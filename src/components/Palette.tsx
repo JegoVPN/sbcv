@@ -34,6 +34,8 @@ import {
 } from "../domain/protocols";
 import { TEMPLATE_PRESETS, TEMPLATE_PRESET_IDS } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
+import { TESTING_RESOURCE_MIN_VERSION, typeMinVersion } from "../domain/minVersions";
+import { atLeast } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 
 // Resolve a Palette item's `kind` to a node {kind, type} so its icon comes from the shared registry
@@ -320,7 +322,18 @@ const deprecatedKinds = new Set<string>([
   "dns-fakeip",
 ]);
 
-function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>): PaletteStatus {
+// The sing-box version a palette item needs, for the "Needs X" gate + label. Node types read their
+// min from the shared TYPE_MIN_VERSION table (same source as the canvas badge); the testing-only
+// resources (http_clients / certificate_providers) have no node type and are gated to 1.14.
+function requiredVersionFor(item: PaletteItem): string | undefined {
+  const ref = paletteNodeRef(item.kind);
+  const fromTable = ref ? typeMinVersion(ref.kind, ref.type) : undefined;
+  if (fromTable) return fromTable;
+  if (item.kind === "http-client" || item.kind.startsWith("certificate-provider")) return TESTING_RESOURCE_MIN_VERSION;
+  return undefined;
+}
+
+function itemStatus(item: PaletteItem, channel: string, version: string, singletons: Set<string>): PaletteStatus {
   if (item.kind === "service-hysteria-realm" && channel !== "testing") return "gated";
   // cloudflared inbound is sing-box 1.14+ — creatable on testing, gated on stable.
   if (item.kind === "inbound-cloudflared" && channel !== "testing") return "gated";
@@ -330,18 +343,28 @@ function itemStatus(item: PaletteItem, channel: string, singletons: Set<string>)
   // Matches only the real palette items (certificate-provider*), not the reference-only "shared-*" set.
   if (item.kind.startsWith("certificate-provider")) return channel === "testing" ? "setup" : "gated";
   if (deprecatedKinds.has(item.kind)) return "deprecated";
+  // V4-S2: version gate — a node type whose min version exceeds the active target isn't creatable yet
+  // (e.g. naive / ccm / ocm on a 1.12 stable target). Channel-gated 1.14 items returned above already.
+  const min = requiredVersionFor(item);
+  if (min && !atLeast(version, min)) return "gated";
   if (singletons.has(item.kind)) return "open";
   if (item.status) return item.status;
   if (item.ready || isTemplatePresetId(item.kind)) return "add";
   return "docs";
 }
 
-function statusTitle(status: PaletteStatus, label: string) {
+/** The display label for a status — "Needs X" for a gated item resolves to its actual required version. */
+function displayStatusLabel(item: PaletteItem, status: PaletteStatus): string {
+  if (status === "gated") return `Needs ${requiredVersionFor(item) ?? TESTING_RESOURCE_MIN_VERSION}`;
+  return statusLabel[status];
+}
+
+function statusTitle(status: PaletteStatus, label: string, gatedVersion = TESTING_RESOURCE_MIN_VERSION) {
   if (status === "add") return `Add ${label} to the canvas`;
   if (status === "setup") return `Add ${label} as a draft — fill in the required fields after`;
   if (status === "table") return `Add or edit ${label} through the ordered list`;
   if (status === "inspector") return `${label} is edited inside its parent node`;
-  if (status === "gated") return `${label} needs sing-box 1.14 — switch to the testing target to create it`;
+  if (status === "gated") return `${label} needs sing-box ${gatedVersion} — switch to a target on that version to create it`;
   if (status === "pending") return `${label} is planned — not creatable yet`;
   if (status === "deprecated") return `${label} is deprecated by sing-box; new configs should use the recommended replacement`;
   if (status === "open") return `${label} already exists — click to open the Inspector`;
@@ -369,6 +392,7 @@ export function Palette() {
     createFromPalette,
     setSelectedId,
     channel,
+    version,
     hasLog,
     hasNtp,
     hasCertificate,
@@ -381,6 +405,7 @@ export function Palette() {
       createFromPalette: state.createFromPalette,
       setSelectedId: state.setSelectedId,
       channel: state.channel,
+      version: state.version,
       hasLog: Boolean(state.config.log && Object.keys(state.config.log).length > 0),
       hasNtp: Boolean(state.config.ntp && Object.keys(state.config.ntp).length > 0),
       hasCertificate: Boolean(state.config.certificate && Object.keys(state.config.certificate).length > 0),
@@ -479,6 +504,7 @@ export function Palette() {
           createFromPalette={createFromPalette}
           loadedTemplateId={loadedTemplateId}
           channel={channel}
+          version={version}
           singletonsPresent={singletonsPresent}
           setSelectedId={setSelectedId}
         />
@@ -509,6 +535,7 @@ export function Palette() {
           createFromPalette={createFromPalette}
           loadedTemplateId={loadedTemplateId}
           channel={channel}
+          version={version}
           singletonsPresent={singletonsPresent}
           setSelectedId={setSelectedId}
         />
@@ -521,6 +548,7 @@ export function Palette() {
           createFromPalette={createFromPalette}
           loadedTemplateId={loadedTemplateId}
           channel={channel}
+          version={version}
           singletonsPresent={singletonsPresent}
           setSelectedId={setSelectedId}
         />
@@ -535,6 +563,7 @@ function PaletteSection({
   createFromPalette,
   loadedTemplateId,
   channel,
+  version,
   singletonsPresent,
   setSelectedId,
 }: {
@@ -543,6 +572,7 @@ function PaletteSection({
   createFromPalette: (kind: string) => void;
   loadedTemplateId: TemplatePresetId | null;
   channel: string;
+  version: string;
   singletonsPresent: Set<string>;
   setSelectedId: (id: string | null) => void;
 }) {
@@ -553,8 +583,9 @@ function PaletteSection({
       <div className="palette-list">
         {group.items.map((item) => {
           const Icon = paletteIcon(item.kind, item.icon);
-          const status = itemStatus(item, channel, singletonsPresent);
+          const status = itemStatus(item, channel, version, singletonsPresent);
           const actionable = canActivate(item, status);
+          const shownLabel = displayStatusLabel(item, status);
           const templateAdded = isTemplateGroup && isTemplatePresetId(item.kind) && item.kind === loadedTemplateId;
           const singletonSelectionId =
             item.kind === "settings-log"
@@ -580,10 +611,10 @@ function PaletteSection({
                   templateAdded
                     ? `Added ${item.label}`
                     : actionable
-                      ? `${statusLabel[status]} ${item.label}`
-                      : `${item.label}: ${statusLabel[status]}`
+                      ? `${shownLabel} ${item.label}`
+                      : `${item.label}: ${shownLabel}`
                 }
-                title={statusTitle(status, item.label)}
+                title={statusTitle(status, item.label, requiredVersionFor(item))}
                 onClick={() => {
                   if (isTemplatePresetId(item.kind)) loadTemplatePreset(item.kind);
                   else createFromPalette(item.kind);
@@ -592,7 +623,7 @@ function PaletteSection({
               >
                 <Icon size={16} />
                 <span>{item.label}</span>
-                <small>{templateAdded ? "Added" : statusLabel[status]}</small>
+                <small>{templateAdded ? "Added" : shownLabel}</small>
               </button>
               {isTemplateGroup ? null : (
                 <a className="palette-doc-link" href={item.docsUrl} target="_blank" rel="noreferrer">

@@ -9,7 +9,7 @@ import {
   type SchemaEnumOption,
   type SchemaFieldMeta,
 } from "./schemaRegistry";
-import { atLeast } from "./targets";
+import { atLeast, defaultVersionForChannel } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 
 /** Active validation target — the channel + resolved version a config is being checked against. */
@@ -194,7 +194,7 @@ function validateRequiredTags(config: SingBoxConfig, diagnostics: Diagnostic[]):
 export function validateConfig(
   config: SingBoxConfig,
   channel: SingBoxChannel,
-  version: string = channel === "stable" ? "1.13" : "1.14",
+  version: string = defaultVersionForChannel(channel),
 ): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   // Namespaced: a tag reused across distinct reference namespaces (inbound vs outbound) never collides

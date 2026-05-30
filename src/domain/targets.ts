@@ -29,6 +29,16 @@ export function targetById(id: SingBoxTargetId): SingBoxTargetOption {
   return target;
 }
 
+// The default version when a channel (Stable / Testing) is selected — the NEWEST configured target on
+// that channel. SING_BOX_TARGETS is the single place the concrete version numbers live, so an upstream
+// release is a one-line edit there and every channel→version default (store setChannel, diagnostics
+// default) follows. The labels (stable/testing/legacy) stay constant; only the numbers move.
+export function defaultVersionForChannel(channel: SingBoxChannel): string {
+  const onChannel = SING_BOX_TARGETS.filter((target) => target.channel === channel);
+  if (onChannel.length === 0) throw new Error(`No sing-box target configured for channel "${channel}".`);
+  return onChannel.reduce((newest, target) => (compareVersions(target.version, newest.version) > 0 ? target : newest)).version;
+}
+
 // Dotted numeric version compare (no semver dep): compareVersions("1.13","1.12") > 0.
 export function compareVersions(a: string, b: string): number {
   const pa = a.split(".").map(Number);
