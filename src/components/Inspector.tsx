@@ -14,21 +14,18 @@ import type { SharedFieldGroupId } from "../domain/sharedFieldRegistry";
 import { sharedGroupsForEntity } from "../domain/sharedFieldRegistry";
 import { JsonField, ModuleCard, PlatformBanner, SensitiveTextField } from "./inspector/controls";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./inspector/advancedFields";
-import { InlineRuleSetEditor } from "./inspector/ruleControls";
 import { DnsRuleInspector, RouteRuleInspector } from "./inspector/ruleInspectors";
+import { CertificateProviderInspector } from "./inspector/certificateProviderInspector";
+import { RuleSetInspector } from "./inspector/ruleSetInspector";
 import {
-  certificateProviderFields,
   SharedFieldCards,
-  SharedFieldControl,
   sharedFieldDefinitions,
 } from "./inspector/sharedFields";
 import {
-  certificateProviderHandledFields,
   dnsServerHandledFieldsForChannel,
   endpointHandledFields,
   inboundHandledFields,
   outboundHandledFields,
-  ruleSetHandledFields,
   serviceHandledFields,
 } from "./inspector/handledFields";
 // Preserve the public API the C17 guard test imports from this module (moved to inspector/handledFields).
@@ -3815,92 +3812,11 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       ) : null}
 
       {ref.kind === "rule-set" ? (
-        <>
-          {entity.type === "remote" || entity.type === "local" ? (
-            <label className="field">
-              <span>Format</span>
-              <select
-                value={String(entity.format ?? "source")}
-                onChange={(event) => updateField(ref, "format", event.target.value)}
-              >
-                <option value="source">source</option>
-                <option value="binary">binary</option>
-              </select>
-            </label>
-          ) : null}
-          {entity.type === "remote" ? (
-            <>
-              <label className="field">
-                <span>URL</span>
-                <input
-                  value={String(entity.url ?? "")}
-                  onChange={(event) => updateField(ref, "url", event.target.value)}
-                />
-              </label>
-              <label className="field">
-                <span>Update Interval</span>
-                <input
-                  value={String(entity.update_interval ?? "")}
-                  onChange={(event) => updateField(ref, "update_interval", event.target.value || undefined)}
-                />
-              </label>
-              {channel === "testing" && entity.download_detour ? (
-                <PlatformBanner
-                  kind="deprecated"
-                  text="`download_detour` is deprecated in sing-box 1.14.0 (removed in 1.16.0). Use an HTTP Client (`http_client`) instead."
-                />
-              ) : null}
-              <label className="field">
-                <span>Download Detour</span>
-                <select
-                  value={String(entity.download_detour ?? "")}
-                  onChange={(event) => updateField(ref, "download_detour", event.target.value || undefined)}
-                >
-                  <option value="">Default outbound</option>
-                  {outboundTags(config).map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </>
-          ) : null}
-          {entity.type === "local" ? (
-            <label className="field">
-              <span>Path</span>
-              <input
-                value={String(entity.path ?? "")}
-                onChange={(event) => updateField(ref, "path", event.target.value)}
-              />
-            </label>
-          ) : null}
-          {entity.type === "inline" ? (
-            <InlineRuleSetEditor
-              key={`${JSON.stringify(ref)}:inline-rules`}
-              value={entity.rules}
-              onChange={(value) => updateField(ref, "rules", value)}
-            />
-          ) : null}
-          <AdvancedScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
-          <AdvancedNonScalarFields entity={entity} handledFields={ruleSetHandledFields} entityRef={ref} updateField={updateField} />
-        </>
+        <RuleSetInspector entity={entity} entityRef={ref} config={config} channel={channel} updateField={updateField} />
       ) : null}
 
       {ref.kind === "certificate-provider" ? (
-        <>
-          {certificateProviderFields(entityType, config).map((definition) => (
-            <SharedFieldControl
-              key={definition.path.join(".")}
-              definition={definition}
-              entity={entity}
-              entityRef={ref}
-              updateField={updateField}
-            />
-          ))}
-          <AdvancedScalarFields entity={entity} handledFields={certificateProviderHandledFields} entityRef={ref} updateField={updateField} />
-          <AdvancedNonScalarFields entity={entity} handledFields={certificateProviderHandledFields} entityRef={ref} updateField={updateField} />
-        </>
+        <CertificateProviderInspector entity={entity} entityRef={ref} config={config} entityType={entityType} updateField={updateField} />
       ) : null}
 
       {(() => {
