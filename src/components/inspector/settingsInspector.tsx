@@ -1,7 +1,7 @@
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { ModuleCard, PlatformBanner, SensitiveTextField } from "./controls";
-import { fromList, type InspectorEntity, objectField, outboundTags, toList, type UpdateField } from "./helpers";
+import { fromList, type InspectorEntity, objectField, outboundTags, parseOptionalPort, toList, type UpdateField } from "./helpers";
 
 // Keys each settings section already renders, so the Advanced fallback surfaces only genuinely-unmodeled
 // keys (M2: e.g. experimental.v2ray_api becomes visible/editable instead of JSON-only). Too-small a set
@@ -101,8 +101,9 @@ export function SettingsInspector({
             <span>Port</span>
             <input
               type="number"
-              value={Number(entity.server_port ?? 123)}
-              onChange={(event) => updateField(entityRef, "server_port", Number(event.target.value))}
+              value={typeof entity.server_port === "number" ? entity.server_port : ""}
+              placeholder="123"
+              onChange={(event) => updateField(entityRef, "server_port", parseOptionalPort(event.target.value))}
             />
           </label>
           <label className="field">

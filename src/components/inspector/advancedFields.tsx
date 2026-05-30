@@ -1,6 +1,6 @@
 import type { EntityRef } from "../../domain/types";
 import { isSensitiveFieldName, JsonField, SensitiveTextField } from "./controls";
-import { editableNonScalarFields, editableScalarFields, type InspectorEntity, labelForField, type UpdateField } from "./helpers";
+import { editableNonScalarFields, editableScalarFields, type InspectorEntity, labelForField, parseOptionalNumber, type UpdateField } from "./helpers";
 
 // C14 — the Advanced JSON fallback renderers extracted from the Inspector monolith. Any entity field NOT
 // claimed by a structured control (i.e. not in the kind's handledFields) renders here as an editable
@@ -53,7 +53,11 @@ export function AdvancedScalarFields({
                 type={typeof value === "number" ? "number" : "text"}
                 value={String(value)}
                 onChange={(event) =>
-                  updateField(entityRef, field, typeof value === "number" ? Number(event.target.value) : event.target.value)
+                  updateField(
+                    entityRef,
+                    field,
+                    typeof value === "number" ? parseOptionalNumber(event.target.value) : event.target.value,
+                  )
                 }
               />
             </label>
