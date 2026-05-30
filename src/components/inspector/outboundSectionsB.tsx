@@ -391,7 +391,17 @@ export function OutboundSectionsB({
                   }
                 }
               };
+              // V9-S1: candidate order is meaningful (urltest priority; selector first-candidate default).
+              // The checklist above is order-agnostic (add appends), so this list reorders entity.outbounds.
+              const moveCandidate = (index: number, direction: -1 | 1) => {
+                const target = index + direction;
+                if (target < 0 || target >= currentCandidates.length) return;
+                const next = [...currentCandidates];
+                [next[index], next[target]] = [next[target]!, next[index]!];
+                updateField(entityRef, "outbounds", next);
+              };
               return (
+                <>
                 <fieldset className="field field--checklist" data-testid="candidate-checklist">
                   <legend>Candidates</legend>
                   {availableTags.length === 0 ? (
@@ -416,6 +426,37 @@ export function OutboundSectionsB({
                     </label>
                   ))}
                 </fieldset>
+                {currentCandidates.length >= 2 ? (
+                  <fieldset className="field field--checklist" data-testid="candidate-order">
+                    <legend>Candidate order</legend>
+                    {currentCandidates.map((candidate, index) => (
+                      <div key={`${candidate}-${index}`} className="rule-row">
+                        <span className="rule-row__label">
+                          {index + 1}. {candidate}
+                        </span>
+                        <button
+                          type="button"
+                          className="node-icon-button"
+                          aria-label={`Move candidate ${candidate} up`}
+                          disabled={index === 0}
+                          onClick={() => moveCandidate(index, -1)}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          className="node-icon-button"
+                          aria-label={`Move candidate ${candidate} down`}
+                          disabled={index === currentCandidates.length - 1}
+                          onClick={() => moveCandidate(index, 1)}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    ))}
+                  </fieldset>
+                ) : null}
+                </>
               );
             })()
           ) : "outbounds" in entity ? (
