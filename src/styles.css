@@ -2041,6 +2041,11 @@ button.sbc-edge-remove:focus-visible {
   color: #eef2f4;
   z-index: 80;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  /* The lazy slot for the desktop "View JSON" dialog lives inside `.topbar` (pointer-events: none — a
+     transparent container whose interactive children opt back in). This recoverable error toast carries
+     the only interactive controls (Retry / Close), so it MUST re-enable pointer events; otherwise it
+     inherits `none` and the buttons are visible but unclickable (clicks fall through to the canvas). */
+  pointer-events: auto;
 }
 .lazy-layer-error__message {
   margin: 0 0 12px;
