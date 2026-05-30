@@ -649,9 +649,19 @@ export function validateConfig(
       );
     }
     const action = typeof ruleObj.action === "string" ? ruleObj.action : "";
-    // respond/match_response + response-match fields are sing-box 1.14 features; gate the ordering
-    // errors to 1.14+ so the stable channel (which already flags them as testing-only) isn't
-    // double-reported with contradictory guidance.
+    // V4-S4 / G4: respond/evaluate are sing-box 1.14 DNS rule actions; on a pre-1.14 target sing-box
+    // rejects them at decode ("unknown DNS rule action"), so they hard-block export there.
+    if (!atLeast(version, "1.14") && (action === "respond" || action === "evaluate")) {
+      push(
+        diagnostics,
+        "error",
+        "dns-rule-action-1-14-only",
+        `/dns/rules/${index}/action`,
+        `DNS rule ${index + 1} uses action "${action}", which is sing-box 1.14+; ${version} rejects it ("unknown DNS rule action").`,
+      );
+    }
+    // respond/match_response + response-match ORDERING checks are 1.14-only features; gate them to 1.14+
+    // (on pre-1.14 the action itself is already errored above).
     if (atLeast(version, "1.14")) {
       const usesResponseMatch =
         matchResponse ||
@@ -684,18 +694,26 @@ export function validateConfig(
 
   listItems(config.dns?.servers).forEach((server, index) => {
     const obj = server as Record<string, unknown>;
-    if (typeof obj.address === "string" && /^[a-z0-9+]+:\/\//i.test(obj.address)) {
+    if (typeof obj.address === "string" && obj.address.trim() !== "") {
+      // V4-S4 / G2: ANY `address` field is the legacy DNS server form (bare IP, `local`, `fakeip`, or
+      // a scheme:// URL) — the typed form uses `type` + `server`. The old regex only matched scheme://
+      // and missed bare IPs. Binary-verified rejection ladder (PR #223 review): 1.12 still accepts it
+      // (warning); 1.13 rejects it by default — `check` FATALs unless ENABLE_DEPRECATED_LEGACY_DNS_SERVERS=true;
+      // 1.14 removed the formats entirely. So it hard-blocks export on BOTH stable (1.13, the default
+      // stable target) and testing (1.14), and is only a soft warning on the legacy 1.12 target.
       const tag = (obj.tag as string | undefined) ?? `dns-server-${index}`;
-      // Legacy schema-prefixed address: deprecated 1.12, removed 1.14 → error once the target is 1.14.
       const removed = atLeast(version, "1.14");
+      const rejected = atLeast(version, "1.13");
       push(
         diagnostics,
-        removed ? "error" : "warning",
+        rejected ? "error" : "warning",
         "dns-server-legacy-address-deprecated",
         `/dns/servers/${index}/address`,
         removed
-          ? `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"), removed in sing-box 1.14.0 — sing-box rejects this. Migrate to the typed form: split into \`type\` + \`server\`.`
-          : `DNS server "${tag}" uses the legacy schema-prefixed \`address\` ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
+          ? `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"), removed in sing-box 1.14.0 — sing-box rejects this. Migrate to the typed form: split into \`type\` + \`server\`.`
+          : rejected
+            ? `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"). sing-box 1.13 rejects this by default (requires ENABLE_DEPRECATED_LEGACY_DNS_SERVERS) and 1.14 removes it. Migrate to the typed form: split into \`type\` + \`server\`.`
+            : `DNS server "${tag}" uses the legacy \`address\` form ("${obj.address}"). Migrate to the typed form: split into \`type\` + \`server\` (sing-box 1.12).`,
       );
     }
     if (server.detour && !outboundTags.has(server.detour)) {
@@ -1410,16 +1428,21 @@ export function validateConfig(
   if (dnsTop && typeof dnsTop === "object") {
     const legacyFakeip = (dnsTop as Record<string, unknown>).fakeip;
     if (legacyFakeip && typeof legacyFakeip === "object" && !Array.isArray(legacyFakeip)) {
-      // Top-level dns.fakeip: deprecated 1.12, removed 1.14 → error once the target is 1.14.
+      // Top-level dns.fakeip: deprecated 1.12, but 1.13 already rejects it by default (binary-verified,
+      // PR #223 review — `check` ERRORs out) and 1.14 removed it. Only 1.12 still accepts it → warning
+      // there, hard error on the default stable target (1.13) and on testing (1.14).
       const removed = atLeast(version, "1.14");
+      const rejected = atLeast(version, "1.13");
       push(
         diagnostics,
-        removed ? "error" : "warning",
+        rejected ? "error" : "warning",
         "legacy-fakeip-deprecated",
         "/dns/fakeip",
         removed
           ? "Top-level dns.fakeip was removed in sing-box 1.14.0 — sing-box rejects this. Migrate to a dns.servers[] entry with type=fakeip."
-          : "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
+          : rejected
+            ? "Top-level dns.fakeip is rejected by sing-box 1.13 (deprecated since 1.12.0, removed in 1.14.0). Migrate to a dns.servers[] entry with type=fakeip."
+            : "Top-level dns.fakeip is deprecated since sing-box 1.12.0 and removed in 1.14.0. Migrate to a dns.servers[] entry with type=fakeip.",
       );
     }
   }
@@ -1641,19 +1664,19 @@ export function validateConfig(
       if (dnsObj.optimistic !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "dns-optimistic-testing-only",
           "/dns/optimistic",
-          "dns.optimistic is testing-only (sing-box 1.14+).",
+          "dns.optimistic is sing-box 1.14+; this target rejects it (unknown field).",
         );
       }
       if (dnsObj.timeout !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "dns-timeout-testing-only",
           "/dns/timeout",
-          "dns.timeout is testing-only (sing-box 1.14+).",
+          "dns.timeout is sing-box 1.14+; this target rejects it (unknown field).",
         );
       }
     }
@@ -1680,7 +1703,7 @@ export function validateConfig(
       if (route.find_neighbor !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "route-find-neighbor-testing-only",
           "/route/find_neighbor",
           "route.find_neighbor is testing-only (sing-box 1.14+).",
@@ -1689,7 +1712,7 @@ export function validateConfig(
       if (route.dhcp_lease_files !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "route-dhcp-lease-files-testing-only",
           "/route/dhcp_lease_files",
           "route.dhcp_lease_files is testing-only (sing-box 1.14+).",
@@ -1698,7 +1721,7 @@ export function validateConfig(
       if (route.default_http_client !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "route-default-http-client-testing-only",
           "/route/default_http_client",
           "route.default_http_client is testing-only (sing-box 1.14+).",
@@ -1709,7 +1732,7 @@ export function validateConfig(
       if ((ruleSet as Record<string, unknown>).http_client !== undefined) {
         push(
           diagnostics,
-          "warning",
+          "error",
           "rule-set-http-client-testing-only",
           `/route/rule_set/${index}/http_client`,
           `Rule-set ${index + 1} sets \`http_client\`, which is testing-only (sing-box 1.14+). On stable, use \`download_detour\`.`,

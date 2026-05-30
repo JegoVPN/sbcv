@@ -3,10 +3,11 @@ import { describe, expect, it } from "vitest";
 import { validateConfig } from "../src/domain/diagnostics";
 import type { SingBoxChannel, SingBoxConfig } from "../src/domain/types";
 
-// C5 (G9): on the 1.14 (testing) target a legacy schema-prefixed DNS-server address and a top-level
-// dns.fakeip block are ERRORS (the 1.14 binary rejects them — "removed in 1.14.0"), while on 1.12/1.13
-// (stable) they stay deprecation WARNINGS.
-// Source: testing/configuration/dns/server/legacy.md ("Removed in sing-box 1.14.0"); testing/.../fakeip.md.
+// C5 (G9 + V4-S4/G2): a legacy DNS-server `address` and a top-level dns.fakeip block are ERRORS on the
+// testing (1.14, removed) target AND on the default stable (1.13) target — binary-verified, sing-box 1.13
+// `check` rejects both by default (legacy address needs ENABLE_DEPRECATED_LEGACY_DNS_SERVERS; fakeip ERRORs
+// out). They stay deprecation WARNINGS only on the legacy 1.12 target, which still accepts them.
+// Source: real sing-box-stable(1.13)/1.12 binaries; testing/.../legacy.md ("Removed in sing-box 1.14.0").
 
 function level(config: SingBoxConfig, code: string, channel: SingBoxChannel, version?: string) {
   return validateConfig(config, channel, version).find((d) => d.code === code)?.level;
@@ -28,8 +29,10 @@ describe("C5 — legacy DNS address version gate", () => {
   it("is an error on the testing (1.14) target", () => {
     expect(level(legacyAddress, "dns-server-legacy-address-deprecated", "testing")).toBe("error");
   });
-  it("stays a warning on stable (1.13) and 1.12", () => {
-    expect(level(legacyAddress, "dns-server-legacy-address-deprecated", "stable")).toBe("warning");
+  it("is an error on the default stable (1.13) target, which rejects it by default", () => {
+    expect(level(legacyAddress, "dns-server-legacy-address-deprecated", "stable")).toBe("error");
+  });
+  it("stays a warning only on the legacy 1.12 target", () => {
     expect(level(legacyAddress, "dns-server-legacy-address-deprecated", "stable", "1.12")).toBe("warning");
   });
   it("emits exactly once and the 1.14 message says removed in 1.14.0", () => {
@@ -43,8 +46,10 @@ describe("C5 — top-level dns.fakeip version gate", () => {
   it("is an error on the testing (1.14) target", () => {
     expect(level(legacyFakeip, "legacy-fakeip-deprecated", "testing")).toBe("error");
   });
-  it("stays a warning on stable (1.13) and 1.12", () => {
-    expect(level(legacyFakeip, "legacy-fakeip-deprecated", "stable")).toBe("warning");
+  it("is an error on the default stable (1.13) target, which rejects it by default", () => {
+    expect(level(legacyFakeip, "legacy-fakeip-deprecated", "stable")).toBe("error");
+  });
+  it("stays a warning only on the legacy 1.12 target", () => {
     expect(level(legacyFakeip, "legacy-fakeip-deprecated", "stable", "1.12")).toBe("warning");
   });
   it("emits exactly once and the 1.14 message says removed in 1.14.0", () => {
