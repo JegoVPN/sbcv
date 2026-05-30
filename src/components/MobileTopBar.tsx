@@ -1,10 +1,11 @@
 import { CheckCircle2, CircleAlert, CircleX, FileCheck2, LoaderCircle, MoreHorizontal, Plus } from "lucide-react";
-import { Suspense, lazy, useMemo, useState } from "react";
+import { lazy, useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { targetFromVersion } from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
+import { LazyLayerBoundary } from "./LazyLayerBoundary";
 import { SbcvLogo } from "./SbcvLogo";
 
 const MobileMenuSheet = lazy(() =>
@@ -166,29 +167,29 @@ export function MobileTopBar() {
       </button>
 
       {menuOpen ? (
-        <Suspense fallback={null}>
+        <LazyLayerBoundary onClose={() => setMenuOpen(false)}>
           <MobileMenuSheet
             open={menuOpen}
             onClose={() => setMenuOpen(false)}
             onOpenTemplates={() => setTemplatesOpen(true)}
             onOpenJson={() => setJsonViewerOpen(true)}
           />
-        </Suspense>
+        </LazyLayerBoundary>
       ) : null}
       {templatesOpen ? (
-        <Suspense fallback={null}>
+        <LazyLayerBoundary onClose={() => setTemplatesOpen(false)}>
           <MobileTemplatesSheet open={templatesOpen} onClose={() => setTemplatesOpen(false)} />
-        </Suspense>
+        </LazyLayerBoundary>
       ) : null}
       {nodeSheetOpen ? (
-        <Suspense fallback={null}>
+        <LazyLayerBoundary onClose={() => setNodeSheetOpen(false)}>
           <MobileNodeSheet open={nodeSheetOpen} onClose={() => setNodeSheetOpen(false)} />
-        </Suspense>
+        </LazyLayerBoundary>
       ) : null}
       {jsonViewerOpen ? (
-        <Suspense fallback={null}>
+        <LazyLayerBoundary onClose={() => setJsonViewerOpen(false)}>
           <ConfigJsonViewerDialog open={jsonViewerOpen} onClose={() => setJsonViewerOpen(false)} />
-        </Suspense>
+        </LazyLayerBoundary>
       ) : null}
     </header>
   );
