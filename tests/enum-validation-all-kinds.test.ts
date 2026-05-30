@@ -29,12 +29,14 @@ describe("W2 — enum/type validation for dns-server + rule-set", () => {
     }
   });
 
-  it("errors an invalid legacy DNS strategy (1.12 target)", () => {
-    const bad = validateConfig(
-      { dns: { servers: [{ tag: "d", address: "8.8.8.8", strategy: "bogus" }] } } as unknown as SingBoxConfig,
-      "stable",
-      "1.12",
-    ).filter((d) => d.level === "error");
-    expect(bad.some((d) => d.code === "enum-invalid" && d.path.endsWith("/strategy"))).toBe(true);
+  it("errors an invalid legacy DNS strategy but accepts the full binary-valid set incl. as_is (1.12)", () => {
+    const strat = (s: string) =>
+      validateConfig({ dns: { servers: [{ tag: "d", address: "8.8.8.8", strategy: s }] } } as unknown as SingBoxConfig, "stable", "1.12")
+        .filter((d) => d.level === "error" && d.path.endsWith("/strategy"));
+    expect(strat("bogus").length).toBeGreaterThan(0);
+    // as_is is binary-valid on the legacy DNS server (verified) — must NOT be flagged (was a false positive).
+    for (const ok of ["as_is", "prefer_ipv4", "prefer_ipv6", "ipv4_only", "ipv6_only"]) {
+      expect(strat(ok)).toEqual([]);
+    }
   });
 });
