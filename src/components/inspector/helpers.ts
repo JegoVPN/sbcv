@@ -17,6 +17,23 @@ export function fromList(value: string): string[] {
     .filter(Boolean);
 }
 
+// R3 — shared optional-number parsing for inspector inputs. A bare `Number(raw)` writes `0` on an empty
+// field (clears become 0) and `NaN` on intermediate input (`-`, `.`, `1e`) — corrupting canonical JSON.
+// parseOptionalNumber: empty/non-finite → undefined (field unset); a real number (including 0) is kept.
+export function parseOptionalNumber(raw: string): number | undefined {
+  if (raw.trim() === "") return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+// parseOptionalPort: a sing-box port is an integer 1..65535; anything else (empty, NaN, out-of-range,
+// fractional) → undefined so an invalid port never reaches the config.
+export function parseOptionalPort(raw: string): number | undefined {
+  const parsed = parseOptionalNumber(raw);
+  if (parsed === undefined || !Number.isInteger(parsed) || parsed < 1 || parsed > 65535) return undefined;
+  return parsed;
+}
+
 // Seeds a new kv-repeater row with a unique, non-empty key so a blank {"":""} entry can never be
 // committed to (and exported from) canonical config (W13 / C0-6). Mirrors the ccm/ocm addHeader pattern.
 export function withUniqueBlankKey<T extends Record<string, unknown>>(map: T, base: string): T {

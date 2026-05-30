@@ -4,7 +4,7 @@ import type { EntityRef } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { PlatformBanner, SensitiveTextField } from "./controls";
 import { endpointHandledFields } from "./handledFields";
-import { type EndpointReferences, fromList, type InspectorEntity, toList, type UpdateField } from "./helpers";
+import { type EndpointReferences, fromList, type InspectorEntity, parseOptionalPort, toList, type UpdateField } from "./helpers";
 
 // C14 — the endpoint entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "endpoint"` branch. The shell computes
@@ -105,7 +105,7 @@ export function EndpointInspector({
                           <input
                             type="number"
                             value={Number(peer.port ?? 51820)}
-                            onChange={(event) => patchPeer(index, { port: Number(event.target.value) })}
+                            onChange={(event) => patchPeer(index, { port: parseOptionalPort(event.target.value) })}
                           />
                         </label>
                         <SensitiveTextField

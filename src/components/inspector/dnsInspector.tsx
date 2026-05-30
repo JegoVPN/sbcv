@@ -1,7 +1,7 @@
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { PlatformBanner } from "./controls";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
-import { type InspectorEntity, objectField, type UpdateField } from "./helpers";
+import { type InspectorEntity, objectField, parseOptionalNumber, type UpdateField } from "./helpers";
 import { DnsRulesTable } from "../RuleTables";
 
 // Keys the DNS hub already renders (here + the Rules table + servers as nodes), so the Advanced fallback
@@ -100,8 +100,8 @@ export function DnsInspector({
             <span>Cache Capacity</span>
             <input
               type="number"
-              value={Number(entity.cache_capacity ?? 0)}
-              onChange={(event) => updateField(entityRef, "cache_capacity", Number(event.target.value) || undefined)}
+              value={typeof entity.cache_capacity === "number" ? entity.cache_capacity : ""}
+              onChange={(event) => updateField(entityRef, "cache_capacity", parseOptionalNumber(event.target.value))}
             />
           </label>
           <label className="toggle-row">

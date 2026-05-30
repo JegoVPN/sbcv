@@ -4,7 +4,7 @@ import type { EntityRef } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { JsonField, SensitiveTextField } from "./controls";
 import { inboundHandledFields } from "./handledFields";
-import { type InspectorEntity, objectField, type UpdateField } from "./helpers";
+import { type InspectorEntity, objectField, parseOptionalNumber, type UpdateField } from "./helpers";
 
 // C14 — the second half of the inbound per-protocol inspector (shadowtls / anytls / shadowsocks / the
 // per-type user-credential editor / tproxy / cloudflared / direct / trojan / hysteria2 / naive / ... +
@@ -590,8 +590,8 @@ export function InboundSectionsB({
                             <span>{field.label}</span>
                             <input
                               type="number"
-                              value={Number(value ?? 0)}
-                              onChange={(event) => patchUser(index, { [field.key]: Number(event.target.value) })}
+                              value={typeof value === "number" ? value : ""}
+                              onChange={(event) => patchUser(index, { [field.key]: parseOptionalNumber(event.target.value) })}
                             />
                           </label>
                         );
