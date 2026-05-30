@@ -42,6 +42,8 @@ export interface SchemaEnumOption {
   channel?: Channel;
   /** Legacy value kept for round-trip + validation, but not offered as a fresh choice. */
   deprecated?: boolean;
+  /** Optgroup label for the data-driven renderer (e.g. shadowsocks methods grouped 2022/AEAD/Legacy). */
+  group?: string;
 }
 
 /**
@@ -61,6 +63,12 @@ export interface SchemaFieldMeta {
   channel?: Channel;
   /** Upstream doc this field's type/enum is transcribed from, relative to `<channel>/configuration/`. */
   doc: string;
+  /** V0-S2 data-driven renderer presentation: the control's display label (defaults to a title-cased path). */
+  label?: string;
+  /** The empty `<option>` text shown when the value is unset (defaults to "(default)"). */
+  emptyLabel?: string;
+  /** Coerce the chosen value to a Number on write (e.g. shadowtls `version` is a numeric enum). */
+  numeric?: boolean;
 }
 
 export interface SchemaRow {
@@ -96,27 +104,31 @@ export interface SchemaRow {
 const NETWORK_ENUM: SchemaEnumOption[] = [{ value: "tcp" }, { value: "udp" }];
 const PACKET_ENCODING_ENUM: SchemaEnumOption[] = [{ value: "packetaddr" }, { value: "xudp" }];
 const VLESS_FLOW_ENUM: SchemaEnumOption[] = [{ value: "xtls-rprx-vision" }];
-const SHADOWTLS_VERSION_ENUM: SchemaEnumOption[] = [{ value: "1" }, { value: "2" }, { value: "3" }];
+const SHADOWTLS_VERSION_ENUM: SchemaEnumOption[] = [
+  { value: "1", label: "1 (no auth)" },
+  { value: "2", label: "2 (single user)" },
+  { value: "3", label: "3 (single user, server-side hash)" },
+];
 // shared/shadowsocks.md outbound method list: 2022 + AEAD + legacy stream ciphers (all round-trip-valid).
 const SS_METHOD_ENUM: SchemaEnumOption[] = [
-  { value: "2022-blake3-aes-128-gcm" },
-  { value: "2022-blake3-aes-256-gcm" },
-  { value: "2022-blake3-chacha20-poly1305" },
-  { value: "none" },
-  { value: "aes-128-gcm" },
-  { value: "aes-192-gcm" },
-  { value: "aes-256-gcm" },
-  { value: "chacha20-ietf-poly1305" },
-  { value: "xchacha20-ietf-poly1305" },
-  { value: "aes-128-ctr", deprecated: true },
-  { value: "aes-192-ctr", deprecated: true },
-  { value: "aes-256-ctr", deprecated: true },
-  { value: "aes-128-cfb", deprecated: true },
-  { value: "aes-192-cfb", deprecated: true },
-  { value: "aes-256-cfb", deprecated: true },
-  { value: "rc4-md5", deprecated: true },
-  { value: "chacha20-ietf", deprecated: true },
-  { value: "xchacha20", deprecated: true },
+  { value: "2022-blake3-aes-128-gcm", group: "Shadowsocks 2022" },
+  { value: "2022-blake3-aes-256-gcm", group: "Shadowsocks 2022" },
+  { value: "2022-blake3-chacha20-poly1305", group: "Shadowsocks 2022" },
+  { value: "aes-128-gcm", group: "AEAD" },
+  { value: "aes-192-gcm", group: "AEAD" },
+  { value: "aes-256-gcm", group: "AEAD" },
+  { value: "chacha20-ietf-poly1305", group: "AEAD" },
+  { value: "xchacha20-ietf-poly1305", group: "AEAD" },
+  { value: "none", group: "Other" },
+  { value: "aes-128-ctr", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "aes-192-ctr", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "aes-256-ctr", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "aes-128-cfb", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "aes-192-cfb", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "aes-256-cfb", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "rc4-md5", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "chacha20-ietf", deprecated: true, group: "Legacy / Stream cipher" },
+  { value: "xchacha20", deprecated: true, group: "Legacy / Stream cipher" },
 ];
 // inbound/shadowsocks.md method table lists the modern AEAD/2022 set only — no legacy stream ciphers.
 const SS_METHOD_MODERN_ENUM: SchemaEnumOption[] = SS_METHOD_ENUM.filter((option) => !option.deprecated);
@@ -288,7 +300,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     sharedGroups: ["listen", "dial"],
     fields: [
       // version is stored numeric (factory `version: 3`); V1 compares String(value) against these.
-      { path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, doc: "inbound/shadowtls.md" },
+      { path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, numeric: true, doc: "inbound/shadowtls.md" },
       {
         path: ["wildcard_sni"],
         type: "enum",
@@ -514,7 +526,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
           { value: "zero" },
           { value: "aes-128-gcm" },
           { value: "chacha20-poly1305" },
-          { value: "aes-128-ctr", deprecated: true },
+          { value: "aes-128-ctr", label: "aes-128-ctr (legacy)", deprecated: true },
         ],
       },
       { path: ["packet_encoding"], type: "enum", enum: PACKET_ENCODING_ENUM, doc: "outbound/vmess.md" },
@@ -610,7 +622,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["dial", "tls"],
-    fields: [{ path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, doc: "outbound/shadowtls.md" }],
+    fields: [{ path: ["version"], type: "enum", enum: SHADOWTLS_VERSION_ENUM, numeric: true, doc: "outbound/shadowtls.md" }],
   },
   {
     kind: "outbound",

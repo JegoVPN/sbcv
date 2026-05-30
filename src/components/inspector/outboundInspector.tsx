@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 
 import { defaultFieldKeysFor } from "../../domain/schemaRegistry";
 import { PlatformBanner, SensitiveTextField } from "./controls";
+import { SchemaEnumField } from "./schemaEnumField";
 import { fromList, type InspectorEntity, objectField, toList, withUniqueBlankKey } from "./helpers";
 import { OutboundSectionsB, type OutboundSectionProps } from "./outboundSectionsB";
 
@@ -24,26 +25,7 @@ export function OutboundInspector(props: OutboundSectionProps) {
             />
           ) : null}
           {entityType === "shadowtls" ? (
-            <label className="field">
-              <span>Version</span>
-              <select
-                value={typeof entity.version === "number" ? String(entity.version) : ""}
-                onChange={(event) => {
-                  const raw = event.target.value;
-                  if (!raw) {
-                    updateField(entityRef, "version", undefined);
-                    return;
-                  }
-                  const parsed = Number(raw);
-                  updateField(entityRef, "version", Number.isFinite(parsed) ? parsed : undefined);
-                }}
-              >
-                <option value="">(default — 1)</option>
-                <option value="1">1 (no auth)</option>
-                <option value="2">2 (single user)</option>
-                <option value="3">3 (single user, server-side hash)</option>
-              </select>
-            </label>
+            <SchemaEnumField kind="outbound" type="shadowtls" field="version" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "tor" ? (
             <>
@@ -195,19 +177,9 @@ export function OutboundInspector(props: OutboundSectionProps) {
               );
             })()
           ) : null}
-          {entityType && ["socks", "http", "shadowsocks", "vmess", "trojan", "vless", "tuic", "hysteria", "hysteria2"].includes(entityType) ? (
-            <label className="field">
-              <span>Network</span>
-              <select
-                value={typeof entity.network === "string" ? entity.network : ""}
-                onChange={(event) => updateField(entityRef, "network", event.target.value || undefined)}
-              >
-                <option value="">tcp + udp (both)</option>
-                <option value="tcp">tcp</option>
-                <option value="udp">udp</option>
-              </select>
-            </label>
-          ) : null}
+          {/* V0/M5: network renders from SchemaFieldMeta — self-gates to the types that declare it (NOT
+              http, which sing-box rejects `network` on — the old hand-list over-included it). */}
+          <SchemaEnumField kind="outbound" type={entityType ?? ""} field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
           {entityType && ["vmess", "vless", "tuic"].includes(entityType) ? (
             <>
               <SensitiveTextField
@@ -412,39 +384,7 @@ export function OutboundInspector(props: OutboundSectionProps) {
           ) : null}
           {entityType === "shadowsocks" ? (
             <>
-              <label className="field">
-                <span>Method</span>
-                <select
-                  value={typeof entity.method === "string" ? entity.method : ""}
-                  onChange={(event) => updateField(entityRef, "method", event.target.value || undefined)}
-                >
-                  <option value="">(none)</option>
-                  <optgroup label="Shadowsocks 2022">
-                    <option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option>
-                    <option value="2022-blake3-aes-256-gcm">2022-blake3-aes-256-gcm</option>
-                    <option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option>
-                  </optgroup>
-                  <optgroup label="AEAD">
-                    <option value="aes-128-gcm">aes-128-gcm</option>
-                    <option value="aes-192-gcm">aes-192-gcm</option>
-                    <option value="aes-256-gcm">aes-256-gcm</option>
-                    <option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option>
-                    <option value="xchacha20-ietf-poly1305">xchacha20-ietf-poly1305</option>
-                  </optgroup>
-                  <optgroup label="Legacy / Stream cipher">
-                    <option value="none">none</option>
-                    <option value="aes-128-ctr">aes-128-ctr</option>
-                    <option value="aes-192-ctr">aes-192-ctr</option>
-                    <option value="aes-256-ctr">aes-256-ctr</option>
-                    <option value="aes-128-cfb">aes-128-cfb</option>
-                    <option value="aes-192-cfb">aes-192-cfb</option>
-                    <option value="aes-256-cfb">aes-256-cfb</option>
-                    <option value="rc4-md5">rc4-md5</option>
-                    <option value="chacha20-ietf">chacha20-ietf</option>
-                    <option value="xchacha20">xchacha20</option>
-                  </optgroup>
-                </select>
-              </label>
+              <SchemaEnumField kind="outbound" type="shadowsocks" field="method" entity={entity} entityRef={entityRef} updateField={updateField} />
               <label className="field">
                 <span>Plugin (SIP003)</span>
                 <select
@@ -473,49 +413,13 @@ export function OutboundInspector(props: OutboundSectionProps) {
             </>
           ) : null}
           {entityType === "vmess" ? (
-            <label className="field">
-              <span>Security</span>
-              <select
-                value={typeof entity.security === "string" ? entity.security : "auto"}
-                onChange={(event) => updateField(entityRef, "security", event.target.value)}
-              >
-                <option value="auto">auto</option>
-                <option value="none">none</option>
-                <option value="zero">zero</option>
-                <option value="aes-128-gcm">aes-128-gcm</option>
-                <option value="chacha20-poly1305">chacha20-poly1305</option>
-                <option value="aes-128-ctr">aes-128-ctr (legacy)</option>
-              </select>
-            </label>
+            <SchemaEnumField kind="outbound" type="vmess" field="security" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "vless" ? (
-            <label className="field">
-              <span>Flow</span>
-              <select
-                value={typeof entity.flow === "string" ? entity.flow : ""}
-                onChange={(event) => updateField(entityRef, "flow", event.target.value || undefined)}
-              >
-                <option value="">(none)</option>
-                <option value="xtls-rprx-vision">xtls-rprx-vision</option>
-              </select>
-            </label>
+            <SchemaEnumField kind="outbound" type="vless" field="flow" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "naive" ? (
-            <label className="field" data-testid="naive-quic-congestion-control">
-              <span>QUIC Congestion Control</span>
-              <select
-                value={typeof entity.quic_congestion_control === "string" ? entity.quic_congestion_control : ""}
-                onChange={(event) =>
-                  updateField(entityRef, "quic_congestion_control", event.target.value || undefined)
-                }
-              >
-                <option value="">(default — bbr)</option>
-                <option value="bbr">bbr</option>
-                <option value="bbr2">bbr2</option>
-                <option value="cubic">cubic</option>
-                <option value="reno">reno</option>
-              </select>
-            </label>
+            <SchemaEnumField kind="outbound" type="naive" field="quic_congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
       <OutboundSectionsB {...props} />
     </>

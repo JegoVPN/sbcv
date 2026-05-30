@@ -581,8 +581,8 @@ describe("SBC editor shell", () => {
     });
     render(<App />);
     const inspector = within(screen.getByLabelText("Node inspector"));
-    const wrapper = inspector.getByTestId("naive-quic-congestion-control");
-    const control = within(wrapper).getByLabelText("QUIC Congestion Control") as HTMLSelectElement;
+    // V0/M5: now rendered by the data-driven SchemaEnumField (from outbound:naive quic_congestion_control meta).
+    const control = inspector.getByLabelText("QUIC Congestion Control") as HTMLSelectElement;
     expect(control.tagName).toBe("SELECT");
     const optionValues = Array.from(control.querySelectorAll("option")).map((o) => o.value);
     expect(optionValues).toEqual(["", "bbr", "bbr2", "cubic", "reno"]);

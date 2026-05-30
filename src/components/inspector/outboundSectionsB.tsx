@@ -5,6 +5,7 @@ import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields"
 import { SensitiveTextField } from "./controls";
 import { outboundHandledFields } from "./handledFields";
 import { fromList, type InspectorEntity, objectField, outboundTags, toList, type UpdateField, withUniqueBlankKey } from "./helpers";
+import { SchemaEnumField } from "./schemaEnumField";
 
 // C14 — the second half of the outbound per-protocol inspector (http / hysteria2 / anytls / tuic / socks /
 // selector / urltest + the Advanced JSON fallback), split out of outboundInspector.tsx to keep each file
@@ -285,31 +286,12 @@ export function OutboundSectionsB({
             })()
           ) : null}
           {entityType === "vmess" || entityType === "vless" ? (
-            <label className="field">
-              <span>Packet Encoding</span>
-              <select
-                value={typeof entity.packet_encoding === "string" ? entity.packet_encoding : ""}
-                onChange={(event) => updateField(entityRef, "packet_encoding", event.target.value || undefined)}
-              >
-                <option value="">(disabled)</option>
-                <option value="packetaddr">packetaddr</option>
-                <option value="xudp">xudp</option>
-              </select>
-            </label>
+            <SchemaEnumField kind="outbound" type={entityType} field="packet_encoding" entity={entity} entityRef={entityRef} updateField={updateField} />
           ) : null}
           {entityType === "tuic" ? (
             <>
-              <label className="field">
-                <span>Congestion Control</span>
-                <select
-                  value={typeof entity.congestion_control === "string" ? entity.congestion_control : "cubic"}
-                  onChange={(event) => updateField(entityRef, "congestion_control", event.target.value)}
-                >
-                  <option value="cubic">cubic</option>
-                  <option value="new_reno">new_reno</option>
-                  <option value="bbr">bbr</option>
-                </select>
-              </label>
+              <SchemaEnumField kind="outbound" type="tuic" field="congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
+              {/* udp_relay_mode stays hand-written: selecting it has a side effect (clears udp_over_stream). */}
               <label className="field">
                 <span>UDP Relay Mode</span>
                 <select
