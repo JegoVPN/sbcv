@@ -8,7 +8,7 @@ import {
   type PortDirection,
   type PortNodeKind,
 } from "../domain/portRelationRegistry";
-import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
+import { dnsRuleAllowsServer, routeRuleAllowsOutbound, routeRuleAllowsServer } from "../domain/commands";
 import { adapterIsConnected, domainResolverTag, httpClientRefTag } from "../domain/portReferenceAdapter";
 import { supportsDialFields, supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
@@ -410,6 +410,10 @@ export function deriveGraph(
         // Same gate as the dns-rule→server edge: only routing actions dial an outbound.
         if (rule.outbound && routeRuleAllowsOutbound(rule)) {
           edges.push(makeEdge(formatEdgeId("route-rule", index, rule.outbound), id, outboundTargetNodeId(rule.outbound), "outbound", "route-rule"));
+        }
+        // V7-S3: the `resolve` action dials a DNS server (mirrors the dns-rule→server edge).
+        if (typeof rule.server === "string" && rule.server && routeRuleAllowsServer(rule)) {
+          edges.push(makeEdge(formatEdgeId("route-rule-resolve", index, rule.server), id, `dns-server:${rule.server}`, "resolve-server", "route-rule-resolve"));
         }
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
