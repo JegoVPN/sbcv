@@ -196,6 +196,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       method: "aes-128-gcm",
       password: "change-me",
     }),
+    requiredFields: ["method", "password"],
     sharedGroups: ["listen", "multiplex", "tcp-brutal"],
     fields: [
       { path: ["method"], type: "enum", enum: SS_METHOD_MODERN_ENUM, doc: "inbound/shadowsocks.md" },
@@ -493,6 +494,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       method: "aes-128-gcm",
       password: "change-me",
     }),
+    requiredFields: ["method", "password"],
     sharedGroups: ["dial", "multiplex", "tcp-brutal", "udp-over-tcp"],
     fields: [
       { path: ["method"], type: "enum", enum: SS_METHOD_ENUM, doc: "outbound/shadowsocks.md" },
@@ -663,6 +665,7 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       udp_relay_mode: "native",
       tls: { enabled: true, server_name: "" },
     }),
+    requiredFields: ["uuid"],
     sharedGroups: ["dial", "tls", "quic"],
     fields: [
       {

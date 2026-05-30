@@ -149,6 +149,26 @@ function validateScalarFields(
           push(diagnostics, "error", result.code, `/${collection}/${index}/${meta.path.join("/")}`, result.message);
         }
       }
+      // W1 (M3): declarative required scalar fields (credentials etc.) — a config missing one passes a
+      // shape-only lint but the binary rejects it (binary-verified: shadowsocks method+password, tuic uuid).
+      // GUI factories always seed them, so this bites imported / cleared entities. cloudflared.token keeps
+      // its bespoke check (nicer message + 1.14 gate), so skip it here to avoid a double diagnostic.
+      if (!(kind === "inbound" && type === "cloudflared")) {
+        const tag = (entity as { tag?: unknown }).tag;
+        const owner = `${kind[0]!.toUpperCase()}${kind.slice(1)} "${typeof tag === "string" && tag ? tag : `${kind}-${index}`}"`;
+        for (const field of requiredFieldsFor(kind, type)) {
+          const value = getAtPath(entity, [field]);
+          if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
+            push(
+              diagnostics,
+              "error",
+              "missing-required-field",
+              `/${collection}/${index}/${field}`,
+              `${owner} of type ${type} requires \`${field}\`.`,
+            );
+          }
+        }
+      }
     });
   }
 }
