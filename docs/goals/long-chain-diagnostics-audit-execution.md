@@ -87,7 +87,7 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - [x] A14-ssm-api-not-managed-shadowsocks-error — PR (this, combined w/ A15 — same ssm-api block)
 - [x] A15-ssm-api-empty-servers-error — PR (this)
 - [x] A16-resolved-dns-server-linux-warning — PR (this)
-- [ ] A17-dns-server-endpoint-not-tailscale-warning（可选/低优先，依赖 A5）
+- [x] A17-dns-server-endpoint-not-tailscale — ⚠️ REVISED → error（run-FATAL 推翻 warning）：PR (this)
 
 ---
 
@@ -276,15 +276,17 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - **Reviewer:** domain-correctness（确认不误升 error）。
 - **Don't mix:** 仅节点归属 + 提示补齐；不改 severity 模型。
 
-#### A17-dns-server-endpoint-not-tailscale-warning — 🆕 缺失检查（可选/低优先，依赖 A5）
-- **Outcome:** 仿 `derp-verify-endpoint-not-tailscale`（`diagnostics.ts:628-635`），当 tailscale DNS 服务器的 `endpoint` 解析到的 `endpoints[]` 条目 `type !== 'tailscale'` 时发**咨询 warning**（**绝不 error**——二进制接受，error 会重现 #303 假阳性类）。
-- **根因（已验证，high）:** tailscale DNS 服务器指向 wireguard endpoint 二进制三版接受（运行时才校验类型），我们今天只查存在性（且过严，见 A5），从不查类型。
-- **Source of truth:** `dns/server/tailscale.md:38`（"The tag of the Tailscale Endpoint"）；`endpoint/tailscale.md:14`。
-- **Touch:** `src/domain/diagnostics.ts` tailscale DNS 分支。须与 A5 配套：解析到 tailscale endpoint = 静默；非 tailscale = warn；悬空/错命名空间 = warn（A5）；缺失/空 = error（`dns-server-tailscale-endpoint-missing`）。
-- **Acceptance:** tailscale DNS 服务器 → 非 tailscale endpoint = warning；→ tailscale endpoint = 静默；二进制三版接受（不可 error）。
-- **Tests:** 种子 `dns-endpoint-service-refs/ts-fn-endpoint-not-tailscale.json`。
-- **Reviewer:** domain-correctness。
-- **Don't mix:** 依赖 A5 先落（存在性已降级）；仅类型咨询 warning。
+#### A17-dns-server-endpoint-not-tailscale — ⚠️ **REVISED 2026-06-01：spec premise 被二进制 `run` 推翻 → error（非 warning）**
+- **原 Outcome（已撤回）:** ~~咨询 warning（绝不 error，"二进制接受"）。~~
+- **实际 Outcome（binary-grounded）:** 新增 `dns-server-endpoint-not-tailscale`(**error**):当 tailscale DNS 服务器的 `endpoint` 解析到的 `endpoints[]` 条目 `type !== 'tailscale'` 时报错。
+- **推翻依据（与 A5 同形,spec 作者同样只跑了 check）:** `ts-fn-endpoint-not-tailscale`(tailscale DNS server → wireguard endpoint)三版 `check` exit 0 但 **`run` FATAL `start service: initialize dns/tailscale[ts]: endpoint is not Tailscale: wg-ep`**。check-pass/run-FATAL = 运行时真阳性(同 `route.final`/A5),审计结论要求保 error。spec「二进制接受(运行时才校验类型→warning)」把 check 当成唯一仲裁者,但运行时类型校验是 **FATAL** 而非容忍。**注意:此条 crosscheck harness 无法验证(仅跑 check,check 通过)——证据是直接 `run` 重放。**
+- **Source of truth:** `dns/server/tailscale.md:38`（"The tag of the Tailscale Endpoint"）；`endpoint/tailscale.md:14`；二进制 `run` 重放(最终仲裁者)。
+- **Touch:** `src/domain/diagnostics.ts` tailscale DNS 分支(`server.endpoint` 非空且 referenced endpoint 存在但非 tailscale)。与 A5 配套:tailscale endpoint = 静默;非 tailscale 类型(存在) = **error**(本条);悬空 = `missing-dns-server-endpoint` error(A5);缺失/空 = `dns-server-tailscale-endpoint-missing` error。
+- **Acceptance:** tailscale DNS 服务器 → 非 tailscale endpoint = **error**;→ tailscale endpoint = 静默;→ 悬空 = missing-dns-server-endpoint(非本条);`run` 重放 FATAL 一致。
+- **Tests:** 内联 `ts-fn-endpoint-not-tailscale`(wireguard endpoint)= error;真 tailscale = silent;悬空 = A5 覆盖。
+- **Reviewer:** domain-correctness（**须独立 `run` 重放复核反转** —— check 不足以仲裁）。
+- **Don't mix:** 依赖 A5 已落;仅类型检查(存在但非 tailscale);悬空/空归 A5 / endpoint-missing。
+- **注:** 既有 `derp-verify-endpoint-not-tailscale`(warning,`diagnostics.ts`)同形,可能也是潜在 FN(derp verify_client_endpoint → 非 tailscale 是否 run-FATAL 未在本 audit 确认——我方 derp probe 因缺 TLS 在 check 阶段即 FATAL,未到类型校验);**不在本 A-queue 范围**,留待后续。
 
 ---
 
@@ -320,4 +322,5 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - **2026-05-31 — ⚠️ A5 预警（二进制复证推翻 spec）。** P0 基线预跑发现 `dns-endpoint-service-refs/ts-fp-dangling-endpoint.json`(tailscale DNS server `endpoint:"does-not-exist"`,另有不同 tag 的 `endpoints[]`)在 **1.12/1.13/1.14 三版 `run` 均 FATAL** `start service: initialize dns/tailscale[ts]: endpoint not found: does-not-exist`——`check` 0 但 `run` FATAL = 运行时真阳性,与 `route.final` 同形,**不应降级**。spec A5「run 干净」声明未被主理人复证覆盖(milestone note 仅列 A1/A3/A4+route.final)。到 A5 时以 wrong-namespace + clean-control 深查后修订本条(预期:`missing-dns-server-endpoint` 保 error;A17 相应调整)。
 - **2026-06-01 — A13 reviewer = APPROVE（PR #315 merged）。** 独立验证并集完整、bogus 字段标记于精确 path、生成器仅改 rule-set、VT3 快照仅新增 rule-set http_client;http_client-on-local 的 sibling false-negative 为 spec 许可(永不假阳性)。
 - **2026-06-01 — A14+A15 落地（本 PR, L-P3;同 ssm-api 块两 slice)。** `ssm-api-no-managed-inbound`(A15)+ `ssm-api-inbound-not-managed-shadowsocks`(A14)warning→**error**(仅级别 + 改进文案)。二进制:空/缺失 `servers` 三版 panic SIGSEGV(exit 2);SSM server 指向非 shadowsocks/非 managed inbound 三版 FATAL `inbound/...is not a SSM server`。crosscheck:detour-chains 族 5 个 ssm case 全 agree。测试:4 错误态 + 1 managed-clean 静默。`pnpm test` 1720 全绿。 A14+A15 reviewer = APPROVE(独立 5 case check 重放全匹配,managed-clean FP 检查通过,无文档默认冲突)。
-- **2026-06-01 — A16 落地（本 PR, L-P3）。** 新增 `dns-server-resolved-linux-only`(**warning**,平台门——验证器无法知部署 OS,保 warning 不 error):在 `server.type==='resolved'` 分支补 Linux-only 提示,**仅当无 backing service:resolved 节点时触发**(有则 service 节点已带 `resolved-service-linux-only`,避免双提示)。二进制:resolved DNS server 在 darwin(非 Linux)三版 `check` FATAL `resolved DNS server is only supported on Linux`(平台门,严重度仍 warning 因目标 OS 未知)。测试:无 backing service → warning(非 error);有 valid backing service → DNS-server 无提示 + service 节点 warning。`pnpm test` 1722 全绿。
+- **2026-06-01 — A16 落地（本 PR, L-P3）。** 新增 `dns-server-resolved-linux-only`(**warning**,平台门——验证器无法知部署 OS,保 warning 不 error):在 `server.type==='resolved'` 分支补 Linux-only 提示,**仅当无 backing service:resolved 节点时触发**(有则 service 节点已带 `resolved-service-linux-only`,避免双提示)。二进制:resolved DNS server 在 darwin(非 Linux)三版 `check` FATAL `resolved DNS server is only supported on Linux`(平台门,严重度仍 warning 因目标 OS 未知)。测试:无 backing service → warning(非 error);有 valid backing service → DNS-server 无提示 + service 节点 warning。`pnpm test` 1722 全绿。 A16 reviewer = APPROVE(独立 probe a/b/c 全对,severity=warning,无回归)。
+- **2026-06-01 — A17 落地（本 PR, L-P3,队列收尾)= ⚠️ 反转。** 新增 `dns-server-endpoint-not-tailscale`(**error**):tailscale DNS server 的 `endpoint` 解析到存在但 `type!=='tailscale'` 的 endpoints[] 条目时报错。**推翻 spec(同 A5,作者只跑 check):** `ts-fn-endpoint-not-tailscale`(→ wireguard endpoint)三版 `check` exit 0 但 **`run` FATAL `endpoint is not Tailscale: wg-ep`** = 运行时真阳性(同 route.final)→ error,非 spec 所称 warning。**crosscheck 无法验证此条**(仅跑 check,check 通过);证据 = 直接 `run` 重放。悬空 tag 由 A5 的 `missing-dns-server-endpoint` 覆盖(本条只查存在但错类型)。测试:wireguard endpoint → error;真 tailscale → silent;悬空 → missing-dns-server-endpoint(非本条)。`pnpm test` 1725 全绿。注:既有 `derp-verify-endpoint-not-tailscale`(warning)同形,可能潜在 FN,不在本 queue 范围。**至此 A1–A17 全部落地(其中 A5/A12/A17 经二进制 `run` 重放推翻 spec premise:A5/A17 保/改 error,A12 被 A8 涵盖)。**
