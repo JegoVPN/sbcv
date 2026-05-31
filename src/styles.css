@@ -144,8 +144,11 @@ textarea {
   transition: background 120ms ease;
 }
 
-.brand:hover,
-.brand--open {
+/* `:not(:disabled)` lifts specificity to (0,3,0) so this beats the global
+   `button:hover:not(:disabled){background:#171d24}` (0,2,1) — otherwise the toggle hover settles on that
+   dark color instead of #292B2D. Highlight tracks hover ONLY: the open state is shown by the chevron flip,
+   not a persistent background (so the toggle isn't lit while the pointer is elsewhere). */
+.brand:hover:not(:disabled) {
   background: #292B2D;
 }
 
