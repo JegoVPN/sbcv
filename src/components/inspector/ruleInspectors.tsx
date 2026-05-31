@@ -22,11 +22,13 @@ export function RouteRuleInspector({
   index,
   rule,
   config,
+  channel,
   updateRouteRule,
 }: {
   index: number;
   rule: InspectorEntity;
   config: SingBoxConfig;
+  channel: SingBoxChannel;
   updateRouteRule: (index: number, patch: Record<string, unknown>) => void;
 }) {
   const isLogical = rule.type === "logical";
@@ -115,9 +117,12 @@ export function RouteRuleInspector({
         <>
           <label className="field">
             <span>Reject Method</span>
+            {/* reply (1.13) replies to ICMP echo (ping) requests; it is a route-action value only —
+                dns/rule_action.md reject has just default/drop, so this option lives here, not in DNS. */}
             <select value={String(rule.method ?? "default")} onChange={(event) => patch({ method: event.target.value === "default" ? undefined : event.target.value })}>
               <option value="default">default</option>
               <option value="drop">drop</option>
+              <option value="reply">reply (ICMP echo, since 1.13)</option>
             </select>
           </label>
           <label className="toggle-row">
@@ -161,6 +166,56 @@ export function RouteRuleInspector({
               <option value="ipv6_only">ipv6_only</option>
             </select>
           </label>
+          {/* U6a — resolve options. disable_cache / rewrite_ttl / client_subnet are 1.12+ (every target
+              supports them); timeout / disable_optimistic_cache are 1.14, so channel-gate them (rendered on
+              testing, or when an imported value already exists so it stays editable on stable). */}
+          <label className="toggle-row">
+            <input type="checkbox" checked={Boolean(rule.disable_cache)} onChange={(event) => patch({ disable_cache: event.target.checked || undefined })} />
+            <span>Disable Cache</span>
+          </label>
+          <label className="field">
+            <span>Rewrite TTL</span>
+            <input
+              type="number"
+              inputMode="numeric"
+              value={typeof rule.rewrite_ttl === "number" ? rule.rewrite_ttl : ""}
+              placeholder="e.g. 300"
+              onChange={(event) => {
+                const next = event.target.value;
+                if (!next) return patch({ rewrite_ttl: undefined });
+                const parsed = Number(next);
+                patch({ rewrite_ttl: Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined });
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Client Subnet</span>
+            <input
+              value={typeof rule.client_subnet === "string" ? rule.client_subnet : ""}
+              placeholder="e.g. 192.168.0.0/24 or 1.2.3.4"
+              onChange={(event) => patch({ client_subnet: event.target.value || undefined })}
+            />
+          </label>
+          {channel === "testing" || rule.timeout !== undefined ? (
+            <label className="field">
+              <span>Resolve Timeout (since 1.14)</span>
+              <input
+                value={typeof rule.timeout === "string" ? rule.timeout : ""}
+                placeholder="e.g. 5s (overrides dns.timeout)"
+                onChange={(event) => patch({ timeout: event.target.value || undefined })}
+              />
+            </label>
+          ) : null}
+          {channel === "testing" || rule.disable_optimistic_cache !== undefined ? (
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={Boolean(rule.disable_optimistic_cache)}
+                onChange={(event) => patch({ disable_optimistic_cache: event.target.checked || undefined })}
+              />
+              <span>Disable Optimistic Cache (since 1.14)</span>
+            </label>
+          ) : null}
         </>
       ) : null}
       {["route", "route-options", "bypass"].includes(String(rule.action ?? "route")) ? (
@@ -367,17 +422,23 @@ export function DnsRuleInspector({
         </>
       ) : null}
       {String(rule.action) === "predefined" ? (
-        <label className="field">
-          <span>Predefined RCODE</span>
-          <select value={String(rule.rcode ?? "NOERROR")} onChange={(event) => patch({ rcode: event.target.value === "NOERROR" ? undefined : event.target.value })}>
-            <option value="NOERROR">NOERROR</option>
-            <option value="FORMERR">FORMERR</option>
-            <option value="SERVFAIL">SERVFAIL</option>
-            <option value="NXDOMAIN">NXDOMAIN</option>
-            <option value="NOTIMP">NOTIMP</option>
-            <option value="REFUSED">REFUSED</option>
-          </select>
-        </label>
+        <>
+          <label className="field">
+            <span>Predefined RCODE</span>
+            <select value={String(rule.rcode ?? "NOERROR")} onChange={(event) => patch({ rcode: event.target.value === "NOERROR" ? undefined : event.target.value })}>
+              <option value="NOERROR">NOERROR</option>
+              <option value="FORMERR">FORMERR</option>
+              <option value="SERVFAIL">SERVFAIL</option>
+              <option value="NXDOMAIN">NXDOMAIN</option>
+              <option value="NOTIMP">NOTIMP</option>
+              <option value="REFUSED">REFUSED</option>
+            </select>
+          </label>
+          {/* U6a — predefined record lists (dns/rule_action.md): text DNS records, e.g. "localhost. IN A 127.0.0.1". */}
+          <RuleListField label="Answer records" value={rule.answer} onChange={(value) => patch({ answer: value })} />
+          <RuleListField label="Name server records" value={rule.ns} onChange={(value) => patch({ ns: value })} />
+          <RuleListField label="Extra records" value={rule.extra} onChange={(value) => patch({ extra: value })} />
+        </>
       ) : null}
       <label className="toggle-row">
         <input type="checkbox" checked={Boolean(rule.invert)} onChange={(event) => patch({ invert: event.target.checked || undefined })} />
