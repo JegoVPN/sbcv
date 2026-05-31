@@ -1,6 +1,6 @@
-import type { EntityRef, SingBoxConfig } from "../../domain/types";
+import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
-import { certificateProviderFields, SharedFieldControl } from "./sharedFields";
+import { certificateProviderFields, isSharedFieldVisible, SharedFieldControl } from "./sharedFields";
 import { certificateProviderHandledFields } from "./handledFields";
 import { type InspectorEntity, type UpdateField } from "./helpers";
 
@@ -12,17 +12,21 @@ export function CertificateProviderInspector({
   entityRef,
   config,
   entityType,
+  channel,
   updateField,
 }: {
   entity: InspectorEntity;
   entityRef: EntityRef;
   config: SingBoxConfig;
   entityType: string | null;
+  channel: SingBoxChannel;
   updateField: UpdateField;
 }) {
   return (
         <>
-          {certificateProviderFields(entityType, config).map((definition) => (
+          {certificateProviderFields(entityType, config, channel)
+            .filter((definition) => isSharedFieldVisible(definition, entity))
+            .map((definition) => (
             <SharedFieldControl
               key={definition.path.join(".")}
               definition={definition}

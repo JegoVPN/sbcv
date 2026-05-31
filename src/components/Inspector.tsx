@@ -289,7 +289,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       ) : null}
 
       {ref.kind === "certificate-provider" ? (
-        <CertificateProviderInspector entity={entity} entityRef={ref} config={config} entityType={entityType} updateField={updateField} />
+        <CertificateProviderInspector entity={entity} entityRef={ref} config={config} entityType={entityType} channel={channel} updateField={updateField} />
       ) : null}
 
       {(() => {
