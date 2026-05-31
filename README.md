@@ -24,9 +24,9 @@ Build your config on a visual canvas: drag inbounds, outbounds, endpoints, DNS s
 
 ### 2. One click runs the official validator — know it's correct *before* you load it
 
-Hit **Check** and sbcv runs the official `sing-box check` binary server-side, against the target version you pick (**1.12 / 1.13 / 1.14**). It's the same verdict sing-box itself would give — not a simulation, not a guess, and nothing to install locally.
+Hit **Check** and sbcv runs the official `sing-box check` binary server-side, against the sing-box release channel you target — **Testing**, **Stable** (the default), or **Legacy** (currently 1.14 / 1.13 / 1.12). We follow sing-box's own release cadence, so each channel always tracks the current upstream build — never a pinned, going-stale snapshot. It's the same verdict sing-box itself would give — not a simulation, not a guess, and nothing to install locally.
 
-> No more *edit → load into your client → it won't start → guess what broke → repeat.* You see exactly which line is wrong before the config ever reaches your client. Upgrading versions? Switch the target, hit Check, and every deprecated or incompatible field lights up instantly.
+> No more *edit → load into your client → it won't start → guess what broke → repeat.* You see exactly which line is wrong before the config ever reaches your client. Want to try the next release? Flip from **Stable** to **Testing**, hit Check, and every deprecated or incompatible field lights up instantly.
 
 ### 3. JSON stays the source of truth — lossless both ways, nothing stored
 
@@ -38,7 +38,7 @@ The canvas is just a readable view; the canonical sing-box JSON is always the so
 
 ## Use it
 
-1. Open **[sbcv.app](https://sbcv.app)** and pick your target sing-box version in the top bar.
+1. Open **[sbcv.app](https://sbcv.app)** and pick your sing-box release channel — Testing, Stable, or Legacy — in the top bar.
 2. Drag nodes onto the canvas, or **Import** an existing config to edit.
 3. Wire nodes together and fill in the dropdowns.
 4. Hit **Check** to validate, then **Export JSON** when you're happy.
@@ -61,7 +61,7 @@ pnpm test         # vitest
 ## How it works
 
 - **Canonical config first.** The `SingBoxConfig` domain model is the source of truth. The React Flow canvas is a *derived* view — every edit flows through domain commands that update the canonical JSON, so visual and raw never drift apart.
-- **Real validation, in the browser.** The remote `sing-box check` validator is a Cloudflare Worker that fans out to three Containers — one per sing-box version — so the verdict matches the binary you'd run yourself.
+- **Real validation, in the browser.** The remote `sing-box check` validator is a Cloudflare Worker that fans out to one Container per sing-box release channel — Testing, Stable, and Legacy — each kept current with upstream, so the verdict matches the binary you'd run yourself.
 - **Private by default.** Configs are never persisted on the server. No account, no telemetry.
 
 **Tech stack:** Vite · React · [React Flow](https://reactflow.dev) · Zustand · TypeScript · Cloudflare Workers + Containers.
