@@ -4,7 +4,7 @@ import type { EntityRef } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { PlatformBanner, SensitiveTextField } from "./controls";
 import { endpointHandledFields } from "./handledFields";
-import { type EndpointReferences, fromList, type InspectorEntity, parseOptionalPort, toList, type UpdateField } from "./helpers";
+import { type EndpointReferences, fromList, type InspectorEntity, parseOptionalInt, parseOptionalPort, toList, type UpdateField } from "./helpers";
 
 // C14 — the endpoint entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "endpoint"` branch. The shell computes
@@ -130,13 +130,14 @@ export function EndpointInspector({
                         <label className="field">
                           <span>Persistent Keepalive</span>
                           <input
-                            value={String(peer.persistent_keepalive_interval ?? "")}
+                            value={typeof peer.persistent_keepalive_interval === "number" ? peer.persistent_keepalive_interval : ""}
                             onChange={(event) =>
                               patchPeer(index, {
-                                persistent_keepalive_interval: event.target.value || undefined,
+                                persistent_keepalive_interval: parseOptionalInt(event.target.value),
                               })
                             }
-                            placeholder="25s"
+                            placeholder="25"
+                            inputMode="numeric"
                           />
                         </label>
                         <label className="field" data-testid={`wireguard-peer-reserved-${index}`}>

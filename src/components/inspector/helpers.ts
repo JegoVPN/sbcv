@@ -34,6 +34,15 @@ export function parseOptionalPort(raw: string): number | undefined {
   return parsed;
 }
 
+// parseOptionalInt: a non-negative integer (e.g. seconds, counts). Empty/NaN/fractional/negative →
+// undefined so a string or float never reaches a field sing-box decodes as a uint (U2: WireGuard peer
+// persistent_keepalive_interval rejected a string; the control used to write the raw value verbatim).
+export function parseOptionalInt(raw: string): number | undefined {
+  const parsed = parseOptionalNumber(raw);
+  if (parsed === undefined || !Number.isInteger(parsed) || parsed < 0) return undefined;
+  return parsed;
+}
+
 // Seeds a new kv-repeater row with a unique, non-empty key so a blank {"":""} entry can never be
 // committed to (and exported from) canonical config (W13 / C0-6). Mirrors the ccm/ocm addHeader pattern.
 export function withUniqueBlankKey<T extends Record<string, unknown>>(map: T, base: string): T {
