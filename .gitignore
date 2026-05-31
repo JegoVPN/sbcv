@@ -32,3 +32,6 @@ pnpm-debug.log*
 
 # system
 .DS_Store
+
+# long-chain diagnostics audit scratch
+.audit/
