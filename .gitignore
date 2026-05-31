@@ -35,3 +35,6 @@ pnpm-debug.log*
 
 # long-chain diagnostics audit scratch
 .audit/
+
+# tailscale runtime state written by `sing-box run` on tailscale endpoint/DNS configs (binary replay)
+tailscale/
