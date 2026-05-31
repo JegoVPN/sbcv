@@ -2135,12 +2135,16 @@ export function validateConfig(
     if (clashApi && typeof clashApi === "object" && !Array.isArray(clashApi)) {
       const detour = (clashApi as Record<string, unknown>).external_ui_download_detour;
       if (typeof detour === "string" && detour.length > 0 && !outboundTags.has(detour)) {
+        // A4 (long-chain audit): warning, not error. The detour is only resolved lazily when downloading
+        // the external UI, and clash-api.md documents the empty default ("Default outbound will be used if
+        // empty"). `check` exits 0 and `run` starts cleanly on 1.12/1.13/1.14, so a dangling tag does not
+        // block a runnable export — but it is still likely a typo worth flagging.
         push(
           diagnostics,
-          "error",
+          "warning",
           "clash-api-download-detour-missing",
           "/experimental/clash_api/external_ui_download_detour",
-          `experimental.clash_api.external_ui_download_detour references missing outbound "${detour}".`,
+          `experimental.clash_api.external_ui_download_detour references missing outbound "${detour}" — UI downloads will fall back to the default outbound. Fix the tag or remove it.`,
         );
       }
       const controller = (clashApi as Record<string, unknown>).external_controller;
