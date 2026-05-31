@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { App } from "../src/App";
+import { DnsRulesTable } from "../src/components/RuleTables";
 import { useProjectStore } from "../src/state/useProjectStore";
 
 // U3 — the DNS Rules quick-edit table (RuleTables.tsx) let the user edit domain/server but not the rule
