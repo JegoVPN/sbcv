@@ -4,7 +4,9 @@ import { STABLE_DOC_FIELD_SUPPLEMENT } from "./knownFieldsRegistry";
 // VT3 — data-driven testing-only field gate. A top-level field that appears in testing's per-(kind,type)
 // doc field set but NOT stable's is 1.14-only, so on a stable target it is an export-blocking error. This
 // is the CLOSED-SET backstop behind the hand-written per-field gates (W8 / VT1): those stay as friendlier
-// messages, but every 1.14-only top-level field — current or future — is caught here without a hand edit.
+// messages. U14 — scope: this catches 1.14-only TOP-LEVEL fields on the typed array-collection entity kinds
+// the caller iterates (inbound/outbound/endpoint/dns-server/service/rule-set/certificate-provider). Singleton
+// owners (dns/route/experimental) and nested under-object fields are NOT in that set — they are hand-gated.
 //
 // Two guards against M1-class false positives (gating a field stable actually accepts):
 //  1. SUPPLEMENT exemption — `knownFieldsRegistry`'s STABLE_DOC_FIELD_SUPPLEMENT lists fields stable
