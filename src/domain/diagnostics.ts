@@ -1605,6 +1605,20 @@ export function validateConfig(
           `${label} (hysteria2) sets bbr_profile; this BBR tuning field is testing-only (sing-box 1.14+).`,
         );
       }
+      // obfs.min_packet_size / max_packet_size are gecko-only and 1.14 (inbound/hysteria2.md).
+      const obfsObj = obj.obfs;
+      if (obfsObj && typeof obfsObj === "object" && !Array.isArray(obfsObj)) {
+        const o = obfsObj as Record<string, unknown>;
+        if (o.min_packet_size !== undefined || o.max_packet_size !== undefined) {
+          push(
+            diagnostics,
+            "error",
+            "hysteria2-obfs-packet-size-testing-only",
+            `/inbounds/${index}/obfs`,
+            `${label} (hysteria2) sets obfs.min_packet_size / max_packet_size; these gecko packet-size fields are testing-only (sing-box 1.14+).`,
+          );
+        }
+      }
     }
     checkQuic114Fields(diagnostics, channel, inbound.type, inbound as Record<string, unknown>, `/inbounds/${index}`, `Inbound "${inbound.tag ?? `inbound-${index}`}"`);
     const tls = (inbound as Record<string, unknown>).tls;
