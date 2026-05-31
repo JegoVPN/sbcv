@@ -960,9 +960,61 @@ export function validateConfig(
   // route.default_domain_resolver is optional when only one DNS server is configured." So a domain server is
   // already covered when route.default_domain_resolver is set (it applies to every entity, overridable
   // per-entity) OR when exactly one DNS server exists (the implicit resolver). Only flag the remaining gap.
-  const defaultDomainResolverPresent = resolverPresent((config.route as Record<string, unknown> | undefined)?.default_domain_resolver);
+  const defaultDomainResolverRaw = (config.route as Record<string, unknown> | undefined)?.default_domain_resolver;
+  const defaultDomainResolverPresent = resolverPresent(defaultDomainResolverRaw);
   const singleDnsServerConfigured = (config.dns?.servers ?? []).length === 1;
   const domainResolverImplicitlyCovered = defaultDomainResolverPresent || singleDnsServerConfigured;
+
+  // A11 (long-chain audit, ⚠️ revises #303): a route.default_domain_resolver naming a non-existent DNS
+  // server is a hard init error on all three binaries ("default domain resolver not found: <tag>") — BUT
+  // only when something actually resolves a domain through dial fields: a `direct` or domain-server
+  // outbound, or a tailscale / domain-peer wireguard endpoint. With no such consumer the dangling value is
+  // tolerated (binary-verified: an IP-only outbound passes), so the check is consumer-gated to avoid a
+  // #303-style false positive. Single-DNS does NOT save a dangling default (verified). The default's value
+  // is a string DNS-server tag, or shorthand for { server: <tag> } (shared/dial.md) — both forms apply.
+  // (Distinct from the missing-resolver checks: this fires on a SET-but-dangling default; the per-entity
+  // checks fire on an ABSENT resolver. A dangling default is reported precisely here, not double-reported
+  // by the generic per-entity warning, which stays suppressed via defaultDomainResolverPresent above.)
+  const defaultDomainResolverTag =
+    typeof defaultDomainResolverRaw === "string"
+      ? defaultDomainResolverRaw
+      : defaultDomainResolverRaw &&
+          typeof defaultDomainResolverRaw === "object" &&
+          !Array.isArray(defaultDomainResolverRaw) &&
+          typeof (defaultDomainResolverRaw as Record<string, unknown>).server === "string"
+        ? ((defaultDomainResolverRaw as Record<string, unknown>).server as string)
+        : undefined;
+  if (typeof defaultDomainResolverTag === "string" && defaultDomainResolverTag.length > 0 && !dnsServerTags.has(defaultDomainResolverTag)) {
+    // A consumer only falls back to route.default_domain_resolver when it has NO valid per-entity
+    // domain_resolver of its own — a per-entity resolver OVERRIDES the default, so a dangling default is
+    // then unconsumed and the binary accepts it (verified: outbound/endpoint with its own domain_resolver +
+    // dangling default → 3-binary check exit 0). So exclude entities that carry their own resolver, mirroring
+    // the per-outbound early-return below. (Without this exclusion the check is a #303-shape false positive.)
+    const hasDomainResolverConsumer =
+      outbounds.some(
+        (outbound) =>
+          (outbound.type === "direct" || looksLikeDomain(outbound.server)) && !resolverPresent(outbound.domain_resolver),
+      ) ||
+      endpoints.some((endpoint) => {
+        const ep = endpoint as Record<string, unknown>;
+        if (resolverPresent(ep.domain_resolver)) return false;
+        if (ep.type === "tailscale") return true;
+        if (ep.type === "wireguard") {
+          const peers = Array.isArray(ep.peers) ? (ep.peers as Record<string, unknown>[]) : [];
+          return peers.some((peer) => looksLikeDomain(peer?.address));
+        }
+        return false;
+      });
+    if (hasDomainResolverConsumer) {
+      push(
+        diagnostics,
+        "error",
+        "missing-default-domain-resolver",
+        "/route/default_domain_resolver",
+        `route.default_domain_resolver references missing DNS server "${defaultDomainResolverTag}" — sing-box rejects this ("default domain resolver not found") whenever a domain-resolving outbound or endpoint is configured. Point it at an existing DNS server or fix the tag.`,
+      );
+    }
+  }
 
   outbounds.forEach((outbound, index) => {
     if (!looksLikeDomain(outbound.server)) return;
