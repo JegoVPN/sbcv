@@ -1905,14 +1905,18 @@ export function validateConfig(
     }
     if (!looksLikeDomain(server.server)) return;
     if (resolverPresent(server.domain_resolver)) return;
-    // Same rule as outbounds (shared/dial.md): covered by route.default_domain_resolver or a single DNS server.
-    if (domainResolverImplicitlyCovered) return;
+    // A6 (long-chain audit, ⚠️ revises #303): a DOMAIN DNS server must set its OWN per-server
+    // domain_resolver. Unlike dial fields (outbounds/endpoints), route.default_domain_resolver and the
+    // single-DNS-server fallback do NOT cover a DNS server's self-resolution — sing-box rejects it on ALL
+    // three versions (1.12 too), FATAL "missing domain resolver for domain server address". #303 wrongly
+    // reused the dial-field implicit-cover here, masking a hard error. (IP-literal servers are excluded by
+    // looksLikeDomain above — the single-server optionality still legitimately covers those.)
     push(
       diagnostics,
-      "warning",
+      "error",
       "dns-server-domain-without-resolver",
       `/dns/servers/${index}/domain_resolver`,
-      `DNS server "${server.tag}" uses a domain remote but no resolver is reachable — it has no domain_resolver, route.default_domain_resolver is unset, and there is more than one DNS server. sing-box 1.14+ needs one whenever the host is a domain name.`,
+      `DNS server "${server.tag}" uses a domain server address ("${server.server}") but has no domain_resolver. sing-box rejects this on every version ("missing domain resolver for domain server address") — a domain DNS server must set its own per-server domain_resolver. route.default_domain_resolver and the single-DNS-server fallback do not apply to DNS servers.`,
     );
   });
 

@@ -2880,25 +2880,31 @@ describe("canonical sing-box domain model", () => {
   });
 
   it("flags a domain host without a resolver ONLY when none is reachable (no per-entity domain_resolver, no route.default_domain_resolver, and not a single DNS server)", () => {
-    // dial.md: "domain_resolver or route.default_domain_resolver is optional when only one DNS server is
-    // configured." So a domain server is covered when route.default_domain_resolver is set OR exactly one
-    // DNS server exists; the warning must only fire when neither holds.
+    // dial.md, for DIAL FIELDS (outbounds/endpoints): "domain_resolver or route.default_domain_resolver is
+    // optional when only one DNS server is configured." So an OUTBOUND domain server is covered when
+    // route.default_domain_resolver is set OR exactly one DNS server exists. NOTE (A6): this fallback does
+    // NOT apply to a DNS SERVER's own domain address — a domain DNS server must set its own per-server
+    // domain_resolver (binary rejects otherwise, all versions), asserted separately below and in the A6 block.
     const domainOutbound: Record<string, unknown> = { type: "trojan", tag: "remote-host", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } };
     const twoDnsServers: Record<string, unknown>[] = [
       { type: "local", tag: "LocalDNS" },
       { type: "tls", tag: "RemoteDNS", server: "cloudflare-dns.com", server_port: 853 },
     ];
     const codesOf = (c: unknown) => validateConfig(c as ReturnType<typeof createStableTunSplitConfig>, "testing").map((d) => d.code);
+    const dsDiag = (c: unknown) => validateConfig(c as ReturnType<typeof createStableTunSplitConfig>, "testing").find((d) => d.code === "dns-server-domain-without-resolver");
 
-    // A — route.default_domain_resolver set + 2 DNS servers (the real-world case the user hit): COVERED.
+    // A — route.default_domain_resolver set + 2 DNS servers. The OUTBOUND is covered by the default, so it is
+    // silent. But the DOMAIN DNS server "RemoteDNS" (cloudflare-dns.com, no per-server resolver) is NOT
+    // covered by the default — binary REJECTS this exact config on all three versions ("missing domain
+    // resolver for domain server address"), so it is an error (A6 — this was #303's over-application).
     const withDefault = { ...createStableTunSplitConfig(), outbounds: [domainOutbound], dns: { servers: twoDnsServers }, route: { default_domain_resolver: "LocalDNS" } };
     expect(codesOf(withDefault)).not.toContain("outbound-domain-without-resolver");
-    expect(codesOf(withDefault)).not.toContain("dns-server-domain-without-resolver");
+    expect(dsDiag(withDefault)?.level).toBe("error");
 
-    // B — no default + 2 DNS servers: genuine gap, warning fires.
+    // B — no default + 2 DNS servers: the outbound now also lacks a resolver, and RemoteDNS still does.
     const noDefault = { ...withDefault, route: {} };
     expect(codesOf(noDefault)).toContain("outbound-domain-without-resolver");
-    expect(codesOf(noDefault)).toContain("dns-server-domain-without-resolver");
+    expect(dsDiag(noDefault)?.level).toBe("error");
 
     // C — no default but exactly ONE DNS server: implicit single-server fallback, no warning.
     const singleServer = { ...noDefault, dns: { servers: [{ type: "local", tag: "OnlyDNS" }] as never } };
@@ -2911,6 +2917,36 @@ describe("canonical sing-box domain model", () => {
     // E — an IP server never warns.
     const ipServer = { ...noDefault, outbounds: [{ type: "trojan", tag: "ip-host", server: "1.1.1.1", server_port: 443, password: "x", tls: { enabled: true } }] as never };
     expect(codesOf(ipServer)).not.toContain("outbound-domain-without-resolver");
+  });
+
+  // ── A6: dns-server-domain-without-resolver is an ERROR; only a per-server domain_resolver covers it ⚠️#303
+  // Binary-verified on 1.12/1.13/1.14 (check FATAL "missing domain resolver for domain server address"): a
+  // DOMAIN DNS server must set its OWN per-server domain_resolver. route.default_domain_resolver and the
+  // single-DNS-server fallback (which DO cover dial fields) do NOT cover a DNS server's self-resolution.
+  // #303 wrongly applied the dial-field implicit-cover here, masking a hard error.
+  describe("A6: domain DNS server requires a per-server domain_resolver (error, revises #303)", () => {
+    const dsDiag = (config: unknown) =>
+      validateConfig(config as SingBoxConfig, "testing").find((d) => d.code === "dns-server-domain-without-resolver");
+
+    it("domain DNS server, no per-server resolver, WITH route.default_domain_resolver → error (default does not cover a DNS server)", () => {
+      const c = { dns: { servers: [{ type: "https", tag: "doh", server: "dns.google" }, { type: "udp", tag: "u", server: "1.1.1.1" }] }, route: { default_domain_resolver: "u" }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(dsDiag(c)?.level).toBe("error");
+    });
+
+    it("domain DNS server, no per-server resolver, SINGLE DNS server → error (single-DNS fallback does not cover a DNS server)", () => {
+      const c = { dns: { servers: [{ type: "https", tag: "doh", server: "dns.google" }] }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(dsDiag(c)?.level).toBe("error");
+    });
+
+    it("domain DNS server WITH its own per-server domain_resolver → silent", () => {
+      const c = { dns: { servers: [{ type: "https", tag: "doh", server: "dns.google", domain_resolver: "u" }, { type: "udp", tag: "u", server: "1.1.1.1" }] }, route: { default_domain_resolver: "u" }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(dsDiag(c)).toBeUndefined();
+    });
+
+    it("IP-literal DNS server with no resolver → silent (single-server optionality still saves IP servers)", () => {
+      const c = { dns: { servers: [{ type: "tls", tag: "ip", server: "1.1.1.1", server_port: 853 }] }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(dsDiag(c)).toBeUndefined();
+    });
   });
 
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
