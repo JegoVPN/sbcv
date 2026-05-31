@@ -1,26 +1,47 @@
 # sbcv — sing-box configuration visualizer
 
-A visual [sing-box](https://github.com/SagerNet/sing-box) configuration builder for editing canonical JSON configs with a React Flow canvas, route rules, DNS rules, validation, import, and export.
+> Build, validate, and understand [sing-box](https://github.com/SagerNet/sing-box) configs on a visual canvas — instead of hand-writing JSON.
 
-[**sbcv.app**](https://sbcv.app) · Free · Open source (MIT) · No install · No login
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Live — sbcv.app](https://img.shields.io/badge/live-sbcv.app-brightgreen.svg)](https://sbcv.app)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#contributing)
+
+**sbcv** turns a sing-box `config.json` into a drag-and-drop canvas: drop inbounds, outbounds, nodes, DNS servers, and routing rules, wire them together, and validate with the **real** `sing-box check` — all in one browser tab.
+
+**[→ Open sbcv.app](https://sbcv.app)** · Free · Open source (MIT) · No install · No login
+
+[![sbcv — a sing-box config laid out as a visual canvas](docs/assets/hero.png)](https://sbcv.app)
 
 ---
 
-## What it does
+## Why sbcv?
 
-Build, inspect, validate, import, and export sing-box JSON configurations through a visual canvas backed by a canonical config model.
+### 1. Drag, don't type — typos become impossible
 
-- **Visual editor.** Drag inbounds, outbounds, endpoints, DNS servers, route rules, and rule-sets onto the canvas. Connect them with wires. Every enum is a dropdown — typos that used to break configs are impossible.
-- **Canonical JSON is the source of truth.** The canvas is a derived view; edits flow through domain commands that update the canonical config. Switching between visual and raw never loses fidelity.
-- **Official validation in the browser.** Hit Check and sbcv runs the real `sing-box check` binary server-side against your chosen target version (1.12 / 1.13 / 1.14). Same verdict sing-box itself would give — no local install, no VPS, no guessing.
-- **Import / Export.** Paste an existing config to start editing; export back to JSON when done.
-- **Open source.** MIT-licensed. Configs never persist on the server. No account, no telemetry.
+Build your config on a visual canvas: drag inbounds, outbounds, endpoints, DNS servers, route rules, and rule-sets, then wire them together. Every enum is a dropdown and every tag reference is a connection — so the misspelled field names and broken references that quietly wreck a hand-written config simply can't happen.
+
+> Instead of hunting through hundreds of lines of JSON to add a "domestic-direct, foreign-proxied" routing rule, you drag the rule out, pick from a dropdown, and draw one wire — the reference wires itself up.
+
+### 2. One click runs the official validator — know it's correct *before* you load it
+
+Hit **Check** and sbcv runs the official `sing-box check` binary server-side, against the target version you pick (**1.12 / 1.13 / 1.14**). It's the same verdict sing-box itself would give — not a simulation, not a guess, and nothing to install locally.
+
+> No more *edit → load into your client → it won't start → guess what broke → repeat.* You see exactly which line is wrong before the config ever reaches your client. Upgrading versions? Switch the target, hit Check, and every deprecated or incompatible field lights up instantly.
+
+### 3. JSON stays the source of truth — lossless both ways, nothing stored
+
+The canvas is just a readable view; the canonical sing-box JSON is always the source of truth. Switch between the visual editor and raw JSON as much as you like — nothing is lost or silently rewritten. **Import** an existing config to start editing, **Export** back to JSON when you're done.
+
+> Handed a 400-line config you didn't write? Import it and the whole topology lays out at a glance — where traffic enters, which rule it hits, which outbound it leaves by. And it all runs in one browser tab: no install, no account, and your config is never persisted on the server.
 
 ---
 
 ## Use it
 
-Open [**sbcv.app**](https://sbcv.app), pick a sing-box version in the top bar, drag nodes onto the canvas (or paste an existing config), and click **Check**. Export the resulting JSON when you're happy.
+1. Open **[sbcv.app](https://sbcv.app)** and pick your target sing-box version in the top bar.
+2. Drag nodes onto the canvas, or **Import** an existing config to edit.
+3. Wire nodes together and fill in the dropdowns.
+4. Hit **Check** to validate, then **Export JSON** when you're happy.
 
 ---
 
@@ -35,26 +56,34 @@ pnpm build        # tsc -b && vite build → dist/
 pnpm test         # vitest
 ```
 
-Tech stack: Vite + React + [React Flow](https://reactflow.dev) + Zustand + TypeScript. The remote `sing-box check` validator is a Cloudflare Worker fanning out to three Containers (one per sing-box version).
+---
+
+## How it works
+
+- **Canonical config first.** The `SingBoxConfig` domain model is the source of truth. The React Flow canvas is a *derived* view — every edit flows through domain commands that update the canonical JSON, so visual and raw never drift apart.
+- **Real validation, in the browser.** The remote `sing-box check` validator is a Cloudflare Worker that fans out to three Containers — one per sing-box version — so the verdict matches the binary you'd run yourself.
+- **Private by default.** Configs are never persisted on the server. No account, no telemetry.
+
+**Tech stack:** Vite · React · [React Flow](https://reactflow.dev) · Zustand · TypeScript · Cloudflare Workers + Containers.
 
 ---
 
 ## Contributing
 
-Issues and PRs welcome. Useful kinds of feedback:
+Issues and PRs welcome. Especially useful:
 
-- A sing-box field is missing from the inspector → open an issue with the field name + doc link.
-- A provider's subscription JSON fails to import → attach a redacted copy.
-- A diagnostic is a false positive → paste the offending snippet.
+- **A sing-box field is missing from the inspector** → open an issue with the field name + doc link.
+- **A provider's subscription JSON fails to import** → attach a redacted copy.
+- **A diagnostic is a false positive** → paste the offending snippet.
 
 ---
 
 ## License
 
-MIT © 2026. See [LICENSE](LICENSE).
+MIT © 2026 — see [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-- [**SagerNet/sing-box**](https://github.com/SagerNet/sing-box) — sbcv just makes its config easier to live with.
-- [**Linux.do**](https://linux.do) — for early feedback, bug reports, and keeping the project pointed at real user needs.
-- [**V2EX**](https://www.v2ex.com) — for thoughtful discussion threads that surfaced edge cases worth supporting.
+- **[SagerNet/sing-box](https://github.com/SagerNet/sing-box)** — sbcv just makes its config easier to live with.
+- **[Linux.do](https://linux.do)** — early feedback, bug reports, and keeping the project pointed at real user needs.
+- **[V2EX](https://www.v2ex.com)** — discussion threads that surfaced edge cases worth supporting.
