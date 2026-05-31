@@ -26,27 +26,15 @@ The canvas is never the config source file. `SingBoxConfig` / domain model is th
 7. **Small atomics**: one concern per commit. Prefer changes under 400 logical lines; split larger work.
 8. **No silent validation gaps**: if `sing-box check` cannot run, state that clearly in the final answer and keep schema/semantic validation separate from official validation.
 9. **No unrelated cleanup**: do not refactor unrelated files while implementing a goal.
-10. **React performance discipline**: frontend implementation and review must apply the `vercel-react-best-practices` skill, especially bundle size, rerender control, and async/data waterfall avoidance.
+10. **React performance discipline**: all frontend work follows the **Frontend Skill Gate** below — apply `vercel-react-best-practices` in the same session.
 11. **No local paths or environment in public history**: never paste absolute local paths, usernames, or environment variables (e.g. a full `PATH="/Users/..."`) into commit messages, PR titles/descriptions, comments, or milestone reports. Record the bare command only — write `pnpm release:check`, not `PATH="/Users/<you>/..." pnpm release:check`. Such data leaks into public history and cannot be fully scrubbed afterward.
 
 ## Frontend Skill Gate
 
-Any change that touches frontend implementation, frontend architecture, UI tests, or frontend review must use the `vercel-react-best-practices` skill in that same work session.
+Any change touching frontend implementation, architecture, UI tests, or frontend review must use the `vercel-react-best-practices` skill in the same session. This is a hard gate for `src/**/*.tsx`, UI-facing `src/**/*.ts`, `src/styles.css`, React Flow canvas code, component/Playwright tests, and build/bundle config.
 
-This is a hard gate for files such as `src/**/*.tsx`, `src/**/*.ts` used by UI state/rendering, `src/styles.css`, React Flow canvas code, component tests, Playwright UI tests, and build/bundle configuration.
-
-Before editing frontend code:
-
-- load/read the `vercel-react-best-practices` skill;
-- identify the frontend-specific performance risks for the atomic, especially bundle size, rerender scope, expensive derived state, and async/data waterfalls;
-- keep transient hover/drag/canvas interaction state out of broad canonical config subscriptions.
-
-Before marking frontend work reviewed or done:
-
-- explicitly review the diff against `vercel-react-best-practices`;
-- verify heavy editors or optional panels are deferred where practical;
-- prefer narrow Zustand/selectors and memoized derived graph data over broad rerender paths;
-- record any intentional deviation in the goal doc or final milestone report.
+- **Before editing:** load the skill; identify the atomic's performance risks (bundle size, rerender scope, expensive derived state, async/data waterfalls); keep transient hover/drag/canvas state out of broad canonical config subscriptions.
+- **Before done:** review the diff against the skill; defer heavy or optional editors where practical; prefer narrow Zustand selectors and memoized derived graph data over broad rerender paths; record intentional deviations in the goal doc or milestone report.
 
 ## Development Protocol
 
@@ -62,7 +50,7 @@ During implementation:
 - Keep config/domain logic separate from canvas layout.
 - Add or update docs when behavior, schema, or validation policy changes.
 - Prefer registry-driven node/schema/form additions over ad hoc component branching.
-- For React/Next code, apply `vercel-react-best-practices`: direct imports, lazy-load heavy editors, avoid broad state subscriptions, memoize expensive derived graph work, and keep frequent canvas hover/drag state out of global rerender paths.
+- For frontend/React work, follow the **Frontend Skill Gate** above (apply `vercel-react-best-practices`).
 - Preserve existing user changes; never discard unrelated work.
 
 Before committing:
