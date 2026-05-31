@@ -15,11 +15,13 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "docs:install": "node scripts/install-sing-box-docs.mjs",
+    "binaries:install": "node scripts/install-sing-box-binaries.mjs",
     "audit:config-docs": "node scripts/audit-config-doc-coverage.mjs",
     "validate:fixtures": "node scripts/validate-fixtures.mjs",
     "fixtures:update:external": "node scripts/update-external-fixtures.mjs && node scripts/update-external-official-gates.mjs",
     "validate:external": "node scripts/validate-external-fixtures.mjs && vitest run tests/external-fixtures.test.ts && node scripts/run-external-render-gate.mjs",
     "validate:export-binary": "vitest run tests/export-binary-check.test.ts",
+    "test:binaries": "pnpm binaries:install && pnpm validate:export-binary",
     "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm validate:external && pnpm validate:export-binary && pnpm e2e"
   },
   "dependencies": {

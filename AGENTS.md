@@ -57,7 +57,7 @@ Before committing:
 
 - Run `git diff --check`.
 - Run available project tests/checks. If the project has no test harness yet, say so.
-- For config fixtures, run the matching `sing-box-stable check` or `sing-box-testing check` once binaries are available.
+- For config fixtures, run the matching `sing-box-stable check` or `sing-box-testing check` once binaries are available. The local one-command workflow is `pnpm test:binaries`: it installs all three pinned sing-box binaries (`sing-box-1.12` / `sing-box-stable` / `sing-box-testing`) into `.tools/bin/` via `scripts/install-sing-box-binaries.mjs` (idempotent — skips when already present) and then runs `tests/export-binary-check.test.ts`, which feeds every internal fixture's pruned export through `sing-box check` on the channel-matched binary. The default `pnpm test` excludes this check, so run `pnpm test:binaries` whenever a change can affect emitted config. Use `pnpm binaries:install` to install the binaries only.
 - Inspect the diff for scope creep.
 
 After committing:
