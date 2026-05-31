@@ -13,7 +13,7 @@ describe("SBC editor shell", () => {
   it("renders editor regions instead of a landing page", async () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
-    expect(screen.getByText("sbcv.app")).toBeInTheDocument();
+    expect(screen.getByText("sbcv")).toBeInTheDocument();
     // Palette is lazy-loaded (code-split off the main bundle) — await it.
     expect(await screen.findByLabelText("Node palette")).toBeInTheDocument();
     expect(screen.getByLabelText("SBC visual canvas")).toBeInTheDocument();

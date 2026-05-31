@@ -112,29 +112,41 @@ textarea {
   pointer-events: auto;
 }
 
-.brand {
+/* The brand bar is one pill holding two regions: a clickable menu toggle (logo + sbcv + chevron) and a
+   non-clickable tagline. The pill chrome (border / fill / blur / shadow) lives here; the toggle only owns
+   its hover highlight. */
+.brand-bar {
   display: flex;
   align-items: center;
-  gap: 9px;
   min-width: 0;
   min-height: 44px;
-  padding: 5px 13px 5px 5px;
+  padding: 4px;
   border: 1px solid #252d35;
   border-radius: 999px;
   background: #1C1E20;
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
   backdrop-filter: blur(14px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 5px 12px 5px 7px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 120ms ease;
 }
 
 .brand:hover,
 .brand--open {
-  background: #232629;
-  border-color: #2d3640;
+  background: #292B2D;
 }
 
 .brand:focus-visible {
@@ -274,8 +286,22 @@ textarea {
   white-space: nowrap;
 }
 
-.brand-subtitle {
-  display: none;
+/* Non-clickable expanded product name beside the toggle, inside the same pill. Muted so the toggle reads
+   as the primary control. It fits beside the right-side validation actions on desktop; below 1000px it is
+   hidden outright (rather than crowding them), so no in-pill truncation is needed. */
+.brand-tagline {
+  margin: 0 14px 0 8px;
+  color: #8e99a4;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  user-select: none;
+}
+@media (max-width: 1000px) {
+  .brand-tagline {
+    display: none;
+  }
 }
 
 .brand-chevron {
