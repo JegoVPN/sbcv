@@ -3054,6 +3054,42 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A12: dial-fields migration gate is SUBSUMED by A8 (spec premise refuted by binary) ───────────
+  // The audit proposed a separate config-level gate firing whenever a `direct` outbound + a domain DNS
+  // server coexist with no route.default_domain_resolver — "even when every per-server resolver is set". A
+  // 3-binary replay REFUTES that: the FATAL is purely the DIRECT outbound lacking a resolver (A8's exact
+  // condition) — adding a per-outbound domain_resolver to the direct makes it pass. So A8 already covers it
+  // precisely; a separate broad config-level gate would risk a #303-style false positive. This locks the
+  // §Coverage-4 boundary: the trigger is the direct outbound, NOT the mere presence of a domain DNS server.
+  describe("A12: dial-fields gate subsumed by A8 (trigger is the direct outbound, not a domain DNS server)", () => {
+    const lvl = (config: unknown, version: string) =>
+      validateConfig(config as SingBoxConfig, version === "1.14" ? "testing" : "stable", version).find((d) => d.code === "outbound-domain-without-resolver")?.level;
+    // Two DNS servers, the first a DOMAIN server that IS per-server resolved (so A6 is silent on it).
+    const domainDnsPerServer = [{ type: "https", tag: "doh", server: "dns.google", domain_resolver: "u" }, { type: "udp", tag: "u", server: "1.1.1.1" }];
+
+    it("gate seed: direct outbound + domain DNS server (per-server resolved) + no default → A8 fires (1.12 warn / 1.13+ error)", () => {
+      const c = { dns: { servers: domainDnsPerServer }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(lvl(c, "1.12")).toBe("warning");
+      expect(lvl(c, "1.13")).toBe("error");
+      expect(lvl(c, "1.14")).toBe("error");
+    });
+
+    it("A12-cover: the SAME but the direct carries its own domain_resolver → silent (binary passes; not a separate gate)", () => {
+      const c = { dns: { servers: domainDnsPerServer }, outbounds: [{ type: "direct", tag: "d", domain_resolver: "u" }] };
+      for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+
+    it("§Coverage-4 non-triggers stay silent (no over-broad gate / #303 redux)", () => {
+      const nonTriggers = [
+        { dns: { servers: domainDnsPerServer } }, // domain DNS server, no outbounds
+        { outbounds: [{ type: "direct", tag: "d" }] }, // direct, no DNS servers
+        { dns: { servers: domainDnsPerServer }, outbounds: [{ type: "block", tag: "blk" }] }, // domain DNS + block
+        { dns: { servers: domainDnsPerServer }, outbounds: [{ type: "socks", tag: "s", server: "192.0.2.1", server_port: 1080 }] }, // domain DNS + IP socks
+      ];
+      for (const c of nonTriggers) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.
