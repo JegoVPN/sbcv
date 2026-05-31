@@ -384,12 +384,15 @@ export function validateConfig(
     const inbounds = Array.isArray(rule.inbound) ? rule.inbound : rule.inbound ? [rule.inbound] : [];
     inbounds.forEach((tag) => {
       if (!inboundTags.has(tag)) {
+        // A2 (long-chain audit): warning, not error. The inbound matcher does not participate in the
+        // router-init reference graph — `check` exits 0 and `run` starts cleanly on 1.12/1.13/1.14; the
+        // rule simply never matches. A typo worth flagging, but it does not block a runnable export.
         push(
           diagnostics,
-          "error",
+          "warning",
           "missing-route-rule-inbound",
           `/route/rules/${index}/inbound`,
-          `Route rule ${index + 1} references missing inbound "${tag}".`,
+          `Route rule ${index + 1} references missing inbound "${tag}" — the rule will never match. Fix the tag or remove the inbound matcher.`,
         );
       }
     });
