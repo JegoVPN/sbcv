@@ -1730,12 +1730,14 @@ describe("SBC editor shell", () => {
     fireEvent.click(verifyBlock.getByRole("button", { name: "Add verify URL" }));
     const urlInput = verifyBlock.getByLabelText("URL") as HTMLInputElement;
     fireEvent.change(urlInput, { target: { value: "https://verify.example.com/check" } });
-    const detourInput = verifyBlock.getByLabelText("Detour") as HTMLInputElement;
-    fireEvent.change(detourInput, { target: { value: "proxy-out" } });
+    // U15b — detour is now an outbound <select>; the minimal template's only outbound is "direct".
+    const detourSelect = verifyBlock.getByLabelText("Detour") as HTMLSelectElement;
+    expect(detourSelect.tagName).toBe("SELECT");
+    fireEvent.change(detourSelect, { target: { value: "direct" } });
     let derp = useProjectStore.getState().config.services?.find((service) => service.type === "derp") as Record<string, unknown>;
     expect((derp.verify_client_url as Record<string, unknown>[])[0]).toMatchObject({
       url: "https://verify.example.com/check",
-      detour: "proxy-out",
+      detour: "direct",
     });
 
     const meshBlock = within(inspector.getByTestId("derp-mesh-with"));

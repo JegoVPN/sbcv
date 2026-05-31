@@ -157,9 +157,13 @@ export function ServiceInspector({
                 />
               </label>
               {(() => {
-                const rows = Array.isArray(entity.verify_client_url)
-                  ? (entity.verify_client_url as InspectorEntity[])
-                  : [];
+                // U15b — a row may be the `{url, ...HTTP Client Fields}` object OR the string shorthand
+                // (`"__URL__"` ≡ `{url}`, derp.md:67-71). Normalize string rows to the object form for
+                // editing (the object form is the documented equivalent), so the destructure + JSON editor
+                // below never spread a string into character-index garbage and never drop the URL on edit.
+                const rows = (Array.isArray(entity.verify_client_url) ? entity.verify_client_url : []).map((row) =>
+                  typeof row === "string" ? ({ url: row } as InspectorEntity) : (row as InspectorEntity),
+                );
                 const writeRows = (next: InspectorEntity[]) =>
                   updateField(entityRef, "verify_client_url", next.length ? next : undefined);
                 const patchRow = (index: number, patch: InspectorEntity) =>
@@ -180,13 +184,21 @@ export function ServiceInspector({
                             onChange={(event) => patchRow(index, { url: event.target.value || undefined })}
                           />
                         </label>
+                        {/* U15b — detour is an outbound tag (HTTP Client Fields, service/derp.md); a select
+                            prevents typos and surfaces the available outbounds, mirroring ccm/ocm. */}
                         <label className="field">
                           <span>Detour</span>
-                          <input
+                          <select
                             value={typeof row.detour === "string" ? row.detour : ""}
-                            placeholder="(outbound tag)"
                             onChange={(event) => patchRow(index, { detour: event.target.value || undefined })}
-                          />
+                          >
+                            <option value="">(default outbound)</option>
+                            {outboundTags(config).map((tag) => (
+                              <option key={tag} value={tag}>
+                                {tag}
+                              </option>
+                            ))}
+                          </select>
                         </label>
                         <button
                           type="button"
@@ -196,6 +208,31 @@ export function ServiceInspector({
                         >
                           <Trash2 size={14} />
                         </button>
+                        {/* U15b — the remaining HTTP Client Fields (tls / headers / dial) of this row as a
+                            parse-safe JSON editor; url + detour above are merged back so they never duplicate. */}
+                        {(() => {
+                          const { url: _url, detour: _detour, ...rest } = row as Record<string, unknown>;
+                          return (
+                            <JsonField
+                              label="HTTP Client Fields (tls / headers / dial)"
+                              value={Object.keys(rest).length ? rest : undefined}
+                              onChange={(next) => {
+                                const extra = next && typeof next === "object" && !Array.isArray(next) ? (next as Record<string, unknown>) : {};
+                                writeRows(
+                                  rows.map((r, i) =>
+                                    i === index
+                                      ? {
+                                          ...(typeof r.url === "string" ? { url: r.url } : {}),
+                                          ...(typeof r.detour === "string" ? { detour: r.detour } : {}),
+                                          ...extra,
+                                        }
+                                      : r,
+                                  ),
+                                );
+                              }}
+                            />
+                          );
+                        })()}
                       </div>
                     ))}
                     <button type="button" className="palette-action" onClick={() => writeRows([...rows, { url: "" }])}>
