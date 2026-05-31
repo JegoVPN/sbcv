@@ -1942,6 +1942,32 @@ button.sbc-edge-remove:focus-visible {
   line-height: 1.4;
 }
 
+/* Inline action buttons (.palette-action) placed directly inside a 2-column .field grid — e.g. "Create
+   HTTP Client" / "Add resolver options" / "Add inline configuration" next to a tag <select>. Without this
+   they fall into the grid auto-flow and get squeezed into the narrow label column, wrapping their text into
+   an oversized block. Span the full row and keep intrinsic width, left-aligned (mirrors .shared-field-hint).
+   .field--checklist is a single-column grid where a full-width "add row" button is the intended pattern, so
+   it is excluded. */
+.field:not(.field--checklist) > .palette-action {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-top: 2px;
+}
+
+/* Empty-state / helper text in array editors (e.g. "No peers configured…") and the JSON escape-hatch parse
+   error. These were unstyled (default-size paragraphs); mirror .shared-field-hint so they read as muted
+   helper text. */
+.field__hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8a96a3;
+}
+.field__hint--error {
+  color: #e79a9a;
+}
+
 /* R5 — PEM/line-array editor (tls.certificate/key/ech.*): monospace so pasted PEM lines align, and
    vertically resizable for long certificate chains. */
 .shared-field-pem {
@@ -2227,6 +2253,12 @@ button.sbc-edge-remove:focus-visible {
 .toggle-row--inline {
   justify-content: flex-start;
   gap: 10px;
+}
+
+/* A "stale" toggle surfaces a deprecated/legacy option that is currently set; dim it so it reads as the
+   not-recommended path without hiding the value (the modifier was previously a no-op). */
+.toggle-row--stale {
+  opacity: 0.6;
 }
 
 .toggle-row input[type="checkbox"],
