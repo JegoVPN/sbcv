@@ -43,6 +43,11 @@ export const routeRulePrimaryFields = new Set([
   "timeout",
   "server",
   "strategy",
+  // U6a — route resolve subfields with dedicated controls (route/rule_action.md).
+  "disable_cache",
+  "disable_optimistic_cache",
+  "rewrite_ttl",
+  "client_subnet",
   "override_address",
   "override_port",
   "network_strategy",
@@ -68,6 +73,10 @@ export const dnsRulePrimaryFields = new Set([
   "method",
   "no_drop",
   "rcode",
+  // U6a — DNS predefined record lists with dedicated controls (dns/rule_action.md).
+  "answer",
+  "ns",
+  "extra",
 ]);
 
 export const routeRuleAdvancedFields = [
