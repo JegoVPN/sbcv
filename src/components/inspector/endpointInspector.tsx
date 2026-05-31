@@ -65,6 +65,18 @@ export function EndpointInspector({
                 value={String(entity.private_key ?? "")}
                 onChange={(next) => updateField(entityRef, "private_key", next)}
               />
+              {/* U5 — listen_port lives in listenSharedFields, but an endpoint only emits the Dial card,
+                  so the WireGuard interface's own listen port had no control (settable from scratch). */}
+              <label className="field">
+                <span>Listen Port</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={typeof entity.listen_port === "number" ? entity.listen_port : ""}
+                  placeholder="51820"
+                  onChange={(event) => updateField(entityRef, "listen_port", parseOptionalPort(event.target.value))}
+                />
+              </label>
               {(() => {
                 const peers = Array.isArray(entity.peers) ? (entity.peers as Record<string, unknown>[]) : [];
                 const writePeers = (next: Record<string, unknown>[]) => {
@@ -184,6 +196,34 @@ export function EndpointInspector({
                   onChange={(event) => updateField(entityRef, "system", event.target.checked || undefined)}
                 />
                 <span>System interface (use the system TUN stack instead of gVisor; requires privilege)</span>
+              </label>
+              {/* U5 — `name` is the custom interface name for the system interface (wireguard.md), so it is
+                  only meaningful when `system` is on; gate the control on it. It is in endpointHandledFields,
+                  so it never double-renders in the Advanced fallback once set. */}
+              {entity.system === true ? (
+                <label className="field">
+                  <span>Interface Name (system interface)</span>
+                  <input
+                    value={typeof entity.name === "string" ? entity.name : ""}
+                    placeholder="wg0"
+                    onChange={(event) => updateField(entityRef, "name", event.target.value || undefined)}
+                  />
+                </label>
+              ) : null}
+              {/* U5 — worker count; sing-box defaults to the CPU count, so 0 (the documented default) and
+                  blank both prune to unset to keep the export minimal. */}
+              <label className="field">
+                <span>Workers (worker count; defaults to CPU count)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={typeof entity.workers === "number" ? entity.workers : ""}
+                  placeholder="(CPU count)"
+                  onChange={(event) => {
+                    const parsed = parseOptionalInt(event.target.value);
+                    updateField(entityRef, "workers", parsed !== undefined && parsed > 0 ? parsed : undefined);
+                  }}
+                />
               </label>
             </>
           ) : null}
