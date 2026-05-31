@@ -1044,6 +1044,43 @@ export function validateConfig(
     );
   });
 
+  // A9/A10 (long-chain audit): endpoints resolve domains through dial fields too, but had NO resolver check.
+  // The coverage gate is identical to outbounds (a per-endpoint domain_resolver, route.default_domain_resolver,
+  // or ≤1 DNS server). Severity differs by type: a wireguard DOMAIN peer address is the dial-field DEPRECATION
+  // (1.12 warn / 1.13+ error — A9); a tailscale endpoint always resolves its control_url
+  // (controlplane.tailscale.com), a HARD init error on ALL versions (1.12 FATALs too — A10).
+  endpoints.forEach((endpoint, index) => {
+    const ep = endpoint as Record<string, unknown>;
+    if (resolverPresent(ep.domain_resolver)) return;
+    if (domainResolverImplicitlyCovered) return;
+    const tag = typeof ep.tag === "string" && ep.tag ? ep.tag : `endpoint-${index}`;
+    if (ep.type === "tailscale") {
+      // A10: tailscale carries an implicit domain server address (control_url default). Binary FATALs on all
+      // three versions without a resolver — an error regardless of target (not a version-gated deprecation).
+      push(
+        diagnostics,
+        "error",
+        "endpoint-tailscale-without-resolver",
+        `/endpoints/${index}/domain_resolver`,
+        `Tailscale endpoint "${tag}" resolves a domain control URL (controlplane.tailscale.com) but no resolver is reachable — it has no domain_resolver, no route.default_domain_resolver, and there is more than one DNS server. sing-box rejects this on every version (FATAL "missing domain resolver for domain server address"). Set this endpoint's domain_resolver or route.default_domain_resolver.`,
+      );
+    } else if (ep.type === "wireguard") {
+      const peers = Array.isArray(ep.peers) ? (ep.peers as Record<string, unknown>[]) : [];
+      if (peers.some((peer) => looksLikeDomain(peer?.address))) {
+        // A9: a domain peer address is a dial-field domain — the deprecation gate (1.12 warn / 1.13+ error).
+        push(
+          diagnostics,
+          atLeast(version, "1.13") ? "error" : "warning",
+          "endpoint-domain-without-resolver",
+          `/endpoints/${index}/domain_resolver`,
+          atLeast(version, "1.13")
+            ? `WireGuard endpoint "${tag}" has a domain peer address but no domain_resolver, no route.default_domain_resolver, and there is more than one DNS server. sing-box ${version} rejects this (FATAL "missing domain resolver for domain server address"; bypass needs ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER). Set this endpoint's domain_resolver or route.default_domain_resolver.`
+            : `WireGuard endpoint "${tag}" has a domain peer address but no domain_resolver, no route.default_domain_resolver, and there is more than one DNS server. This is deprecated since sing-box 1.12 and removed in 1.14 — set this endpoint's domain_resolver or route.default_domain_resolver.`,
+        );
+      }
+    }
+  });
+
   outbounds.forEach((outbound, index) => {
     const tag = outbound.tag ?? `outbound-${index}`;
     if (outbound.type === "dns") {
