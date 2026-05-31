@@ -54,6 +54,14 @@ export const routeRulePrimaryFields = new Set([
   "fallback_delay",
   "udp_disable_domain_unmapping",
   "tls_fragment",
+  // U6b — remaining route-options subfields with dedicated controls (route/rule_action.md).
+  "udp_connect",
+  "udp_timeout",
+  "tls_record_fragment",
+  "tls_fragment_fallback_delay",
+  "fallback_network_type",
+  "tls_spoof",
+  "tls_spoof_method",
 ]);
 
 export const dnsRulePrimaryFields = new Set([

@@ -283,6 +283,68 @@ export function RouteRuleInspector({
             />
             <span>TLS fragment</span>
           </label>
+          {/* U6b — remaining route-options subfields (route/rule_action.md). udp_connect/udp_timeout are
+              base; tls_record_fragment/tls_fragment_fallback_delay are 1.12; fallback_network_type is a
+              network-type list (1.11). */}
+          <label className="toggle-row">
+            <input type="checkbox" checked={Boolean(rule.udp_connect)} onChange={(event) => patch({ udp_connect: event.target.checked || undefined })} />
+            <span>UDP Connect (connect the UDP socket instead of listening)</span>
+          </label>
+          <label className="field">
+            <span>UDP Timeout</span>
+            <input
+              value={typeof rule.udp_timeout === "string" ? rule.udp_timeout : ""}
+              placeholder="e.g. 5m"
+              onChange={(event) => patch({ udp_timeout: event.target.value || undefined })}
+            />
+          </label>
+          <label className="field">
+            <span>TLS Record Fragment</span>
+            <input
+              value={typeof rule.tls_record_fragment === "string" ? rule.tls_record_fragment : ""}
+              onChange={(event) => patch({ tls_record_fragment: event.target.value || undefined })}
+            />
+          </label>
+          <label className="field">
+            <span>TLS Fragment Fallback Delay</span>
+            <input
+              value={typeof rule.tls_fragment_fallback_delay === "string" ? rule.tls_fragment_fallback_delay : ""}
+              placeholder="500ms"
+              onChange={(event) => patch({ tls_fragment_fallback_delay: event.target.value || undefined })}
+            />
+          </label>
+          <RuleListField
+            label="Fallback Network Type (wifi/cellular/ethernet/other)"
+            value={rule.fallback_network_type}
+            onChange={(value) => patch({ fallback_network_type: value })}
+          />
+          {/* tls_spoof / tls_spoof_method are 1.14 (route/rule_action.md, shared/tls.md spoof/spoof_method);
+              channel-gate to testing, keeping an imported value editable on stable. */}
+          {channel === "testing" || rule.tls_spoof !== undefined || rule.tls_spoof_method !== undefined ? (
+            <>
+              <label className="field">
+                <span>TLS Spoof SNI (since 1.14)</span>
+                <input
+                  value={typeof rule.tls_spoof === "string" ? rule.tls_spoof : ""}
+                  placeholder="e.g. example.com (forged ClientHello SNI)"
+                  onChange={(event) => patch({ tls_spoof: event.target.value || undefined })}
+                />
+              </label>
+              <label className="field">
+                <span>TLS Spoof Method (since 1.14)</span>
+                <select
+                  value={typeof rule.tls_spoof_method === "string" ? rule.tls_spoof_method : "wrong-sequence"}
+                  onChange={(event) => patch({ tls_spoof_method: event.target.value === "wrong-sequence" ? undefined : event.target.value })}
+                >
+                  <option value="wrong-sequence">wrong-sequence (default)</option>
+                  <option value="wrong-checksum">wrong-checksum</option>
+                  <option value="wrong-ack">wrong-ack</option>
+                  <option value="wrong-md5">wrong-md5</option>
+                  <option value="wrong-timestamp">wrong-timestamp</option>
+                </select>
+              </label>
+            </>
+          ) : null}
         </fieldset>
       ) : null}
       <label className="toggle-row">
