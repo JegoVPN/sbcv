@@ -87,6 +87,11 @@ export const inboundHandledFields: ReadonlySet<string> = new Set([
   "network",
   "token",
   "ha_connections",
+  // U8 — inbound TUIC fields promoted to dedicated controls (inbound/tuic.md).
+  "congestion_control",
+  "auth_timeout",
+  "zero_rtt_handshake",
+  "heartbeat",
   "protocol",
   "post_quantum",
   "region",
@@ -191,7 +196,7 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   "accept_routes", "ephemeral", "exit_node", "exit_node_allow_lan_access", "hostname", "relay_server_port",
   // U5 — WireGuard endpoint controls (endpoint/wireguard.md); listen_port / name (system-gated) / workers.
   "listen_port", "name", "workers",
-  "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auto_detect_interface",
+  "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auth_timeout", "auto_detect_interface",
   "auto_redirect", "auto_route", "brutal_debug", "cache_capacity", "cache_file", "cache_path", "certificate",
   "certificate_directory_path", "certificate_path", "cipher", "client_subnet", "client_version", "clash_api",
   "config_path", "congestion_control", "control_url", "credential_path", "data_directory", "default",
