@@ -350,9 +350,10 @@ export const serviceHandledFields = new Set([
 ]);
 export const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client", "rules"]);
 
-// C2-B: fields the per-type certificate-provider editor renders structurally; the rest (e.g. http_client,
-// dns01_challenge) fall through to the Advanced JSON sections. external_account is an object whose
-// key_id/mac_key are rendered as nested controls, so the parent is handled here.
+// C2-B: fields the per-type certificate-provider editor renders structurally; the rest fall through to the
+// Advanced JSON sections. external_account is an object whose key_id/mac_key are rendered as nested
+// controls, so the parent is handled here. U12 — dns01_challenge + http_client now have structured controls
+// (the ACME branch), so they are handled too (no Advanced double-render).
 export const certificateProviderHandledFields = new Set([
   "tag",
   "type",
@@ -369,4 +370,6 @@ export const certificateProviderHandledFields = new Set([
   "request_type",
   "requested_validity",
   "endpoint",
+  "dns01_challenge",
+  "http_client",
 ]);
