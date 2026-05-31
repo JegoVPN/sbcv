@@ -166,10 +166,15 @@ export function sharedFieldDefinitions(
   const dnsServerOptions = (config.dns?.servers ?? [])
     .map((server) => server.tag)
     .filter((tag): tag is string => Boolean(tag));
+  // U10 — same discoverability fix as U1's http_client: the resolver select sources DNS server tags, so an
+  // empty None-only list needs a hint pointing at "create a DNS server first" rather than a dead end.
+  const domainResolverHint = dnsServerOptions.length
+    ? "References a DNS server by tag (or switch to an inline object)."
+    : "No DNS servers defined yet — add a DNS server first, then select it here.";
 
   if (group === "dial" && ref.kind === "route") {
     return [
-      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver" },
+      { label: "Default Domain Resolver", path: ["default_domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver", hint: domainResolverHint },
       { label: "Default Network Strategy", path: ["default_network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Default Network Type", path: ["default_network_type"], kind: "list" },
       { label: "Default Fallback Network", path: ["default_fallback_network_type"], kind: "list" },
@@ -203,7 +208,7 @@ export function sharedFieldDefinitions(
       { label: "TCP Keep Alive (1.13+)", path: ["tcp_keep_alive"], kind: "text" },
       { label: "TCP Keep Alive Interval (1.13+)", path: ["tcp_keep_alive_interval"], kind: "text" },
       { label: "UDP Fragment", path: ["udp_fragment"], kind: "boolean" },
-      { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver" },
+      { label: "Domain Resolver", path: ["domain_resolver"], kind: "select", options: ["", ...dnsServerOptions], objectForm: "domain-resolver", hint: domainResolverHint },
       { label: "Network Strategy", path: ["network_strategy"], kind: "select", options: networkStrategyOptions },
       { label: "Network Type", path: ["network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
       { label: "Fallback Network", path: ["fallback_network_type"], kind: "list", hint: "Values: wifi, cellular, ethernet, other. Graphical Android/Apple clients only, with auto_detect_interface enabled." },
