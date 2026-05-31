@@ -6,6 +6,8 @@
 [![Live — sbcv.app](https://img.shields.io/badge/live-sbcv.app-brightgreen.svg)](https://sbcv.app)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-orange.svg)](#contributing)
 
+**English** · [简体中文](README.zh-CN.md)
+
 **sbcv** turns a sing-box `config.json` into a drag-and-drop canvas: drop inbounds, outbounds, nodes, DNS servers, and routing rules, wire them together, and validate with the **real** `sing-box check` — all in one browser tab.
 
 **[→ Open sbcv.app](https://sbcv.app)** · Free · Open source (MIT) · No install · No login
