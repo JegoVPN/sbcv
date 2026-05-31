@@ -101,6 +101,15 @@ describe("VT3 — data-driven testing-only field gate", () => {
           "headless-rule": [
             "package_name_regex",
           ],
+          "inline": [
+            "http_client",
+          ],
+          "local": [
+            "http_client",
+          ],
+          "remote": [
+            "http_client",
+          ],
         },
       }
     `);
