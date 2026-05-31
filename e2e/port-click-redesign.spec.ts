@@ -21,7 +21,11 @@ async function importInlineConfig(page: Page, config: unknown) {
 
 async function exportedConfig(page: Page) {
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Export", exact: true }).click();
+  // Export now lives in the brand menu (grouped with View/Import JSON) — open it, then trigger the
+  // download. Clicking Export closes the menu, so re-open idempotently on each call.
+  const toggle = page.getByTestId("brand-menu-toggle");
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  await page.getByTestId("export-button").click();
   const download = await downloadPromise;
   const path = await download.path();
   if (!path) throw new Error("missing export path");
