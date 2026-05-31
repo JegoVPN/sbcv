@@ -1963,6 +1963,24 @@ export function validateConfig(
         `Tailscale DNS server "${server.tag}" requires an endpoint reference to a tailscale endpoint node.`,
       );
     }
+    if (server.type === "tailscale" && server.endpoint) {
+      // A17 (long-chain audit, ⚠️ revises spec): a tailscale DNS server's endpoint must reference a
+      // TAILSCALE endpoint. The audit proposed an advisory warning ("binary accepts; runtime-only type
+      // check"), but a 3-binary `run` replay refutes that — `check` passes yet `run` FATALs "endpoint is not
+      // Tailscale: <tag>" on all three. Like route.final / A5, that is a runtime true positive → error.
+      // (A dangling tag is already covered by missing-dns-server-endpoint, so only an existing wrong-typed
+      // endpoint is flagged here.)
+      const referenced = config.endpoints?.find((entry) => entry.tag === server.endpoint);
+      if (referenced && referenced.type !== "tailscale") {
+        push(
+          diagnostics,
+          "error",
+          "dns-server-endpoint-not-tailscale",
+          `/dns/servers/${index}/endpoint`,
+          `Tailscale DNS server "${server.tag}" references endpoint "${server.endpoint}", which is a ${referenced.type} endpoint, not tailscale — sing-box rejects this at runtime (FATAL "endpoint is not Tailscale"). Point it at a tailscale endpoint.`,
+        );
+      }
+    }
     if (channel === "stable" && server.type === "tailscale") {
       const obj = server as Record<string, unknown>;
       if (obj.accept_search_domain !== undefined) {

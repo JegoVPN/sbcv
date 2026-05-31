@@ -3184,6 +3184,35 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A17: a tailscale DNS server's endpoint must reference a TAILSCALE endpoint (error) ───────────
+  // ⚠️ Revises the spec: the audit proposed an advisory WARNING ("binary accepts; runtime-only type
+  // check"), but a 3-binary `run` replay REFUTES that — like A5, it is check-pass / run-FATAL: a tailscale
+  // DNS server pointing at a non-tailscale (e.g. wireguard) endpoint runs to FATAL "endpoint is not
+  // Tailscale: <tag>" on all three. That is a runtime TRUE positive (same shape as route.final), so it is
+  // an ERROR. (The dangling-tag case is covered by missing-dns-server-endpoint, A5; empty by
+  // dns-server-tailscale-endpoint-missing.)
+  describe("A17: tailscale DNS server endpoint must be a tailscale endpoint (error, revises spec)", () => {
+    const diag = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "testing").find((d) => d.code === code);
+    const wgEndpoint = { type: "wireguard", tag: "wg-ep", address: ["10.0.0.2/32"], private_key: "k", peers: [{ address: "1.2.3.4", port: 51820, public_key: "k", allowed_ips: ["0.0.0.0/0"] }] };
+
+    it("tailscale DNS server → a wireguard endpoint (exists, wrong type) → error (run FATAL 'endpoint is not Tailscale')", () => {
+      const c = { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "wg-ep" }] }, endpoints: [wgEndpoint] };
+      expect(diag(c, "dns-server-endpoint-not-tailscale")?.level).toBe("error");
+    });
+
+    it("tailscale DNS server → a real tailscale endpoint → no not-tailscale diagnostic (silent)", () => {
+      const c = { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "ts-ep" }] }, endpoints: [{ type: "tailscale", tag: "ts-ep" }] };
+      expect(diag(c, "dns-server-endpoint-not-tailscale")).toBeUndefined();
+    });
+
+    it("tailscale DNS server → a dangling endpoint tag → missing-dns-server-endpoint (A5), NOT not-tailscale (endpoint does not exist)", () => {
+      const c = { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "ghost" }] }, endpoints: [wgEndpoint] };
+      expect(diag(c, "dns-server-endpoint-not-tailscale")).toBeUndefined();
+      expect(diag(c, "missing-dns-server-endpoint")?.level).toBe("error");
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.
