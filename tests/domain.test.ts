@@ -2404,32 +2404,91 @@ describe("canonical sing-box domain model", () => {
     expect(codes).toContain("dns-rule-outbound-matcher-deprecated");
   });
 
-  it("emits dns-rule-legacy-address-filter-deprecated when ip_cidr is used without match_response", () => {
+  it("gates dns-rule-legacy-address-filter-deprecated to 1.14 (binary: 1.13 runs clean) and respects match_response", () => {
     const base = createStableTunSplitConfig();
-    const configWithoutMatch = {
-      ...base,
+    const withRule = (extra: Record<string, unknown>) =>
+      ({
+        ...base,
+        dns: {
+          ...(base.dns ?? {}),
+          rules: [
+            ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
+            { ip_cidr: ["198.18.0.0/15"], server: "fakeip", ...extra },
+          ],
+        },
+      }) as typeof base;
+    // 1.14 (testing): deprecated → warns. 1.13 (stable): the normal form, binary runs clean → no warning.
+    expect(validateConfig(withRule({}), "testing").map((d) => d.code)).toContain(
+      "dns-rule-legacy-address-filter-deprecated",
+    );
+    expect(validateConfig(withRule({}), "stable").map((d) => d.code)).not.toContain(
+      "dns-rule-legacy-address-filter-deprecated",
+    );
+    // match_response present → no warning even on 1.14.
+    expect(validateConfig(withRule({ match_response: true }), "testing").map((d) => d.code)).not.toContain(
+      "dns-rule-legacy-address-filter-deprecated",
+    );
+  });
+
+  it("emits dns-rule-legacy-address-filter-deprecated for a geoip rule-set inside a logical DNS rule (1.14 only)", () => {
+    const config = {
+      outbounds: [{ type: "direct", tag: "direct" }],
+      route: {
+        rule_set: [{ type: "remote", tag: "geoip-cn", url: "https://example.com/geoip-cn.srs", format: "binary" }],
+      },
       dns: {
-        ...(base.dns ?? {}),
+        servers: [{ type: "udp", tag: "d", server: "1.1.1.1" }],
         rules: [
-          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
-          { ip_cidr: ["198.18.0.0/15"], server: "fakeip" },
+          {
+            type: "logical",
+            mode: "and",
+            rules: [{ rule_set: "geosite-x", invert: true }, { rule_set: "geoip-cn" }],
+            server: "d",
+          },
         ],
       },
-    } as typeof base;
-    const noMatchCodes = validateConfig(configWithoutMatch, "stable").map((d) => d.code);
-    expect(noMatchCodes).toContain("dns-rule-legacy-address-filter-deprecated");
-    const configWithMatch = {
-      ...base,
+    } as unknown as Parameters<typeof validateConfig>[0];
+    expect(validateConfig(config, "testing").map((d) => d.code)).toContain(
+      "dns-rule-legacy-address-filter-deprecated",
+    );
+    expect(validateConfig(config, "stable").map((d) => d.code)).not.toContain(
+      "dns-rule-legacy-address-filter-deprecated",
+    );
+  });
+
+  it("emits dns-rule-legacy-strategy-deprecated for a strategy DNS rule action (1.14 only)", () => {
+    const config = {
+      outbounds: [{ type: "direct", tag: "direct" }],
       dns: {
-        ...(base.dns ?? {}),
-        rules: [
-          ...((base.dns?.rules as Record<string, unknown>[]) ?? []),
-          { ip_cidr: ["198.18.0.0/15"], match_response: true, server: "fakeip" },
-        ],
+        servers: [{ type: "udp", tag: "d", server: "1.1.1.1" }],
+        rules: [{ domain: ["example.com"], action: "route", server: "d", strategy: "ipv4_only" }],
       },
-    } as typeof base;
-    const matchCodes = validateConfig(configWithMatch, "stable").map((d) => d.code);
-    expect(matchCodes).not.toContain("dns-rule-legacy-address-filter-deprecated");
+    } as unknown as Parameters<typeof validateConfig>[0];
+    expect(validateConfig(config, "testing").map((d) => d.code)).toContain("dns-rule-legacy-strategy-deprecated");
+    expect(validateConfig(config, "stable").map((d) => d.code)).not.toContain("dns-rule-legacy-strategy-deprecated");
+  });
+
+  it("emits rule-set-implicit-http-client-deprecated for a remote rule-set lacking an explicit client (1.14 only)", () => {
+    const withRuleSet = (route: Record<string, unknown>) =>
+      ({ outbounds: [{ type: "direct", tag: "direct" }], route }) as unknown as Parameters<typeof validateConfig>[0];
+    const implicit = withRuleSet({
+      rule_set: [{ type: "remote", tag: "rs", url: "https://example.com/rs.srs", format: "binary" }],
+    });
+    expect(validateConfig(implicit, "testing").map((d) => d.code)).toContain(
+      "rule-set-implicit-http-client-deprecated",
+    );
+    // Not deprecated on 1.13.
+    expect(validateConfig(implicit, "stable").map((d) => d.code)).not.toContain(
+      "rule-set-implicit-http-client-deprecated",
+    );
+    // route.default_http_client set → suppressed even on 1.14.
+    const explicit = withRuleSet({
+      default_http_client: "hc",
+      rule_set: [{ type: "remote", tag: "rs", url: "https://example.com/rs.srs", format: "binary" }],
+    });
+    expect(validateConfig(explicit, "testing").map((d) => d.code)).not.toContain(
+      "rule-set-implicit-http-client-deprecated",
+    );
   });
 
   it("emits v2ray-stats-inbound-missing + outbound-missing when stats references unknown tags", () => {
