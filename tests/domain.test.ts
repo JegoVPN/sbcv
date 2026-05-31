@@ -33,6 +33,12 @@ type ReferenceCoverageCase = {
   nextTag: string;
   paths: string[];
   staleDiagnosticCodes: string[];
+  /**
+   * Codes that fire as a WARNING (not error) when this kind's ref dangles. The binary `check`+`run`
+   * BOTH accept these dangling refs (the rule just never matches / lazily resolves), so the long-chain
+   * audit (A1–A5) downgraded them error→warning — coverage is still bound here, just at warning level.
+   */
+  staleWarningCodes?: string[];
   assertRenamed: (config: SingBoxConfig) => void;
   assertDeleted: (config: SingBoxConfig) => void;
 };
@@ -180,7 +186,6 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     ],
     staleDiagnosticCodes: [
       "missing-route-final",
-      "missing-rule-outbound",
       "missing-outbound-candidate",
       "missing-dns-server-detour",
       "missing-endpoint-detour",
@@ -190,6 +195,9 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       "rule-set-download-detour-missing",
       "v2ray-stats-outbound-missing",
     ],
+    // A1: a dangling route-rule `outbound` (matcher + action form) is check+run clean — the rule just
+    // never matches — so it warns instead of erroring. Coverage stays bound, at warning level.
+    staleWarningCodes: ["missing-rule-outbound"],
     assertRenamed: (config) => {
       expect(config.route?.final).toBe("proxy-renamed");
       expect(config.route?.rules?.[0]?.outbound).toBe("proxy-renamed");
@@ -434,17 +442,22 @@ describe("canonical sing-box domain model", () => {
     // W7: the reference graph is enumerated in THREE places — referenceRegistry (cascade), portRelation-
     // Registry (canvas edges, parity-bound above), and the diagnostics missing-* checks. This binds that
     // THIRD enumeration to the catalog: with the referenced entity removed, every dangling ref of this kind
-    // must surface a missing-* error. http-client / certificate-provider declare NO codes because sing-box
-    // TOLERATES their dangling refs (binary-verified), so the empty list is intentional — not a coverage gap.
-    const errors = new Set(
-      validateConfig(danglingByRemoving(testCase.kind, testCase.tag), "testing")
-        .filter((d) => d.level === "error")
-        .map((d) => d.code),
-    );
+    // must surface a missing-* diagnostic — an error, or (for the binary-tolerated long-chain refs the audit
+    // downgraded, A1–A5) a warning declared in staleWarningCodes. http-client / certificate-provider declare
+    // NO codes because sing-box TOLERATES their dangling refs (binary-verified), so the empty lists are
+    // intentional — not a coverage gap.
+    const dangling = validateConfig(danglingByRemoving(testCase.kind, testCase.tag), "testing");
+    const codesByLevel = (level: "error" | "warning") =>
+      new Set(dangling.filter((d) => d.level === level).map((d) => d.code));
+    const errors = codesByLevel("error");
+    const warnings = codesByLevel("warning");
     for (const code of testCase.staleDiagnosticCodes) {
-      expect(errors.has(code), `dangling ${testCase.kind} ref should emit ${code}`).toBe(true);
+      expect(errors.has(code), `dangling ${testCase.kind} ref should emit error ${code}`).toBe(true);
     }
-    if (testCase.staleDiagnosticCodes.length === 0) {
+    for (const code of testCase.staleWarningCodes ?? []) {
+      expect(warnings.has(code), `dangling ${testCase.kind} ref should emit warning ${code}`).toBe(true);
+    }
+    if (testCase.staleDiagnosticCodes.length === 0 && (testCase.staleWarningCodes?.length ?? 0) === 0) {
       expect(["http-client", "certificate-provider"]).toContain(testCase.kind);
     }
   });
@@ -459,9 +472,42 @@ describe("canonical sing-box domain model", () => {
     testCase.assertDeleted(deleted);
 
     const codes = validateConfig(deleted, "testing").map((diagnostic) => diagnostic.code);
-    for (const code of testCase.staleDiagnosticCodes) {
+    for (const code of [...testCase.staleDiagnosticCodes, ...(testCase.staleWarningCodes ?? [])]) {
       expect(codes).not.toContain(code);
     }
+  });
+
+  // ── Long-chain false-positive downgrades (A1–A5) ────────────────────────────────────────────────
+  // The audit cross-checked these against all three real binaries with BOTH `check` AND `run`: the
+  // dangling cross-section reference is accepted (the rule just never matches / lazily resolves, no
+  // FATAL), so erroring on it wrongly blocks a runnable config. Each downgrades error→warning while
+  // keeping the genuinely run-FATAL siblings (route.final, detour, …) as errors.
+  describe("long-chain false-positive downgrades (binary check+run clean)", () => {
+    const diagOf = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "testing").find((d) => d.code === code);
+
+    // A1 — a route rule's dangling `outbound` (matcher form + Rule-Action `action:"route"` form) is a
+    // warning, not an error: binary `check` exit 0 and `run` "sing-box started" on all of 1.12/1.13/1.14.
+    const routeWith = (route: Record<string, unknown>) => ({
+      inbounds: [{ type: "mixed", tag: "in", listen: "127.0.0.1", listen_port: 2080 }],
+      outbounds: [{ type: "direct", tag: "direct" }],
+      route,
+    });
+
+    it("A1: dangling route-rule outbound (matcher form) warns, not errors", () => {
+      const diag = diagOf(routeWith({ rules: [{ inbound: ["in"], outbound: "ghost" }], final: "direct" }), "missing-rule-outbound");
+      expect(diag?.level).toBe("warning");
+    });
+
+    it("A1: dangling route-rule outbound (action:\"route\" form) warns, not errors", () => {
+      const diag = diagOf(routeWith({ rules: [{ inbound: ["in"], action: "route", outbound: "ghost" }], final: "direct" }), "missing-rule-outbound");
+      expect(diag?.level).toBe("warning");
+    });
+
+    it("A1 control: dangling route.final stays an error (run FATAL — not downgraded)", () => {
+      const diag = diagOf(routeWith({ final: "ghost" }), "missing-route-final");
+      expect(diag?.level).toBe("error");
+    });
   });
 
   it("renames extended tag references through the canonical reference registry", () => {

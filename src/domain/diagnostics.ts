@@ -394,12 +394,16 @@ export function validateConfig(
       }
     });
     if (rule.outbound && !outboundTags.has(rule.outbound)) {
+      // A1 (long-chain audit): warning, not error. `check` does not resolve route-rule outbound refs and
+      // `run` starts cleanly on all of 1.12/1.13/1.14 — the rule simply never matches (the route silently
+      // fails over to route.final). Almost always a typo worth flagging, but it does not block a runnable
+      // export. (Contrast route.final, which IS run-FATAL "default outbound not found" — stays an error.)
       push(
         diagnostics,
-        "error",
+        "warning",
         "missing-rule-outbound",
         `/route/rules/${index}/outbound`,
-        `Route rule ${index + 1} references missing outbound "${rule.outbound}".`,
+        `Route rule ${index + 1} references missing outbound "${rule.outbound}" — the rule will never match (it silently falls through to route.final). Fix the tag or remove the rule.`,
       );
     }
     const ruleSets = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
