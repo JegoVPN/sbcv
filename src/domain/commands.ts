@@ -252,6 +252,24 @@ function dropRuleKeys<T extends object>(rule: T, keys: string[]): T {
   return copy as T;
 }
 
+// route-options Fields (route/rule_action.md): valid only under the route / route-options / bypass actions
+// (and the default ""). `network_type` is deliberately absent — it is a rule MATCH field, valid on every
+// action, so it must NOT be scrubbed here.
+const ROUTE_OPTIONS_KEYS = [
+  "override_address",
+  "override_port",
+  "network_strategy",
+  "fallback_network_type",
+  "fallback_delay",
+  "udp_disable_domain_unmapping",
+  "udp_connect",
+  "udp_timeout",
+  "tls_fragment",
+  "tls_fragment_fallback_delay",
+  "tls_record_fragment",
+  "tls_spoof",
+  "tls_spoof_method",
+];
 export function normalizeRouteRule(rule: RouteRule): RouteRule {
   const action = typeof rule.action === "string" ? rule.action : "";
   const drop = routeRuleAllowsOutbound(rule) ? [] : ["outbound"];
@@ -259,6 +277,14 @@ export function normalizeRouteRule(rule: RouteRule): RouteRule {
   if (action !== "reject") drop.push("method", "no_drop");
   // `server` is resolve-only — scrub it on any other action (mirrors the dns-rule server scrub).
   if (!routeRuleAllowsServer(rule)) drop.push("server");
+  // U13 — the remaining action-specific fields. `sniffer` is sniff-only; the resolve options
+  // (strategy + the 1.14 cache/ttl/subnet knobs) are resolve-only; `timeout` is shared by sniff (sniff
+  // timeout) AND resolve (1.14 query timeout), so it is scrubbed only when the action is neither.
+  if (action !== "sniff") drop.push("sniffer");
+  if (action !== "resolve") drop.push("strategy", "disable_cache", "disable_optimistic_cache", "rewrite_ttl", "client_subnet");
+  if (action !== "sniff" && action !== "resolve") drop.push("timeout");
+  // route-options group is valid only on route / route-options / bypass (and "").
+  if (!["", "route", "route-options", "bypass"].includes(action)) drop.push(...ROUTE_OPTIONS_KEYS);
   return dropRuleKeys(rule, drop);
 }
 
