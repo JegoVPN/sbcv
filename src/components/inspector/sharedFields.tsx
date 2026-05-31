@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 
 import type { SharedFieldGroupId } from "../../domain/sharedFieldRegistry";
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
+import { useProjectStore } from "../../state/useProjectStore";
 import { JsonField, ModuleCard } from "./controls";
 import {
   endpointTags,
@@ -42,6 +43,13 @@ export type SharedFieldDefinition = {
    * fields (http_client, a full client config) keep the JSON editor.
    */
   objectForm?: "domain-resolver";
+  /**
+   * U1 — render a "create" inline-action button next to this tag <select> that mints the referenced
+   * top-level entry and wires this field to it. `"http-client"` appends an http_clients[] entry and
+   * sets http_client / default_http_client to its tag, so the deprecated-download_detour migration is
+   * not a dead end on a fresh project.
+   */
+  createKind?: "http-client";
 };
 
 const networkStrategyOptions = ["default", "hybrid", "fallback"];
@@ -382,9 +390,12 @@ export function sharedFieldDefinitions(
   }
 
   if (group === "http-client") {
+    const httpClientHint = httpClientOptions.length
+      ? "References a shared HTTP Client by tag."
+      : "No HTTP Clients defined yet — create one to use as this download client.";
     return ref.kind === "rule-set"
-      ? [{ label: "HTTP Client", path: ["http_client"], kind: "select", options: httpClientOptions }]
-      : [{ label: "Default HTTP Client", path: ["default_http_client"], kind: "select", options: httpClientOptions }];
+      ? [{ label: "HTTP Client", path: ["http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client" }]
+      : [{ label: "Default HTTP Client", path: ["default_http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client" }];
   }
 
   if (group === "http2") {
@@ -438,6 +449,9 @@ export function SharedFieldControl({
   entityRef: EntityRef;
   updateField: UpdateField;
 }) {
+  // Stable action selector (no extra re-renders): wires the "Create HTTP Client" inline action without
+  // prop-drilling the store action through SharedFieldCards. (U1)
+  const createHttpClientForField = useProjectStore((s) => s.createHttpClientForField);
   const value = sharedValueAt(entity, definition.path);
   const applyValue = (nextValue: unknown) => {
     const patch = nestedPatch(entity, definition.path, nextValue);
@@ -548,6 +562,10 @@ export function SharedFieldControl({
       <label className="field">
         <span>{definition.label}</span>
         <select
+          // Explicit accessible name so the control stays findable by its label even when an inline
+          // action button (e.g. "Create HTTP Client") inside this <label> would otherwise pollute the
+          // label's computed text. (U1)
+          aria-label={definition.label}
           value={String(value ?? "")}
           onChange={(event) => applyValue(coerceSharedFieldValue(definition.kind, event.target.value))}
         >
@@ -566,6 +584,18 @@ export function SharedFieldControl({
             onClick={() => applyValue({ server: value })}
           >
             Add resolver options
+          </button>
+        ) : null}
+        {definition.createKind === "http-client" ? (
+          // U1 — mint a fresh http_clients[] entry and wire this field to it, so the deprecated
+          // download_detour → HTTP Client migration is not a dead end on a fresh project. The store
+          // action self-guards on the testing channel.
+          <button
+            type="button"
+            className="palette-action"
+            onClick={() => createHttpClientForField(entityRef, definition.path[0]!)}
+          >
+            Create HTTP Client
           </button>
         ) : null}
       </label>
