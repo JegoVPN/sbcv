@@ -69,25 +69,25 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - [x] A2-missing-route-rule-inbound-downgrade — PR #306 (merged)
 - [x] A3-missing-dns-rule-server-downgrade — PR #307 (merged)
 - [x] A4-clash-api-download-detour-downgrade — PR #308 (merged)
-- [x] A5-missing-dns-server-endpoint-downgrade — ⚠️ **REVISED → 保 error**（二进制推翻降级）：PR (this) = 回归锁定 + spec 更正,无 severity 改动
+- [x] A5-missing-dns-server-endpoint-downgrade — ⚠️ **REVISED → 保 error**（二进制推翻降级）：PR #309 (merged) = 回归锁定 + spec 更正,无 severity 改动
 
 #### Phase L-P1 — #303 resolver 抑制修订（⚠️ 修订 #303）
 - [x] A11-missing-default-domain-resolver（新增 error；非双报,implicit-cover 语义保留）⚠️#303 — PR #310 (merged)
 - [x] A6-dns-server-domain-resolver-revise ⚠️#303 — PR #311 (merged)
 
 #### Phase L-P2 — dial-fields 版本门 + endpoint resolver 缺失检查
-- [x] A7-outbound-resolver-version-gate — PR (this, combined w/ A8 per spec "可同 PR")
-- [x] A8-direct-outbound-resolver — PR (this)
-- [x] A9-endpoint-wireguard-resolver（🆕）— PR (this, combined w/ A10 — shared endpoints loop)
-- [x] A10-endpoint-tailscale-resolver（🆕）— PR (this)
-- [x] A12-dial-fields-migration-gate — ⚠️ **REVISED → 被 A8 涵盖**（distinct-gate premise 被二进制推翻）：PR (this) = 回归锁定 + spec 更正,无新 gate
+- [x] A7-outbound-resolver-version-gate — PR #312 (merged, combined w/ A8)
+- [x] A8-direct-outbound-resolver — PR #312 (merged)
+- [x] A9-endpoint-wireguard-resolver（🆕）— PR #313 (merged, combined w/ A10)
+- [x] A10-endpoint-tailscale-resolver（🆕）— PR #313 (merged)
+- [x] A12-dial-fields-migration-gate — ⚠️ **REVISED → 被 A8 涵盖**（distinct-gate premise 被二进制推翻）：PR #314 (merged) = 回归锁定 + spec 更正,无新 gate
 
 #### Phase L-P3 — 其余假阴性 / 缺失检查 / 规格修正
-- [x] A13-rule-set-unknown-field-coverage（🆕，生成器层）— PR (this)
-- [x] A14-ssm-api-not-managed-shadowsocks-error — PR (this, combined w/ A15 — same ssm-api block)
-- [x] A15-ssm-api-empty-servers-error — PR (this)
-- [x] A16-resolved-dns-server-linux-warning — PR (this)
-- [x] A17-dns-server-endpoint-not-tailscale — ⚠️ REVISED → error（run-FATAL 推翻 warning）：PR (this)
+- [x] A13-rule-set-unknown-field-coverage（🆕，生成器层）— PR #315 (merged)
+- [x] A14-ssm-api-not-managed-shadowsocks-error — PR #316 (merged, combined w/ A15)
+- [x] A15-ssm-api-empty-servers-error — PR #316 (merged)
+- [x] A16-resolved-dns-server-linux-warning — PR #317 (merged)
+- [x] A17-dns-server-endpoint-not-tailscale — ⚠️ REVISED → error（run-FATAL 推翻 warning）：PR #318 (merged)
 
 ---
 
@@ -306,6 +306,7 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 
 ## Milestone Notes
 
+- **2026-06-01 — ✅ 队列完成:A1–A17 全部落地（PRs #305–#318，14 PR）。** 每项 test-first → 三二进制(`check`+ 必要时 `run`)验证 → squash PR → 一名资深 reviewer 子代理(独立二进制重放) → Cloudflare Workers Builds 门 → 合并。最终 `pnpm test` 1725 全绿。**3 处 spec premise 经 `run` 重放推翻**(审计/spec 只跑了 `check`):A5(悬空 tailscale DNS endpoint = run-FATAL → 保 error,非降级)、A12(≡ A8,无独立 gate)、A17(非 tailscale endpoint 类型 = run-FATAL → error,非 warning)。**核心教训:crosscheck harness 仅跑 `check`,无法验证运行时真阳性(check-pass/run-FATAL,同 `route.final`)——跨段 tag/类型引用必须 `run` 重放。** #303 过度抑制全修(A6 DNS-server 臂 + A11 default-resolver,含 reviewer 抓到的 FP-1:消费者门须排除自带 per-entity resolver 的实体)。过程中 reviewer 还抓到一次 `tailscale/` 运行时残留误入提交(已 gitignore)。遗留(非本 queue):`derp-verify-endpoint-not-tailscale`(warning)可能同 A17 形态的潜在 FN,待后续确认。
 - **2026-05-31 — 审计完成、本 doc 创建。** 36-agent workflow（`scripts/workflows/long-chain-diagnostics-audit.workflow.js`）+ 交叉验证 harness（`tests/chain-crosscheck.test.ts`，已从默认 `pnpm test` 排除，显式 `CROSSCHECK_DIR=... npx vitest run` 调用）。8 链路族、26 confirmed（0 推翻）。头条：#303 的 `domainResolverImplicitlyCovered` 被过度套用到 DNS 服务器分支,制造假阴性（A6/A11/A12 修订）。主理人独立二进制重放复证：A1/A3/A4 假阳性 `run` 干净启动、`route.final` 对照 `run` FATAL——确认「假阳性降级 vs 运行时真阳性保 error」判据。回归种子在 `.audit/cases/`（gitignored，落地时内联进 `tests/`）。**A1–A17 待执行。**
 - **2026-05-31 — A1 落地（PR #305, merged）。** `missing-rule-outbound` error→warning。二进制重放（1.12.25/1.13.12/1.14.0-alpha.25）：matcher + `action:"route"` 两形式 `check` exit 0 + `run` "sing-box started" 无 FATAL；对照 `route.final` 悬空 `run` FATAL `default outbound not found`(保 error)。测试：W7 reference-coverage parity 测试迁移到 `staleWarningCodes` 绑定(覆盖仍绑,降为 warning 级)+ 两形式专属回归 + route.final 对照。reviewer(domain-correctness, general-purpose 子代理, 独立二进制重放)= APPROVE 无 blocking。门：`pnpm test`(1671)/`build`/`test:binaries`(19) 全绿 + Cloudflare Workers Builds success。
 - **2026-05-31 — A2 落地（PR #306, merged）。** `missing-route-rule-inbound` error→warning（仅此 code,不碰 `missing-dns-rule-inbound`）。二进制重放：`route-rule-inbound-dangling` 三版 `check` 0 + `run` started。测试：inbound 案移入 `staleWarningCodes` + 专属回归。reviewer = APPROVE(独立二进制重放亦确认 A5 run-FATAL,第三次印证)。
