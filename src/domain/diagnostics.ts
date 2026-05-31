@@ -945,17 +945,25 @@ export function validateConfig(
   const resolverPresent = (resolver: unknown) =>
     (typeof resolver === "string" && resolver.length > 0) ||
     (resolver !== null && typeof resolver === "object" && resolver !== undefined);
+  // shared/dial.md: resolving a DOMAIN server needs a resolver, but "domain_resolver OR
+  // route.default_domain_resolver is optional when only one DNS server is configured." So a domain server is
+  // already covered when route.default_domain_resolver is set (it applies to every entity, overridable
+  // per-entity) OR when exactly one DNS server exists (the implicit resolver). Only flag the remaining gap.
+  const defaultDomainResolverPresent = resolverPresent((config.route as Record<string, unknown> | undefined)?.default_domain_resolver);
+  const singleDnsServerConfigured = (config.dns?.servers ?? []).length === 1;
+  const domainResolverImplicitlyCovered = defaultDomainResolverPresent || singleDnsServerConfigured;
 
   outbounds.forEach((outbound, index) => {
     if (!looksLikeDomain(outbound.server)) return;
     if (resolverPresent(outbound.domain_resolver)) return;
+    if (domainResolverImplicitlyCovered) return;
     const tag = outbound.tag ?? `outbound-${index}`;
     push(
       diagnostics,
       "warning",
       "outbound-domain-without-resolver",
       `/outbounds/${index}/domain_resolver`,
-      `Outbound "${tag}" uses a domain server but has no domain_resolver. sing-box 1.14+ requires this; rely on route.default_domain_resolver only if a single DNS server is configured.`,
+      `Outbound "${tag}" uses a domain server but no resolver is reachable — it has no domain_resolver, route.default_domain_resolver is unset, and there is more than one DNS server. sing-box 1.14+ needs one: set this outbound's domain_resolver or route.default_domain_resolver.`,
     );
   });
 
@@ -1834,12 +1842,14 @@ export function validateConfig(
     }
     if (!looksLikeDomain(server.server)) return;
     if (resolverPresent(server.domain_resolver)) return;
+    // Same rule as outbounds (shared/dial.md): covered by route.default_domain_resolver or a single DNS server.
+    if (domainResolverImplicitlyCovered) return;
     push(
       diagnostics,
       "warning",
       "dns-server-domain-without-resolver",
       `/dns/servers/${index}/domain_resolver`,
-      `DNS server "${server.tag}" uses a domain remote but has no domain_resolver. sing-box 1.14+ requires this whenever the host is a domain name.`,
+      `DNS server "${server.tag}" uses a domain remote but no resolver is reachable — it has no domain_resolver, route.default_domain_resolver is unset, and there is more than one DNS server. sing-box 1.14+ needs one whenever the host is a domain name.`,
     );
   });
 
