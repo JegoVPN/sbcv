@@ -52,14 +52,32 @@ C-queue 聚焦 palette 创建/版本门控精度/序列化门控统一；本 U-q
   序列化已被验证无损——**任何原子项都不得新增 per-field 序列化器**，新字段靠通用 passthrough 自动往返；改动只在控件层。
 - **One atomic = one outcome，严守 don't-mix。** copy vs behavior、domain vs component、stable vs testing-gated、refactor vs feature。过大的原子项按其 `Slice` 拆成多个**各自独立 green** 的 PR。
 - **Test-first.** 先写失败测试再改实现；迁移既有测试到新的正确行为（绝不为通过旧测试而保留错误行为）。
-- **Land via squash PR，never direct push to `main`.** PR gate + main issue gate 都必须 clean（见 `docs/goal-driven-development.md` 的 Post-Merge Issue Gate）。
-- **Review gate（per-PR best-suited Claude Code expert reviewer，NOT Codex）：** 每个 PR 派出最匹配该原子项领域的专家 reviewer subagent(s)（用 Agent 工具：React/perf、domain schema 正确性、version-gating/diagnostics、serialization/round-trip、canvas/React-Flow），应用其可执行发现后再合并。一次 pass、合并前完成。
+- **Land via squash PR，never direct push to `main`.** PR gate + main issue gate 都必须 clean（见 `docs/goal-driven-development.md` 的 Post-Merge Issue Gate）。**Green-before-merge 是硬门：本地 `pnpm test` + `pnpm build` 全绿、Cloudflare Workers Builds 检查 = success、reviewer verdict 已回且 actionable 发现已应用——四者缺一不得合并。** 测试红、build 错、有冲突、CI 未通过、或 review 未回时一律停下，绝不合并。
+- **Review gate（per-PR best-suited Claude Code expert reviewer，NOT Codex；BLOCKING）：** 每个 PR 派出最匹配该原子项领域的专家 reviewer subagent(s)（用 Agent 工具：React/perf、domain schema 正确性、version-gating/diagnostics、serialization/round-trip、canvas/React-Flow）。**这是阻塞门：必须先拿到 reviewer 的 verdict，应用其 actionable 发现，本地重新跑到全绿，然后才进入合并步骤。** reviewer 给出 REQUEST-CHANGES 时绝不合并。一次 pass、合并前完成。
 - **Frontend gate**（`vercel-react-best-practices`，见 `AGENTS.md` 的 Frontend Skill Gate）对任何 `src/components/**` 或 `src/state/**` diff 强制执行，在同一 work session 内做 bundle / rerender scope / derived-state / async-waterfalls / 全局订阅检查。
 - **C17 不变量必须保持绿。** 每个新增结构控件的 key：要么加入对应 `*HandledFields` 且**确实渲染一个能用的控件**，要么加入 `INLINE_RENDERED_KEYS`——否则 `tests/no-silent-unreachable-fields.test.tsx`（C17 guard）会失败。这正是本审计要落实的「主流零回退」硬判据。
 - **Re-verify against HEAD before each atomic.** 开工前 sync 到 main 并对照 HEAD 复核 file:line 锚点（`.claude/worktrees/*` 可能 stale；本 doc 锚点采于 2026-05-31 HEAD）；`pnpm exec tsc -b` + `pnpm test` + `pnpm build` + `pnpm e2e` 全绿后再开始。
 - **Devlog every atomic** —— 在下方 Running TODO 勾选 + 在 Milestone Notes 追加一条 per-atomic 记录（what changed / tests / expert-review verdict / verification commands）。
 
-## Source Docs
+### Execution Loop（strict / serial / interruptible）—— 不可省略
+
+本次执行的**事故根因**是把多个步骤串进同一个工具批次、在红 / review 未回时就合并，导致 review gate 与 green gate 形同虚设、且用户无法中途叫停。为杜绝复发，每个原子项**必须严格串行单步推进**：
+
+1. **一次只做一个原子项。** 不跨原子项预跑。前一个原子项合并并过 main issue gate 之前，不开始下一个。
+2. **一个工具批次只做"一件可独立验证的事"。** 严禁把 implement、跑测试、commit、push、开 PR、轮询 CI、merge、下一个原子项 这些**不同阶段**打包进同一个工具批次。每个阶段是独立的一轮，看到上一轮的真实结果后才进入下一轮。
+3. **每个原子项的强制步骤序列（逐步、各自独立成轮）：**
+   a. sync main + 对照 HEAD 复核 file:line 锚点；
+   b. test-first 写失败测试，确认它**确实红**（看真实输出，不看汇总）；
+   c. 实现；
+   d. 跑目标测试 → 全量 `pnpm test` → `pnpm build`，**全绿**（红则停下修，不前进）；
+   e. 新建分支、commit、push、开 PR；
+   f. **派阻塞 reviewer**，拿 verdict，应用 actionable 发现，本地重新全绿；
+   g. 轮询 Cloudflare Workers Builds（check 名 = `Workers Builds: sbcv`）至 `success`；
+   h. **此时四门全绿**（local test/build + reviewer verdict + CI success + 无冲突）才 squash-merge + 删分支；
+   i. sync main，跑 main issue gate，勾选 Running TODO + 追加 Milestone Notes。
+4. **绝不在红 / build 错 / 冲突 / CI 未绿 / review 未回时合并**（与上方 Land/Review 门重复，因其重要故再申明）。
+5. **空工具输出按"已成功"对待，不重试、不据此 reset / 恐慌操作。** 需要确认时单独发一条只读命令核查，绝不基于猜测改动仓库状态。
+6. **可中断优先于速度。** 步骤之间留出用户介入窗口；用户一旦表达停止，立即停、不抢跑。
 
 - `AGENTS.md` —— 仓库工作约束 + Frontend Skill Gate。
 - `scripts/workflows/inspector-usability-audit.workflow.js` —— 本 goal 的来源审计 workflow（可重跑做 re-assessment）。
@@ -74,11 +92,11 @@ C-queue 聚焦 palette 创建/版本门控精度/序列化门控统一；本 U-q
 ### Running TODO
 
 #### Phase U-P0 — The motivating bug + the only emit-correctness defect
-- [ ] U1-http-client-migration-loop — rule-set/route/dns-server HTTP Client select 加空状态 hint + testing-gated「Create HTTP Client」就地创建按钮 + 弃用 banner 联动；一举修掉触发 bug 与 4 个同类 owner。Touch: `src/components/inspector/sharedFields.tsx`, `src/components/inspector/ruleSetInspector.tsx`, `src/domain/commands.ts`(reuse).
-- [ ] U2-wireguard-keepalive-int — WireGuard peer `persistent_keepalive_interval` 改为整数强转（当前写原始字符串，sing-box 拒绝），placeholder `"25s"`→`"25"`。Touch: `src/components/inspector/endpointInspector.tsx`.
+- [x] U1-http-client-migration-loop — rule-set/route/dns-server HTTP Client select 加空状态 hint + testing-gated「Create HTTP Client」就地创建按钮 + 弃用 banner 联动；一举修掉触发 bug 与 4 个同类 owner。Touch: `src/components/inspector/sharedFields.tsx`, `src/components/inspector/ruleSetInspector.tsx`, `src/domain/commands.ts`(reuse). **DONE (PR #272).**
+- [x] U2-wireguard-keepalive-int — WireGuard peer `persistent_keepalive_interval` 改为整数强转（当前写原始字符串，sing-box 拒绝），placeholder `"25s"`→`"25"`。Touch: `src/components/inspector/endpointInspector.tsx`. **DONE (PR #271).**
 
 #### Phase U-P1 — impossible-to-set clusters
-- [ ] U3-dns-rule-action-model — DNS Rules 表格加 action `<select>` + 各 action 选项控件（reject/predefined/route-options），打通整个 DNS rule action 模型。Touch: `src/components/RuleTables.tsx`.
+- [x] U3-dns-rule-action-model — DNS Rules 表格加 action `<select>`（reusing `updateDnsRule`→`normalizeDnsRule`）；深度 per-action 选项已在节点检查器（`DnsRuleInspector`）覆盖，故表格只补 action select（右尺寸，不重复造编辑器）。Touch: `src/components/RuleTables.tsx`. **DONE (PR #273 + #275 + #276).**
 - [ ] U4-tailscale-fields — Tailscale 分支补 `accept_routes`/`ephemeral`/`exit_node`/`exit_node_allow_lan_access`/`hostname`/`relay_server_port`，登记 handled + INLINE_RENDERED_KEYS。Touch: `src/components/inspector/endpointInspector.tsx`, `handledFields.ts`.
 - [ ] U5-wireguard-fields — WireGuard 分支补 `listen_port`/`name`(gate on `system`)/`workers`，登记 handled。Touch: `src/components/inspector/endpointInspector.tsx`, `handledFields.ts`.
 - [ ] U6-route-rule-action-coverage — route resolve `timeout`/cache/ttl/client_subnet、predefined `answer`/`ns`/`extra`、route-options 6 子字段 + 1.14 `tls_spoof`/`tls_spoof_method`（版本门控）、两处 reject Method 加 `reply`。Touch: `src/components/inspector/ruleInspectors.tsx`, `ruleControls.tsx`.
@@ -321,4 +339,6 @@ C-queue 聚焦 palette 创建/版本门控精度/序列化门控统一；本 U-q
 
 （每个 atomic 合并后追加一条：what changed / tests / expert-review verdict / verification commands。）
 
-- _（U1 起逐条记录）_
+- **U2 (PR #271, commit `5f9222d`)** — WireGuard peer `persistent_keepalive_interval` 从写原始字符串改为整数强转：新增 `parseOptionalInt` helper（非负整数，控件再 clamp 到 uint16 ≤65535），placeholder `"25s"`→`"25"`、`inputMode="numeric"`、读回为 number。Tests: `tests/wireguard-keepalive.test.tsx`（含 0/超界/清空/导出为 JSON number）+ `tests/inspector-helpers.test.ts`（pin parseOptionalInt 契约）。Reviewer: APPROVE（2 条 minor——0 值测试 + helper 单测——已补）。Verify: full suite green, `pnpm build` clean。
+- **U1 (PR #272, commit `4561548`)** — rule-set HTTP Client select 加空状态 hint + testing-gated「Create HTTP Client」按钮（新 store action `createHttpClientForField`，复用 `addHttpClient`，保持当前选择 + autoPlace 新节点），弃用 banner 联动。`http_client` 形状/序列化未动。Tests: `tests/http-client-create-affordance.test.tsx`（testing 建+连、stable 不显示、既有 tag 选择无回归）。Reviewer: APPROVE。Verify: full suite green, build clean, C17 guard green。
+- **U3 (PR #273 → #275 → #276)** — DNS Rules 表格加 action `<select>`。**执行事故记录（诚实留痕，为后续戒）：** 我把 implement+commit+merge 串进同一巨型工具批次,导致:(a) #273 只合进了测试、生产代码漏进 commit → main 变红;(b) #275 的"修复"又把 action select 重复插入了一份 → `Found multiple elements` 仍红;(c) #276 删掉重复块,恢复绿。根因 = 违反单步/green-before-merge,已据此在本 doc 新增 **Execution Loop（strict/serial/interruptible）** 小节并强化 Land/Review 门。最终状态:每行单个 action select,`tests/dns-rule-table-action.test.tsx` 6/6 绿,full suite 169 files/1590 tests green,build clean。
