@@ -253,7 +253,10 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     tag: "local-dns",
     nextTag: "dns-renamed",
     paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
-    staleDiagnosticCodes: ["missing-dns-final"],
+    // A11: removing local-dns leaves route.default_domain_resolver={server:"local-dns"} dangling, and the
+    // config has domain consumers (the "dialer" outbound + the ts-ep tailscale endpoint), so
+    // missing-default-domain-resolver fires (error) — binding the new ref check to the W7 catalog.
+    staleDiagnosticCodes: ["missing-dns-final", "missing-default-domain-resolver"],
     // A3: a dangling dns-rule `server` (legacy form + `action:"route"` form) is check+run clean — the rule
     // just never matches — so it warns instead of erroring. NOTE: `server` only; `missing-dns-rule-set` stays
     // an error (1.14 `check` DOES resolve dns rule_set — § Coverage 1).
@@ -598,6 +601,89 @@ describe("canonical sing-box domain model", () => {
       const clean = { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "ts-ep" }] }, endpoints: [{ type: "tailscale", tag: "ts-ep" }] };
       expect(diagOf(clean, "missing-dns-server-endpoint")).toBeUndefined();
       expect(diagOf(clean, "dns-server-tailscale-endpoint-missing")).toBeUndefined();
+    });
+  });
+
+  // ── A11: missing-default-domain-resolver (dangling route.default_domain_resolver) ⚠️#303 ─────────
+  // Binary-verified: a route.default_domain_resolver that names a non-existent DNS server is a hard init
+  // error on all three binaries ("default domain resolver not found: <tag>") — but ONLY when some entity
+  // actually consumes domain resolution via dial fields (a domain/direct outbound, or a tailscale/domain-
+  // wireguard endpoint). With no such consumer (e.g. an IP-only outbound) the dangling value is tolerated,
+  // so the check is consumer-gated to avoid a #303-style false positive. Single-DNS does NOT save a
+  // dangling default (verified). Handles both string and {server:...} forms.
+  describe("A11: missing-default-domain-resolver (dangling default_domain_resolver)", () => {
+    const diagOf = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "testing").find((d) => d.code === code);
+    const twoDns = [{ type: "udp", tag: "a", server: "1.1.1.1" }, { type: "udp", tag: "b", server: "8.8.8.8" }];
+    const domainOutbound = { type: "trojan", tag: "p", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } };
+
+    it("dangling default (string) + domain outbound → error at /route/default_domain_resolver", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [domainOutbound] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+      expect(d?.path).toBe("/route/default_domain_resolver");
+    });
+
+    it("dangling default (object {server}) + domain outbound → error", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: { server: "DoesNotExist" } }, outbounds: [domainOutbound] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+    });
+
+    it("dangling default + direct outbound (resolves request domains) → error", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "direct", tag: "d" }] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+    });
+
+    it("dangling default + SINGLE DNS server + domain outbound → error (single-DNS does not save a dangling default)", () => {
+      const d = diagOf({ dns: { servers: [{ type: "udp", tag: "only", server: "1.1.1.1" }] }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [domainOutbound] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+    });
+
+    it("dangling default + tailscale endpoint (implicit domain control_url) → error", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "block", tag: "blk" }], endpoints: [{ type: "tailscale", tag: "ts", auth_key: "k" }] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+    });
+
+    it("dangling default + wireguard domain-peer endpoint → error", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "block", tag: "blk" }], endpoints: [{ type: "wireguard", tag: "wg", address: ["10.0.0.2/32"], private_key: "k", peers: [{ address: "peer.example.com", port: 51820, public_key: "k", allowed_ips: ["0.0.0.0/0"] }] }] }, "missing-default-domain-resolver");
+      expect(d?.level).toBe("error");
+    });
+
+    it("dangling default + ONLY an IP outbound (no domain consumer) → silent (no false positive)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "trojan", tag: "ip", server: "192.0.2.1", server_port: 443, password: "x", tls: { enabled: true } }] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    it("real default (resolves to a DNS server tag) + domain outbound → silent", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "a" }, outbounds: [domainOutbound] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    it("no default set + domain outbound → no missing-default-domain-resolver (absence is not dangling)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, outbounds: [domainOutbound] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    // A per-entity domain_resolver OVERRIDES the default, so the entity never falls back to it — a dangling
+    // default is then unconsumed and the binary accepts it (3-binary check exit 0, verified). The consumer
+    // gate must exclude these or it becomes a #303-shape false positive on valid runnable configs.
+    it("dangling default + domain outbound WITH its own domain_resolver → silent (override, no false positive)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ ...domainOutbound, domain_resolver: "a" }] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    it("dangling default + direct outbound WITH its own domain_resolver → silent (override)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "direct", tag: "d", domain_resolver: "a" }] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    it("dangling default + tailscale endpoint WITH its own domain_resolver → silent (override)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "block", tag: "blk" }], endpoints: [{ type: "tailscale", tag: "ts", auth_key: "k", domain_resolver: "a" }] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
+    });
+
+    it("dangling default + wireguard domain-peer endpoint WITH its own domain_resolver → silent (override)", () => {
+      const d = diagOf({ dns: { servers: twoDns }, route: { default_domain_resolver: "DoesNotExist" }, outbounds: [{ type: "block", tag: "blk" }], endpoints: [{ type: "wireguard", tag: "wg", address: ["10.0.0.2/32"], private_key: "k", domain_resolver: "a", peers: [{ address: "peer.example.com", port: 51820, public_key: "k", allowed_ips: ["0.0.0.0/0"] }] }] }, "missing-default-domain-resolver");
+      expect(d).toBeUndefined();
     });
   });
 
