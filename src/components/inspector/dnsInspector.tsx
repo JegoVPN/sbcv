@@ -187,10 +187,10 @@ export function DnsInspector({
             const raw = entity.optimistic;
             const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : undefined;
             const enabled = raw === true || obj?.enabled === true;
-            const window = typeof obj?.timeout === "string" ? obj.timeout : "";
+            const staleWindow = typeof obj?.timeout === "string" ? obj.timeout : "";
             const setEnabled = (on: boolean) => {
               if (!on) return updateField(entityRef, "optimistic", undefined);
-              updateField(entityRef, "optimistic", window ? { enabled: true, timeout: window } : true);
+              updateField(entityRef, "optimistic", staleWindow ? { enabled: true, timeout: staleWindow } : true);
             };
             const setWindow = (value: string) => {
               updateField(entityRef, "optimistic", value ? { enabled: true, timeout: value } : true);
@@ -206,7 +206,7 @@ export function DnsInspector({
                   <label className="field">
                     <span>Stale-serve window (default 3d)</span>
                     <input
-                      value={window}
+                      value={staleWindow}
                       placeholder="3d"
                       onChange={(event) => setWindow(event.target.value)}
                     />
