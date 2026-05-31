@@ -8,6 +8,8 @@ export const meta = {
   ],
 }
 
+// Workflow agents already run with their shell rooted at the repo, so this is just a label for the
+// prompts — keep it a relative marker, never a machine-specific absolute path (which leaks a local username).
 const REPO = '<repo root>'
 
 const ARCHITECTURE = [
