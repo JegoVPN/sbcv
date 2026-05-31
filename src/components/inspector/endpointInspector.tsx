@@ -213,6 +213,49 @@ export function EndpointInspector({
                   onChange={(event) => updateField(entityRef, "control_url", event.target.value || undefined)}
                 />
               </label>
+              {/* U4 — documented tailscale.md fields that had no control: a from-scratch node could not set
+                  them (the Advanced fallback only edits keys that already exist). All are base 1.12 fields
+                  except relay_server_port (1.13, gated below). */}
+              <label className="toggle-row" data-testid="tailscale-ephemeral">
+                <input
+                  type="checkbox"
+                  checked={entity.ephemeral === true}
+                  onChange={(event) => updateField(entityRef, "ephemeral", event.target.checked || undefined)}
+                />
+                <span>Ephemeral (register as an ephemeral node, removed when offline)</span>
+              </label>
+              <label className="field">
+                <span>Hostname</span>
+                <input
+                  value={typeof entity.hostname === "string" ? entity.hostname : ""}
+                  placeholder="localhost"
+                  onChange={(event) => updateField(entityRef, "hostname", event.target.value || undefined)}
+                />
+              </label>
+              <label className="toggle-row" data-testid="tailscale-accept-routes">
+                <input
+                  type="checkbox"
+                  checked={entity.accept_routes === true}
+                  onChange={(event) => updateField(entityRef, "accept_routes", event.target.checked || undefined)}
+                />
+                <span>Accept Routes (accept subnet routes advertised by other nodes)</span>
+              </label>
+              <label className="field">
+                <span>Exit Node</span>
+                <input
+                  value={typeof entity.exit_node === "string" ? entity.exit_node : ""}
+                  placeholder="exit-node-name or 100.x.y.z"
+                  onChange={(event) => updateField(entityRef, "exit_node", event.target.value || undefined)}
+                />
+              </label>
+              <label className="toggle-row" data-testid="tailscale-exit-node-allow-lan">
+                <input
+                  type="checkbox"
+                  checked={entity.exit_node_allow_lan_access === true}
+                  onChange={(event) => updateField(entityRef, "exit_node_allow_lan_access", event.target.checked || undefined)}
+                />
+                <span>Exit Node Allow LAN Access (route locally-reachable subnets directly, not via the exit node)</span>
+              </label>
               <label className="field">
                 <span>Advertise Routes</span>
                 <input
@@ -256,6 +299,16 @@ export function EndpointInspector({
                       event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed,
                     );
                   }}
+                />
+              </label>
+              <label className="field">
+                <span>Relay Server Port (since sing-box 1.13.0)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={typeof entity.relay_server_port === "number" ? entity.relay_server_port : ""}
+                  placeholder="41641"
+                  onChange={(event) => updateField(entityRef, "relay_server_port", parseOptionalPort(event.target.value))}
                 />
               </label>
               <label className="field">
