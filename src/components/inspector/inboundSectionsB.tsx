@@ -536,6 +536,40 @@ export function InboundSectionsB({
               onChange={(next) => updateField(entityRef, "obfs", next || undefined)}
             />
           ) : null}
+          {/* U8 — inbound TUIC section (mirrors outbound minus the outbound-only udp_relay_mode /
+              udp_over_stream). congestion_control / auth_timeout / zero_rtt_handshake / heartbeat are base
+              TUIC fields (inbound/tuic.md), so no version gate. */}
+          {entityType === "tuic" ? (
+            <>
+              <div data-testid="inbound-tuic-congestion-control">
+                <SchemaEnumField kind="inbound" type="tuic" field="congestion_control" entity={entity} entityRef={entityRef} updateField={updateField} />
+              </div>
+              <label className="field" data-testid="inbound-tuic-auth-timeout">
+                <span>Auth Timeout</span>
+                <input
+                  value={typeof entity.auth_timeout === "string" ? entity.auth_timeout : ""}
+                  placeholder="3s"
+                  onChange={(event) => updateField(entityRef, "auth_timeout", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field" data-testid="inbound-tuic-heartbeat">
+                <span>Heartbeat</span>
+                <input
+                  value={typeof entity.heartbeat === "string" ? entity.heartbeat : ""}
+                  placeholder="10s"
+                  onChange={(event) => updateField(entityRef, "heartbeat", event.target.value || undefined)}
+                />
+              </label>
+              <label className="toggle-row" data-testid="inbound-tuic-zero-rtt-handshake">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.zero_rtt_handshake)}
+                  onChange={(event) => updateField(entityRef, "zero_rtt_handshake", event.target.checked || undefined)}
+                />
+                <span>0-RTT Handshake (faster reconnects, vulnerable to replay attacks)</span>
+              </label>
+            </>
+          ) : null}
           {entityType === "naive" ? (
             <>
               <div data-testid="inbound-naive-network">
