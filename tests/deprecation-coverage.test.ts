@@ -21,37 +21,59 @@ import { validateConfig } from "../src/domain/diagnostics";
 
 const DEPRECATED_MD = join(__dirname, "../docs/upstream/sing-box/testing/deprecated.md");
 
-/** title (exact `####` heading text) -> how it is handled on the 1.12/1.13/1.14 targets. */
+/** title (exact `####` heading text) -> how it is handled on the 1.12/1.13/1.14 targets.
+ *
+ *  `[RR 1.12/1.13/1.14]` records the behaviour BINARY-VERIFIED by run-replay (`sing-box check`/`run`
+ *  against the three pinned binaries, 2026-06-01): warn = deprecation warning, error = check/decode
+ *  rejection (validator returns invalid), clean = silently accepted. Entries without `[RR ...]` are
+ *  classified from the doc + code grep only (removed long before the oldest supported target, or a
+ *  non-config item). Trigger predicates for the diagnostics are themselves run-replay-derived — e.g.
+ *  the address-filter warning fires on a geoip rule-set, which the doc's "(ip_cidr / ip_is_private)"
+ *  parenthetical omits, and `block` is still accepted by the binary despite the doc saying "removed 1.13". */
 const ACKNOWLEDGED: Record<string, string> = {
-  // 1.14.0 — warn on the 1.14 target; run-only (check is clean) unless noted.
-  "Legacy `download_detour` remote rule-set option": "diagnostic: rule-set-download-detour-deprecated / -removed",
-  "Implicit default HTTP client": "diagnostic: rule-set-implicit-http-client-deprecated (run-only)",
-  "Inline ACME options in TLS": "diagnostic: tls acme deprecation gate",
-  "Legacy `strategy` DNS rule action option": "diagnostic: dns-rule-legacy-strategy-deprecated (run-only)",
+  // 1.14.0 — deprecated on the 1.14 target; run-only (check clean) unless the note says check.
+  "Legacy `download_detour` remote rule-set option":
+    "diagnostic rule-set-download-detour-deprecated/-removed. [RR run-WARN @1.14, e.g. Gougou.json]",
+  "Implicit default HTTP client":
+    "diagnostic rule-set-implicit-http-client-deprecated. [RR run-WARN @1.14 only; 1.12/1.13 clean]",
+  "Inline ACME options in TLS": "diagnostic: tls.acme deprecation gate (code-verified; not individually run-replayed)",
+  "Legacy `strategy` DNS rule action option":
+    "diagnostic dns-rule-legacy-strategy-deprecated. [RR run-WARN @1.14 only; 1.12/1.13 clean]",
   "Legacy `rule_set_ip_cidr_accept_empty` DNS rule item":
-    "binary: check emits the warning on 1.14 (validator surfaces it); also feeds dns-rule-mixed-legacy-and-modern-conflict",
-  "`independent_cache` DNS option": "diagnostic: deprecated-dns-independent-cache",
-  "`store_rdrc` cache file option": "diagnostic: store_rdrc gate (settings)",
+    "[RR check-WARN @1.14] binary surfaces it via the validator; also feeds dns-rule-mixed-legacy-and-modern-conflict",
+  "`independent_cache` DNS option":
+    "diagnostic deprecated-dns-independent-cache + binary check-WARN. [RR check-WARN @1.14, e.g. Gougou.json]",
+  "`store_rdrc` cache file option":
+    "diagnostic cache-file-store-rdrc-deprecated + binary check-WARN. [RR check-WARN @1.14, e.g. Jego.json]",
   "Legacy Address Filter Fields in DNS rules":
-    "diagnostic: dns-rule-legacy-address-filter-deprecated (run-only; ip_cidr/ip_is_private OR geoip rule-set, incl. logical sub-rules)",
+    "diagnostic dns-rule-legacy-address-filter-deprecated (ip_cidr/ip_is_private OR geoip rule-set, incl. logical sub-rules). " +
+    "[RR run-WARN @1.14; escalates to a cold-start rule-set-init FATAL when a geoip rule-set loads; 1.12/1.13 clean]",
   // 1.12.0
-  "Legacy DNS server formats": "diagnostic: legacy DNS server gate (error on >=1.14)",
-  "`outbound` DNS rule item": "diagnostic: dns-rule-outbound-matcher-deprecated",
+  "Legacy DNS server formats":
+    "diagnostic legacy-DNS-server gate + binary. [RR check-WARN @1.12, check-ERROR @1.13, decode-FATAL @1.14]",
+  "`outbound` DNS rule item":
+    "diagnostic dns-rule-outbound-matcher-deprecated + binary. [RR check-WARN @1.12, check-ERROR @1.13/1.14]",
   "Legacy ECH fields":
-    "binary: check rejects (error) on 1.12/1.13/1.14 — validator returns invalid (run-replay confirmed)",
-  // 1.11.0 — removed in 1.13, so check-error on 1.13/1.14, warn on 1.12.
-  "Legacy special outbounds": "diagnostic: legacy special-outbound gate",
-  "Legacy inbound fields": "diagnostic: legacy inbound-field gate",
-  "Destination override fields in direct outbound": "diagnostic: override_address/override_port gate",
-  "WireGuard outbound": "diagnostic: legacy wireguard-outbound gate",
-  "GSO option in TUN": "binary: check rejects (error) on 1.12/1.13/1.14 — validator returns invalid (run-replay confirmed)",
+    "[RR check-ERROR @1.12/1.13/1.14] binary rejects — validator returns invalid",
+  // 1.11.0 — removed in 1.13: check-error on 1.13/1.14, warn/clean on 1.12.
+  "Legacy special outbounds":
+    "diagnostics: `type:\"dns\"` outbound errors, `type:\"block\"` -> outbound-block-deprecated (warn). " +
+    "[RR `dns`: ERROR @1.12, FATAL @1.13/1.14 | `block`: CLEAN on all three — binary still accepts it despite the doc's 'removed 1.13', so our warning is purely informative]",
+  "Legacy inbound fields":
+    "diagnostic: inbound sniff / domain_strategy gate. [RR check-clean @1.12 (covered statically), decode-FATAL @1.13/1.14]",
+  "Destination override fields in direct outbound":
+    "diagnostic: override_address/override_port gate + binary. [RR check-ERROR @1.12, decode-FATAL @1.13/1.14]",
+  "WireGuard outbound":
+    "diagnostic: legacy wireguard-outbound gate + binary. [RR check-ERROR @1.12, decode-FATAL @1.13/1.14]",
+  "GSO option in TUN": "[RR check-ERROR @1.12/1.13/1.14] binary rejects — validator returns invalid",
   // 1.10.0 and earlier — removed before the oldest supported target (1.12); decode as unknown-field errors.
-  "TUN address fields are merged": "removed <=1.12; unknown-field / decode error on all supported targets",
+  "TUN address fields are merged":
+    "removed <=1.12; decode error on supported targets (diagnostic also flags legacy tun address fields). Not individually run-replayed.",
   "Match source rule items are renamed": "removed in 1.11; unknown-field / decode error on all supported targets",
   "Drop support for go1.18 and go1.19": "n/a — Go toolchain requirement, not a config field",
   "Cache file and related features in Clash API": "removed long before supported targets; decode error if present",
-  GeoIP: "removed in 1.12; decode error on all supported targets",
-  Geosite: "removed in 1.12; decode error on all supported targets",
+  GeoIP: "[RR FATAL @1.12/1.13/1.14] binary rejects at router init",
+  Geosite: "[RR FATAL @1.12/1.13/1.14] binary rejects at router init",
   // 1.6.0
   ShadowsocksR: "removed long ago; unsupported protocol type — decode error",
   "Proxy Protocol": "removed long ago — n/a",
