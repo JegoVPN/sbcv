@@ -196,11 +196,12 @@ export function RouteRulesTable() {
 
 export function DnsRulesTable() {
   const [dnsPage, setDnsPage] = useState(0);
-  const { servers, ruleSets, rules, addDnsRule, updateDnsRule, moveDnsRule, deleteDnsRule } = useProjectStore(
+  const { servers, ruleSets, rules, channel, addDnsRule, updateDnsRule, moveDnsRule, deleteDnsRule } = useProjectStore(
     useShallow((state) => ({
       servers: state.config.dns?.servers,
       ruleSets: state.config.route?.rule_set,
       rules: state.config.dns?.rules,
+      channel: state.channel,
       addDnsRule: state.addDnsRule,
       updateDnsRule: state.updateDnsRule,
       moveDnsRule: state.moveDnsRule,
@@ -268,6 +269,25 @@ export function DnsRulesTable() {
                       value={listToText(rule.domain_keyword)}
                       onChange={(event) => updateDnsRule(ruleIndex, { domain_keyword: textToList(event.target.value) })}
                     />
+                  </label>
+                  {/* U3: the rule ACTION is editable from the table too (deep per-action options stay in the
+                      node inspector). updateDnsRule → normalizeDnsRule scrubs action-incompatible keys, so
+                      switching action here is lossless. evaluate/respond are 1.14-only: offered on testing,
+                      or kept selectable when already set so the control still displays the value. */}
+                  <label className="rule-field">
+                    <span>Action</span>
+                    <select
+                      aria-label={`DNS rule ${ruleIndex + 1} action`}
+                      value={typeof rule.action === "string" && rule.action ? rule.action : "route"}
+                      onChange={(event) => updateDnsRule(ruleIndex, { action: event.target.value })}
+                    >
+                      <option value="route">route</option>
+                      {channel === "testing" || rule.action === "evaluate" ? <option value="evaluate">evaluate</option> : null}
+                      {channel === "testing" || rule.action === "respond" ? <option value="respond">respond</option> : null}
+                      <option value="route-options">route-options</option>
+                      <option value="reject">reject</option>
+                      <option value="predefined">predefined</option>
+                    </select>
                   </label>
                   {/* R4: hide the server select for actions that scrub `server` (predefined / reject /
                       respond) — dead control otherwise. Gating mirrors the domain normalizer (dnsRuleAllowsServer). */}
