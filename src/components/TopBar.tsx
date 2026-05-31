@@ -227,24 +227,25 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="brand-menu-host" ref={brandMenuRef}>
-        <button
-          type="button"
-          className={`brand ${brandMenuOpen ? "brand--open" : ""}`}
-          onClick={() => setBrandMenuOpen((open) => !open)}
-          aria-label="Open sbcv.app menu"
-          aria-haspopup="menu"
-          aria-expanded={brandMenuOpen}
-          data-testid="brand-menu-toggle"
-        >
-          <div className="brand-mark" aria-hidden>
-            <SbcvLogo />
-          </div>
-          <div>
-            <div className="brand-title">sbcv.app</div>
-            <div className="brand-subtitle">sing-box visual config</div>
-          </div>
-          <ChevronDown className="brand-chevron" size={15} aria-hidden />
-        </button>
+        <div className="brand-bar">
+          <button
+            type="button"
+            className={`brand ${brandMenuOpen ? "brand--open" : ""}`}
+            onClick={() => setBrandMenuOpen((open) => !open)}
+            aria-label="Open sbcv.app menu"
+            aria-haspopup="menu"
+            aria-expanded={brandMenuOpen}
+            data-testid="brand-menu-toggle"
+          >
+            <span className="brand-mark" aria-hidden>
+              <SbcvLogo />
+            </span>
+            <span className="brand-title">sbcv</span>
+            <ChevronDown className="brand-chevron" size={15} aria-hidden />
+          </button>
+          {/* Expanded product name as a non-clickable tagline beside the toggle (same pill). */}
+          <span className="brand-tagline">sing-box configuration visualizer</span>
+        </div>
         {brandMenuOpen ? (
           <div className="brand-menu" role="menu" aria-label="sbcv.app menu">
             <div className="brand-menu__intro">

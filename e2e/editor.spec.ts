@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test("stable-first visual editor primary path", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByText("sbcv.app", { exact: true })).toBeVisible();
+  await expect(page.getByText("sbcv", { exact: true })).toBeVisible();
   await expect(page.locator(".react-flow__attribution")).toHaveCount(0);
   await expect(page.getByLabel("Node palette")).toBeVisible();
   await expect(page.getByLabel("Sing-box target")).toHaveValue("1.13-stable");

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
 import { useProjectStore } from "../src/state/useProjectStore";
@@ -16,7 +16,10 @@ describe("L1-brandmenu — brand menu exposes product identity", () => {
     expect(label).toMatch(/open sbcv\.app menu/i);
     expect(label).not.toMatch(/return to home/i);
     fireEvent.click(brand);
-    expect(screen.getByText("sing-box configuration visualizer")).toBeInTheDocument();
+    // The expanded meaning shows both as the always-on brand tagline and in the menu intro; assert the
+    // menu intro specifically (the tagline now carries the same text outside the menu).
+    const menu = screen.getByRole("menu", { name: /sbcv\.app menu/i });
+    expect(within(menu).getByText("sing-box configuration visualizer")).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: /View JSON/i })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: /GitHub/i })).toHaveAttribute(
       "href",
