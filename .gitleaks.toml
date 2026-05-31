@@ -1,0 +1,37 @@
+title = "sbcv gitleaks config"
+
+# Secret rules are intentionally OFF: this repo ships many SAMPLE sing-box configs with fake
+# credentials (uuids, wireguard keys, passwords) that would be ~300 false positives. The vitest suite
+# and code review cover authored code; this gitleaks config targets the LOCAL-PATH leak class + history.
+[extend]
+useDefault = false
+
+# Custom privacy rule: a committed absolute home path leaks the developer's local username.
+# This is what slipped through in a workflow script; gitleaks default rules do NOT cover it.
+# NOTE: gitleaks uses Go RE2 — no lookahead. The CI `/home/runner/` case is excluded via the
+# allowlist regexes below, not in this pattern.
+[[rules]]
+id = "local-home-path"
+description = "Local absolute home path (leaks developer username)"
+regex = '''/(?:Users|home)/[A-Za-z0-9._-]+/'''
+tags = ["privacy", "local-path"]
+
+[allowlist]
+description = "Third-party / test content: external configs, synced upstream docs, test fixtures (fake secrets), and lockfiles"
+paths = [
+  '''docs/upstream/.*''',
+  '''fixtures/.*''',
+  '''tests/.*''',
+  '''.*pnpm-lock\.yaml$''',
+  '''.*\.snap$''',
+  # Untracked local scratch (agent worktrees, deps, build output) — never committed, but excluded so a
+  # filesystem-mode (`--no-git`) run stays clean too.
+  '''\.claude/.*''',
+  '''node_modules/.*''',
+  '''\.tools/.*''',
+  '''dist/.*''',
+  '''\.wrangler/.*''',
+  '''coverage/.*''',
+  '''\.git/.*''',
+]
+regexes = ['''/home/runner/''']

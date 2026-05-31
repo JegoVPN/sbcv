@@ -1,0 +1,15 @@
+#!/bin/sh
+# Block commits that add a local absolute home path (or any gitleaks rule). Install: handled by the
+# `prepare` npm script (sets core.hooksPath=.githooks). Bypass (discouraged): git commit --no-verify
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --config .gitleaks.toml || {
+    echo "gitleaks: commit blocked — a staged change matches a rule (see above)." >&2
+    exit 1
+  }
+else
+  # Fallback when gitleaks is not installed: grep staged additions for /Users/<name>/ or /home/<name>/.
+  if git diff --cached -U0 | grep -E '^\+' | grep -E '/(Users|home)/[A-Za-z0-9._-]+/' | grep -vE '/home/runner/' >/dev/null 2>&1; then
+    echo "pre-commit: a staged line adds a local absolute home path (/Users/<name>/ or /home/<name>/). Use a relative path. (Install gitleaks for full scanning.)" >&2
+    exit 1
+  fi
+fi

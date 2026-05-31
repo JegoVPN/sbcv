@@ -22,7 +22,8 @@
     "validate:external": "node scripts/validate-external-fixtures.mjs && vitest run tests/external-fixtures.test.ts && node scripts/run-external-render-gate.mjs",
     "validate:export-binary": "vitest run tests/export-binary-check.test.ts",
     "test:binaries": "pnpm binaries:install && pnpm validate:export-binary",
-    "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm validate:external && pnpm validate:export-binary && pnpm e2e"
+    "release:check": "pnpm build && pnpm test && pnpm validate:fixtures && pnpm validate:external && pnpm validate:export-binary && pnpm e2e",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
