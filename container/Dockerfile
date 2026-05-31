@@ -67,10 +67,21 @@ COPY --from=binaries /stage/bin/      ./bin/
 COPY --from=build    --chown=sbc:sbc /app/dist ./dist
 COPY --chown=sbc:sbc package.json ./
 
-# Build-time hard fail if any binary cannot actually execute on glibc.
-RUN /app/bin/sing-box-1.12    version | head -n 1 \
- && /app/bin/sing-box-stable  version | head -n 1 \
- && /app/bin/sing-box-testing version | head -n 1
+# Build-time hard fail if any binary cannot actually execute on glibc, and if
+# the naive outbound cannot load its cronet sidecar — the failure that surfaced
+# as "cronet: library not found" when libcronet.so was dropped during install.
+# `check` constructs every outbound, so a naive+quic config exercises the cronet
+# dlopen without needing the network. 1.12 predates the naive outbound, so it is
+# version-checked only.
+RUN /app/bin/sing-box-1.12/sing-box    version | head -n 1 \
+ && /app/bin/sing-box-stable/sing-box  version | head -n 1 \
+ && /app/bin/sing-box-testing/sing-box version | head -n 1 \
+ && test -s /app/bin/sing-box-stable/libcronet.so \
+ && test -s /app/bin/sing-box-testing/libcronet.so \
+ && printf '%s' '{"outbounds":[{"type":"naive","tag":"cronet-smoke","server":"127.0.0.1","server_port":443,"username":"u","password":"p","quic":true,"tls":{"enabled":true,"server_name":"example.com"}}]}' > /tmp/naive-smoke.json \
+ && /app/bin/sing-box-stable/sing-box  check -c /tmp/naive-smoke.json \
+ && /app/bin/sing-box-testing/sing-box check -c /tmp/naive-smoke.json \
+ && rm -f /tmp/naive-smoke.json
 
 USER sbc
 
