@@ -456,6 +456,74 @@ export function InboundSectionsB({
                 />
                 <span>Brutal Debug (verbose congestion-control logging)</span>
               </label>
+              {/* U7b — inbound had no obfs control at all (only the Advanced JSON fallback reached it). Mirror
+                  the outbound obfs fieldset: type salamander/gecko, password, gecko-only min/max packet sizes
+                  (1.14, gated by hysteria2-obfs-packet-size-testing-only). */}
+              {(() => {
+                const obfs = objectField(entity.obfs);
+                const writeObfs = (patch: InspectorEntity) => {
+                  const merged: InspectorEntity = { ...obfs, ...patch };
+                  const cleaned: InspectorEntity = {};
+                  for (const [k, v] of Object.entries(merged)) {
+                    if (v === undefined || v === "") continue;
+                    cleaned[k] = v;
+                  }
+                  updateField(entityRef, "obfs", Object.keys(cleaned).length ? cleaned : undefined);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="inbound-hysteria2-obfs">
+                    <legend>Obfuscator (obfs)</legend>
+                    <label className="field">
+                      <span>Obfuscator Type</span>
+                      <select
+                        value={typeof obfs.type === "string" ? obfs.type : ""}
+                        onChange={(event) => writeObfs({ type: event.target.value || undefined })}
+                      >
+                        <option value="">(disabled)</option>
+                        <option value="salamander">salamander</option>
+                        <option value="gecko">gecko (1.14+ testing)</option>
+                      </select>
+                    </label>
+                    {typeof obfs.type === "string" && obfs.type ? (
+                      <SensitiveTextField
+                        label="Obfuscator Password"
+                        value={typeof obfs.password === "string" ? obfs.password : ""}
+                        onChange={(next) => writeObfs({ password: next || undefined })}
+                      />
+                    ) : null}
+                    {obfs.type === "gecko" ? (
+                      <>
+                        <label className="field">
+                          <span>Min Packet Size (gecko, 1.14)</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            value={typeof obfs.min_packet_size === "number" ? obfs.min_packet_size : ""}
+                            placeholder="512"
+                            onChange={(event) => {
+                              const parsed = parseOptionalNumber(event.target.value);
+                              writeObfs({ min_packet_size: parsed !== undefined && Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined });
+                            }}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Max Packet Size (gecko, 1.14)</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            value={typeof obfs.max_packet_size === "number" ? obfs.max_packet_size : ""}
+                            placeholder="1200"
+                            onChange={(event) => {
+                              const parsed = parseOptionalNumber(event.target.value);
+                              writeObfs({ max_packet_size: parsed !== undefined && Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined });
+                            }}
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                  </fieldset>
+                );
+              })()}
             </>
           ) : null}
           {entityType === "naive" ? (

@@ -78,6 +78,8 @@ export const inboundHandledFields: ReadonlySet<string> = new Set([
   "quic_congestion_control",
   "masquerade",
   "brutal_debug",
+  // U7b — inbound hysteria2 obfs now has a structured control (mirrors outbound), so handle it.
+  "obfs",
   "fallback",
   "fallback_for_alpn",
   "override_address",
