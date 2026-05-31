@@ -3090,6 +3090,45 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A13: W9 unknown-field linter now covers rule-sets (generator layer) ─────────────────────────
+  // The unknown-field linter scanned rule-sets but knownFieldsFor('rule-set', 'remote'|'local'|'inline')
+  // returned null (the type enum lives in rule-set/index.md, which the generator skipped), so rule-sets were
+  // silently un-linted while the binary FATALs unknown fields ("json: unknown field"). A13 fixes the
+  // generator to emit the index.md field union for remote/local/inline. Union (not per-section) so a valid
+  // field for one sub-type (remote's `url`) is never flagged on another.
+  describe("A13: rule-set unknown-field coverage", () => {
+    const codes = (config: unknown, channel: "stable" | "testing") =>
+      validateConfig(config as SingBoxConfig, channel).filter((d) => d.code === "unknown-field").map((d) => d.path);
+
+    it("flags a bogus top-level rule-set field (binary FATALs 'json: unknown field')", () => {
+      const c = { route: { rule_set: [{ type: "remote", tag: "geo", url: "https://example.com/g.srs", totally_made_up_field: true }] } };
+      expect(codes(c, "testing")).toContain("/route/rule_set/0/totally_made_up_field");
+    });
+
+    it("does NOT flag legal remote fields (format, url, download_detour, update_interval)", () => {
+      const c = { outbounds: [{ type: "direct", tag: "out" }], route: { rule_set: [{ type: "remote", tag: "geo", format: "binary", url: "https://example.com/g.srs", download_detour: "out", update_interval: "1d" }] } };
+      expect(codes(c, "testing")).toEqual([]);
+      expect(codes(c, "stable")).toEqual([]);
+    });
+
+    it("does NOT flag legal local fields (format, path)", () => {
+      const c = { route: { rule_set: [{ type: "local", tag: "geo", format: "binary", path: "/etc/geo.srs" }] } };
+      expect(codes(c, "testing")).toEqual([]);
+      expect(codes(c, "stable")).toEqual([]);
+    });
+
+    it("does NOT flag legal inline fields (rules)", () => {
+      const c = { route: { rule_set: [{ type: "inline", tag: "geo", rules: [{ domain: ["example.com"] }] }] } };
+      expect(codes(c, "testing")).toEqual([]);
+      expect(codes(c, "stable")).toEqual([]);
+    });
+
+    it("does NOT flag a remote rule-set http_client (testing field)", () => {
+      const c = { http_clients: [{ tag: "hc1" }], route: { rule_set: [{ type: "remote", tag: "geo", url: "https://example.com/g.srs", http_client: "hc1" }] } };
+      expect(codes(c, "testing")).toEqual([]);
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.

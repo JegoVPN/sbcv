@@ -425,6 +425,36 @@ export const DOC_FIELD_NAMES = {
         "source-format": [
           "version",
           "rules"
+        ],
+        "remote": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "download_detour",
+          "update_interval"
+        ],
+        "local": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "download_detour",
+          "update_interval"
+        ],
+        "inline": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "download_detour",
+          "update_interval"
         ]
       },
       "endpoint": {
@@ -1078,6 +1108,39 @@ export const DOC_FIELD_NAMES = {
         "source-format": [
           "version",
           "rules"
+        ],
+        "remote": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "http_client",
+          "update_interval",
+          "download_detour"
+        ],
+        "local": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "http_client",
+          "update_interval",
+          "download_detour"
+        ],
+        "inline": [
+          "type",
+          "tag",
+          "rules",
+          "format",
+          "path",
+          "url",
+          "http_client",
+          "update_interval",
+          "download_detour"
         ]
       },
       "endpoint": {
