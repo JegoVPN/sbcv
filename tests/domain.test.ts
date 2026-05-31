@@ -2656,36 +2656,38 @@ describe("canonical sing-box domain model", () => {
     expect(testing.some((diagnostic) => diagnostic.code === "rule-set-download-detour-deprecated")).toBe(true);
   });
 
-  it("warns when an outbound or dns-server uses a domain host without a domain_resolver", () => {
-    const config: ReturnType<typeof createStableTunSplitConfig> = createStableTunSplitConfig();
-    const next: typeof config = {
-      ...config,
-      outbounds: [
-        ...(config.outbounds ?? []),
-        { type: "trojan", tag: "remote-host", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } },
-      ],
-      dns: {
-        ...(config.dns ?? {}),
-        servers: [
-          ...(config.dns?.servers ?? []),
-          { type: "tls", tag: "remote-doh", server: "cloudflare-dns.com", server_port: 853 },
-        ],
-      },
-    };
+  it("flags a domain host without a resolver ONLY when none is reachable (no per-entity domain_resolver, no route.default_domain_resolver, and not a single DNS server)", () => {
+    // dial.md: "domain_resolver or route.default_domain_resolver is optional when only one DNS server is
+    // configured." So a domain server is covered when route.default_domain_resolver is set OR exactly one
+    // DNS server exists; the warning must only fire when neither holds.
+    const domainOutbound: Record<string, unknown> = { type: "trojan", tag: "remote-host", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } };
+    const twoDnsServers: Record<string, unknown>[] = [
+      { type: "local", tag: "LocalDNS" },
+      { type: "tls", tag: "RemoteDNS", server: "cloudflare-dns.com", server_port: 853 },
+    ];
+    const codesOf = (c: unknown) => validateConfig(c as ReturnType<typeof createStableTunSplitConfig>, "testing").map((d) => d.code);
 
-    const diagnostics = validateConfig(next, "testing");
-    expect(diagnostics.some((diagnostic) => diagnostic.code === "outbound-domain-without-resolver")).toBe(true);
-    expect(diagnostics.some((diagnostic) => diagnostic.code === "dns-server-domain-without-resolver")).toBe(true);
+    // A — route.default_domain_resolver set + 2 DNS servers (the real-world case the user hit): COVERED.
+    const withDefault = { ...createStableTunSplitConfig(), outbounds: [domainOutbound], dns: { servers: twoDnsServers }, route: { default_domain_resolver: "LocalDNS" } };
+    expect(codesOf(withDefault)).not.toContain("outbound-domain-without-resolver");
+    expect(codesOf(withDefault)).not.toContain("dns-server-domain-without-resolver");
 
-    const ipOnly: typeof config = {
-      ...config,
-      outbounds: [
-        ...(config.outbounds ?? []),
-        { type: "trojan", tag: "ip-host", server: "1.1.1.1", server_port: 443, password: "x", tls: { enabled: true } },
-      ],
-    };
-    const ipDiagnostics = validateConfig(ipOnly, "testing");
-    expect(ipDiagnostics.some((diagnostic) => diagnostic.code === "outbound-domain-without-resolver")).toBe(false);
+    // B — no default + 2 DNS servers: genuine gap, warning fires.
+    const noDefault = { ...withDefault, route: {} };
+    expect(codesOf(noDefault)).toContain("outbound-domain-without-resolver");
+    expect(codesOf(noDefault)).toContain("dns-server-domain-without-resolver");
+
+    // C — no default but exactly ONE DNS server: implicit single-server fallback, no warning.
+    const singleServer = { ...noDefault, dns: { servers: [{ type: "local", tag: "OnlyDNS" }] as never } };
+    expect(codesOf(singleServer)).not.toContain("outbound-domain-without-resolver");
+
+    // D — a per-outbound domain_resolver covers it even with no default + multiple servers.
+    const perOutbound = { ...noDefault, outbounds: [{ ...domainOutbound, domain_resolver: "RemoteDNS" }] as never };
+    expect(codesOf(perOutbound)).not.toContain("outbound-domain-without-resolver");
+
+    // E — an IP server never warns.
+    const ipServer = { ...noDefault, outbounds: [{ type: "trojan", tag: "ip-host", server: "1.1.1.1", server_port: 443, password: "x", tls: { enabled: true } }] as never };
+    expect(codesOf(ipServer)).not.toContain("outbound-domain-without-resolver");
   });
 
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
