@@ -193,13 +193,14 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       "missing-endpoint-detour",
       "missing-service-detour",
       "ntp-detour-missing",
-      "clash-api-download-detour-missing",
       "rule-set-download-detour-missing",
       "v2ray-stats-outbound-missing",
     ],
-    // A1: a dangling route-rule `outbound` (matcher + action form) is check+run clean — the rule just
-    // never matches — so it warns instead of erroring. Coverage stays bound, at warning level.
-    staleWarningCodes: ["missing-rule-outbound"],
+    // A1: dangling route-rule `outbound` (matcher + action form) is check+run clean (rule never matches).
+    // A4: dangling clash_api `external_ui_download_detour` is check+run clean and the doc says "Default
+    // outbound will be used if empty" — the detour is only lazily resolved when downloading external UI.
+    // Both warn instead of erroring; coverage stays bound, at warning level.
+    staleWarningCodes: ["missing-rule-outbound", "clash-api-download-detour-missing"],
     assertRenamed: (config) => {
       expect(config.route?.final).toBe("proxy-renamed");
       expect(config.route?.rules?.[0]?.outbound).toBe("proxy-renamed");
@@ -543,6 +544,17 @@ describe("canonical sing-box domain model", () => {
     it("A3 control: dangling dns-rule rule_set stays an error (1.14 check resolves it — not downgraded)", () => {
       const diag = diagOf(dnsWith({ rule_set: "ghost-set", server: "d1" }), "missing-dns-rule-set");
       expect(diag?.level).toBe("error");
+    });
+
+    // A4 — a dangling clash_api `external_ui_download_detour` is a warning: `check` exit 0 + `run`
+    // started on all three (the detour is only lazily resolved when downloading the external UI), and the
+    // doc documents the empty default ("Default outbound will be used if empty").
+    it("A4: dangling clash_api external_ui_download_detour warns, not errors", () => {
+      const diag = diagOf(
+        { outbounds: [{ type: "direct", tag: "direct" }], experimental: { clash_api: { external_controller: "127.0.0.1:9090", external_ui_download_detour: "ghost-detour" } } },
+        "clash-api-download-detour-missing",
+      );
+      expect(diag?.level).toBe("warning");
     });
   });
 
