@@ -574,12 +574,14 @@ export function validateConfig(
     if (service.type === "ssm-api") {
       const servers = service.servers && typeof service.servers === "object" && !Array.isArray(service.servers) ? service.servers : {};
       if (Object.keys(servers).length === 0) {
+        // A15 (long-chain audit): error, not warning. `servers` is Required; an empty/missing map makes
+        // sing-box panic (SIGSEGV, status 2) on all three versions — net effect is a never-runnable config.
         push(
           diagnostics,
-          "warning",
+          "error",
           "ssm-api-no-managed-inbound",
           `/services/${index}/servers`,
-          "SSM API needs at least one managed Shadowsocks inbound mapping.",
+          "SSM API requires at least one managed Shadowsocks inbound in `servers` — sing-box crashes (panic) when it is empty or missing.",
         );
       }
       Object.entries(servers).forEach(([path, tag]) => {
@@ -593,12 +595,14 @@ export function validateConfig(
             `SSM API endpoint "${path}" references missing inbound "${tag}".`,
           );
         } else if (inbound.type !== "shadowsocks" || !inbound.managed) {
+          // A14 (long-chain audit): error, not warning. An SSM server pointing at a non-shadowsocks or
+          // non-managed inbound is a FATAL "inbound/... is not a SSM server" on all three versions.
           push(
             diagnostics,
-            "warning",
+            "error",
             "ssm-api-inbound-not-managed-shadowsocks",
             `/services/${index}/servers/${path}`,
-            `SSM API endpoint "${path}" should reference a Shadowsocks inbound with managed enabled.`,
+            `SSM API endpoint "${path}" must reference a Shadowsocks inbound with \`managed: true\` — sing-box rejects "${tag}" otherwise ("inbound/... is not a SSM server").`,
           );
         }
       });
