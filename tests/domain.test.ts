@@ -140,11 +140,13 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     nextTag: "tun-renamed",
     paths: ["/route/rules/*/inbound", "/dns/rules/*/inbound", "/inbounds/*/detour", "/services/*/servers", "/experimental/v2ray_api/stats/inbounds"],
     staleDiagnosticCodes: [
-      "missing-route-rule-inbound",
       "missing-dns-rule-inbound",
       "missing-ssm-api-inbound",
       "v2ray-stats-inbound-missing",
     ],
+    // A2: a dangling route-rule `inbound` matcher is check+run clean — the rule just never matches — so it
+    // warns instead of erroring. Coverage stays bound, at warning level.
+    staleWarningCodes: ["missing-route-rule-inbound"],
     assertRenamed: (config) => {
       expect(config.route?.rules?.[0]?.inbound).toEqual(["tun-renamed"]);
       expect(config.dns?.rules?.[0]?.inbound).toEqual(["tun-renamed"]);
@@ -507,6 +509,13 @@ describe("canonical sing-box domain model", () => {
     it("A1 control: dangling route.final stays an error (run FATAL — not downgraded)", () => {
       const diag = diagOf(routeWith({ final: "ghost" }), "missing-route-final");
       expect(diag?.level).toBe("error");
+    });
+
+    // A2 — a route rule's dangling `inbound` matcher is a warning, not an error: binary `check` exit 0
+    // and `run` "sing-box started" on all of 1.12/1.13/1.14 (the rule simply never matches).
+    it("A2: dangling route-rule inbound matcher warns, not errors", () => {
+      const diag = diagOf(routeWith({ rules: [{ inbound: ["ghost-in"], outbound: "direct" }], final: "direct" }), "missing-route-rule-inbound");
+      expect(diag?.level).toBe("warning");
     });
   });
 
