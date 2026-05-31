@@ -24,4 +24,13 @@ describe("targets", () => {
     expect(resolveTarget("1.13 stable").binary).toBe("sing-box-stable");
     expect(resolveTarget("1.14 testing").binary).toBe("sing-box-testing");
   });
+
+  it("resolveTarget points binaryPath inside the per-version directory", () => {
+    // The binary must be invoked from its own directory so the naive outbound
+    // can dlopen the sibling libcronet sidecar (see install-binaries.sh).
+    for (const target of SUPPORTED_TARGETS) {
+      const spec = resolveTarget(target);
+      expect(spec.binaryPath.endsWith(`${spec.binary}/sing-box`)).toBe(true);
+    }
+  });
 });

@@ -72,17 +72,40 @@ download_binary() {
     exit 1
   fi
   echo "==> Found binary at: ${binary_path}"
+  extracted_dir="$(dirname "$binary_path")"
 
-  mv "$binary_path" "${BIN_DIR}/${outname}"
-  chmod 0755 "${BIN_DIR}/${outname}"
+  # Each version gets its own directory so its cronet sidecar (below) sits beside
+  # the matching binary. sing-box 1.13+ purego Linux/Windows builds load cronet
+  # via dlopen() from the binary's own directory at runtime; a flat shared layout
+  # could mismatch cronet across versions.
+  target_dir="${BIN_DIR}/${outname}"
+  rm -rf "$target_dir"
+  mkdir -p "$target_dir"
+
+  mv "$binary_path" "${target_dir}/sing-box"
+  chmod 0755 "${target_dir}/sing-box"
+
+  # The naive outbound (since 1.13.0) dlopen()s the cronet library from the
+  # binary's directory. The release tarball ships it next to the binary; carry it
+  # over so naive (including quic) initializes instead of failing at construction
+  # with "cronet: library not found". 1.12 ships no cronet (no naive outbound).
+  for lib in libcronet.so libcronet.dll; do
+    lib_path="$(find "$extracted_dir" -maxdepth 1 -type f -name "$lib" 2>/dev/null | head -n 1)"
+    if [ -n "$lib_path" ]; then
+      mv "$lib_path" "${target_dir}/${lib}"
+      chmod 0644 "${target_dir}/${lib}"
+      echo "==> Installed ${target_dir}/${lib} (naive cronet sidecar)"
+    fi
+  done
+
   rm -rf "$tmp_dir"
 
   # Sanity-check immediately so a silent mv failure cannot mask a missing binary.
-  if [ ! -x "${BIN_DIR}/${outname}" ]; then
-    echo "FATAL: ${BIN_DIR}/${outname} is not executable after install" >&2
+  if [ ! -x "${target_dir}/sing-box" ]; then
+    echo "FATAL: ${target_dir}/sing-box is not executable after install" >&2
     exit 1
   fi
-  echo "==> Installed ${BIN_DIR}/${outname}"
+  echo "==> Installed ${target_dir}/sing-box"
 }
 
 download_binary "$SB_112_VERSION"     sing-box-1.12
@@ -93,7 +116,8 @@ echo
 echo "==> File sanity (binaries are not executed here: sing-box 1.13+ links"
 echo "    glibc + cronet, which the alpine build stage cannot run; the final"
 echo "    Debian-based runtime stage validates execution.)"
-for f in "${BIN_DIR}/sing-box-1.12" "${BIN_DIR}/sing-box-stable" "${BIN_DIR}/sing-box-testing"; do
+for d in sing-box-1.12 sing-box-stable sing-box-testing; do
+  f="${BIN_DIR}/${d}/sing-box"
   if [ ! -s "$f" ] || [ ! -x "$f" ]; then
     echo "FATAL: $f missing or not executable" >&2
     exit 1
@@ -101,3 +125,17 @@ for f in "${BIN_DIR}/sing-box-1.12" "${BIN_DIR}/sing-box-stable" "${BIN_DIR}/sin
   size="$(wc -c < "$f")"
   echo "  $f: ${size} bytes, executable bit ok"
 done
+
+# sing-box 1.13+ (stable, testing) must ship the cronet sidecar or the naive
+# outbound fails at construction with "cronet: library not found" — the exact
+# failure this layout fixes. 1.12 has no naive outbound, so it needs no sidecar.
+if [ "$TARGETOS" = "linux" ]; then
+  for d in sing-box-stable sing-box-testing; do
+    lib="${BIN_DIR}/${d}/libcronet.so"
+    if [ ! -s "$lib" ]; then
+      echo "FATAL: $lib missing — naive outbound would fail with 'cronet: library not found'" >&2
+      exit 1
+    fi
+    echo "  $lib: $(wc -c < "$lib") bytes, present"
+  done
+fi
