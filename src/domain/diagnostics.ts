@@ -97,6 +97,36 @@ function isIpv6Cidr(value: string): boolean {
   return groups.every((g) => g.length <= 4);
 }
 
+/** Heuristic: does this rule-set carry IP (geoip-style) content? Used to flag legacy address-filter DNS
+ *  rules that match on a rule-set's IPs without match_response (deprecated 1.14, removed 1.16). Remote/
+ *  local content is opaque, so fall back to the conventional `geoip` naming; inline rule-sets are read
+ *  directly. */
+function ruleSetIsIpBased(ruleSet: Record<string, unknown>): boolean {
+  const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : "";
+  const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
+  if (/geoip/i.test(tag) || /geoip/i.test(url)) return true;
+  const inlineRules = Array.isArray(ruleSet.rules) ? ruleSet.rules : [];
+  return inlineRules.some((r) => {
+    const o = r as Record<string, unknown> | null;
+    return (Array.isArray(o?.ip_cidr) && o.ip_cidr.length > 0) || o?.ip_is_private !== undefined;
+  });
+}
+
+/** All rule-set tags a DNS rule references, recursing into `logical` sub-rules (where geoip refs commonly
+ *  live, e.g. an `and`-rule combining a geosite and a geoip rule-set). */
+function collectDnsRuleSetRefs(rule: Record<string, unknown>): string[] {
+  const out: string[] = [];
+  const rs = rule.rule_set;
+  if (typeof rs === "string") out.push(rs);
+  else if (Array.isArray(rs)) for (const x of rs) if (typeof x === "string") out.push(x);
+  if (Array.isArray(rule.rules)) {
+    for (const sub of rule.rules) {
+      if (sub && typeof sub === "object") out.push(...collectDnsRuleSetRefs(sub as Record<string, unknown>));
+    }
+  }
+  return out;
+}
+
 function push(
   diagnostics: Diagnostic[],
   level: Diagnostic["level"],
@@ -368,6 +398,37 @@ export function validateConfig(
   const dnsRules = listItems(config.dns?.rules);
   const endpoints = listItems(config.endpoints);
   const services = listItems(config.services);
+
+  // Rule-sets that match on IPs (geoip / inline ip_cidr) — referencing one in a DNS rule without
+  // match_response is the legacy address-filter pattern deprecated in 1.14 (see the DNS-rule loop).
+  const ipBasedRuleSetTags = new Set<string>();
+  for (const rs of listItems(config.route?.rule_set)) {
+    const o = rs as Record<string, unknown>;
+    const t = typeof o.tag === "string" ? o.tag : "";
+    if (t && ruleSetIsIpBased(o)) ipBasedRuleSetTags.add(t);
+  }
+
+  // Deprecation (run-only — `check` is clean): a remote rule-set with neither http_client nor
+  // download_detour downloads via the implicit default outbound, deprecated in sing-box 1.14 and removed
+  // in 1.16. Suppressed when route.default_http_client is set. Emitted once (sing-box logs it once).
+  if (
+    atLeast(version, "1.14") &&
+    (config.route as Record<string, unknown> | undefined)?.default_http_client === undefined
+  ) {
+    const usesImplicit = listItems(config.route?.rule_set).some((rs) => {
+      const o = rs as Record<string, unknown>;
+      return o.type === "remote" && o.download_detour === undefined && o.http_client === undefined;
+    });
+    if (usesImplicit) {
+      push(
+        diagnostics,
+        "warning",
+        "rule-set-implicit-http-client-deprecated",
+        "/route",
+        "One or more remote rule-sets download via the implicit default outbound (no http_client or download_detour, and no route.default_http_client). This is deprecated in sing-box 1.14 and removed in 1.16. Set route.default_http_client, or give each remote rule-set an http_client.",
+      );
+    }
+  }
 
   const routeFinal = config.route?.final;
   if (routeFinal && !outboundTags.has(routeFinal)) {
@@ -840,13 +901,32 @@ export function validateConfig(
     const hasIpCidr = Array.isArray(ruleObj.ip_cidr) && ruleObj.ip_cidr.length > 0;
     const hasIpIsPrivate = ruleObj.ip_is_private !== undefined;
     const matchResponse = ruleObj.match_response === true;
-    if ((hasIpCidr || hasIpIsPrivate) && !matchResponse) {
+    // Legacy address-filter: matching on response IPs — via ip_cidr / ip_is_private OR via an IP-based
+    // (geoip) rule-set, including inside `logical` sub-rules — without match_response. Deprecated in 1.14,
+    // removed in 1.16. run-only (check is clean) and NOT deprecated pre-1.14, so gate to 1.14+ to avoid a
+    // false positive on the 1.12/1.13 targets where this is the normal form.
+    const refsIpRuleSet = collectDnsRuleSetRefs(ruleObj).some((t) => ipBasedRuleSetTags.has(t));
+    if (atLeast(version, "1.14") && (hasIpCidr || hasIpIsPrivate || refsIpRuleSet) && !matchResponse) {
+      const via =
+        hasIpCidr || hasIpIsPrivate
+          ? "address-filter fields (ip_cidr / ip_is_private)"
+          : "an IP-based rule-set (e.g. geoip)";
       push(
         diagnostics,
         "warning",
         "dns-rule-legacy-address-filter-deprecated",
         `/dns/rules/${index}`,
-        `DNS rule ${index + 1} uses address-filter fields (ip_cidr / ip_is_private) without match_response (sing-box 1.14). Migrate to an \`evaluate\` action + a follow-up rule with \`match_response: true\`.`,
+        `DNS rule ${index + 1} matches on ${via} without match_response — legacy address-filter behavior is deprecated in sing-box 1.14 and removed in 1.16. Migrate to an \`evaluate\` action + a follow-up rule with \`match_response: true\`.`,
+      );
+    }
+    // `strategy` DNS rule action option — deprecated in 1.14, removed in 1.16. run-only warning.
+    if (atLeast(version, "1.14") && ruleObj.strategy !== undefined) {
+      push(
+        diagnostics,
+        "warning",
+        "dns-rule-legacy-strategy-deprecated",
+        `/dns/rules/${index}/strategy`,
+        `DNS rule ${index + 1} uses the \`strategy\` DNS rule action option, deprecated in sing-box 1.14 and removed in 1.16. Express the query strategy via rule items (ip_version / query_type) instead.`,
       );
     }
     const hasModernIpField = ruleObj.ip_version !== undefined || ruleObj.query_type !== undefined;
