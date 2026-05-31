@@ -8,21 +8,33 @@
 # against glibc with libcronet.so as a side car, and musl/alpine cannot
 # resolve the ELF interpreter even though the binary file is present.
 #
-# Cache-bust marker (touch to force a fresh image hash): 2026-05-27-2
+# Cache-bust marker (touch to force a fresh image hash): 2026-06-01-1
+#
+# 2026-06-01: the #320 merge built green but Cloudflare served a STALE image
+# (the running container still failed naive+quic with "cronet: library not
+# found" even after a cold start), so the per-version layout + libcronet
+# sidecar never reached production. Bumping this marker AND threading CACHE_BUST
+# through stage 1 forces the binaries stage to actually re-run install-binaries.sh
+# instead of reusing a cached layer.
 
+ARG CACHE_BUST=2026-06-01-1
 ARG SB_112_VERSION=1.12.25
 ARG SB_STABLE_VERSION=1.13.12
 ARG SB_TESTING_VERSION=1.14.0-alpha.25
 
 # ---- Stage 1: download + extract sing-box binaries
 FROM alpine:3.20 AS binaries
+ARG CACHE_BUST
 ARG SB_112_VERSION
 ARG SB_STABLE_VERSION
 ARG SB_TESTING_VERSION
 ARG TARGETOS=linux
 ARG TARGETARCH=amd64
 
-RUN apk add --no-cache curl tar ca-certificates coreutils
+# Referencing CACHE_BUST in a RUN ties this layer's cache key to the marker, so
+# bumping it invalidates the download/install layers and re-runs the install.
+RUN echo "cache-bust: ${CACHE_BUST}" \
+ && apk add --no-cache curl tar ca-certificates coreutils
 
 WORKDIR /stage
 COPY scripts/install-binaries.sh ./install-binaries.sh
