@@ -54,7 +54,7 @@ export function RuleSetInspector({
               {channel === "testing" && entity.download_detour ? (
                 <PlatformBanner
                   kind="deprecated"
-                  text="`download_detour` is deprecated in sing-box 1.14.0 (removed in 1.16.0). Use an HTTP Client (`http_client`) instead."
+                  text="`download_detour` is deprecated in sing-box 1.14.0 (removed in 1.16.0). Use an HTTP Client (`http_client`) instead. Create one in the HTTP Client section below, then select it."
                 />
               ) : null}
               <label className="field">

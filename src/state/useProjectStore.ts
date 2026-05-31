@@ -185,6 +185,12 @@ type ProjectStore = {
   connectPorts: (connection: PortConnection) => void;
   togglePortConnection: (nodeId: string, direction: PortDirection, port: NodePortAction) => void;
   updateField: (ref: EntityRef, field: string, value: unknown) => void;
+  /**
+   * U1 — create a fresh top-level http_clients[] entry and wire `ref.field` (http_client /
+   * default_http_client) to its tag, in one update. Discoverability affordance for the rule-set
+   * download_detour → HTTP Client migration: testing-only, keeps the current selection.
+   */
+  createHttpClientForField: (ref: EntityRef, field: string) => void;
   changeEntityType: (ref: EntityRef, nextType: string) => void;
   renameTag: (kind: ReferenceKind, oldTag: string, newTag: string) => void;
   deleteEntity: (ref: EntityRef) => void;
@@ -1553,6 +1559,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   updateField: (ref, field, value) =>
     set((state) => sync(updateEntityField(state.config, ref, field, value), state.channel, state.version)),
+  createHttpClientForField: (ref, field) =>
+    set((state) => {
+      // http_clients[] is sing-box 1.14+ — creatable on testing only (mirrors the createFromPalette
+      // gate). The whole http-client card is testing-only, so this is defense-in-depth.
+      if (state.channel !== "testing") return {};
+      const config = addHttpClient(state.config);
+      const newTag = config.http_clients?.[config.http_clients.length - 1]?.tag;
+      if (!newTag) return {};
+      const next = updateEntityField(config, ref, field, newTag);
+      // Keep the current selection (stay on the rule-set; do NOT navigate to the new http-client node).
+      return { ...sync(next, state.channel, state.version), selectedId: state.selectedId };
+    }),
   changeEntityType: (ref, nextType) =>
     set((state) => {
       if (
