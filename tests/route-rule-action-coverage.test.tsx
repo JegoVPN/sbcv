@@ -2,7 +2,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { App } from "../src/App";
+import { validateConfig } from "../src/domain/diagnostics";
+import type { SingBoxChannel, SingBoxConfig } from "../src/domain/types";
 import { useProjectStore } from "../src/state/useProjectStore";
+
+function routeCodes(config: SingBoxConfig, channel: SingBoxChannel, version?: string) {
+  return validateConfig(config, channel, version).map((d) => d.code);
+}
 
 // U6a — per-action coverage gaps in the route/DNS rule inspectors (route/rule_action.md, dns/rule_action.md):
 //  - route `resolve` exposed only server+strategy; disable_cache/rewrite_ttl/client_subnet (1.12) and
@@ -124,6 +130,59 @@ describe("U6a — route/DNS rule action coverage", () => {
       openRoute({ inbound: ["in"], action: "resolve", disable_cache: true, client_subnet: "10.0.0.0/8" }, "testing");
       expect(screen.getAllByLabelText(/Disable Cache/i)).toHaveLength(1);
       expect(screen.getAllByLabelText(/Client Subnet/i)).toHaveLength(1);
+    });
+  });
+
+  // U6b — route-options subfields + tls_spoof/tls_spoof_method (route/rule_action.md).
+  describe("route-options subfields (U6b)", () => {
+    it("edits the base route-options subfields (udp_connect / udp_timeout / tls_record_fragment / tls_fragment_fallback_delay / fallback_network_type)", () => {
+      openRoute({ inbound: ["in"], action: "route-options" });
+      const udpConnect = screen.getByLabelText(/UDP Connect/i) as HTMLInputElement;
+      expect(udpConnect.type).toBe("checkbox");
+      fireEvent.click(udpConnect);
+      expect(routeRule()?.udp_connect).toBe(true);
+
+      fireEvent.change(screen.getByLabelText(/UDP Timeout/i), { target: { value: "5m" } });
+      expect(routeRule()?.udp_timeout).toBe("5m");
+
+      fireEvent.change(screen.getByLabelText(/TLS Record Fragment/i), { target: { value: "1" } });
+      expect(routeRule()?.tls_record_fragment).toBe("1");
+
+      fireEvent.change(screen.getByLabelText(/TLS Fragment Fallback Delay/i), { target: { value: "500ms" } });
+      expect(routeRule()?.tls_fragment_fallback_delay).toBe("500ms");
+
+      fireEvent.change(screen.getByLabelText(/Fallback Network Type/i), { target: { value: "wifi, cellular" } });
+      expect(routeRule()?.fallback_network_type).toEqual(["wifi", "cellular"]);
+    });
+
+    it("channel-gates tls_spoof / tls_spoof_method to testing", () => {
+      openRoute({ inbound: ["in"], action: "route-options" }, "stable");
+      expect(screen.queryByLabelText(/TLS Spoof SNI/i)).toBeNull();
+      expect(screen.queryByLabelText(/TLS Spoof Method/i)).toBeNull();
+    });
+
+    it("shows + edits tls_spoof / tls_spoof_method on testing", () => {
+      openRoute({ inbound: ["in"], action: "route-options" }, "testing");
+      fireEvent.change(screen.getByLabelText(/TLS Spoof SNI/i), { target: { value: "example.com" } });
+      expect(routeRule()?.tls_spoof).toBe("example.com");
+
+      const method = screen.getByLabelText(/TLS Spoof Method/i) as HTMLSelectElement;
+      const values = Array.from(method.options).map((o) => o.value);
+      expect(values).toEqual(["wrong-sequence", "wrong-checksum", "wrong-ack", "wrong-md5", "wrong-timestamp"]);
+      fireEvent.change(method, { target: { value: "wrong-checksum" } });
+      expect(routeRule()?.tls_spoof_method).toBe("wrong-checksum");
+    });
+
+    it("keeps an imported tls_spoof value editable on stable (reachability)", () => {
+      openRoute({ inbound: ["in"], action: "route-options", tls_spoof: "example.com" }, "stable");
+      expect((screen.getByLabelText(/TLS Spoof SNI/i) as HTMLInputElement).value).toBe("example.com");
+    });
+
+    it("flags tls_spoof / tls_spoof_method on a pre-1.14 target", () => {
+      const GATE = "route-rule-tls-spoof-1-14-only";
+      const config = { route: { rules: [{ inbound: ["in"], action: "route-options", tls_spoof: "example.com" }] } } as unknown as SingBoxConfig;
+      expect(routeCodes(config, "stable", "1.13")).toContain(GATE);
+      expect(routeCodes(config, "testing", "1.14")).not.toContain(GATE);
     });
   });
 });

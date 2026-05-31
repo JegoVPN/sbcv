@@ -422,6 +422,15 @@ export function validateConfig(
         push(diagnostics, "error", "route-rule-interface-address-1-13-only", `/route/rules/${index}`, `Route rule ${index + 1} sets interface_address / network_interface_address / default_interface_address, which are sing-box 1.13+; ${version} rejects them ("unknown field").`);
       }
     }
+    // 1.14-added route-options features — error on a pre-1.14 target (route/rule_action.md tls_spoof /
+    // tls_spoof_method Since 1.14.0). Like the dns-rule-action-1-14-only / route-rule-bypass gates, an
+    // unknown field hard-blocks decode, so this is an error rather than an advisory.
+    if (!atLeast(version, "1.14")) {
+      const ruleObj = rule as Record<string, unknown>;
+      if (ruleObj.tls_spoof !== undefined || ruleObj.tls_spoof_method !== undefined) {
+        push(diagnostics, "error", "route-rule-tls-spoof-1-14-only", `/route/rules/${index}`, `Route rule ${index + 1} sets tls_spoof / tls_spoof_method, which are sing-box 1.14+; ${version} rejects them ("unknown field").`);
+      }
+    }
   });
 
   // 1.13-added local DNS prefer_go (dns/server/local.md, Since 1.13.0) — warn on a pre-1.13 target. (C7-C)
