@@ -32,8 +32,14 @@ test("brand toggle highlights with #292B2D only while hovering the toggle region
   await expect(brand).toHaveCSS("background-color", TRANSPARENT);
 
   // Open the menu, then move the pointer away → the toggle does not stay highlighted when not hovered.
+  // NOTE: here the assertion target (TRANSPARENT) equals the *start* of the hover-release transition, so
+  // `toHaveCSS` would greedily match the opening transient frame and pass even with the bug present. Wait
+  // out the 120ms transition and read the SETTLED background once, so a regressed `.brand--open` fill
+  // (which holds the toggle at #292B2D) is actually caught.
   await toggle.click();
   await expect(page.getByRole("menu", { name: /sbcv\.app menu/i })).toBeVisible();
   await page.mouse.move(5, 5);
-  await expect(brand).toHaveCSS("background-color", TRANSPARENT);
+  await page.waitForTimeout(220);
+  const openAwayBg = await brand.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(openAwayBg).toBe(TRANSPARENT);
 });
