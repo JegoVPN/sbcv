@@ -1098,7 +1098,11 @@ describe("canonical sing-box domain model", () => {
     expect(v113).not.toContain("endpoint-tailscale-system-interface-1-13-only");
   });
 
-  it("warns when a hosts DNS server has no predefined or path", () => {
+  it("does NOT warn about an empty hosts DNS server (path defaults to /etc/hosts)", () => {
+    // dns/server/hosts.md: `path` defaults to /etc/hosts (the Windows system hosts file on Windows). So a
+    // hosts server with no predefined entries and no explicit path is a valid, purposeful "serve the system
+    // hosts file" config — it does NOT "match nothing", so the old dns-server-hosts-empty warning was both
+    // noise and factually wrong, and was removed.
     const config = createStableTunSplitConfig();
     config.dns = {
       ...config.dns,
@@ -1107,13 +1111,6 @@ describe("canonical sing-box domain model", () => {
         { type: "hosts", tag: "empty-hosts" } as never,
       ],
     };
-    expect(
-      validateConfig(config, "stable").some((finding) => finding.code === "dns-server-hosts-empty"),
-    ).toBe(true);
-
-    (config.dns!.servers as Array<Record<string, unknown>>)[
-      (config.dns!.servers as Array<Record<string, unknown>>).length - 1
-    ]!.path = "/etc/hosts";
     expect(
       validateConfig(config, "stable").some((finding) => finding.code === "dns-server-hosts-empty"),
     ).toBe(false);
@@ -2027,7 +2024,7 @@ describe("canonical sing-box domain model", () => {
     expect(codes).toContain("tuic-udp-mode-conflict");
   });
 
-  it("flags urltest missing url + invalid scheme", () => {
+  it("flags an invalid urltest url scheme but NOT a missing url (url has a documented default)", () => {
     const base = createStableTunSplitConfig();
     const config = {
       ...base,
@@ -2038,7 +2035,9 @@ describe("canonical sing-box domain model", () => {
       ],
     } as typeof base;
     const codes = validateConfig(config, "stable").map((d) => d.code);
-    expect(codes).toContain("urltest-url-missing");
+    // urltest.md: `url` is optional — "https://www.gstatic.com/generate_204 will be used if empty". An empty
+    // url is purposeful and spec-compliant, so it must NOT be flagged. A set-but-malformed scheme still is.
+    expect(codes).not.toContain("urltest-url-missing");
     expect(codes).toContain("urltest-url-invalid-scheme");
   });
 
@@ -2378,7 +2377,7 @@ describe("canonical sing-box domain model", () => {
     expect(codes).toContain("hysteria-realm-user-token-required");
   });
 
-  it("emits ccm-users-empty + ccm-public-listen for a wide-open empty ccm service", () => {
+  it("flags a public ccm service without a secret, but NOT empty users (empty = no-auth, documented)", () => {
     const base = createStableTunSplitConfig();
     const config = {
       ...base,
@@ -2388,7 +2387,10 @@ describe("canonical sing-box domain model", () => {
       ],
     } as typeof base;
     const codes = validateConfig(config, "stable").map((d) => d.code);
-    expect(codes).toContain("ccm-users-empty");
+    // service/ccm.md: empty users = "no authentication required" (a documented mode) — clients are NOT
+    // rejected, so the old ccm-users-empty warning was noise + factually wrong and was removed. The real
+    // risk (a public listen with no auth) is still covered by ccm-public-listen.
+    expect(codes).not.toContain("ccm-users-empty");
     expect(codes).toContain("ccm-public-listen");
   });
 

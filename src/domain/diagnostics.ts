@@ -736,16 +736,9 @@ export function validateConfig(
 
     if (service.type === "ccm") {
       const obj = service as Record<string, unknown>;
-      const users = Array.isArray(obj.users) ? obj.users : [];
-      if (users.length === 0) {
-        push(
-          diagnostics,
-          "warning",
-          "ccm-users-empty",
-          `/services/${index}/users`,
-          `CCM service "${service.tag}" has no users; remote Claude Code clients will be rejected.`,
-        );
-      }
+      // Empty `users` is a documented mode — service/ccm.md: "If empty, no authentication is required."
+      // So it is NOT flagged (clients are accepted, not rejected). The actual exposure risk — a public
+      // listen with no auth — is covered by ccm-public-listen below.
       if (
         typeof obj.listen === "string" &&
         (obj.listen === "0.0.0.0" || obj.listen === "::" || obj.listen === "")
@@ -1201,15 +1194,9 @@ export function validateConfig(
     if (outbound.type === "urltest") {
       const obj = outbound as Record<string, unknown>;
       const url = typeof obj.url === "string" ? obj.url.trim() : "";
-      if (!url) {
-        push(
-          diagnostics,
-          "warning",
-          "urltest-url-missing",
-          `/outbounds/${index}/url`,
-          `URLTest "${tag}" has no url; sing-box falls back to a built-in default, recommend setting it explicitly.`,
-        );
-      } else if (!/^https?:\/\//i.test(url)) {
+      // `url` is optional: urltest.md — "https://www.gstatic.com/generate_204 will be used if empty". An
+      // empty url is purposeful and spec-compliant, so it is NOT flagged. Only a set-but-malformed scheme is.
+      if (url && !/^https?:\/\//i.test(url)) {
         push(
           diagnostics,
           "warning",
@@ -1795,23 +1782,9 @@ export function validateConfig(
   }
 
   listItems(config.dns?.servers).forEach((server, index) => {
-    if (server.type === "hosts") {
-      const hosts = server as Record<string, unknown>;
-      const predefined = hosts.predefined;
-      const path = hosts.path;
-      const hasPredefined =
-        predefined && typeof predefined === "object" && !Array.isArray(predefined) && Object.keys(predefined).length > 0;
-      const hasPath = (typeof path === "string" && path.trim().length > 0) || (Array.isArray(path) && path.length > 0);
-      if (!hasPredefined && !hasPath) {
-        push(
-          diagnostics,
-          "warning",
-          "dns-server-hosts-empty",
-          `/dns/servers/${index}`,
-          `Hosts DNS server "${server.tag ?? `dns-server-${index}`}" has no predefined entries or path; it will match nothing.`,
-        );
-      }
-    }
+    // A hosts DNS server with no predefined entries and no explicit `path` is NOT empty/useless — dns/server/
+    // hosts.md: `path` defaults to /etc/hosts (the system hosts file; the Windows path on Windows), so it
+    // serves the system host entries. That is a valid, purposeful config, so it is not flagged.
     if (server.type === "resolved") {
       const obj = server as Record<string, unknown>;
       const serviceTag = typeof obj.service === "string" ? obj.service : "";
