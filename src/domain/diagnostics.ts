@@ -1421,6 +1421,20 @@ export function validateConfig(
           `Outbound "${tag}" (hysteria2) sets hop_interval_max; this randomization field is testing-only (sing-box 1.14+).`,
         );
       }
+      // obfs.min_packet_size / max_packet_size are gecko-only and 1.14 (hysteria2.md).
+      const obfsObj = obj.obfs;
+      if (obfsObj && typeof obfsObj === "object" && !Array.isArray(obfsObj)) {
+        const o = obfsObj as Record<string, unknown>;
+        if (o.min_packet_size !== undefined || o.max_packet_size !== undefined) {
+          push(
+            diagnostics,
+            "error",
+            "hysteria2-obfs-packet-size-testing-only",
+            `/outbounds/${index}/obfs`,
+            `Outbound "${tag}" (hysteria2) sets obfs.min_packet_size / max_packet_size; these gecko packet-size fields are testing-only (sing-box 1.14+).`,
+          );
+        }
+      }
     }
     checkQuic114Fields(diagnostics, channel, outbound.type, outbound as Record<string, unknown>, `/outbounds/${index}`, `Outbound "${tag}"`);
     const tls = (outbound as Record<string, unknown>).tls;

@@ -165,6 +165,10 @@ export const outboundHandledFields: ReadonlySet<string> = new Set([
   "idle_session_check_interval",
   "idle_session_timeout",
   "min_idle_session",
+  // U7a — outbound hysteria2 1.14 fields promoted to dedicated controls (outbound/hysteria2.md).
+  "hop_interval_max",
+  "bbr_profile",
+  "realm",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -194,7 +198,7 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   "exclude_uid_range", "executable_path", "extra_args", "extra_headers", "fakeip", "fallback",
   "fallback_for_alpn", "final",
   "find_process", "flow", "format", "grace_period", "ha_connections", "headers", "heartbeat", "home",
-  "hop_interval", "host_key", "host_key_algorithms", "idle_session_check_interval", "idle_session_timeout",
+  "hop_interval", "hop_interval_max", "bbr_profile", "realm", "host_key", "host_key_algorithms", "idle_session_check_interval", "idle_session_timeout",
   "idle_timeout", "include_interface", "include_package", "include_uid_range", "independent_cache", "insecure_concurrency", "interface",
   "interface_name", "mtu",
   "interrupt_exist_connections", "interval", "kex_algorithm", "level", "loopback_address", "mac", "masquerade",
