@@ -2879,7 +2879,7 @@ describe("canonical sing-box domain model", () => {
     expect(testing.some((diagnostic) => diagnostic.code === "rule-set-download-detour-deprecated")).toBe(true);
   });
 
-  it("flags a domain host without a resolver ONLY when none is reachable (no per-entity domain_resolver, no route.default_domain_resolver, and not a single DNS server)", () => {
+  it("flags a domain host without a resolver ONLY when none is reachable (no per-entity domain_resolver, no route.default_domain_resolver, and more than one DNS server)", () => {
     // dial.md, for DIAL FIELDS (outbounds/endpoints): "domain_resolver or route.default_domain_resolver is
     // optional when only one DNS server is configured." So an OUTBOUND domain server is covered when
     // route.default_domain_resolver is set OR exactly one DNS server exists. NOTE (A6): this fallback does
@@ -2998,6 +2998,59 @@ describe("canonical sing-box domain model", () => {
         { dns: { servers: twoDns }, outbounds: [{ type: "direct", tag: "d", domain_resolver: "a" }] },
       ];
       for (const c of cases) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+  });
+
+  // ── A9/A10: endpoints resolver checks (parallel to outbounds) ───────────────────────────────────
+  // Binary-verified: endpoints resolve domains via dial fields too. A wireguard DOMAIN peer address hits
+  // the dial-field deprecation gate (1.12 warn / 1.13+ error — A9). A tailscale endpoint always resolves
+  // its control_url (controlplane.tailscale.com), a HARD init error on ALL versions (1.12 FATALs too — A10).
+  // Same coverage gate as outbounds (per-endpoint domain_resolver | default | ≤1 DNS server).
+  describe("A9/A10: endpoint domain resolver checks (wireguard version-gated, tailscale unconditional error)", () => {
+    const lvl = (config: unknown, code: string, version: string) =>
+      validateConfig(config as SingBoxConfig, version === "1.14" ? "testing" : "stable", version).find((d) => d.code === code)?.level;
+    const twoDns = [{ type: "udp", tag: "a", server: "1.1.1.1" }, { type: "udp", tag: "b", server: "8.8.8.8" }];
+    const wgDomainPeer = (extra: Record<string, unknown> = {}) => ({ type: "wireguard", tag: "wg", address: ["10.0.0.2/32"], private_key: "k", peers: [{ address: "peer.example.com", port: 51820, public_key: "k", allowed_ips: ["0.0.0.0/0"] }], ...extra });
+    const tsEndpoint = (extra: Record<string, unknown> = {}) => ({ type: "tailscale", tag: "ts", auth_key: "k", ...extra });
+    const block = [{ type: "block", tag: "blk" }];
+
+    it("A9: wireguard domain peer + 2 DNS + no resolver → warning on 1.12, error on 1.13/1.14", () => {
+      const c = { dns: { servers: twoDns }, outbounds: block, endpoints: [wgDomainPeer()] };
+      expect(lvl(c, "endpoint-domain-without-resolver", "1.12")).toBe("warning");
+      expect(lvl(c, "endpoint-domain-without-resolver", "1.13")).toBe("error");
+      expect(lvl(c, "endpoint-domain-without-resolver", "1.14")).toBe("error");
+    });
+
+    it("A9: wireguard domain peer covered (per-endpoint | default | single DNS | zero DNS) → silent", () => {
+      const cases = [
+        { dns: { servers: twoDns }, outbounds: block, endpoints: [wgDomainPeer({ domain_resolver: "a" })] },
+        { dns: { servers: twoDns }, route: { default_domain_resolver: "a" }, outbounds: block, endpoints: [wgDomainPeer()] },
+        { dns: { servers: [twoDns[0]] }, outbounds: block, endpoints: [wgDomainPeer()] },
+        { outbounds: block, endpoints: [wgDomainPeer()] },
+      ];
+      for (const c of cases) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, "endpoint-domain-without-resolver", v)).toBeUndefined();
+    });
+
+    it("A9: wireguard with an IP peer (no domain) → silent (not a domain consumer)", () => {
+      const c = { dns: { servers: twoDns }, outbounds: block, endpoints: [{ type: "wireguard", tag: "wg", address: ["10.0.0.2/32"], private_key: "k", peers: [{ address: "192.0.2.1", port: 51820, public_key: "k", allowed_ips: ["0.0.0.0/0"] }] }] };
+      for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, "endpoint-domain-without-resolver", v)).toBeUndefined();
+    });
+
+    it("A10: tailscale endpoint + 2 DNS + no resolver → ERROR on ALL versions (1.12 too — hard init, not a deprecation)", () => {
+      const c = { dns: { servers: twoDns }, outbounds: block, endpoints: [tsEndpoint()] };
+      expect(lvl(c, "endpoint-tailscale-without-resolver", "1.12")).toBe("error");
+      expect(lvl(c, "endpoint-tailscale-without-resolver", "1.13")).toBe("error");
+      expect(lvl(c, "endpoint-tailscale-without-resolver", "1.14")).toBe("error");
+    });
+
+    it("A10: tailscale covered (per-endpoint | default | single DNS | zero DNS) → silent", () => {
+      const cases = [
+        { dns: { servers: twoDns }, outbounds: block, endpoints: [tsEndpoint({ domain_resolver: "a" })] },
+        { dns: { servers: twoDns }, route: { default_domain_resolver: "a" }, outbounds: block, endpoints: [tsEndpoint()] },
+        { dns: { servers: [twoDns[0]] }, outbounds: block, endpoints: [tsEndpoint()] },
+        { outbounds: block, endpoints: [tsEndpoint()] },
+      ];
+      for (const c of cases) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, "endpoint-tailscale-without-resolver", v)).toBeUndefined();
     });
   });
 
