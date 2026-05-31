@@ -181,6 +181,8 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   // system_interface_mtu (tailscale endpoint). All have real `updateField(…)` literals (anti-drift test).
   "accept_default_resolvers", "accept_search_domain", "inet4_range", "inet6_range",
   "relay_server_static_endpoints", "system_interface_mtu",
+  // U4 — tailscale endpoint controls (endpoint/tailscale.md); all have real updateField(entityRef, …) literals.
+  "accept_routes", "ephemeral", "exit_node", "exit_node_allow_lan_access", "hostname", "relay_server_port",
   "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auto_detect_interface",
   "auto_redirect", "auto_route", "brutal_debug", "cache_capacity", "cache_file", "cache_path", "certificate",
   "certificate_directory_path", "certificate_path", "cipher", "client_subnet", "client_version", "clash_api",
@@ -291,6 +293,13 @@ export const endpointHandledFields = new Set([
   "system_interface_name",
   "system_interface_mtu",
   "relay_server_static_endpoints",
+  // U4 — tailscale fields promoted to dedicated controls (endpoint/tailscale.md).
+  "accept_routes",
+  "ephemeral",
+  "exit_node",
+  "exit_node_allow_lan_access",
+  "hostname",
+  "relay_server_port",
   ...dialSharedFields,
 ]);
 export const serviceHandledFields = new Set([

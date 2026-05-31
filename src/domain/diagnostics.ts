@@ -1851,6 +1851,16 @@ export function validateConfig(
           `Endpoint "${tag}" (tailscale) uses system_interface fields; these are sing-box 1.13+. Stable 1.12 targets reject them.`,
         );
       }
+      // relay_server_port is sing-box 1.13+ (the 0 default means "auto/off", so only a real port is flagged).
+      if (typeof obj.relay_server_port === "number" && obj.relay_server_port > 0 && !atLeast(version, "1.13")) {
+        push(
+          diagnostics,
+          "warning",
+          "endpoint-tailscale-relay-server-port-1-13-only",
+          `/endpoints/${index}/relay_server_port`,
+          `Endpoint "${tag}" (tailscale) sets relay_server_port; this field is sing-box 1.13+. Stable 1.12 targets reject it.`,
+        );
+      }
     });
     const dnsObj = config.dns as Record<string, unknown> | undefined;
     if (dnsObj && typeof dnsObj === "object") {
