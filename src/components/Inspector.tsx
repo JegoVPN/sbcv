@@ -180,7 +180,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
         <DnsInspector entity={entity} entityRef={ref} config={config} channel={channel} updateField={updateField} />
       ) : null}
       {ref.kind === "route-rule" ? (
-        <RouteRuleInspector index={ref.index} rule={entity} config={config} updateRouteRule={updateRouteRule} />
+        <RouteRuleInspector index={ref.index} rule={entity} config={config} channel={channel} updateRouteRule={updateRouteRule} />
       ) : null}
       {ref.kind === "dns-rule" ? (
         <DnsRuleInspector index={ref.index} rule={entity} config={config} channel={channel} updateDnsRule={updateDnsRule} />
