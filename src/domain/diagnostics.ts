@@ -433,6 +433,40 @@ export function validateConfig(
     }
   });
 
+  // U11 — an inline http_client object (as opposed to a tag ref into http_clients[]) supports only a
+  // limited field set (shared/http-client.md:48-74). Unsupported keys are silently ignored by the
+  // HTTP Client adapter, so the config does not behave as written — warn. Channel-invariant.
+  const HTTP_CLIENT_UNSUPPORTED_TOP = ["version", "disable_version_fallback"];
+  const HTTP_CLIENT_UNSUPPORTED_TLS = [
+    "engine", "alpn", "disable_sni", "cipher_suites", "curve_preferences",
+    "client_certificate", "client_certificate_path", "client_key", "client_key_path",
+    "fragment", "record_fragment", "kernel_tx", "kernel_rx", "ech", "utls", "reality",
+  ];
+  const checkHttpClientObject = (raw: unknown, pointer: string, label: string) => {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+    const obj = raw as Record<string, unknown>;
+    const bad: string[] = [];
+    for (const key of HTTP_CLIENT_UNSUPPORTED_TOP) if (obj[key] !== undefined) bad.push(key);
+    const tls = obj.tls;
+    if (tls && typeof tls === "object" && !Array.isArray(tls)) {
+      const tlsObj = tls as Record<string, unknown>;
+      for (const key of HTTP_CLIENT_UNSUPPORTED_TLS) if (tlsObj[key] !== undefined) bad.push(`tls.${key}`);
+    }
+    if (bad.length > 0) {
+      push(
+        diagnostics,
+        "warning",
+        "http-client-unsupported-field",
+        pointer,
+        `${label} inline http_client sets fields the HTTP Client adapter does not support (${bad.join(", ")}); they are silently ignored (shared/http-client.md). Use a shared http_clients[] tag for the full TLS/transport feature set.`,
+      );
+    }
+  };
+  checkHttpClientObject((config.route as Record<string, unknown> | undefined)?.default_http_client, "/route/default_http_client", "route.default_http_client");
+  listItems(config.route?.rule_set).forEach((ruleSet, index) => {
+    checkHttpClientObject((ruleSet as Record<string, unknown>).http_client, `/route/rule_set/${index}/http_client`, `Rule-set ${index + 1}`);
+  });
+
   // 1.13-added local DNS prefer_go (dns/server/local.md, Since 1.13.0) — warn on a pre-1.13 target. (C7-C)
   if (!atLeast(version, "1.13")) {
     listItems(config.dns?.servers).forEach((server, index) => {

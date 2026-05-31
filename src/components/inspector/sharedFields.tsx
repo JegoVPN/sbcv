@@ -42,7 +42,7 @@ export type SharedFieldDefinition = {
    * subform (server + strategy + siblings) instead of the raw JSON fallback. Other object-valued select
    * fields (http_client, a full client config) keep the JSON editor.
    */
-  objectForm?: "domain-resolver";
+  objectForm?: "domain-resolver" | "http-client";
   /**
    * U1 — render a "create" inline-action button next to this tag <select> that mints the referenced
    * top-level entry and wires this field to it. `"http-client"` appends an http_clients[] entry and
@@ -399,8 +399,8 @@ export function sharedFieldDefinitions(
       ? "References a shared HTTP Client by tag."
       : "No HTTP Clients defined yet — create one to use as this download client.";
     return ref.kind === "rule-set"
-      ? [{ label: "HTTP Client", path: ["http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client" }]
-      : [{ label: "Default HTTP Client", path: ["default_http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client" }];
+      ? [{ label: "HTTP Client", path: ["http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client", objectForm: "http-client" }]
+      : [{ label: "Default HTTP Client", path: ["default_http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client", objectForm: "http-client" }];
   }
 
   if (group === "http2") {
@@ -601,6 +601,18 @@ export function SharedFieldControl({
             onClick={() => createHttpClientForField(entityRef, definition.path[0]!)}
           >
             Create HTTP Client
+          </button>
+        ) : null}
+        {/* U11 — http_client is a tag string OR an inline object (shared/http-client.md). Offer an entry
+            point to switch to the inline object form (seed {}), mirroring domain_resolver's "Add resolver
+            options"; the empty object renders the JSON editor branch above. */}
+        {definition.objectForm === "http-client" ? (
+          <button
+            type="button"
+            className="palette-action"
+            onClick={() => applyValue({})}
+          >
+            Add inline configuration
           </button>
         ) : null}
       </label>
