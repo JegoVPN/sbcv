@@ -350,6 +350,15 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["listen", "tls", "quic"],
+    // U8 — congestion_control enum so SchemaEnumField renders it + V1 validates an imported value.
+    fields: [
+      {
+        path: ["congestion_control"],
+        type: "enum",
+        doc: "inbound/tuic.md",
+        enum: [{ value: "cubic" }, { value: "new_reno" }, { value: "bbr" }],
+      },
+    ],
   },
   {
     kind: "inbound",
