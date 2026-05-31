@@ -1942,6 +1942,15 @@ button.sbc-edge-remove:focus-visible {
   line-height: 1.4;
 }
 
+/* palette-action — the inline "add row" / inline-action buttons. The generic `button` rule gives them
+   their chrome but no font-size, so they inherited the larger inspector font and rendered bigger than the
+   14px field labels/inputs (the same R1b issue the field controls had). Pin the control font so every
+   palette-action button (Add peer/user/header, Create HTTP Client, Add resolver options, …) matches. */
+.palette-action {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 /* Inline action buttons (.palette-action) placed directly inside a 2-column .field grid — e.g. "Create
    HTTP Client" / "Add resolver options" / "Add inline configuration" next to a tag <select>. Without this
    they fall into the grid auto-flow and get squeezed into the narrow label column, wrapping their text into
