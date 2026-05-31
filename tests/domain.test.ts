@@ -3162,6 +3162,28 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A16: resolved DNS server gets the Linux-only platform hint ──────────────────────────────────
+  // The binary rejects a `resolved` DNS server on non-Linux ("resolved DNS server is only supported on
+  // Linux") — but the validator can't know the deploy OS, so this is a WARNING, not an error. The hint
+  // previously only attached to a service:resolved node; a resolved DNS server with no backing service got
+  // none. A16 surfaces it on the DNS-server node when no backing service:resolved exists (when one does, the
+  // service node already carries resolved-service-linux-only — avoid double-hinting).
+  describe("A16: resolved DNS server Linux-only warning (platform gate — stays warning)", () => {
+    const diag = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "stable").find((d) => d.code === code);
+
+    it("resolved DNS server with no backing service → Linux-only warning (not error)", () => {
+      const d = diag({ dns: { servers: [{ type: "resolved", tag: "res" }] } }, "dns-server-resolved-linux-only");
+      expect(d?.level).toBe("warning");
+    });
+
+    it("resolved DNS server with a valid backing service:resolved → no DNS-server Linux hint (service node carries it)", () => {
+      const c = { dns: { servers: [{ type: "resolved", tag: "res", service: "rsvc" }] }, services: [{ type: "resolved", tag: "rsvc" }] };
+      expect(diag(c, "dns-server-resolved-linux-only")).toBeUndefined();
+      expect(diag(c, "resolved-service-linux-only")?.level).toBe("warning");
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.

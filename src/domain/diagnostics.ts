@@ -1914,6 +1914,23 @@ export function validateConfig(
     if (server.type === "resolved") {
       const obj = server as Record<string, unknown>;
       const serviceTag = typeof obj.service === "string" ? obj.service : "";
+      // A16 (long-chain audit): a resolved DNS server is Linux/systemd-specific — the binary rejects it on
+      // non-Linux ("resolved DNS server is only supported on Linux"). The validator can't know the deploy
+      // OS, so this is a WARNING (platform gate), never an error. The hint already attaches to a backing
+      // service:resolved node; surface it on the DNS-server node only when there is NO backing service node
+      // (else it would double-hint with resolved-service-linux-only).
+      const backingResolvedService = serviceTag.length > 0 && (config.services ?? []).some(
+        (entry) => entry.type === "resolved" && entry.tag === serviceTag,
+      );
+      if (!backingResolvedService) {
+        push(
+          diagnostics,
+          "warning",
+          "dns-server-resolved-linux-only",
+          `/dns/servers/${index}`,
+          `Resolved DNS server "${server.tag}" is Linux/systemd-specific (a fake systemd-resolved DBUS service); sing-box rejects it on non-Linux targets ("resolved DNS server is only supported on Linux"). Keep it only for Linux deployments.`,
+        );
+      }
       if (!serviceTag) {
         push(
           diagnostics,
