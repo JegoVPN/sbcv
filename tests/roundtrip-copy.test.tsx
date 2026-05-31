@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { App } from "../src/App";
 import { MobileMenuSheet } from "../src/components/MobileMenuSheet";
@@ -14,6 +14,8 @@ afterEach(() => useProjectStore.getState().importJson(JSON.stringify({})));
 describe("L1-roundtrip-copy — export communicates normalization", () => {
   it("desktop Export button tooltip explains the config is normalized", () => {
     render(<App />);
+    // Export now lives in the brand menu (grouped with View/Import JSON) — open it to reach the control.
+    fireEvent.click(screen.getByTestId("brand-menu-toggle"));
     const exportButton = screen.getByTestId("export-button");
     const title = exportButton.getAttribute("title") ?? "";
     expect(title).toMatch(/normaliz/i);

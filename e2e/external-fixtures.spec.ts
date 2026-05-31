@@ -207,7 +207,11 @@ test("representative external fixtures import, render, inspect, export, and re-i
     // (missing references, server-less outbounds, legacy DNS forms removed at the target version), so we
     // only assert the export → re-import round-trip for the fixtures the gate lets through; for the rest
     // we assert the gate blocks (the done-bar guarantee).
-    const exportButton = page.getByRole("button", { name: "Export", exact: true });
+    // Export now lives in the brand menu (grouped with View/Import JSON) — open it to reach the control.
+    // The prior node clicks (route/dns) close the menu, so it is reliably shut here; open it idempotently.
+    const brandToggle = page.getByTestId("brand-menu-toggle");
+    if ((await brandToggle.getAttribute("aria-expanded")) !== "true") await brandToggle.click();
+    const exportButton = page.getByTestId("export-button");
     if (await exportButton.isDisabled()) {
       await expect(exportButton).toBeDisabled();
     } else {

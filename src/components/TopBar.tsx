@@ -290,6 +290,26 @@ export function TopBar() {
               <FolderOpen size={17} />
               <span>Import JSON</span>
             </button>
+            <button
+              type="button"
+              className="brand-menu__item"
+              role="menuitem"
+              data-testid="export-button"
+              disabled={exportBlockers.length > 0}
+              aria-disabled={exportBlockers.length > 0}
+              title={
+                exportBlockers.length > 0
+                  ? `Fix ${exportBlockers.length} structural error${exportBlockers.length === 1 ? "" : "s"} before exporting — open the status pill to see them.`
+                  : "Downloads a normalized config: empty fields are dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may differ textually from your original but sing-box reads it identically."
+              }
+              onClick={() => {
+                setBrandMenuOpen(false);
+                void exportConfig();
+              }}
+            >
+              <Download size={17} />
+              <span>Export JSON</span>
+            </button>
             <a className="brand-menu__item" role="menuitem" href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
               <Github size={17} />
               <span>GitHub</span>
@@ -345,21 +365,6 @@ export function TopBar() {
             />
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={exportConfig}
-          data-testid="export-button"
-          disabled={exportBlockers.length > 0}
-          aria-disabled={exportBlockers.length > 0}
-          title={
-            exportBlockers.length > 0
-              ? `Fix ${exportBlockers.length} structural error${exportBlockers.length === 1 ? "" : "s"} before exporting — open the status pill to see them.`
-              : "Downloads a normalized config: empty fields are dropped and shorthand values are expanded to sing-box's canonical form, so a re-imported file may differ textually from your original but sing-box reads it identically."
-          }
-        >
-          <Download size={15} />
-          Export
-        </button>
       </div>
       <input
         ref={fileInputRef}
