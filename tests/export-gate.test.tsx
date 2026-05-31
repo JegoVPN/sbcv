@@ -51,6 +51,8 @@ describe("V2 — desktop export hard gate", () => {
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
     });
     render(<App />);
+    // Export now lives in the brand menu (grouped with View/Import JSON) — open it to reach the control.
+    fireEvent.click(screen.getByTestId("brand-menu-toggle"));
     const button = screen.getByTestId("export-button");
     expect(button).toBeDisabled();
 
@@ -68,9 +70,10 @@ describe("V2 — desktop export hard gate", () => {
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "missing-outbound");
     });
     render(<App />);
+    fireEvent.click(screen.getByTestId("brand-menu-toggle"));
     expect(screen.getByTestId("export-button")).toBeDisabled();
 
-    // Clear the bad reference → gate releases.
+    // Clear the bad reference → gate releases. (The brand menu stays open across the field update.)
     act(() => {
       useProjectStore.getState().updateField({ kind: "route", id: "main" }, "final", "");
     });
@@ -82,6 +85,7 @@ describe("V2 — desktop export hard gate", () => {
   it("exports a valid config without prompting", () => {
     useProjectStore.getState().loadTemplate();
     render(<App />);
+    fireEvent.click(screen.getByTestId("brand-menu-toggle"));
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
     fireEvent.click(screen.getByTestId("export-button"));

@@ -360,6 +360,15 @@ textarea {
   background: #292B2D;
   border-color: transparent;
 }
+/* Export JSON is gated when the config has structural export errors (V2). Show the menu item dimmed and
+   non-interactive, and don't highlight it on hover. */
+.brand-menu__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.brand-menu .brand-menu__item:disabled:hover {
+  background: transparent;
+}
 
 .brand-menu__item > svg:first-child {
   color: #eef2f4;
