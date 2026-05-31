@@ -526,6 +526,16 @@ export function InboundSectionsB({
               })()}
             </>
           ) : null}
+          {/* U7b — hysteria v1 obfs is a plain STRING (an obfuscated password, inbound/hysteria.md), unlike
+              the v2 object above. obfs is in inboundHandledFields (so the v2 object doesn't double-render),
+              which would hide this v1 string from the Advanced fallback — so it needs its own control. */}
+          {entityType === "hysteria" ? (
+            <SensitiveTextField
+              label="Obfs (obfuscated password)"
+              value={typeof entity.obfs === "string" ? entity.obfs : ""}
+              onChange={(next) => updateField(entityRef, "obfs", next || undefined)}
+            />
+          ) : null}
           {entityType === "naive" ? (
             <>
               <div data-testid="inbound-naive-network">

@@ -135,4 +135,19 @@ describe("U7b — inbound hysteria2 obfs", () => {
     expect(codes(config, "stable", "1.13")).toContain("hysteria2-obfs-packet-size-testing-only");
     expect(codes(config, "testing", "1.14")).not.toContain("hysteria2-obfs-packet-size-testing-only");
   });
+
+  // Regression: hysteria v1 inbound carries `obfs` as a plain STRING (an obfuscated password,
+  // inbound/hysteria.md). Adding obfs to inboundHandledFields suppresses it from the Advanced fallback for
+  // ALL inbound types, so v1 needs its own string control or its imported value becomes unreachable.
+  it("keeps the hysteria v1 obfs string reachable (not hidden by the v2 object handling)", () => {
+    useProjectStore
+      .getState()
+      .importJson(JSON.stringify({ inbounds: [{ type: "hysteria", tag: "hy1", listen: "::", listen_port: 443, up_mbps: 100, down_mbps: 100, obfs: "secretpass", users: [{ auth_str: "x" }] }] }));
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-inbound:hy1"));
+    const obfs = screen.getByLabelText("Obfs (obfuscated password)") as HTMLInputElement;
+    expect(obfs.value).toBe("secretpass");
+    fireEvent.change(obfs, { target: { value: "newpass" } });
+    expect((useProjectStore.getState().config.inbounds?.[0] as Record<string, unknown>)?.obfs).toBe("newpass");
+  });
 });
