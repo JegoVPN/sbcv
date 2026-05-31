@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { App } from "../src/App";
+import { DnsRulesTable } from "../src/components/RuleTables";
 import { useProjectStore } from "../src/state/useProjectStore";
 
 // U3 — the DNS Rules quick-edit table (RuleTables.tsx) let the user edit domain/server but not the rule
@@ -21,8 +21,9 @@ function importRule(extra: Record<string, unknown> = {}) {
 }
 
 function openDnsTable() {
-  render(<App />);
-  act(() => useProjectStore.getState().setPanelTab("dns"));
+  // Render the table directly (it reads from the store). The DNS rules table mounts via the dns hub
+  // node, not a panel tab, so setPanelTab does not mount it in the desktop App tree.
+  render(<DnsRulesTable />);
 }
 
 function rule0() {
