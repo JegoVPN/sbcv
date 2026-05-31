@@ -161,7 +161,7 @@ export const dnsRuleAdvancedFields = [
 // network_interface_address/default_interface_address/process_path_regex stay in the JSON escape hatch.)
 const INLINE_RULE_LIST_FIELDS: Array<{ key: string; label: string; numeric?: boolean }> = [
   { key: "query_type", label: "DNS query type" },
-  { key: "network", label: "Network (tcp/udp)" },
+  { key: "network", label: "Network (tcp/udp/icmp)" },
   { key: "domain", label: "Domain" },
   { key: "domain_suffix", label: "Domain suffix" },
   { key: "domain_keyword", label: "Domain keyword" },
@@ -405,6 +405,29 @@ export function RuleAdvancedFields({
       <div className="advanced-fields__body">
         {fields.map((field) => {
           const value = rule[field];
+          // U15a — `network` is the fixed tcp/udp/icmp enum (route/rule.md; icmp since 1.13), a list matcher.
+          // Render a checkbox group so a typo (`TCP`, `icmpv6`) can't be silently accepted.
+          if (field === "network") {
+            const list = Array.isArray(value) ? (value as string[]) : typeof value === "string" ? [value] : [];
+            return (
+              <fieldset className="field field--checklist" key={field} data-testid="rule-network-enum">
+                <legend>Network</legend>
+                {["tcp", "udp", "icmp"].map((net) => (
+                  <label className="toggle-row" key={net}>
+                    <input
+                      type="checkbox"
+                      checked={list.includes(net)}
+                      onChange={(event) => {
+                        const next = event.target.checked ? [...list, net] : list.filter((n) => n !== net);
+                        onPatch({ network: next.length ? next : undefined });
+                      }}
+                    />
+                    <span>{net}</span>
+                  </label>
+                ))}
+              </fieldset>
+            );
+          }
           if (typeof value === "boolean") {
             return (
               <label className="toggle-row" key={field}>
