@@ -956,14 +956,16 @@ export function validateConfig(
   const resolverPresent = (resolver: unknown) =>
     (typeof resolver === "string" && resolver.length > 0) ||
     (resolver !== null && typeof resolver === "object" && resolver !== undefined);
-  // shared/dial.md: resolving a DOMAIN server needs a resolver, but "domain_resolver OR
-  // route.default_domain_resolver is optional when only one DNS server is configured." So a domain server is
-  // already covered when route.default_domain_resolver is set (it applies to every entity, overridable
-  // per-entity) OR when exactly one DNS server exists (the implicit resolver). Only flag the remaining gap.
+  // shared/dial.md: resolving a domain via a dial field needs a resolver, but "domain_resolver OR
+  // route.default_domain_resolver is optional when only one DNS server is configured." The dial-field
+  // deprecation gate fires only when the choice of DNS server is ambiguous — i.e. ≥2 DNS servers and no
+  // default. So a dial-field consumer is implicitly covered when route.default_domain_resolver is set
+  // (applies to every entity, overridable per-entity) OR when AT MOST ONE DNS server is configured (0 = a
+  // built-in default, 1 = the unambiguous implicit resolver — binary-verified: both accepted on all three).
   const defaultDomainResolverRaw = (config.route as Record<string, unknown> | undefined)?.default_domain_resolver;
   const defaultDomainResolverPresent = resolverPresent(defaultDomainResolverRaw);
-  const singleDnsServerConfigured = (config.dns?.servers ?? []).length === 1;
-  const domainResolverImplicitlyCovered = defaultDomainResolverPresent || singleDnsServerConfigured;
+  const atMostOneDnsServer = (config.dns?.servers ?? []).length <= 1;
+  const domainResolverImplicitlyCovered = defaultDomainResolverPresent || atMostOneDnsServer;
 
   // A11 (long-chain audit, ⚠️ revises #303): a route.default_domain_resolver naming a non-existent DNS
   // server is a hard init error on all three binaries ("default domain resolver not found: <tag>") — BUT
@@ -1017,16 +1019,28 @@ export function validateConfig(
   }
 
   outbounds.forEach((outbound, index) => {
-    if (!looksLikeDomain(outbound.server)) return;
+    // A8 (long-chain audit): a `direct` outbound has no `server` field but resolves the REQUEST's domain via
+    // dial fields (shared/dial.md: direct → "Domain in request"), so it consumes a resolver exactly like a
+    // domain-server outbound — treat both as domain dial-field consumers.
+    const resolvesDomain = outbound.type === "direct" || looksLikeDomain(outbound.server);
+    if (!resolvesDomain) return;
     if (resolverPresent(outbound.domain_resolver)) return;
     if (domainResolverImplicitlyCovered) return;
     const tag = outbound.tag ?? `outbound-${index}`;
+    const isDirect = outbound.type === "direct";
+    const subject = isDirect ? "is a direct outbound that resolves request domains" : "uses a domain server address";
+    // A7 (long-chain audit): version-keyed severity. Missing route.default_domain_resolver / per-entity
+    // domain_resolver in dial fields with ≥2 DNS servers is a 1.12 deprecation (WARN, check exit 0) but a
+    // 1.13/1.14 hard error (FATAL, ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER gate). Mirrors the version
+    // keying of dns-server-legacy-address-deprecated.
     push(
       diagnostics,
-      "warning",
+      atLeast(version, "1.13") ? "error" : "warning",
       "outbound-domain-without-resolver",
       `/outbounds/${index}/domain_resolver`,
-      `Outbound "${tag}" uses a domain server but no resolver is reachable — it has no domain_resolver, route.default_domain_resolver is unset, and there is more than one DNS server. sing-box 1.14+ needs one: set this outbound's domain_resolver or route.default_domain_resolver.`,
+      atLeast(version, "1.13")
+        ? `Outbound "${tag}" ${subject} but has no domain_resolver, no route.default_domain_resolver, and there is more than one DNS server. sing-box ${version} rejects this (FATAL "missing domain resolver for domain server address"; bypass needs ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER). Set this outbound's domain_resolver or route.default_domain_resolver.`
+        : `Outbound "${tag}" ${subject} but has no domain_resolver, no route.default_domain_resolver, and there is more than one DNS server. This is deprecated since sing-box 1.12 and removed in 1.14 — set this outbound's domain_resolver or route.default_domain_resolver.`,
     );
   });
 

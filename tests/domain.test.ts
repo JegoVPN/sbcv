@@ -2949,6 +2949,58 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A7/A8: outbound + direct dial-field resolver gate (version-keyed) ───────────────────────────
+  // Binary-verified: a dial-field domain consumer with no resolver and ≥2 DNS servers hits the deprecation
+  // gate — 1.12 WARN (check exit 0), 1.13/1.14 FATAL (ENABLE_DEPRECATED_MISSING_DOMAIN_RESOLVER). So the
+  // severity is version-keyed (A7), mirroring dns-server-legacy-address-deprecated. A `direct` outbound has
+  // no `server` field but resolves the REQUEST's domain, so it is a consumer too (A8). The gate needs ≥2 DNS
+  // servers: 0 or 1 DNS server is unambiguous and the binary ACCEPTS it (A7 also fixes a pre-existing
+  // false-positive warning on the 0-DNS case, which the version-gate would otherwise escalate to an error).
+  describe("A7/A8: outbound/direct domain resolver gate is version-keyed (1.12 warn / 1.13+ error)", () => {
+    const lvl = (config: unknown, version: string) =>
+      validateConfig(config as SingBoxConfig, version === "1.14" ? "testing" : "stable", version).find((d) => d.code === "outbound-domain-without-resolver")?.level;
+    const twoDns = [{ type: "udp", tag: "a", server: "1.1.1.1" }, { type: "udp", tag: "b", server: "8.8.8.8" }];
+    const domainOb = { type: "trojan", tag: "p", server: "example.com", server_port: 443, password: "x", tls: { enabled: true } };
+
+    it("A7: domain outbound + 2 DNS + no resolver → warning on 1.12, error on 1.13/1.14", () => {
+      const c = { dns: { servers: twoDns }, outbounds: [domainOb] };
+      expect(lvl(c, "1.12")).toBe("warning");
+      expect(lvl(c, "1.13")).toBe("error");
+      expect(lvl(c, "1.14")).toBe("error");
+    });
+
+    it("A7: resolver chain satisfied (default | per-outbound | single DNS) → silent on all versions", () => {
+      const cases = [
+        { dns: { servers: twoDns }, route: { default_domain_resolver: "a" }, outbounds: [domainOb] },
+        { dns: { servers: twoDns }, outbounds: [{ ...domainOb, domain_resolver: "a" }] },
+        { dns: { servers: [twoDns[0]] }, outbounds: [domainOb] },
+      ];
+      for (const c of cases) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+
+    it("A7 fix: domain outbound + ZERO DNS servers → silent on all versions (binary accepts; gate needs ≥2 DNS)", () => {
+      const c = { outbounds: [domainOb] };
+      for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+
+    it("A8: direct outbound + 2 DNS + no resolver → warning on 1.12, error on 1.13/1.14", () => {
+      const c = { dns: { servers: twoDns }, outbounds: [{ type: "direct", tag: "d" }] };
+      expect(lvl(c, "1.12")).toBe("warning");
+      expect(lvl(c, "1.13")).toBe("error");
+      expect(lvl(c, "1.14")).toBe("error");
+    });
+
+    it("A8: direct + (single DNS | zero DNS | default | per-outbound resolver) → silent (no false positive)", () => {
+      const cases = [
+        { dns: { servers: [twoDns[0]] }, outbounds: [{ type: "direct", tag: "d" }] },
+        { outbounds: [{ type: "direct", tag: "d" }] },
+        { dns: { servers: twoDns }, route: { default_domain_resolver: "a" }, outbounds: [{ type: "direct", tag: "d" }] },
+        { dns: { servers: twoDns }, outbounds: [{ type: "direct", tag: "d", domain_resolver: "a" }] },
+      ];
+      for (const c of cases) for (const v of ["1.12", "1.13", "1.14"]) expect(lvl(c, v)).toBeUndefined();
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.
