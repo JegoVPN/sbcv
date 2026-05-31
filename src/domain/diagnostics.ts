@@ -799,12 +799,16 @@ export function validateConfig(
       }
     });
     if (rule.server && !dnsServerTags.has(rule.server)) {
+      // A3 (long-chain audit): warning, not error. `check` does not resolve a dns rule's `server` ref
+      // (legacy or `action:"route"` form) and `run` starts cleanly on 1.12/1.13/1.14 — the rule just never
+      // matches. A typo worth flagging, but it does not block a runnable export. (NOTE: the dns `rule_set`
+      // ref below stays an error — 1.14 `check` DOES resolve it, FATAL "rule-set not found".)
       push(
         diagnostics,
-        "error",
+        "warning",
         "missing-dns-rule-server",
         `/dns/rules/${index}/server`,
-        `DNS rule ${index + 1} references missing server "${rule.server}".`,
+        `DNS rule ${index + 1} references missing server "${rule.server}" — the rule will never match (it falls through to dns.final). Fix the tag or remove the rule.`,
       );
     }
     const ruleSets = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];

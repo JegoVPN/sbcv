@@ -66,8 +66,8 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 
 #### Phase L-P0 — 假阳性降级（error→warning；`check`+`run` 双清已实测）
 - [x] A1-missing-rule-outbound-downgrade — PR #305 (merged)
-- [ ] A2-missing-route-rule-inbound-downgrade
-- [ ] A3-missing-dns-rule-server-downgrade
+- [x] A2-missing-route-rule-inbound-downgrade — PR #306 (merged)
+- [x] A3-missing-dns-rule-server-downgrade — PR (this)
 - [ ] A4-clash-api-download-detour-downgrade
 - [ ] A5-missing-dns-server-endpoint-downgrade ⚠️ **二进制复证推翻 spec**：`ts-fp-dangling-endpoint` 三版 `run` FATAL `endpoint not found`（check 0 / run FATAL）= 运行时真阳性,**应保 error 不降级**(到 A5 时深查后修订本条)
 
@@ -299,5 +299,6 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 
 - **2026-05-31 — 审计完成、本 doc 创建。** 36-agent workflow（`scripts/workflows/long-chain-diagnostics-audit.workflow.js`）+ 交叉验证 harness（`tests/chain-crosscheck.test.ts`，已从默认 `pnpm test` 排除，显式 `CROSSCHECK_DIR=... npx vitest run` 调用）。8 链路族、26 confirmed（0 推翻）。头条：#303 的 `domainResolverImplicitlyCovered` 被过度套用到 DNS 服务器分支,制造假阴性（A6/A11/A12 修订）。主理人独立二进制重放复证：A1/A3/A4 假阳性 `run` 干净启动、`route.final` 对照 `run` FATAL——确认「假阳性降级 vs 运行时真阳性保 error」判据。回归种子在 `.audit/cases/`（gitignored，落地时内联进 `tests/`）。**A1–A17 待执行。**
 - **2026-05-31 — A1 落地（PR #305, merged）。** `missing-rule-outbound` error→warning。二进制重放（1.12.25/1.13.12/1.14.0-alpha.25）：matcher + `action:"route"` 两形式 `check` exit 0 + `run` "sing-box started" 无 FATAL；对照 `route.final` 悬空 `run` FATAL `default outbound not found`(保 error)。测试：W7 reference-coverage parity 测试迁移到 `staleWarningCodes` 绑定(覆盖仍绑,降为 warning 级)+ 两形式专属回归 + route.final 对照。reviewer(domain-correctness, general-purpose 子代理, 独立二进制重放)= APPROVE 无 blocking。门：`pnpm test`(1671)/`build`/`test:binaries`(19) 全绿 + Cloudflare Workers Builds success。
-- **2026-05-31 — A2 落地（本 PR）。** `missing-route-rule-inbound` error→warning（仅此 code,不碰 `missing-dns-rule-inbound`）。二进制重放：`route-rule-inbound-dangling` 三版 `check` 0 + `run` started。测试：inbound 案移入 `staleWarningCodes` + 专属回归。
+- **2026-05-31 — A2 落地（PR #306, merged）。** `missing-route-rule-inbound` error→warning（仅此 code,不碰 `missing-dns-rule-inbound`）。二进制重放：`route-rule-inbound-dangling` 三版 `check` 0 + `run` started。测试：inbound 案移入 `staleWarningCodes` + 专属回归。reviewer = APPROVE(独立二进制重放亦确认 A5 run-FATAL,第三次印证)。
+- **2026-05-31 — A3 落地（本 PR）。** `missing-dns-rule-server` error→warning（仅 dns 规则 `server`,**不碰 `missing-dns-rule-set`**）。二进制重放:legacy 形式 + `action:"route"` 形式三版 `check` 0 + `run` started；对照 dns `rule_set` 悬空 1.14 `check` FATAL `rule-set not found`(保 error,§Coverage 1 成立)。测试:dns-server 案 `missing-dns-rule-server` 移入 `staleWarningCodes` + 两形式专属回归 + rule_set error 对照。
 - **2026-05-31 — ⚠️ A5 预警（二进制复证推翻 spec）。** P0 基线预跑发现 `dns-endpoint-service-refs/ts-fp-dangling-endpoint.json`(tailscale DNS server `endpoint:"does-not-exist"`,另有不同 tag 的 `endpoints[]`)在 **1.12/1.13/1.14 三版 `run` 均 FATAL** `start service: initialize dns/tailscale[ts]: endpoint not found: does-not-exist`——`check` 0 但 `run` FATAL = 运行时真阳性,与 `route.final` 同形,**不应降级**。spec A5「run 干净」声明未被主理人复证覆盖(milestone note 仅列 A1/A3/A4+route.final)。到 A5 时以 wrong-namespace + clean-control 深查后修订本条(预期:`missing-dns-server-endpoint` 保 error;A17 相应调整)。

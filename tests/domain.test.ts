@@ -252,7 +252,11 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     tag: "local-dns",
     nextTag: "dns-renamed",
     paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
-    staleDiagnosticCodes: ["missing-dns-final", "missing-dns-rule-server"],
+    staleDiagnosticCodes: ["missing-dns-final"],
+    // A3: a dangling dns-rule `server` (legacy form + `action:"route"` form) is check+run clean — the rule
+    // just never matches — so it warns instead of erroring. NOTE: `server` only; `missing-dns-rule-set` stays
+    // an error (1.14 `check` DOES resolve dns rule_set — § Coverage 1).
+    staleWarningCodes: ["missing-dns-rule-server"],
     assertRenamed: (config) => {
       expect(config.dns?.final).toBe("dns-renamed");
       expect(config.dns?.rules?.[0]?.server).toBe("dns-renamed");
@@ -516,6 +520,29 @@ describe("canonical sing-box domain model", () => {
     it("A2: dangling route-rule inbound matcher warns, not errors", () => {
       const diag = diagOf(routeWith({ rules: [{ inbound: ["ghost-in"], outbound: "direct" }], final: "direct" }), "missing-route-rule-inbound");
       expect(diag?.level).toBe("warning");
+    });
+
+    // A3 — a dns rule's dangling `server` (legacy form + Rule-Action `action:"route"` form) is a warning:
+    // `check` exit 0 + `run` "sing-box started" on all three (the rule never matches). The dns `rule_set`
+    // ref is NOT in scope and stays an error (1.14 `check` resolves it → "rule-set not found").
+    const dnsWith = (rule: Record<string, unknown>) => ({
+      outbounds: [{ type: "direct", tag: "direct" }],
+      dns: { servers: [{ type: "udp", tag: "d1", server: "8.8.8.8" }], rules: [rule] },
+    });
+
+    it("A3: dangling dns-rule server (legacy form) warns, not errors", () => {
+      const diag = diagOf(dnsWith({ domain: ["example.com"], server: "ghost" }), "missing-dns-rule-server");
+      expect(diag?.level).toBe("warning");
+    });
+
+    it("A3: dangling dns-rule server (action:\"route\" form) warns, not errors", () => {
+      const diag = diagOf(dnsWith({ domain: ["example.com"], action: "route", server: "ghost" }), "missing-dns-rule-server");
+      expect(diag?.level).toBe("warning");
+    });
+
+    it("A3 control: dangling dns-rule rule_set stays an error (1.14 check resolves it — not downgraded)", () => {
+      const diag = diagOf(dnsWith({ rule_set: "ghost-set", server: "d1" }), "missing-dns-rule-set");
+      expect(diag?.level).toBe("error");
     });
   });
 
