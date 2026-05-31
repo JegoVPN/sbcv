@@ -926,7 +926,7 @@ export function validateConfig(
         "warning",
         "dns-rule-legacy-strategy-deprecated",
         `/dns/rules/${index}/strategy`,
-        `DNS rule ${index + 1} uses the \`strategy\` DNS rule action option, deprecated in sing-box 1.14 and removed in 1.16. Migrate strategy to rule items (see /migration/#migrate-dns-rule-action-strategy-to-rule-items).`,
+        `DNS rule ${index + 1} uses the \`strategy\` DNS rule action option, deprecated in sing-box 1.14 and removed in 1.16. Express the query strategy via rule items (ip_version / query_type) instead.`,
       );
     }
     const hasModernIpField = ruleObj.ip_version !== undefined || ruleObj.query_type !== undefined;
