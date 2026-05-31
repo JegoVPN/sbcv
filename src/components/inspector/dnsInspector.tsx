@@ -180,19 +180,46 @@ export function DnsInspector({
             kind="channel"
             text="The next two fields (Optimistic, Timeout) only take effect on sing-box 1.14+ (testing channel)."
           />
-          <label className="toggle-row" data-testid="dns-hub-optimistic">
-            <input
-              type="checkbox"
-              checked={Boolean(entity.optimistic)}
-              onChange={(event) => updateField(entityRef, "optimistic", event.target.checked || undefined)}
-            />
-            <span>Optimistic (testing 1.14+)</span>
-          </label>
+          {/* U9 — optimistic is a boolean OR an object {enabled, timeout} (the stale-serve window, default
+              3d) per dns/index.md. Composite: enabled checkbox + conditional window text. With a window the
+              value is the object form; enabled-only collapses to the boolean form. */}
+          {(() => {
+            const raw = entity.optimistic;
+            const obj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : undefined;
+            const enabled = raw === true || obj?.enabled === true;
+            const staleWindow = typeof obj?.timeout === "string" ? obj.timeout : "";
+            const setEnabled = (on: boolean) => {
+              if (!on) return updateField(entityRef, "optimistic", undefined);
+              updateField(entityRef, "optimistic", staleWindow ? { enabled: true, timeout: staleWindow } : true);
+            };
+            const setWindow = (value: string) => {
+              updateField(entityRef, "optimistic", value ? { enabled: true, timeout: value } : true);
+            };
+            return (
+              <fieldset className="field field--checklist" data-testid="dns-hub-optimistic">
+                <legend>Optimistic cache (testing 1.14+)</legend>
+                <label className="toggle-row">
+                  <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+                  <span>Optimistic (serve stale entries while refreshing)</span>
+                </label>
+                {enabled ? (
+                  <label className="field">
+                    <span>Stale-serve window (default 3d)</span>
+                    <input
+                      value={staleWindow}
+                      placeholder="3d"
+                      onChange={(event) => setWindow(event.target.value)}
+                    />
+                  </label>
+                ) : null}
+              </fieldset>
+            );
+          })()}
           <label className="field" data-testid="dns-hub-timeout">
-            <span>Timeout (testing 1.14+, e.g. "5s")</span>
+            <span>Query Timeout (testing 1.14+, per-query default 10s)</span>
             <input
               value={typeof entity.timeout === "string" ? entity.timeout : ""}
-              placeholder="5s"
+              placeholder="10s"
               onChange={(event) => updateField(entityRef, "timeout", event.target.value || undefined)}
             />
           </label>
