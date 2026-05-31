@@ -183,6 +183,8 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   "relay_server_static_endpoints", "system_interface_mtu",
   // U4 — tailscale endpoint controls (endpoint/tailscale.md); all have real updateField(entityRef, …) literals.
   "accept_routes", "ephemeral", "exit_node", "exit_node_allow_lan_access", "hostname", "relay_server_port",
+  // U5 — WireGuard endpoint controls (endpoint/wireguard.md); listen_port / name (system-gated) / workers.
+  "listen_port", "name", "workers",
   "address", "advertise_routes", "advertise_tags", "auth_key", "auth_str", "auto_detect_interface",
   "auto_redirect", "auto_route", "brutal_debug", "cache_capacity", "cache_file", "cache_path", "certificate",
   "certificate_directory_path", "certificate_path", "cipher", "client_subnet", "client_version", "clash_api",
@@ -300,6 +302,11 @@ export const endpointHandledFields = new Set([
   "exit_node_allow_lan_access",
   "hostname",
   "relay_server_port",
+  // U5 — WireGuard interface fields promoted to dedicated controls (endpoint/wireguard.md). Handled so a
+  // value never double-renders in the Advanced fallback (the `name` control is system-gated).
+  "listen_port",
+  "name",
+  "workers",
   ...dialSharedFields,
 ]);
 export const serviceHandledFields = new Set([
