@@ -157,9 +157,13 @@ export function ServiceInspector({
                 />
               </label>
               {(() => {
-                const rows = Array.isArray(entity.verify_client_url)
-                  ? (entity.verify_client_url as InspectorEntity[])
-                  : [];
+                // U15b — a row may be the `{url, ...HTTP Client Fields}` object OR the string shorthand
+                // (`"__URL__"` ≡ `{url}`, derp.md:67-71). Normalize string rows to the object form for
+                // editing (the object form is the documented equivalent), so the destructure + JSON editor
+                // below never spread a string into character-index garbage and never drop the URL on edit.
+                const rows = (Array.isArray(entity.verify_client_url) ? entity.verify_client_url : []).map((row) =>
+                  typeof row === "string" ? ({ url: row } as InspectorEntity) : (row as InspectorEntity),
+                );
                 const writeRows = (next: InspectorEntity[]) =>
                   updateField(entityRef, "verify_client_url", next.length ? next : undefined);
                 const patchRow = (index: number, patch: InspectorEntity) =>
