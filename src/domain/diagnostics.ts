@@ -17,7 +17,10 @@ import { testingOnlyFields } from "./versionFieldGate";
 // VT3 — the data-driven testing-only field backstop. For each typed entity, any top-level field that is
 // 1.14-only (present on testing's per-(kind,type) doc set but not stable's; see versionFieldGate) is an
 // export-blocking error on a stable target. Deduped by path so the friendlier hand-written gates (W8 / VT1)
-// own the message where they exist; this closed set catches every other 1.14-only field, current or future.
+// own the message where they exist. U14 — scope: this closed set covers top-level fields on the seven
+// ARRAY-COLLECTION kinds listed below. Singleton owners (dns / route / experimental / log) and nested
+// (under-object) fields are NOT covered here — those are hand-gated case by case (e.g. dns.optimistic,
+// route.default_http_client, the rule-set download_detour escalation above).
 const VERSION_GATE_SECTIONS: Array<{ kind: string; get: (c: SingBoxConfig) => unknown[]; path: (i: number) => string }> = [
   { kind: "inbound", get: (c) => c.inbounds ?? [], path: (i) => `/inbounds/${i}` },
   { kind: "outbound", get: (c) => c.outbounds ?? [], path: (i) => `/outbounds/${i}` },
@@ -2203,13 +2206,33 @@ export function validateConfig(
           `Remote rule-set "${tag}" references missing download_detour outbound "${detour}".`,
         );
       }
-      if (detour && channel === "testing") {
+      // U14 — download_detour is deprecated in 1.14 and REMOVED in 1.16 (rule-set/index.md:130-134). Warn
+      // on 1.14/1.15; escalate to an export-blocking error on >=1.16 where the field no longer decodes.
+      if (detour && atLeast(version, "1.16")) {
+        push(
+          diagnostics,
+          "error",
+          "rule-set-download-detour-removed",
+          `/route/rule_set/${index}/download_detour`,
+          `Remote rule-set "${tag}" uses download_detour, which was removed in sing-box 1.16; ${version} rejects it. Use an HTTP Client (http_client) instead.`,
+        );
+      } else if (detour && atLeast(version, "1.14")) {
         push(
           diagnostics,
           "warning",
           "rule-set-download-detour-deprecated",
           `/route/rule_set/${index}/download_detour`,
-          `Remote rule-set "${tag}" uses download_detour, which is deprecated in sing-box 1.14+ in favour of http_client. Consider migrating before the field is removed.`,
+          `Remote rule-set "${tag}" uses download_detour, which is deprecated in sing-box 1.14+ in favour of http_client. Migrate before it is removed in 1.16.`,
+        );
+      }
+      // U14 — both set: http_client takes precedence, so download_detour is redundant dead config.
+      if (detour && (ruleSet as Record<string, unknown>).http_client !== undefined) {
+        push(
+          diagnostics,
+          "warning",
+          "rule-set-download-detour-http-client-conflict",
+          `/route/rule_set/${index}/download_detour`,
+          `Remote rule-set "${tag}" sets both download_detour and http_client; http_client takes precedence, so download_detour is redundant — remove it.`,
         );
       }
     }

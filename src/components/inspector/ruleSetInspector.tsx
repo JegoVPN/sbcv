@@ -57,20 +57,26 @@ export function RuleSetInspector({
                   text="`download_detour` is deprecated in sing-box 1.14.0 (removed in 1.16.0). Use an HTTP Client (`http_client`) instead. Create one in the HTTP Client section below, then select it."
                 />
               ) : null}
-              <label className="field">
-                <span>Download Detour</span>
-                <select
-                  value={String(entity.download_detour ?? "")}
-                  onChange={(event) => updateField(entityRef, "download_detour", event.target.value || undefined)}
-                >
-                  <option value="">Default outbound</option>
-                  {outboundTags(config).map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {/* U14 — on testing, only render the control when a value already exists (to edit/clear it).
+                  A fresh testing project is steered to http_client instead, so the deprecated field is not
+                  the path of least resistance (pairs with U1's HTTP Client create affordance). On stable
+                  download_detour is the supported path, so the control always shows there. */}
+              {channel !== "testing" || entity.download_detour ? (
+                <label className="field">
+                  <span>Download Detour</span>
+                  <select
+                    value={String(entity.download_detour ?? "")}
+                    onChange={(event) => updateField(entityRef, "download_detour", event.target.value || undefined)}
+                  >
+                    <option value="">Default outbound</option>
+                    {outboundTags(config).map((tag) => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             </>
           ) : null}
           {entity.type === "local" ? (
