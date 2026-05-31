@@ -85,6 +85,19 @@ function sharedValueAt(entity: InspectorEntity, path: string[]) {
   return current;
 }
 
+// Whether a shared-field definition should render for this entity: `gatedBy` is a boolean-truthiness gate,
+// `visibleWhen` matches the value at a sibling path against an allow-list (e.g. dns01 credentials gate on
+// the chosen provider). Exported so the certificate-provider inspector applies the SAME rule its
+// dns01_challenge fields rely on — the shared-group renderer below uses it too.
+export function isSharedFieldVisible(definition: SharedFieldDefinition, entity: InspectorEntity): boolean {
+  if (definition.gatedBy && !sharedValueAt(entity, definition.gatedBy)) return false;
+  if (definition.visibleWhen) {
+    const current = sharedValueAt(entity, definition.visibleWhen.path);
+    if (!definition.visibleWhen.in.includes(String(current ?? ""))) return false;
+  }
+  return true;
+}
+
 function nestedPatch(entity: InspectorEntity, path: string[], value: unknown): { field: string; value: unknown } | null {
   const [field, ...nested] = path;
   if (!field) return null;
@@ -121,6 +134,37 @@ function isSharedValueActive(value: unknown) {
   if (Array.isArray(value)) return value.length > 0;
   if (typeof value === "boolean") return value;
   return value !== undefined && value !== null && value !== "";
+}
+
+// U12 — dns01_challenge field definitions, parameterized by root path so the inline-TLS ACME editor (root
+// tls.acme.dns01_challenge) and the standalone certificate-provider (root dns01_challenge) share ONE source
+// and cannot drift. Provider-specific credentials gate on the chosen provider; the 1.14-added top-level
+// fields are channel-gated. Source: shared/dns01_challenge.md.
+function dns01ChallengeFields(root: string[], channel: SingBoxChannel): SharedFieldDefinition[] {
+  const at = (leaf: string) => [...root, leaf];
+  const provider = (p: string[]) => ({ path: at("provider"), in: p });
+  return [
+    { label: "DNS01 Provider", path: at("provider"), kind: "select", options: ["alidns", "cloudflare", "acmedns"] },
+    { label: "DNS01 Access Key ID", path: at("access_key_id"), kind: "text", visibleWhen: provider(["alidns"]) },
+    { label: "DNS01 Access Key Secret", path: at("access_key_secret"), kind: "text", visibleWhen: provider(["alidns"]) },
+    { label: "DNS01 Region ID", path: at("region_id"), kind: "text", visibleWhen: provider(["alidns"]) },
+    { label: "DNS01 Security Token", path: at("security_token"), kind: "text", visibleWhen: provider(["alidns"]) },
+    { label: "DNS01 API Token", path: at("api_token"), kind: "text", visibleWhen: provider(["cloudflare"]) },
+    { label: "DNS01 Zone Token", path: at("zone_token"), kind: "text", visibleWhen: provider(["cloudflare"]) },
+    { label: "DNS01 Username", path: at("username"), kind: "text", visibleWhen: provider(["acmedns"]) },
+    { label: "DNS01 Password", path: at("password"), kind: "text", visibleWhen: provider(["acmedns"]) },
+    { label: "DNS01 Subdomain", path: at("subdomain"), kind: "text", visibleWhen: provider(["acmedns"]) },
+    { label: "DNS01 Server URL", path: at("server_url"), kind: "text", visibleWhen: provider(["acmedns"]) },
+    ...(channel === "testing"
+      ? ([
+          { label: "DNS01 TTL", path: at("ttl"), kind: "text" },
+          { label: "DNS01 Propagation Delay", path: at("propagation_delay"), kind: "text" },
+          { label: "DNS01 Propagation Timeout", path: at("propagation_timeout"), kind: "text" },
+          { label: "DNS01 Resolvers", path: at("resolvers"), kind: "list" },
+          { label: "DNS01 Override Domain", path: at("override_domain"), kind: "text" },
+        ] as SharedFieldDefinition[])
+      : []),
+  ];
 }
 
 export function sharedFieldDefinitions(
@@ -290,9 +334,8 @@ export function sharedFieldDefinitions(
     ];
     // Inline ACME editor (deprecated in 1.14 but still valid) — Inbound server-only in both channels.
     // domain[] empty disables ACME. provider is free-text so a custom `https://…` directory survives.
-    // dns01_challenge provider-specific fields gate on the chosen provider; the 1.14-added top-level
-    // dns01 fields are channel-gated to testing. (shared/tls.md, shared/dns01_challenge.md)
-    const dns01Provider = (p: string[]) => ({ path: ["tls", "acme", "dns01_challenge", "provider"], in: p });
+    // dns01_challenge provider-specific fields gate on the chosen provider; the 1.14-added top-level dns01
+    // fields are channel-gated. Shared with the standalone cert-provider via dns01ChallengeFields (U12).
     const tlsAcmeFields: SharedFieldDefinition[] =
       ref.kind === "inbound"
         ? [
@@ -307,26 +350,7 @@ export function sharedFieldDefinitions(
             { label: "ACME Alternative TLS Port", path: ["tls", "acme", "alternative_tls_port"], kind: "number" },
             { label: "ACME EAB Key ID", path: ["tls", "acme", "external_account", "key_id"], kind: "text" },
             { label: "ACME EAB MAC Key", path: ["tls", "acme", "external_account", "mac_key"], kind: "text" },
-            { label: "DNS01 Provider", path: ["tls", "acme", "dns01_challenge", "provider"], kind: "select", options: ["alidns", "cloudflare", "acmedns"] },
-            { label: "DNS01 Access Key ID", path: ["tls", "acme", "dns01_challenge", "access_key_id"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
-            { label: "DNS01 Access Key Secret", path: ["tls", "acme", "dns01_challenge", "access_key_secret"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
-            { label: "DNS01 Region ID", path: ["tls", "acme", "dns01_challenge", "region_id"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
-            { label: "DNS01 Security Token", path: ["tls", "acme", "dns01_challenge", "security_token"], kind: "text", visibleWhen: dns01Provider(["alidns"]) },
-            { label: "DNS01 API Token", path: ["tls", "acme", "dns01_challenge", "api_token"], kind: "text", visibleWhen: dns01Provider(["cloudflare"]) },
-            { label: "DNS01 Zone Token", path: ["tls", "acme", "dns01_challenge", "zone_token"], kind: "text", visibleWhen: dns01Provider(["cloudflare"]) },
-            { label: "DNS01 Username", path: ["tls", "acme", "dns01_challenge", "username"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
-            { label: "DNS01 Password", path: ["tls", "acme", "dns01_challenge", "password"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
-            { label: "DNS01 Subdomain", path: ["tls", "acme", "dns01_challenge", "subdomain"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
-            { label: "DNS01 Server URL", path: ["tls", "acme", "dns01_challenge", "server_url"], kind: "text", visibleWhen: dns01Provider(["acmedns"]) },
-            ...(channel === "testing"
-              ? ([
-                  { label: "DNS01 TTL", path: ["tls", "acme", "dns01_challenge", "ttl"], kind: "text" },
-                  { label: "DNS01 Propagation Delay", path: ["tls", "acme", "dns01_challenge", "propagation_delay"], kind: "text" },
-                  { label: "DNS01 Propagation Timeout", path: ["tls", "acme", "dns01_challenge", "propagation_timeout"], kind: "text" },
-                  { label: "DNS01 Resolvers", path: ["tls", "acme", "dns01_challenge", "resolvers"], kind: "list" },
-                  { label: "DNS01 Override Domain", path: ["tls", "acme", "dns01_challenge", "override_domain"], kind: "text" },
-                ] as SharedFieldDefinition[])
-              : []),
+            ...dns01ChallengeFields(["tls", "acme", "dns01_challenge"], channel),
           ]
         : [];
     return isServerRole ? [...shared, ...serverOnly, ...tlsAcmeFields] : [...shared, ...clientOnly];
@@ -739,14 +763,7 @@ export function SharedFieldCards({
         return (
           <ModuleCard key={card.group} title={sharedGroupTitles[card.group]} active={active}>
             {card.definitions
-              .filter((definition) => {
-                if (definition.gatedBy && !sharedValueAt(entity, definition.gatedBy)) return false;
-                if (definition.visibleWhen) {
-                  const current = sharedValueAt(entity, definition.visibleWhen.path);
-                  if (!definition.visibleWhen.in.includes(String(current ?? ""))) return false;
-                }
-                return true;
-              })
+              .filter((definition) => isSharedFieldVisible(definition, entity))
               .map((definition) => (
                 <SharedFieldControl
                   key={definition.path.join(".")}
@@ -766,7 +783,17 @@ export function SharedFieldCards({
 // C2-B: per-type structured field definitions for certificate_providers (testing-only, 1.14). acme &
 // cloudflare-origin-ca require domain[]; tailscale reuses a Tailscale endpoint. Rendered through the shared
 // SharedFieldControl so the list/select/text/number controls (and object-form JSON fallback) are reused.
-export function certificateProviderFields(entityType: string | null, config: SingBoxConfig): SharedFieldDefinition[] {
+export function certificateProviderFields(
+  entityType: string | null,
+  config: SingBoxConfig,
+  channel: SingBoxChannel,
+): SharedFieldDefinition[] {
+  const httpClientOptions = (config.http_clients ?? [])
+    .map((client) => client.tag)
+    .filter((tag): tag is string => Boolean(tag));
+  const httpClientHint = httpClientOptions.length
+    ? "References a shared HTTP Client by tag (or switch to an inline object)."
+    : "No HTTP Clients defined yet — create one to use as the ACME HTTP client.";
   if (entityType === "acme") {
     return [
       { label: "Domain", path: ["domain"], kind: "list", hint: "ACME is disabled when empty." },
@@ -778,6 +805,9 @@ export function certificateProviderFields(entityType: string | null, config: Sin
       { label: "Account Key", path: ["account_key"], kind: "text" },
       { label: "EAB Key ID", path: ["external_account", "key_id"], kind: "text" },
       { label: "EAB MAC Key", path: ["external_account", "mac_key"], kind: "text" },
+      // U12 — structured dns01_challenge (shared helper) + the 1.14 http_client; previously raw-JSON only.
+      ...dns01ChallengeFields(["dns01_challenge"], channel),
+      { label: "HTTP Client", path: ["http_client"], kind: "select", options: httpClientOptions, hint: httpClientHint, createKind: "http-client", objectForm: "http-client" },
     ];
   }
   if (entityType === "cloudflare-origin-ca") {
