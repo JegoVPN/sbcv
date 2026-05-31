@@ -56,6 +56,26 @@ describe("U2 — WireGuard peer persistent_keepalive_interval is an integer", ()
     expect(input.value).toBe("25");
   });
 
+  it("keeps an explicit 0 (a valid 'disabled' value), distinct from unset", () => {
+    importWg({ persistent_keepalive_interval: 25 });
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-endpoint:wg"));
+    const input = screen.getByLabelText("Persistent Keepalive") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "0" } });
+    expect(peer0().persistent_keepalive_interval).toBe(0);
+  });
+
+  it("rejects an out-of-uint16-range value instead of exporting one sing-box rejects", () => {
+    importWg();
+    render(<App />);
+    fireEvent.click(screen.getByTestId("node-endpoint:wg"));
+    const input = screen.getByLabelText("Persistent Keepalive") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "99999" } });
+    expect(peer0().persistent_keepalive_interval).toBeUndefined();
+    fireEvent.change(input, { target: { value: "65535" } });
+    expect(peer0().persistent_keepalive_interval).toBe(65535);
+  });
+
   it("clears the field on empty / non-integer input instead of storing a bad value", () => {
     importWg({ persistent_keepalive_interval: 25 });
     render(<App />);

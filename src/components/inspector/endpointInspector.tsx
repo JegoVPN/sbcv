@@ -131,11 +131,15 @@ export function EndpointInspector({
                           <span>Persistent Keepalive</span>
                           <input
                             value={typeof peer.persistent_keepalive_interval === "number" ? peer.persistent_keepalive_interval : ""}
-                            onChange={(event) =>
+                            onChange={(event) => {
+                              // sing-box decodes this as a uint16 (WireGuard's on-wire keepalive is
+                              // seconds in a 16-bit field), so an out-of-range value is rejected at load
+                              // just like a string was — clamp the accepted range to 0..65535.
+                              const seconds = parseOptionalInt(event.target.value);
                               patchPeer(index, {
-                                persistent_keepalive_interval: parseOptionalInt(event.target.value),
-                              })
-                            }
+                                persistent_keepalive_interval: seconds !== undefined && seconds <= 65535 ? seconds : undefined,
+                              });
+                            }}
                             placeholder="25"
                             inputMode="numeric"
                           />
