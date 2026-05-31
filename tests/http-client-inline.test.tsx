@@ -47,11 +47,24 @@ describe("U11 — inline http_client object", () => {
       expect(codes(config, "testing", "1.14")).toContain(GATE);
     });
 
-    it("does not flag a supported-only inline object (headers + tls.server_name)", () => {
+    it("does not flag a supported-only inline object (headers + supported tls keys)", () => {
       const config = {
-        route: { default_http_client: { headers: { "X-Test": "1" }, tls: { server_name: "example.com", insecure: true } } },
+        route: {
+          default_http_client: {
+            headers: { "X-Test": "1" },
+            // tls.certificate is SUPPORTED — guards against a prefix bug vs unsupported tls.client_certificate.
+            tls: { server_name: "example.com", insecure: true, certificate: ["pem"], certificate_path: "/c.pem" },
+          },
+        },
       } as unknown as SingBoxConfig;
       expect(codes(config, "testing", "1.14")).not.toContain(GATE);
+    });
+
+    it("flags an inline http_client object that sets an unsupported HTTP2/QUIC top-level field", () => {
+      const config = {
+        route: { default_http_client: { idle_timeout: "30s" } },
+      } as unknown as SingBoxConfig;
+      expect(codes(config, "testing", "1.14")).toContain(GATE);
     });
 
     it("does not flag a plain tag-string http_client", () => {

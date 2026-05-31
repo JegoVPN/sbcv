@@ -436,7 +436,12 @@ export function validateConfig(
   // U11 — an inline http_client object (as opposed to a tag ref into http_clients[]) supports only a
   // limited field set (shared/http-client.md:48-74). Unsupported keys are silently ignored by the
   // HTTP Client adapter, so the config does not behave as written — warn. Channel-invariant.
-  const HTTP_CLIENT_UNSUPPORTED_TOP = ["version", "disable_version_fallback"];
+  const HTTP_CLIENT_UNSUPPORTED_TOP = [
+    "version", "disable_version_fallback",
+    // HTTP2 Fields (http2.md) + QUIC Fields (quic.md) are inlined at the top level and unsupported.
+    "idle_timeout", "keep_alive_period", "stream_receive_window", "connection_receive_window",
+    "max_concurrent_streams", "initial_packet_size", "disable_path_mtu_discovery",
+  ];
   const HTTP_CLIENT_UNSUPPORTED_TLS = [
     "engine", "alpn", "disable_sni", "cipher_suites", "curve_preferences",
     "client_certificate", "client_certificate_path", "client_key", "client_key_path",
