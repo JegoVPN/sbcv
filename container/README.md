@@ -17,7 +17,7 @@ pnpm dev            # tsx watch on :8080, binaries must already be on $BIN_DIR
 pnpm test           # vitest
 ```
 
-For end-to-end local runs that exercise the real `sing-box` binary, point `BIN_DIR` at the repo-root `.tools/bin/` directory after running `node scripts/install-sing-box-binaries.mjs` at the repo root.
+For end-to-end local runs that exercise the real `sing-box` binary, point `BIN_DIR` at the repo-root `.tools/` directory after running `node scripts/install-sing-box-binaries.mjs` at the repo root. Each binary lives in its own `<name>/sing-box` subdirectory next to its `libcronet.so` sidecar (on Linux), matching the in-container layout — the naive outbound dlopen()s cronet from the binary's own directory.
 
 ## Docker
 
@@ -43,7 +43,7 @@ Keep these versions in sync with `scripts/install-sing-box-binaries.mjs` at the 
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `PORT` | HTTP listen port | `8080` |
-| `BIN_DIR` | Directory containing the three binaries | `/app/bin` |
+| `BIN_DIR` | Root holding each per-version `<name>/sing-box` (+ `libcronet.so` sidecar) | `/app/bin` |
 | `INTERNAL_TOKEN` | Shared secret with the Worker; required header `x-internal-token` if set | unset (open) |
 | `MAX_BODY_BYTES` | Reject larger bodies with 413 | `524288` (512 KB) |
 | `CHECK_TIMEOUT_MS` | Kill `sing-box check` after N ms | `5000` |
