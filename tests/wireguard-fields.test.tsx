@@ -64,14 +64,18 @@ describe("U5 — WireGuard endpoint fields", () => {
     expect(ep()?.workers).toBeUndefined();
   });
 
-  it("hides the interface name control until the system interface is enabled", () => {
+  // `name` is handled (excluded from the Advanced fallback), so its control must render unconditionally —
+  // gating it on `system` would make an imported `name` (with system off) silently unreachable: no inline
+  // control AND no Advanced row. The label conveys the system-interface scope instead.
+  it("renders the interface name control regardless of the system toggle", () => {
     importWg();
-    expect(screen.queryByLabelText(/Interface Name/i)).toBeNull();
+    expect(screen.getByLabelText(/Interface Name/i)).not.toBeNull();
   });
 
-  it("edits name when the system interface is enabled (system-interface scope)", () => {
-    importWg({ system: true });
+  it("edits name and round-trips an imported value even when the system interface is off", () => {
+    importWg({ name: "wg0" });
     const input = screen.getByLabelText(/Interface Name/i) as HTMLInputElement;
+    expect(input.value).toBe("wg0"); // imported value is reachable without toggling system on
     fireEvent.change(input, { target: { value: "wg-tun" } });
     expect(ep()?.name).toBe("wg-tun");
     fireEvent.change(input, { target: { value: "" } });

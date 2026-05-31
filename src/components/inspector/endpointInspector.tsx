@@ -197,19 +197,18 @@ export function EndpointInspector({
                 />
                 <span>System interface (use the system TUN stack instead of gVisor; requires privilege)</span>
               </label>
-              {/* U5 — `name` is the custom interface name for the system interface (wireguard.md), so it is
-                  only meaningful when `system` is on; gate the control on it. It is in endpointHandledFields,
-                  so it never double-renders in the Advanced fallback once set. */}
-              {entity.system === true ? (
-                <label className="field">
-                  <span>Interface Name (system interface)</span>
-                  <input
-                    value={typeof entity.name === "string" ? entity.name : ""}
-                    placeholder="wg0"
-                    onChange={(event) => updateField(entityRef, "name", event.target.value || undefined)}
-                  />
-                </label>
-              ) : null}
+              {/* U5 — `name` is the custom interface name for the system interface (wireguard.md). It is in
+                  endpointHandledFields (so it never double-renders in the Advanced fallback), which means the
+                  control must render unconditionally: gating it on `system` would leave an imported `name`
+                  (system off) silently unreachable. The label conveys the system-interface scope instead. */}
+              <label className="field">
+                <span>Interface Name (system interface)</span>
+                <input
+                  value={typeof entity.name === "string" ? entity.name : ""}
+                  placeholder="wg0"
+                  onChange={(event) => updateField(entityRef, "name", event.target.value || undefined)}
+                />
+              </label>
               {/* U5 — worker count; sing-box defaults to the CPU count, so 0 (the documented default) and
                   blank both prune to unset to keep the export minimal. */}
               <label className="field">
