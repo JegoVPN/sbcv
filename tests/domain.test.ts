@@ -558,6 +558,49 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── Long-chain runtime true-positives (binary check-pass / run-FATAL — STAY error) ──────────────
+  // A5: the audit spec proposed downgrading missing-dns-server-endpoint to a warning, but a 3-binary
+  // replay REFUTES that premise. A tailscale DNS server's `endpoint` ref IS resolved at run/init and is
+  // FATAL when it does not name a real endpoint: `check` exits 0 on all three (1.12/1.13/1.14) but `run`
+  // FATALs `initialize dns/tailscale[..]: endpoint not found: ..` (non-empty dangling / wrong-namespace)
+  // or `missing tailscale endpoint tag` (empty/missing). This is the same shape as route.final — a runtime
+  // true positive — so it MUST stay an error. The clean control (endpoint → a real tailscale endpoint) runs
+  // to "sing-box started" (only TRACE health warnings), which isolates the dangling ref as the FATAL cause.
+  describe("long-chain runtime true-positives (binary run-FATAL — stay error)", () => {
+    const diagOf = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "testing").find((d) => d.code === code);
+
+    it("A5: a non-empty dangling tailscale DNS-server endpoint stays an error (run FATAL endpoint-not-found)", () => {
+      const diag = diagOf(
+        { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "does-not-exist" }] }, endpoints: [{ type: "tailscale", tag: "ts-ep" }] },
+        "missing-dns-server-endpoint",
+      );
+      expect(diag?.level).toBe("error");
+    });
+
+    it("A5: a wrong-namespace tailscale DNS-server endpoint (→ outbound tag) stays an error", () => {
+      const diag = diagOf(
+        { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "direct-out" }] }, outbounds: [{ type: "direct", tag: "direct-out" }], endpoints: [{ type: "tailscale", tag: "ts-ep" }] },
+        "missing-dns-server-endpoint",
+      );
+      expect(diag?.level).toBe("error");
+    });
+
+    it("A5: an empty/missing tailscale endpoint stays an error (covered by dns-server-tailscale-endpoint-missing)", () => {
+      const empty = diagOf({ dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "" }] } }, "dns-server-tailscale-endpoint-missing");
+      expect(empty?.level).toBe("error");
+      const missing = diagOf({ dns: { servers: [{ type: "tailscale", tag: "ts" }] } }, "dns-server-tailscale-endpoint-missing");
+      expect(missing?.level).toBe("error");
+    });
+
+    it("A5 control: a tailscale endpoint pointing at a REAL endpoint emits no missing-dns-server-endpoint (no over-fire)", () => {
+      // The clean control runs to "sing-box started" on all three binaries; we must not false-positive on it.
+      const clean = { dns: { servers: [{ type: "tailscale", tag: "ts", endpoint: "ts-ep" }] }, endpoints: [{ type: "tailscale", tag: "ts-ep" }] };
+      expect(diagOf(clean, "missing-dns-server-endpoint")).toBeUndefined();
+      expect(diagOf(clean, "dns-server-tailscale-endpoint-missing")).toBeUndefined();
+    });
+  });
+
   it("renames extended tag references through the canonical reference registry", () => {
     const config = {
       ...createStableTunSplitConfig(),

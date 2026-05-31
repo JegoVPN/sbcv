@@ -68,8 +68,8 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - [x] A1-missing-rule-outbound-downgrade — PR #305 (merged)
 - [x] A2-missing-route-rule-inbound-downgrade — PR #306 (merged)
 - [x] A3-missing-dns-rule-server-downgrade — PR #307 (merged)
-- [x] A4-clash-api-download-detour-downgrade — PR (this)
-- [ ] A5-missing-dns-server-endpoint-downgrade ⚠️ **二进制复证推翻 spec**：`ts-fp-dangling-endpoint` 三版 `run` FATAL `endpoint not found`（check 0 / run FATAL）= 运行时真阳性,**应保 error 不降级**(到 A5 时深查后修订本条)
+- [x] A4-clash-api-download-detour-downgrade — PR #308 (merged)
+- [x] A5-missing-dns-server-endpoint-downgrade — ⚠️ **REVISED → 保 error**（二进制推翻降级）：PR (this) = 回归锁定 + spec 更正,无 severity 改动
 
 #### Phase L-P1 — #303 resolver 抑制修订（⚠️ 修订 #303）
 - [ ] A11-missing-default-domain-resolver（+ 收紧 implicit-cover）⚠️#303 — **先落**
@@ -135,15 +135,22 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - **Reviewer:** domain-correctness。
 - **Don't mix:** 仅此规则。
 
-#### A5-missing-dns-server-endpoint-downgrade — 假阳性（保留覆盖）
-- **Outcome:** `missing-dns-server-endpoint` 由 `"error"` 降为 `"warning"`，**仅针对非空但悬空/错命名空间的 tag**。空/缺失 endpoint 的硬拒绝仍由 `dns-server-tailscale-endpoint-missing`（error）覆盖——降级不丢对二进制拒绝场景的覆盖。
-- **根因（已验证，high）:** tailscale DNS 服务器的 `endpoint` tag 运行时惰性解析；实测 `run` 干净（仅 TRACE）。`getEndpointTags` 只收集 `config.endpoints[].tag`（`indexes.ts:118`）。
-- **Source of truth:** `dns/server/tailscale.md:34-38`（endpoint ==Required==，是字段存在要求；不要求引用 tag 在 check 时存在）。
-- **Touch:** `src/domain/diagnostics.ts:928-936`（`"error"`→`"warning"`）；**确认** `diagnostics.ts:1822-1828`（`dns-server-tailscale-endpoint-missing`，error）覆盖空/缺失（与二进制 FATAL "missing tailscale endpoint tag" 一致）不变。
-- **Acceptance:** 非空悬空/错命名空间 endpoint → warning；空/缺失 endpoint → 仍 error；三二进制 check+run 接受悬空非空 case。
-- **Tests:** 种子 `dns-endpoint-service-refs/ts-fp-dangling-endpoint.json`、`ts-fp-endpoint-wrong-namespace.json`；并断言空 endpoint 仍 error。
-- **Reviewer:** domain-correctness。
-- **Don't mix:** 仅存在性 severity；类型检查（非 tailscale endpoint）归 A17。
+#### A5-missing-dns-server-endpoint-downgrade — ⚠️ **REVISED 2026-06-01：spec premise 被二进制推翻 → 保 error**
+- **原 Outcome（已撤回）:** ~~`missing-dns-server-endpoint` 由 error 降为 warning（仅非空悬空/错命名空间）。~~
+- **实际 Outcome（binary-grounded）:** **不降级。** `missing-dns-server-endpoint`（error）与 `dns-server-tailscale-endpoint-missing`（error）**均已正确,保持不变**。本原子项 = **回归锁定 + spec 更正**(无 severity 改动)。
+- **推翻依据（三-binary 三-control 复证,主理人未在原审计复证此条）:** tailscale DNS 服务器的 `endpoint` 引用**在 run/init 解析且 FATAL**——并非惰性。三版 `check` 0 但 `run` FATAL：
+  - `ts-fp-dangling-endpoint`（非空悬空,另有有效 `endpoints[]`）→ 三版 `run` FATAL `initialize dns/tailscale[ts]: endpoint not found: does-not-exist`。
+  - `ts-fp-endpoint-wrong-namespace`（endpoint→outbound tag）→ 三版 `run` FATAL `endpoint not found: direct-out`。
+  - `ts-clean-control`（endpoint→真实 tailscale endpoint）→ 三版 `run` "sing-box started"(仅 TRACE 健康警告,连不上 controlplane ≠ FATAL)——**隔离证明悬空引用本身才是 FATAL 源**。
+  - 空/缺失 → 三版 `run` FATAL `missing tailscale endpoint tag`。
+  与 `route.final` 同形(check-pass/run-FATAL = 运行时真阳性,审计结论要求保 error)。原审计「run 干净(仅 TRACE)」声明误把 clean-control 的行为安到了 dangling case 上。
+- **Source of truth:** `dns/server/tailscale.md:34-38`（endpoint ==Required==）+ 二进制 `run` 重放(最终仲裁者)。
+- **Touch:** **无代码改动。** 仅在 `tests/domain.test.ts` 新增 describe「long-chain runtime true-positives (binary run-FATAL — stay error)」锁定四态 severity。
+- **Acceptance:** 非空悬空/错命名空间 → error；空/缺失 → error；clean-control → 静默；锁定测试全绿。
+- **Tests:** 内联 `ts-fp-dangling-endpoint` / `ts-fp-endpoint-wrong-namespace` / 空 / 缺失 四态 → 断言 level=error。
+- **Reviewer:** domain-correctness（复核反转推理 + 独立 `run` 重放）。
+- **Don't mix:** 仅锁定 severity 现状 + spec 更正；类型检查（endpoint 存在但非 tailscale 类型）仍归 A17。
+- **⚠️ 连带影响 A17:** A17 原模型「悬空/错命名空间 = warn(A5)」**作废**——那些是 error。A17 仅处理「endpoint 存在于 `endpoints[]` 但 `type!=='tailscale'`」的咨询 warning（到 A17 时复核 `ts-fn-endpoint-not-tailscale` 二进制是否接受）。
 
 ---
 
@@ -301,5 +308,6 @@ PR #303 修了 `outbound-domain-without-resolver`：它原本只查 per-entity `
 - **2026-05-31 — A1 落地（PR #305, merged）。** `missing-rule-outbound` error→warning。二进制重放（1.12.25/1.13.12/1.14.0-alpha.25）：matcher + `action:"route"` 两形式 `check` exit 0 + `run` "sing-box started" 无 FATAL；对照 `route.final` 悬空 `run` FATAL `default outbound not found`(保 error)。测试：W7 reference-coverage parity 测试迁移到 `staleWarningCodes` 绑定(覆盖仍绑,降为 warning 级)+ 两形式专属回归 + route.final 对照。reviewer(domain-correctness, general-purpose 子代理, 独立二进制重放)= APPROVE 无 blocking。门：`pnpm test`(1671)/`build`/`test:binaries`(19) 全绿 + Cloudflare Workers Builds success。
 - **2026-05-31 — A2 落地（PR #306, merged）。** `missing-route-rule-inbound` error→warning（仅此 code,不碰 `missing-dns-rule-inbound`）。二进制重放：`route-rule-inbound-dangling` 三版 `check` 0 + `run` started。测试：inbound 案移入 `staleWarningCodes` + 专属回归。reviewer = APPROVE(独立二进制重放亦确认 A5 run-FATAL,第三次印证)。
 - **2026-05-31 — A3 落地（PR #307, merged）。** `missing-dns-rule-server` error→warning（仅 dns 规则 `server`,**不碰 `missing-dns-rule-set`**）。二进制重放:legacy 形式 + `action:"route"` 形式三版 `check` 0 + `run` started；对照 dns `rule_set` 悬空 1.14 `check` FATAL `rule-set not found`(保 error,§Coverage 1 成立)。测试:dns-server 案 `missing-dns-rule-server` 移入 `staleWarningCodes` + 两形式专属回归 + rule_set error 对照。reviewer 发现 binary-replay 残留(`tailscale/` 运行时文件含私钥被 `git add -A` 误扫入提交)→ 已 `git rm --cached` + 把 `tailscale/` 加进 `.gitignore` 并 force-push 修复(实质评审全 PASS)。**教训:改用显式 `git add <path>`。**
-- **2026-05-31 — A4 落地（本 PR）。** `clash-api-download-detour-missing` error→warning（文档化默认:clash-api.md "Default outbound will be used if empty"）。二进制重放:`clash-api-download-detour-dangling` 三版 `check` 0 + `run` started。测试:outbound 案该 code 移入 `staleWarningCodes` + 专属回归。
+- **2026-05-31 — A4 落地（PR #308, merged）。** `clash-api-download-detour-missing` error→warning（文档化默认:clash-api.md "Default outbound will be used if empty"）。二进制重放:`clash-api-download-detour-dangling` 三版 `check` 0 + `run` started。测试:outbound 案该 code 移入 `staleWarningCodes` + 专属回归。reviewer = APPROVE(确认 diff 恰 3 文件、无 stray 残留)。
+- **2026-06-01 — A5 落地（本 PR）= ⚠️ 反转。** 三-binary 三-control `run` 重放推翻 spec「降级」premise:tailscale DNS-server `endpoint` 在 run/init 解析且 FATAL(`ts-fp-dangling-endpoint` / `ts-fp-endpoint-wrong-namespace` 三版 `run` FATAL `endpoint not found`;`ts-clean-control` 三版 `run` started 仅 TRACE = 隔离证明;空/缺失 三版 `run` FATAL `missing tailscale endpoint tag`)。= 运行时真阳性(同 `route.final`)→ **保 error,无代码改动**。原审计「run 干净」误植 clean-control 行为。本 PR 仅加锁定测试 + 更正 spec A5 章节,并标注 A17 连带作废。两次独立 reviewer(A2/A3 reviewer 顺带)亦确认 run-FATAL,共三次印证。
 - **2026-05-31 — ⚠️ A5 预警（二进制复证推翻 spec）。** P0 基线预跑发现 `dns-endpoint-service-refs/ts-fp-dangling-endpoint.json`(tailscale DNS server `endpoint:"does-not-exist"`,另有不同 tag 的 `endpoints[]`)在 **1.12/1.13/1.14 三版 `run` 均 FATAL** `start service: initialize dns/tailscale[ts]: endpoint not found: does-not-exist`——`check` 0 但 `run` FATAL = 运行时真阳性,与 `route.final` 同形,**不应降级**。spec A5「run 干净」声明未被主理人复证覆盖(milestone note 仅列 A1/A3/A4+route.final)。到 A5 时以 wrong-namespace + clean-control 深查后修订本条(预期:`missing-dns-server-endpoint` 保 error;A17 相应调整)。
