@@ -3129,6 +3129,39 @@ describe("canonical sing-box domain model", () => {
     });
   });
 
+  // ── A14/A15: SSM API misconfigurations are errors (binary-verified hard failures) ───────────────
+  // A15: servers is ==Required==; an empty/missing map makes sing-box panic (SIGSEGV) on all three. A14:
+  // an SSM server pointing at a non-shadowsocks or non-managed inbound is a FATAL "inbound/... is not a SSM
+  // server" on all three. Both were warnings; the binary hard-fails, so they are errors (level only).
+  describe("A14/A15: SSM API hard failures are errors", () => {
+    const diag = (config: unknown, code: string) =>
+      validateConfig(config as SingBoxConfig, "stable").find((d) => d.code === code);
+    const ssm = (servers: unknown) => ({ type: "ssm-api", tag: "api", listen: "127.0.0.1", listen_port: 8080, ...(servers === undefined ? {} : { servers }) });
+
+    it("A15: empty servers map → error (sing-box panics on all three)", () => {
+      expect(diag({ services: [ssm({})] }, "ssm-api-no-managed-inbound")?.level).toBe("error");
+    });
+
+    it("A15: missing servers → error", () => {
+      expect(diag({ services: [ssm(undefined)] }, "ssm-api-no-managed-inbound")?.level).toBe("error");
+    });
+
+    it("A14: SSM server → a non-shadowsocks inbound → error (FATAL 'is not a SSM server')", () => {
+      const c = { inbounds: [{ type: "mixed", tag: "mx", listen: "127.0.0.1", listen_port: 2080 }], services: [ssm({ "/": "mx" })] };
+      expect(diag(c, "ssm-api-inbound-not-managed-shadowsocks")?.level).toBe("error");
+    });
+
+    it("A14: SSM server → a shadowsocks inbound without managed → error", () => {
+      const c = { inbounds: [{ type: "shadowsocks", tag: "ss", listen: "127.0.0.1", listen_port: 8388, method: "2022-blake3-aes-128-gcm", password: "8JCsPssfgS8tiRwiMlhARg==" }], services: [ssm({ "/": "ss" })] };
+      expect(diag(c, "ssm-api-inbound-not-managed-shadowsocks")?.level).toBe("error");
+    });
+
+    it("A14: SSM server → a managed shadowsocks inbound → no not-managed diagnostic", () => {
+      const c = { inbounds: [{ type: "shadowsocks", tag: "ss", listen: "127.0.0.1", listen_port: 8388, method: "2022-blake3-aes-128-gcm", password: "8JCsPssfgS8tiRwiMlhARg==", managed: true }], services: [ssm({ "/": "ss" })] };
+      expect(diag(c, "ssm-api-inbound-not-managed-shadowsocks")).toBeUndefined();
+    });
+  });
+
   it("seeds default TLS for TLS-required inbound and outbound protocols", () => {
     // A18 (W26): VLESS inbound TLS is optional upstream, so it is intentionally NOT seeded (it can run
     // over Reality / a plain transport). The outbound keeps a TLS-on client default below.
