@@ -49,6 +49,15 @@ for (const channel of CHANNELS) {
       const fields = fieldsFrom(`${full}/${file}`);
       if (fields.length) byKind[kind][type] = fields;
     }
+    // A13: rule-set TYPES (remote/local/inline) are documented in index.md (one page with field sections),
+    // not per-type files, so the loop above misses them and the unknown-field linter skipped every rule-set.
+    // Emit the UNION of all `#### field` names from index.md for each type — a union (not per-section) so a
+    // field valid for one sub-type (e.g. remote's `url`) is never flagged on another; the linter only
+    // over-blocks when a VALID field is ABSENT from the set, so a superset is safe. (testing adds http_client.)
+    if (kind === "rule-set") {
+      const union = fieldsFrom(`${full}/index.md`);
+      if (union.length) for (const t of ["remote", "local", "inline"]) byKind[kind][t] = union;
+    }
   }
   const shared = {};
   for (const g of SHARED_DOCS) {
