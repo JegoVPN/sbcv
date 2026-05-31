@@ -287,17 +287,15 @@ textarea {
 }
 
 /* Non-clickable expanded product name beside the toggle, inside the same pill. Muted so the toggle reads
-   as the primary control; truncates rather than crowding the validation actions on narrower desktops. */
+   as the primary control. It fits beside the right-side validation actions on desktop; below 1000px it is
+   hidden outright (rather than crowding them), so no in-pill truncation is needed. */
 .brand-tagline {
   margin: 0 14px 0 8px;
-  min-width: 0;
   color: #8e99a4;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   user-select: none;
 }
 @media (max-width: 1000px) {
