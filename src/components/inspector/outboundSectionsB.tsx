@@ -2,7 +2,7 @@ import { Trash2 } from "lucide-react";
 
 import type { EntityRef, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
-import { SensitiveTextField } from "./controls";
+import { JsonField, SensitiveTextField } from "./controls";
 import { outboundHandledFields } from "./handledFields";
 import { fromList, type InspectorEntity, objectField, outboundTags, toList, type UpdateField, withUniqueBlankKey } from "./helpers";
 import { SchemaEnumField } from "./schemaEnumField";
@@ -207,6 +207,40 @@ export function OutboundSectionsB({
                   onChange={(event) => updateField(entityRef, "hop_interval", event.target.value || undefined)}
                 />
               </label>
+              {/* U7a — hop_interval_max / bbr_profile / realm are 1.14 (hysteria2.md); the outbound inspector
+                  version-gates via diagnostics, so render unconditionally. brutal_debug is an older field. */}
+              <label className="field">
+                <span>Hop Interval Max (1.14, randomizes hopping)</span>
+                <input
+                  value={String(entity.hop_interval_max ?? "")}
+                  placeholder="e.g. 60s"
+                  onChange={(event) => updateField(entityRef, "hop_interval_max", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>BBR Profile (1.14)</span>
+                <select
+                  value={typeof entity.bbr_profile === "string" ? entity.bbr_profile : "standard"}
+                  onChange={(event) => updateField(entityRef, "bbr_profile", event.target.value === "standard" ? undefined : event.target.value)}
+                >
+                  <option value="standard">standard (default)</option>
+                  <option value="conservative">conservative</option>
+                  <option value="aggressive">aggressive</option>
+                </select>
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.brutal_debug)}
+                  onChange={(event) => updateField(entityRef, "brutal_debug", event.target.checked || undefined)}
+                />
+                <span>Brutal Debug (verbose congestion-control logging)</span>
+              </label>
+              <JsonField
+                label="Realm (object, 1.14 — conflicts with server/server_port)"
+                value={entity.realm}
+                onChange={(next) => updateField(entityRef, "realm", next)}
+              />
             </>
           ) : null}
           {entityType === "anytls" ? (
@@ -280,6 +314,42 @@ export function OutboundSectionsB({
                       value={typeof obfs.password === "string" ? obfs.password : ""}
                       onChange={(next) => writeObfs({ password: next || undefined })}
                     />
+                  ) : null}
+                  {/* U7a — min/max on-wire packet size are gecko-only (1.14, hysteria2.md). Version is gated
+                      by the hysteria2-obfs-packet-size-testing-only diagnostic, matching the gecko option. */}
+                  {obfs.type === "gecko" ? (
+                    <>
+                      <label className="field">
+                        <span>Min Packet Size (gecko, 1.14)</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={typeof obfs.min_packet_size === "number" ? obfs.min_packet_size : ""}
+                          placeholder="512"
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            if (!next) return writeObfs({ min_packet_size: undefined });
+                            const parsed = Number(next);
+                            writeObfs({ min_packet_size: Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined });
+                          }}
+                        />
+                      </label>
+                      <label className="field">
+                        <span>Max Packet Size (gecko, 1.14)</span>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={typeof obfs.max_packet_size === "number" ? obfs.max_packet_size : ""}
+                          placeholder="1200"
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            if (!next) return writeObfs({ max_packet_size: undefined });
+                            const parsed = Number(next);
+                            writeObfs({ max_packet_size: Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined });
+                          }}
+                        />
+                      </label>
+                    </>
                   ) : null}
                 </fieldset>
               );
