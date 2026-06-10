@@ -83,7 +83,7 @@ Run with:
 #### Phase T-P3 — light 表与机制
 - [x] T6-light-variable-table（[data-theme="light"] + color-scheme + 对比度守卫测试）— PR #337
 - [x] T7-theme-mechanism（theme-init.js + useTheme 模块 + CodeMirror/meta 联动 + playwright pin 同 PR）— PR #338
-- [ ] T8-theme-toggle-ui（桌面 brand menu + 移动 menu sheet 三态控件 + e2e）
+- [x] T8-theme-toggle-ui（桌面 brand menu + 移动 menu sheet 三态控件 + e2e）— PR #339
 
 #### Phase T-P4 — 收尾
 - [ ] T9-light-polish-and-re-audit（18 条 lightRisk 逐项核销 + workflow 重跑 re-assessment + devlog 终结）
@@ -265,4 +265,10 @@ Run with:
 - **Tests (test-first):** `tests/use-theme.test.ts` 8 项真值表（含缺 matchMedia、抛错存储、garbage 值、setPreference 持久化/清键）；`e2e/theme.spec.ts` 3 项（theme-init 首绘路径、系统跟随双向、stored dark 压过 light 系统）。**全套 e2e 40/40：37 个既有 spec 在 dark pin 下零改动零破坏**（审计判据 6 的预言精确兑现）。
 - **Build 验证:** `dist/theme-init.js` 入产物、`dist/index.html` 引用保留。CSP 留待部署后在 sbcv.app 复核 console（`_headers` 不被本地 preview 解析——审计 IF2）。
 - **视觉验证:** light 下 JSON 查看器 = 白 chrome + light CodeMirror 语法高亮 + 编辑器高度正常。
+- **偏差:** 无。
+
+### T8-theme-toggle-ui — PR #339
+- **What changed:** 桌面 brand menu 三态分段控件（System/Dark/Light，Monitor/Moon/Sun 图标，GitHub 项上方、`--border-menu` 分隔；激活态借用 palette is-active 语言 = `--surface-selected` + `--accent-brand-fg`）；移动 menu sheet 同三态（`mobile-theme-buttons`，Target 字段上方）；样式零新字面量（guard 终态保持，仅新增 `useTheme.ts` 两条 meta theme-color 例外入 allowlist——`<meta content>` 无法消费 CSS var，镜像 `--surface-app` 双值）。
+- **Tests:** e2e 新增 2 项（桌面：切 light → focus-ring=#55721a 断言 → reload 持久 → 回 System 跟随 emulated dark 且 localStorage 清键；移动：sheet 内同三态）——**e2e 42/42**；unit 1749。
+- **视觉验证:** light 菜单截图——三态控件激活态清晰、与菜单语言融合；切换即时生效。
 - **偏差:** 无。

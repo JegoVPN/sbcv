@@ -10,8 +10,7 @@ import {
   FolderOpen,
   Github,
   Home,
-  LoaderCircle,
-} from "lucide-react";
+  LoaderCircle, Monitor, Moon, Sun, } from "lucide-react";
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
@@ -25,6 +24,7 @@ import type { Diagnostic, SingBoxConfig, SingBoxTargetId } from "../domain/types
 import { GITHUB_REPO_URL } from "./appLinks";
 import { DiagnosticsPopover } from "./DiagnosticsPopover";
 import { SbcvLogo } from "./SbcvLogo";
+import { useTheme, type ThemePreference } from "../state/useTheme";
 
 const ConfigJsonViewerDialog = lazy(() =>
   import("./ConfigJsonViewerDialog").then((module) => ({ default: module.ConfigJsonViewerDialog })),
@@ -100,6 +100,7 @@ export function TopBar() {
   );
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme();
   const [jsonViewerOpen, setJsonViewerOpen] = useState(false);
 
   const allDiagnostics = useMemo(
@@ -311,6 +312,27 @@ export function TopBar() {
               <Download size={17} />
               <span>Export JSON</span>
             </button>
+            <div className="brand-menu__theme" role="group" aria-label="Theme">
+              {(
+                [
+                  ["system", "System", Monitor],
+                  ["dark", "Dark", Moon],
+                  ["light", "Light", Sun],
+                ] as const
+              ).map(([value, label, Icon]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={themePreference === value ? "is-active" : undefined}
+                  aria-pressed={themePreference === value}
+                  data-testid={`theme-${value}`}
+                  onClick={() => setThemePreference(value as ThemePreference)}
+                >
+                  <Icon size={14} aria-hidden />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
             <a className="brand-menu__item" role="menuitem" href={GITHUB_REPO_URL} target="_blank" rel="noreferrer">
               <Github size={17} />
               <span>GitHub</span>

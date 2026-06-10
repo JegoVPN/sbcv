@@ -37,6 +37,16 @@ const ALLOWLIST: Array<{ file: string; lineIncludes: string; reason: string }> =
     lineIncludes: '#0d1116',
     reason: "logo plate = theme invariant (user ruling 2026-06-10); CSS --logo-plate owns it",
   },
+  {
+    file: "src/state/useTheme.ts",
+    lineIncludes: 'dark: "#090b0f"',
+    reason: "<meta theme-color> content cannot consume CSS vars; mirrors --surface-app (dark)",
+  },
+  {
+    file: "src/state/useTheme.ts",
+    lineIncludes: 'light: "#f2f4f7"',
+    reason: "<meta theme-color> content cannot consume CSS vars; mirrors --surface-app (light)",
+  },
 ];
 
 function stripCssComments(css: string): string {
