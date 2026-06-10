@@ -120,6 +120,22 @@ describe("U4 — Tailscale endpoint fields", () => {
       expect(ep()?.ssh_server).toEqual({ enabled: true, disable_sftp: true });
     });
 
+    it("preserves unknown ssh_server sub-keys when editing a documented option", () => {
+      // Future upstream sub-keys must survive a toggle edit — editing one documented
+      // option must not silently drop sibling data the controls don't know about.
+      openTailscale({ ssh_server: { enabled: true, future_key: "x" } });
+      fireEvent.click(screen.getByLabelText(/^Disable SFTP/) as HTMLInputElement);
+      expect(ep()?.ssh_server).toEqual({ enabled: true, future_key: "x", disable_sftp: true });
+    });
+
+    it("treats an imported ssh_server:false as off and enables to the object form", () => {
+      openTailscale({ ssh_server: false });
+      const cb = screen.getByLabelText(/^SSH Server/) as HTMLInputElement;
+      expect(cb.checked).toBe(false);
+      fireEvent.click(cb);
+      expect(ep()?.ssh_server).toEqual({ enabled: true });
+    });
+
     it("hides the disable_* options while ssh_server is off", () => {
       openTailscale();
       expect(screen.queryByLabelText(/^Disable PTY/)).toBeNull();

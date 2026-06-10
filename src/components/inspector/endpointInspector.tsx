@@ -28,11 +28,16 @@ function sshServerFlag(value: unknown, flag: SshServerFlag): boolean {
 function sshServerValue(
   current: unknown,
   patch: Partial<Record<SshServerFlag | "enabled", boolean>>,
-): Record<string, boolean> | undefined {
+): Record<string, unknown> | undefined {
   if (!(patch.enabled ?? sshServerEnabled(current))) return undefined;
-  const next: Record<string, boolean> = { enabled: true };
+  // Start from the current object so sub-keys these controls don't know about (future
+  // upstream additions) survive an edit; documented flags are re-derived and pruned below.
+  const next: Record<string, unknown> =
+    typeof current === "object" && current !== null ? { ...(current as Record<string, unknown>) } : {};
+  next.enabled = true;
   for (const [flag] of SSH_SERVER_FLAGS) {
     if (patch[flag] ?? sshServerFlag(current, flag)) next[flag] = true;
+    else delete next[flag];
   }
   return next;
 }
