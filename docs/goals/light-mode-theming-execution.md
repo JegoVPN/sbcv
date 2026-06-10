@@ -309,3 +309,6 @@ Run with:
 - **CVD 复核（Machado severity-1.0 protan/deutan 矩阵）:** 关键前景模拟后对比全部 ≥4.3（不退化）；olive/amber 在红绿色弱下色相趋同属物理必然，逐场景核查确认**零"仅靠色相"判定点**（状态 pill 有文字、popover/chip/toast 有图标形状、dangling 边虚线、olive vs 蓝 CVD 距离 189+）。normal/deutan 双视角截图过目。
 - **Tests:** unit 1749、theme e2e 5/5（focus-ring 断言同步 `#4a6418`）、equivalence ✓。
 - **偏差:** 把 olive/amber 在 CVD 下拉开到强可辨（距离 ≥60）需要更换色系，违背"正常即可"与品牌——以形状/文字冗余作为该轴的承载（现状已满足），记录为设计决策而非缺口。
+
+### 追加：light 画布点阵调浅 — PR #343（用户反馈：点阵对色弱构成视觉噪点）
+- T10 将点阵随整体加深（dot 1.52 / rf 1.43 分离度），浅底上的深色高频噪点对色弱/低视力用户构成干扰。回调至 dark 的"隐约存在"感知（dark 参照 1.31；浅底感知更强故取更低）：`--canvas-dot #d2d9e0`(1.19)、`--canvas-dot-rf #d6dce2`(1.15)。dark 不动；contrast/separation 守卫不涉及装饰点阵，全部保持绿。
