@@ -1161,7 +1161,8 @@ export const DOC_FIELD_NAMES = {
           "system_interface",
           "system_interface_name",
           "system_interface_mtu",
-          "udp_timeout"
+          "udp_timeout",
+          "ssh_server"
         ],
         "wireguard": [
           "system",

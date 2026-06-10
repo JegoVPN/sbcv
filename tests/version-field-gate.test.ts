@@ -73,6 +73,11 @@ describe("VT3 — data-driven testing-only field gate", () => {
             "accept_search_domain",
           ],
         },
+        "endpoint": {
+          "tailscale": [
+            "ssh_server",
+          ],
+        },
         "inbound": {
           "hysteria2": [
             "bbr_profile",
