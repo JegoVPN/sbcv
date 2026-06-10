@@ -78,7 +78,7 @@ Run with:
 - [x] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）— PR #335
 
 #### Phase T-P2 — 受控收敛
-- [ ] T5-token-consolidation（~200 verbatim → ~85–100 语义 token；有意微调，单独 review）
+- [x] T5-token-consolidation（verbatim alias → 语义档收敛；有意微调）— PR #336
 
 #### Phase T-P3 — light 表与机制
 - [ ] T6-light-variable-table（[data-theme="light"] + color-scheme + 对比度守卫测试）
@@ -244,3 +244,10 @@ Run with:
 - **Tests:** unit 1732、build ✓、e2e 37/37。
 - **视觉抽查:** 移动 topbar pill/validation group/画布——一致。
 - **偏差:** 无。
+
+### T5-token-consolidation — PR #336
+- **What changed:** 71 个 verbatim alias 收敛进语义档（text 六档、border 三档、hover 族→4 + 单列 `--surface-control-hover`、raised/overlay-modal/chip 表面归并、info 前景→1、danger 三组双连、`--surface-control-chip` 撞名按 goal 裁决重排、`--shadow-floating` 同几何 alpha 微并）；brightness 参数化（`--hover-brightness[-strong]`，T6 填 light 极性）；equivalence 脚本新增 `--report` 容差模式。
+- **政策合规:** 93 个声明变化、112 处颜色 Δ、max Δ=24、0 unpaired；Δ>8 共 32 处逐条核对全部落在审计预批伞下，清单外零超标。e2e 锚定全部保值（#171d24/#292b2d/#ff7b7b/#2d99ff/#c7ff00/#ff5d5d/#59616a），16 处断言原值通过。
+- **Tests:** unit 1732、build ✓、e2e 37/37；guard 终态保持 []。
+- **视觉抽查:** 桌面全景——设计语言完好，可感差异限于预批项。
+- **偏差:** ① token 定义余 163（颜色语义 ≈110，高于估算 85–100）——角色拆分 alias 是 T6 分别调值的抓手，不强并；② shadow 仅同几何 alpha 微并，完整 13→3-4 档需统一几何（视觉变化超"微调"承诺）推迟至 T6 统筹。
