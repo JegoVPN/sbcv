@@ -32,7 +32,7 @@ Run with:
    - **React Flow vendor 变量**：app 未传 `colorMode`，xyflow 的 **light 默认表**今天就在生效。精确泄漏面 = minimap mask `rgba(240,240,240,.6)` + minimap node `#e2e2e2` + 框选矩形 `rgba(0,89,220,…)` + **选中边 `#555`**；其余（handle/node-wrapper/attribution/edge-label）已证明不漏。杠杆：**在我们的 token 表里定义 `--xy-*`（非 `-default` 后缀）变量**，fallback 链中两主题都胜出，不用 `colorMode` prop（避免双源）。
    - **`color-scheme`**：scrollbar/原生 `<select>` 弹出/checkbox/autofill 全靠 `styles.css:2` 的 `color-scheme: dark`，repo 零自定义滚动条 CSS。light 表第一行必须是 `color-scheme: light`，否则白面板配深色滚动条。
    - **CodeMirror 双重耦合**：`ConfigJsonViewerDialog.tsx:72` 的 `theme="dark"` 注入 oneDark 全套色；且 `styles.css:2578-2581` 的高度规则选择器写死 `.cm-theme-dark`——**prop 切到 light 时类名变 `.cm-theme-light`，编辑器直接失去高度（布局破坏，不只是颜色）**。uiw 的 theme 切换是受支持的动态 reconfigure（`useCodeMirror.js:178-186`，无需 remount）。
-   - **TSX 三处字面量**（已证明是 src 内全部）：`CanvasWorkspace.tsx:50` 连接线 inline stroke（**不能删**——删除会复活 :1586 死掉的 `.valid` lime 规则改变拖线行为；改为 `stroke: "var(--edge-connection)"`，inline SVG style 接受 var()）；`CanvasWorkspace.tsx:591` `<Background color="#1f2730">`（改传 var() 字符串，注意它与一位之差的 `#1f2731`(:577 分隔线) 是**巧合不是同族**）；`SbcvLogo.tsx:22` 六边形底板 fill（在 CSS 里加 `.sbcv-logo__hexagon { fill: var(…) }` 覆盖 presentation attribute，TSX 不动）。
+   - **TSX 三处字面量**（已证明是 src 内全部）：`CanvasWorkspace.tsx:50` 连接线 inline stroke（**不能删**——删除会复活 :1586 死掉的 `.valid` lime 规则改变拖线行为；改为 `stroke: "var(--edge-connection)"`，inline SVG style 接受 var()）；`CanvasWorkspace.tsx:591` `<Background color="#1f2730">`（改传 var() 字符串，注意它与一位之差的 `#1f2731`(:577 分隔线) 是**巧合不是同族**）；`SbcvLogo.tsx:22` 六边形底板 fill（在 CSS 里加 `.sbcv-logo__hexagon { fill: var(--logo-plate) }` 覆盖 presentation attribute，TSX 不动）。**logo 全件配色 = 主题不变量（用户拍板 2026-06-10，token 预览评审）**：底板 `#0d1116`、lime 描边/圆点 `#c7ff00`（:176-193）、idle 灰 `#59616a`（:180）mint 为 `--logo-plate`/`--logo-stroke`/`--logo-idle`，仅 `:root` 定义，**light 表不覆盖**（lime 对比的是自带暗板而非页面背景，双主题下均成立）。
    - **CSP 拦截 inline 防闪脚本**：`public/_headers:7` `script-src 'self' …` 无 `unsafe-inline` 无 hash，且 `_headers` 在 Workers Static Assets 部署下生效——**inline `<script>` 在 dev 能跑、在 sbcv.app 被静默拦截**。防 FOUC 引导必须是 `public/theme-init.js` 外部经典阻塞脚本（'self' 允许）。注意当前 FOUC 方向：light 用户会看到**暗闪**（`:root` 背景 `#090b0f`）。
    - **favicon**：`index.html:31` data-URI SVG 用 `%23` 编码色（`%230d1116`/`%23c7ff00`），逃过一切 `#` 正则——guard 测试必须同时匹配 `%23[0-9a-fA-F]{3,8}`。favicon 与 logo 暗色底板定为**两主题通用的品牌件（non-goal，不随主题翻转）**。
 6. **e2e 时序判据（审计实测）**：Playwright 未设 `colorScheme`，默认模拟 **prefers-color-scheme: light**。(i) 纯 verbatim token 化 = **0 预期 e2e 失败**（16 处颜色断言全部比较计算值，var() 间接不改计算值——它们是 P1 的免费像素回归网）；(ii) 三态机制一旦上线，全套 e2e 翻成 light 渲染，`brand-hover.spec.ts:28` 等必破。**`colorScheme: "dark"` 的 pin 必须与机制同一个 PR 落地**（T7）。
@@ -113,7 +113,7 @@ Run with:
 - **基建交付:** `:root` token 表骨架（按词表分类注释分区）；`scripts/verify-token-equivalence.mjs`；`tests/theme-token-guard.test.ts`（ratchet，初始基线 = 全文件现状）；`[data-theme]` 占位注释（空表，T6 填）。
 - **Source of truth:** `.audit/light-mode/findings.json` css-1 段 + 归并对抗裁决；guard 模板 = `tests/no-local-absolute-paths.test.ts:14-53`。
 - **Touch:** `src/styles.css`（1–815 段 + 顶部 token 表）、`scripts/verify-token-equivalence.mjs`（新）、`tests/theme-token-guard.test.ts`（新）。
-- **关键拆分（本段）:** 状态 pill 三色 fill/fg 分离（:472/:477/:487 与 :520/:526/:532 的故意双声明**必须同 token**，:515 stale 注释一并修正为 token 名）；`#1C1E20` pill-chrome vs `.brand-menu` overlay 分 alias；`#333537` 背景/边框拆；白 alpha hover 洗(:630) mint 为 `--surface-hover-wash`（light 翻转黑基）；`--accent-{brand,warn,danger}-rgb` 三元组承接 :522/:528/:534/:802/:805 的 alpha 阶梯。
+- **关键拆分（本段）:** 状态 pill 三色 fill/fg 分离（:472/:477/:487 与 :520/:526/:532 的故意双声明**必须同 token**，:515 stale 注释一并修正为 token 名）；`#1C1E20` pill-chrome vs `.brand-menu` overlay 分 alias；`#333537` 背景/边框拆；白 alpha hover 洗(:630) mint 为 `--surface-hover-wash`（light 翻转黑基）；`--accent-{brand,warn,danger}-rgb` 三元组承接 :522/:528/:534/:802/:805 的 alpha 阶梯；logo stroke 族（:176-193 的 `#c7ff00`、:180 的 `#59616a`）mint 为 **主题不变**的 `--logo-stroke`/`--logo-idle`（不并入 `--accent-brand-fg`，见审计结论 5 与 Out-of-scope 第 1 条）。
 - **Acceptance/Tests:** equivalence 零 diff；ratchet 基线从 N₀ 降至 N₁ 并锁定；test-first = 先提交 guard 测试（红：基线断言写成 T1 完成后的目标数）再替换。
 - **Reviewer:** CSS refactor 正确性（重点抽查双声明同 token、注释改写、alias 拆分对照审计 JSON）。
 - **Don't mix:** 不动 815 行之后任何字面量；不引入 light 值；不调整选择器/specificity。
@@ -162,7 +162,7 @@ Run with:
 - **Touch:** `src/styles.css`（light 表 ~100–150 行）、`tests/theme-contrast.test.ts`（新：解析两套表，对一份显式 fg/bg 配对清单断言对比度阈值——配对清单是测试的一部分，新 token 不配对则测试失败提醒登记；**rgba token 按其配对 bg 先做 alpha 合成再算 ratio；shadow/scrim/gradient 类进显式 exempt 表**）。
 - **Acceptance/Tests:** 对比度测试绿（test-first：先写配对清单与阈值，红，再填表）；一条临时 e2e（`page.addInitScript` 设 data-theme=light）smoke 关键面无 vendor 色/无暗残留；dark 渲染零变化（equivalence 不涉及——light 表不触 :root）。
 - **Reviewer:** a11y/contrast expert（验算对比度数学与配对清单完备性）。
-- **Don't mix:** 不加切换机制/UI；不动 CodeMirror；**light 覆盖只写变量值，`[data-theme="light"]` 下不得新增组件级选择器**（避免重开 :147-150 那类 specificity war——审计 IF18 警告）。
+- **Don't mix:** 不加切换机制/UI；不动 CodeMirror；**light 覆盖只写变量值，`[data-theme="light"]` 下不得新增组件级选择器**（避免重开 :147-150 那类 specificity war——审计 IF18 警告）；**`--logo-*` 族是主题不变量，不进 light 覆盖表**。
 
 #### T7-theme-mechanism
 - **Outcome:** 三态主题机制端到端可用（无 UI 入口，console/localStorage 可驱动）：`public/theme-init.js`（CSP-safe 外部阻塞脚本：读 `sbcv:theme` → 设 `data-theme` + 同步首帧背景，防双向 FOUC）；`src/state/useTheme.ts`（镜像 `useViewport.ts`：matchMedia('(prefers-color-scheme: dark)') + localStorage 覆盖 + `useSyncExternalStore` + dataset 同步 + 缺 matchMedia 防御 + **localStorage 读写一律 try/catch，异常按 system 处理**（Safari 隐私模式等，theme-init.js 同样要求））；**常驻挂载：`App.tsx` 顶层调用 `useTheme()`**（useViewport 模式的 listener 在首个订阅时才挂上，唯一消费者若是惰性挂载的对话框，系统主题翻转将不会同步 dataset/meta——必须有常驻订阅者）；`<meta name="theme-color">` 动态对（media-paired 初始 + 手动覆盖时 JS 更新）；CodeMirror `theme={resolved}` 联动 + `styles.css:2578-2581` 选择器改 `[class*="cm-theme"]` 双态兼容；可选的切换瞬间 transition 抑制类（:144,:508,:1291,:1782,:1865 五处 120ms tween 可接受则记录为 known-minor）。
@@ -189,7 +189,7 @@ Run with:
 
 ## Out of scope（显式非目标）
 
-- favicon 与 SbcvLogo 暗色底板的随主题翻转（保持品牌件，两主题通用——审计确认双主题下均 legible）。
+- favicon 与 SbcvLogo 的随主题翻转——**logo 全件配色（暗底板 `#0d1116` + lime `#c7ff00` 描边/圆点 + idle 灰 `#59616a`）为主题不变量（用户拍板 2026-06-10）**；token 化为 `--logo-*` 族、仅 `:root` 定义，light 表不覆盖（审计确认双主题下均 legible）。
 - `prefers-reduced-motion` / `prefers-contrast` / forced-colors 支持（审计确认现状为零，独立 gap，另立 goal）。
 - CodeMirror 自绘 token-driven EditorView.theme（务实采用 stock one-dark/light；如 T9 巡检认定 stock light 与 chrome 失谐，再立后续原子）。
 - 第三主题（高对比度等）——token 架构已为其留好形状，但不在本 queue。
