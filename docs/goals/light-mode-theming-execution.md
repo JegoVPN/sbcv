@@ -81,7 +81,7 @@ Run with:
 - [x] T5-token-consolidation（verbatim alias → 语义档收敛；有意微调）— PR #336
 
 #### Phase T-P3 — light 表与机制
-- [ ] T6-light-variable-table（[data-theme="light"] + color-scheme + 对比度守卫测试）
+- [x] T6-light-variable-table（[data-theme="light"] + color-scheme + 对比度守卫测试）— PR #337
 - [ ] T7-theme-mechanism（theme-init.js + useTheme 模块 + CodeMirror/meta 联动 + **playwright colorScheme pin 同 PR**）
 - [ ] T8-theme-toggle-ui（桌面 brand menu + 移动 menu sheet 三态控件 + e2e）
 
@@ -251,3 +251,11 @@ Run with:
 - **Tests:** unit 1732、build ✓、e2e 37/37；guard 终态保持 []。
 - **视觉抽查:** 桌面全景——设计语言完好，可感差异限于预批项。
 - **偏差:** ① token 定义余 163（颜色语义 ≈110，高于估算 85–100）——角色拆分 alias 是 T6 分别调值的抓手，不强并；② shadow 仅同几何 alpha 微并，完整 13→3-4 档需统一几何（视觉变化超"微调"承诺）推迟至 T6 统筹。
+
+### T6-light-variable-table — PR #337
+- **What changed:** `[data-theme="light"]` 完整变量表（~150 个覆盖：`color-scheme: light` 居首、白卡浮浅灰画布的极性翻转、品牌 fill 保 lime 而前景/边线/焦点环转 olive（`#55721a`/`#6b9000`）、状态色全员加深（error 实底 `#c63838` 顺手修掉 dark 现状白字 3.91 的缺口至 5.2+）、选中蓝深化 `#1c7ed6`、`--accent-*-rgb` 三元组换 olive/深红基使 alpha 阶梯自动重导出、白 alpha ghost 族翻 ink-alpha、阴影 alpha 砍至 ~1/3 蓝墨基、glass 换白基保 alpha、`--hover-brightness` 极性翻转（0.96/0.93）、xyflow 桥接 light 值；**`--logo-*`/fill 族/on-fill 墨色不覆盖**（主题不变量）。
+- **tests/theme-contrast.test.ts（test-first，先红后绿）:** 解析两套表、var() 链解析、rgba 先合成再算 ratio；**55 个 fg/bg 配对 × 两主题全部过线**（文本 4.5/UI 3.0）；dark 现状债务 8 项以实测值锁定（防进一步回归，light 无豁免）；`--logo-*` 不进 light 表有专项断言；配对清单即登记机制。
+- **Equivalence:** ✓ 457（[data-theme] 块按设计排除——dark 渲染零变化）。
+- **Tests:** unit 1735（+3）、build ✓、e2e 37/37。
+- **视觉验证:** 桌面/移动 light 全景截图——白卡/浅画布/olive 图/深字全部成立；首截发现 `--surface-rule-summary` 漏覆盖（rule 卡黑块），机械差集排查补齐 2 个漏项后复验干净。
+- **偏差:** CodeMirror 在 light 下仍为 dark 岛（theme prop 联动属 T7，按 don't-mix 未动）。
