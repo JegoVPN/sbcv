@@ -4,6 +4,16 @@ name: Sync sing-box docs
 # Re-runs scripts/sync-singbox-docs.mjs with FORCE and opens a PR ONLY when the
 # upstream docs actually changed (the script writes no wall-clock timestamp, so an
 # unchanged upstream produces no diff). Manual runs via "Run workflow".
+#
+# Operating requirement: the repository setting "Allow GitHub Actions to create
+# and approve pull requests" (Settings → Actions → General; API field
+# `can_approve_pull_request_reviews`) must stay ENABLED. The job-level
+# `pull-requests: write` permission below is not sufficient on its own: with the
+# setting off, the branch push still succeeds but PR creation is rejected with
+# "GitHub Actions is not permitted to create or approve pull requests", and the
+# run fails on every schedule once upstream has pending changes (incident
+# 2026-06-01..09; the 2026-05-28..31 runs only passed because upstream had no
+# diff yet, so the PR-creation path was never exercised).
 
 on:
   schedule:
@@ -23,12 +33,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Sync upstream docs (force re-pull)
         env:
@@ -36,7 +46,8 @@ jobs:
         run: node scripts/sync-singbox-docs.mjs
 
       - name: Open PR if docs changed
-        uses: peter-evans/create-pull-request@v7
+        id: create-pr
+        uses: peter-evans/create-pull-request@v8
         with:
           add-paths: docs/upstream/**
           branch: chore/singbox-docs-sync
@@ -53,3 +64,22 @@ jobs:
           labels: |
             docs
             automated
+
+      # The repo-level "allow Actions to create PRs" switch overrides the job's
+      # pull-requests:write permission, so when it gets turned off the failure is
+      # otherwise a cryptic daily red X (see incident note in the header).
+      - name: Diagnose PR-creation failure
+        if: failure() && steps.create-pr.conclusion == 'failure'
+        run: |
+          {
+            echo "## sing-box docs sync: PR creation failed"
+            echo
+            echo "Most likely cause: the repository setting **Allow GitHub Actions to create and approve pull requests** is disabled (it overrides this job's \`pull-requests: write\` permission; the sync itself and the branch push usually still succeed)."
+            echo
+            echo "Re-enable it under Settings → Actions → General, or run:"
+            echo
+            echo '```'
+            echo "gh api -X PUT repos/${{ github.repository }}/actions/permissions/workflow -f default_workflow_permissions=read -F can_approve_pull_request_reviews=true"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::PR creation failed. Likely the repo setting 'Allow GitHub Actions to create and approve pull requests' is disabled — see the run summary for the one-line fix."
