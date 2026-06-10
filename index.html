@@ -3,6 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#090b0f" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f4f7" />
+    <!-- Pre-paint theme bootstrap: must stay a blocking EXTERNAL script (prod CSP
+         has no 'unsafe-inline' for script-src) and precede the Vite-injected
+         stylesheet so the data-theme attribute lands before first paint. -->
+    <script src="/theme-init.js"></script>
     <meta
       name="description"
       content="sbcv is a visual sing-box configuration builder for editing canonical json configs with a react flow canvas, route rules, dns rules, validation, import, and export."

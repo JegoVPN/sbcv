@@ -8,6 +8,10 @@ export default defineConfig({
   },
   use: {
     baseURL: "http://127.0.0.1:5173",
+    // The app follows prefers-color-scheme (three-state theme, T7). Playwright
+    // EMULATES "light" by default, which would silently flip every existing
+    // spec to the light theme — pin dark; theme.spec.ts opts into light per test.
+    colorScheme: "dark",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },

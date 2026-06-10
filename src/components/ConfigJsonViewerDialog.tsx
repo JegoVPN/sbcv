@@ -3,6 +3,7 @@ import { json } from "@codemirror/lang-json";
 import { Braces, Copy, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTheme } from "../state/useTheme";
 import { stringifyConfig } from "../domain/serialization";
 import { useProjectStore } from "../state/useProjectStore";
 
@@ -15,6 +16,7 @@ type ConfigJsonViewerDialogProps = {
 
 export function ConfigJsonViewerDialog({ open, onClose }: ConfigJsonViewerDialogProps) {
   const config = useProjectStore((state) => state.config);
+  const { resolved: resolvedTheme } = useTheme();
   const [copied, setCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
   const jsonText = useMemo(() => stringifyConfig(config), [config]);
@@ -69,7 +71,7 @@ export function ConfigJsonViewerDialog({ open, onClose }: ConfigJsonViewerDialog
           <CodeMirror
             value={jsonText}
             height="100%"
-            theme="dark"
+            theme={resolvedTheme}
             extensions={jsonExtensions}
             editable={false}
             readOnly

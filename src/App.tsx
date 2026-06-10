@@ -6,6 +6,7 @@ import { MobileTopBar } from "./components/MobileTopBar";
 import { ToastHost } from "./components/ToastHost";
 import { TopBar } from "./components/TopBar";
 import { useViewport } from "./components/useViewport";
+import { useTheme } from "./state/useTheme";
 import "./styles.css";
 
 // Code-split the desktop Palette so its chunk (icons + the full node catalog) is NOT in the main
@@ -15,6 +16,10 @@ const Palette = lazy(() => import("./components/Palette").then((m) => ({ default
 
 export function App() {
   const { isMobile } = useViewport();
+  // Permanent subscriber: keeps the prefers-color-scheme listener and the
+  // data-theme/<meta theme-color> side-effects alive even when every other
+  // consumer (e.g. the lazily-mounted JSON viewer) is unmounted.
+  useTheme();
 
   if (isMobile) {
     return (
