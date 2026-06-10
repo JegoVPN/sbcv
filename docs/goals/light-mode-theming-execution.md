@@ -69,7 +69,7 @@ Run with:
 ### Running TODO
 
 #### Phase T-P0 — 先行行为修复
-- [ ] T0-selected-edge-stroke-bug
+- [x] T0-selected-edge-stroke-bug — PR #329
 
 #### Phase T-P1 — verbatim token 化（dark 像素零变化，equivalence 脚本背书）
 - [ ] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）
@@ -207,3 +207,11 @@ Run with:
 ## Milestone Notes
 
 （每原子项落地后追加：what changed / tests / equivalence 输出 / reviewer verdict / verification commands / 偏差。）
+
+### T0-selected-edge-stroke-bug — PR #329
+- **What changed:** `:root` 新增 `--xy-edge-stroke-selected: #2d99ff`（vendor 三臂 `.selected`/`.selectable:focus`/`.selectable:focus-visible` 统一经该中间层变量取色），选中/聚焦边从 vendor `#555` 变为选择蓝。选蓝理由：与卡片选中（:1296-1305）和一级边高亮（#2d99ff）同语言。
+- **Tests (test-first):** e2e `editor.spec.ts` 新增——点选（interaction path 几何中点 + getScreenCTM，避开 bezier bbox 中心不在曲线上的问题）与键盘 focus 两臂均断言 `rgb(45,153,255)`；修复前红（实测 `rgb(85,85,85)` 复现 bug）。
+- **Verification:** `pnpm test`(1731) + `pnpm build` + `pnpm e2e`(37) 全绿；视觉截图确认选中边清晰可辨。vendor 消费链核验：`dist/style.css:180` 消费 `var(--xy-edge-stroke-selected, …-default)`，vendor 仅定义 `-default` 后缀（:8 `#555`、:56 dark `#727272`），无同名遮蔽。
+- **Reviewer verdict:** 7 角度 review（line-scan / removed-behavior / cross-file / reuse / simplification / efficiency / altitude）零 actionable 发现；altitude 评注——own 中间层变量优于叠加 specificity，三臂一处生效。
+- **偏差:** 无。该变量值由 T2 接管为 `var(--edge-selected)`。
+- **事故记录:** 并行会话从本分支误切 `ci/sync-singbox-docs-hardening` 导致 PR #330 短暂裹挟 T0 commit；已 `rebase --onto origin/main` 剥离并 force-with-lease 修复，两 PR 文件集已各自干净。
