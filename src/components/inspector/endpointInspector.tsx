@@ -6,6 +6,42 @@ import { PlatformBanner, SensitiveTextField } from "./controls";
 import { endpointHandledFields } from "./handledFields";
 import { type EndpointReferences, fromList, type InspectorEntity, parseOptionalInt, parseOptionalPort, toList, type UpdateField } from "./helpers";
 
+// endpoint/tailscale.md ssh_server (since 1.14.0) is bool-or-object with `true` ≡ `{ "enabled": true }`.
+// Controls edit the documented object form (udp_over_tcp precedent) and prune to undefined when off.
+type SshServerFlag = "disable_pty" | "disable_sftp" | "disable_forwarding";
+
+const SSH_SERVER_FLAGS: ReadonlyArray<[SshServerFlag, string]> = [
+  ["disable_pty", "Disable PTY (refuse PTY allocation requests)"],
+  ["disable_sftp", "Disable SFTP (refuse the SFTP subsystem)"],
+  ["disable_forwarding", "Disable Forwarding (refuse TCP and Unix-socket forwarding, including SSH agent)"],
+];
+
+function sshServerEnabled(value: unknown): boolean {
+  if (value === true) return true;
+  return typeof value === "object" && value !== null && (value as Record<string, unknown>).enabled === true;
+}
+
+function sshServerFlag(value: unknown, flag: SshServerFlag): boolean {
+  return typeof value === "object" && value !== null && (value as Record<string, unknown>)[flag] === true;
+}
+
+function sshServerValue(
+  current: unknown,
+  patch: Partial<Record<SshServerFlag | "enabled", boolean>>,
+): Record<string, unknown> | undefined {
+  if (!(patch.enabled ?? sshServerEnabled(current))) return undefined;
+  // Start from the current object so sub-keys these controls don't know about (future
+  // upstream additions) survive an edit; documented flags are re-derived and pruned below.
+  const next: Record<string, unknown> =
+    typeof current === "object" && current !== null ? { ...(current as Record<string, unknown>) } : {};
+  next.enabled = true;
+  for (const [flag] of SSH_SERVER_FLAGS) {
+    if (patch[flag] ?? sshServerFlag(current, flag)) next[flag] = true;
+    else delete next[flag];
+  }
+  return next;
+}
+
 // C14 — the endpoint entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "endpoint"` branch. The shell computes
 // selectedEndpointReferences (via helpers.endpointReferences) and passes it in read-only.
@@ -361,6 +397,30 @@ export function EndpointInspector({
                   }}
                 />
               </label>
+              <label className="toggle-row" data-testid="tailscale-ssh-server">
+                <input
+                  type="checkbox"
+                  checked={sshServerEnabled(entity.ssh_server)}
+                  onChange={(event) =>
+                    updateField(entityRef, "ssh_server", sshServerValue(entity.ssh_server, { enabled: event.target.checked }))
+                  }
+                />
+                <span>SSH Server (since sing-box 1.14.0; runs a Tailscale SSH server on tailnet port 22)</span>
+              </label>
+              {sshServerEnabled(entity.ssh_server)
+                ? SSH_SERVER_FLAGS.map(([flag, label]) => (
+                    <label key={flag} className="toggle-row" data-testid={`tailscale-ssh-${flag}`}>
+                      <input
+                        type="checkbox"
+                        checked={sshServerFlag(entity.ssh_server, flag)}
+                        onChange={(event) =>
+                          updateField(entityRef, "ssh_server", sshServerValue(entity.ssh_server, { [flag]: event.target.checked }))
+                        }
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))
+                : null}
             </>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={endpointHandledFields} entityRef={entityRef} updateField={updateField} />
