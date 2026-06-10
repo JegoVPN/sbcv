@@ -72,7 +72,7 @@ Run with:
 - [x] T0-selected-edge-stroke-bug — PR #329
 
 #### Phase T-P1 — verbatim token 化（dark 像素零变化，equivalence 脚本背书）
-- [ ] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）
+- [x] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）— PR #331
 - [ ] T2-canvas-nodes-edges-tsx（styles.css 805–1890 + TSX 三处 + xyflow 桥接变量）
 - [ ] T3-inspector-dialogs（styles.css 1880–2735 + 孤儿 var 修复）
 - [ ] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）
@@ -215,3 +215,10 @@ Run with:
 - **Reviewer verdict:** 7 角度 review（line-scan / removed-behavior / cross-file / reuse / simplification / efficiency / altitude）零 actionable 发现；altitude 评注——own 中间层变量优于叠加 specificity，三臂一处生效。
 - **偏差:** 无。该变量值由 T2 接管为 `var(--edge-selected)`。
 - **事故记录:** 并行会话从本分支误切 `ci/sync-singbox-docs-hardening` 导致 PR #330 短暂裹挟 T0 commit；已 `rebase --onto origin/main` 剥离并 force-with-lease 修复，两 PR 文件集已各自干净。
+
+### T1-token-infra-and-global-topbar — PR #331
+- **What changed:** ① `:root` token 表落地（59 个 token：surfaces ×15、text ×14、borders ×8、accents/status ×13、RGB 三元组 ×3、logo 主题不变量 ×2、whole-shadow ×3、vendor bridge ×1），`[data-theme="light"]` 占位注释就位；② styles.css 全局/topbar 段（文件头至 `status-check-pulse` keyframe）全部颜色字面量改 `var()`——状态 pill 的故意双声明（rest + hover re-assert）已同 token 锁死；glow ring/pulse keyframe 走 `rgba(var(--accent-*-rgb), α)` 三元组；大小写孪生（`#1C1E20`/`#292B2D`/`#494B4D`）token 化时归一小写；4 处注释 hex 同步改写为 token 名（含 :515 stale 注释修正）；③ `scripts/verify-token-equivalence.mjs`（两侧各自解析 var→字面、剥注释、属性名稳定排序规范化、豁免清单带值断言）；④ `tests/theme-token-guard.test.ts`（ratchet：391 → **301**；`rgba(var(` 豁免、TS 注释剥离防 `#303` 类 PR 编号误报、SbcvLogo.tsx:22 allowlist 带理由）。
+- **Equivalence:** `node scripts/verify-token-equivalence.mjs main` → ✓ 456 个规范化声明逐一相同（零像素变化机械成立）。
+- **Tests:** unit 1732/1732（含新 guard）、build ✓（tsc 严格索引检查通过）、e2e 37/37（16 处颜色断言原值通过 = 免费像素回归网）。
+- **视觉抽查:** topbar/brand pill/状态 pill/popover 截图与 token 化前一致。
+- **偏差:** `:root` 内 `background`/`color` 声明移至 token 表之后（值不变，声明顺序对渲染无影响）——equivalence 脚本以属性名稳定排序吸收该顺序差，同名属性保持相对顺序以保住 CSS 覆盖语义。

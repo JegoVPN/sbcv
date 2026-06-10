@@ -2,11 +2,97 @@
   color-scheme: dark;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #090b0f;
-  color: #eef2f4;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  /* ==================== design tokens ====================
+     T-queue (docs/goals/light-mode-theming-execution.md): P1 (T1–T4) mints one
+     token per verbatim dark value, segment by segment — pixel-identical by
+     construction (proven by scripts/verify-token-equivalence.mjs). Same-value
+     tokens are deliberate ROLE splits and must not be re-merged here;
+     consolidation is T5's reviewed pass. The [data-theme="light"] table lands
+     in T6 and overrides tokens only — never component rules. */
+
+  /* -- surfaces: generic blue-gray control ramp -- */
+  --surface-app: #090b0f;
+  --surface-app-shell: #0a0d12;
+  --surface-control: #101418;
+  --surface-input: #11161c;
+  --surface-hover: #171d24;
+  --surface-hover-raised: #1a222b;
+  --surface-control-chip: #1a222b;
+  --status-checking-bg: #20262d;
+
+  /* -- surfaces: warmer neutral topbar-pill family -- */
+  --surface-pill: #1c1e20;
+  --surface-menu: #1c1e20;
+  --surface-pill-control: #333537;
+  --surface-pill-hover: #292b2d;
+  --surface-pill-hover-strong: #494b4d;
+
+  /* -- surfaces: translucent glass (base color woven into rgba; light theme
+        swaps the base, not just alpha) -- */
+  --surface-glass-popover: rgba(16, 20, 24, 0.98);
+  --surface-hover-wash: rgba(255, 255, 255, 0.05);
+
+  /* -- text -- */
+  --text-primary: #eef2f4;
+  --text-input: #f4f7f9;
+  --text-secondary: #d7dee7;
+  --text-secondary-soft: #b7c2cd;
+  --text-muted: #8a96a3;
+  --text-muted-pill: #8e99a4;
+  --text-muted-menu: #9aa3ad;
+  --text-muted-badge: #9aa5b0;
+  --text-muted-control: #a6b0ba;
+  --text-icon-idle: #6f7b86;
+  /* hue-tinted inks on the saturated status fills — tuned WITH their fill, never generic */
+  --text-on-brand: #151900;
+  --text-on-warn: #1f1600;
+  --text-on-danger: #fff;
+  --status-checking-fg: #d7dee7;
+
+  /* -- borders -- */
+  --border-control: #29313a;
+  --border-control-hover: #5f6d7a;
+  --border-input: #303944;
+  --border-pill: #252d35;
+  --border-menu: #333537;
+  --border-popover: #2a3340;
+  --border-subtle: #1f2731;
+  --border-subtle-deep: #181e25;
+
+  /* -- brand / status accents (fill vs fg are separate roles: fills survive a
+        light theme nearly as-is, foregrounds must darken — see goal ruling 4) -- */
+  --accent-brand-fill: #c7ff00;
+  --accent-brand-fg: #c7ff00;
+  --accent-warn-fill: #f2bc4b;
+  --accent-warn-fg: #f2bc4b;
+  --accent-danger-fill: #e34b4b;
+  --accent-danger-fg: #e34b4b;
+  --focus-ring: #c7ff00;
+  --status-error-icon: #e34b4b;
+  --status-warn-icon: #f2bc4b;
+  --status-info-icon: #59b4ff;
+
+  /* -- accent RGB triplets: drive the alpha ladders (glow rings, pulse keyframes)
+        so a retuned accent re-derives every wash -- */
+  --accent-brand-rgb: 199, 255, 0;
+  --accent-warn-rgb: 242, 188, 75;
+  --accent-danger-rgb: 227, 75, 75;
+
+  /* -- logo: THEME INVARIANT (user ruling 2026-06-10) — the lime artwork reads
+        against its own dark plate, not the page; never overridden by light -- */
+  --logo-stroke: #c7ff00;
+  --logo-idle: #59616a;
+
+  /* -- elevation (whole-shadow tokens so light can retune alpha AND geometry) -- */
+  --shadow-pill: 0 18px 42px rgba(0, 0, 0, 0.46);
+  --shadow-menu: 0 26px 70px rgba(0, 0, 0, 0.52);
+  --shadow-popover: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+  /* -- React Flow vendor bridge -- */
   /* React Flow paints a selected/focused edge via three selector arms (.selected,
      .selectable:focus, .selectable:focus-visible) whose vendor default is a #555 that
      is near-invisible on the dark canvas. All three arms resolve this mid-layer
@@ -14,7 +100,13 @@
      rule cannot, because the :focus arms carry higher specificity than ours. Matches
      the app's selection language (card selection blue). */
   --xy-edge-stroke-selected: #2d99ff;
+
+  background: var(--surface-app);
+  color: var(--text-primary);
 }
+
+/* [data-theme="light"] token overrides land here in T6 (values only — no
+   component-level selectors, per the goal's specificity-war guard). */
 
 * {
   box-sizing: border-box;
@@ -36,9 +128,9 @@ textarea {
 }
 
 button {
-  border: 1px solid #29313a;
-  background: #101418;
-  color: #eef2f4;
+  border: 1px solid var(--border-control);
+  background: var(--surface-control);
+  color: var(--text-primary);
   min-height: 34px;
   border-radius: 7px;
   padding: 0 11px;
@@ -50,8 +142,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  border-color: #5f6d7a;
-  background: #171d24;
+  border-color: var(--border-control-hover);
+  background: var(--surface-hover);
 }
 
 button:disabled {
@@ -62,9 +154,9 @@ button:disabled {
 input,
 select,
 textarea {
-  border: 1px solid #303944;
-  background: #11161c;
-  color: #f4f7f9;
+  border: 1px solid var(--border-input);
+  background: var(--surface-input);
+  color: var(--text-input);
   border-radius: 7px;
   outline: none;
 }
@@ -98,7 +190,7 @@ textarea {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0a0d12;
+  background: var(--surface-app-shell);
 }
 
 .topbar {
@@ -128,10 +220,10 @@ textarea {
   min-width: 0;
   min-height: 44px;
   padding: 4px;
-  border: 1px solid #252d35;
+  border: 1px solid var(--border-pill);
   border-radius: 999px;
-  background: #1C1E20;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
+  background: var(--surface-pill);
+  box-shadow: var(--shadow-pill);
   backdrop-filter: blur(14px);
 }
 
@@ -152,15 +244,16 @@ textarea {
 }
 
 /* `:not(:disabled)` lifts specificity to (0,3,0) so this beats the global
-   `button:hover:not(:disabled){background:#171d24}` (0,2,1) — otherwise the toggle hover settles on that
-   dark color instead of #292B2D. Highlight tracks hover ONLY: the open state is shown by the chevron flip,
-   not a persistent background (so the toggle isn't lit while the pointer is elsewhere). */
+   `button:hover:not(:disabled){background:var(--surface-hover)}` (0,2,1) — otherwise the toggle hover
+   settles on that dark color instead of the pill family's --surface-pill-hover. Highlight tracks hover
+   ONLY: the open state is shown by the chevron flip, not a persistent background (so the toggle isn't lit
+   while the pointer is elsewhere). */
 .brand:hover:not(:disabled) {
-  background: #292B2D;
+  background: var(--surface-pill-hover);
 }
 
 .brand:focus-visible {
-  outline: 2px solid #c7ff00;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -180,15 +273,15 @@ textarea {
 }
 
 .sbcv-logo__hexagon {
-  stroke: #c7ff00;
+  stroke: var(--logo-stroke);
 }
 
 .sbcv-logo--animated .sbcv-logo__hexagon {
-  stroke: #59616a;
+  stroke: var(--logo-idle);
 }
 
 .sbcv-logo__link {
-  stroke: #c7ff00;
+  stroke: var(--logo-stroke);
   stroke-width: 3.2;
   stroke-linecap: round;
   opacity: 0;
@@ -197,7 +290,7 @@ textarea {
 }
 
 .sbcv-logo__dot {
-  fill: #c7ff00;
+  fill: var(--logo-stroke);
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -301,7 +394,7 @@ textarea {
    hidden outright (rather than crowding them), so no in-pill truncation is needed. */
 .brand-tagline {
   margin: 0 14px 0 8px;
-  color: #8e99a4;
+  color: var(--text-muted-pill);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1px;
@@ -316,7 +409,7 @@ textarea {
 
 .brand-chevron {
   margin-left: 1px;
-  color: #8e99a4;
+  color: var(--text-muted-pill);
   transition: transform 120ms ease;
 }
 
@@ -330,12 +423,12 @@ textarea {
   left: 0;
   width: 292px;
   padding: 8px;
-  border: 1px solid #333537;
+  border: 1px solid var(--border-menu);
   border-radius: 18px;
-  background: #1C1E20;
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.52);
+  background: var(--surface-menu);
+  box-shadow: var(--shadow-menu);
   backdrop-filter: blur(16px);
-  color: #eef2f4;
+  color: var(--text-primary);
 }
 
 .brand-menu__intro {
@@ -344,7 +437,7 @@ textarea {
   align-items: center;
   gap: 12px;
   padding: 12px 10px 14px;
-  border-bottom: 1px solid #333537;
+  border-bottom: 1px solid var(--border-menu);
   margin-bottom: 6px;
 }
 
@@ -365,7 +458,7 @@ textarea {
 
 .brand-menu__intro span {
   margin-top: 5px;
-  color: #9aa3ad;
+  color: var(--text-muted-menu);
   font-size: 12px;
   line-height: 1.25;
   white-space: nowrap;
@@ -382,7 +475,7 @@ textarea {
   border: 0;
   border-radius: 14px;
   background: transparent;
-  color: #eef2f4;
+  color: var(--text-primary);
   font: inherit;
   font-size: 15px;
   font-weight: 680;
@@ -393,7 +486,7 @@ textarea {
 
 .brand-menu .brand-menu__item:hover,
 .brand-menu button.brand-menu__item:hover:not(:disabled) {
-  background: #292B2D;
+  background: var(--surface-pill-hover);
   border-color: transparent;
 }
 /* Export JSON is gated when the config has structural export errors (V2). Show the menu item dimmed and
@@ -407,11 +500,11 @@ textarea {
 }
 
 .brand-menu__item > svg:first-child {
-  color: #eef2f4;
+  color: var(--text-primary);
 }
 
 .brand-menu__external {
-  color: #9aa3ad;
+  color: var(--text-muted-menu);
 }
 
 .topbar-actions {
@@ -420,10 +513,10 @@ textarea {
   gap: 6px;
   min-width: 0;
   padding: 6px;
-  border: 1px solid #252d35;
+  border: 1px solid var(--border-pill);
   border-radius: 999px;
-  background: #1C1E20;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
+  background: var(--surface-pill);
+  box-shadow: var(--shadow-pill);
   backdrop-filter: blur(14px);
   pointer-events: auto;
 }
@@ -435,8 +528,8 @@ textarea {
   min-height: 34px;
   padding: 0 8px 0 11px;
   border-radius: 999px;
-  background: #333537;
-  color: #a6b0ba;
+  background: var(--surface-pill-control);
+  color: var(--text-muted-control);
   font-size: 12px;
 }
 
@@ -451,11 +544,11 @@ textarea {
   min-height: 34px;
   border: 0;
   border-radius: 999px;
-  background: #333537;
+  background: var(--surface-pill-control);
 }
 
 .topbar-actions button:hover:not(:disabled) {
-  background: #494B4D;
+  background: var(--surface-pill-hover-strong);
 }
 
 .status-pill {
@@ -472,26 +565,26 @@ textarea {
 
 /* Prefixed with `.topbar-actions` to outrank the earlier
    `.topbar-actions button` rule (specificity 0,1,1) — without that, the pill
-   inherits the generic action-button background (#101418) and 999px radius
-   now that it's a real <button>, losing its bright fill color. */
+   inherits the generic action-button background (--surface-control) and 999px
+   radius now that it's a real <button>, losing its bright fill color. */
 .topbar-actions .status-pill--valid {
-  color: #151900;
-  background: #c7ff00;
+  color: var(--text-on-brand);
+  background: var(--accent-brand-fill);
 }
 
 .topbar-actions .status-pill--warning {
-  color: #1f1600;
-  background: #f2bc4b;
+  color: var(--text-on-warn);
+  background: var(--accent-warn-fill);
 }
 
 .topbar-actions .status-pill--checking {
-  color: #d7dee7;
-  background: #20262d;
+  color: var(--status-checking-fg);
+  background: var(--status-checking-bg);
 }
 
 .topbar-actions .status-pill--error {
-  color: #fff;
-  background: #e34b4b;
+  color: var(--text-on-danger);
+  background: var(--accent-danger-fill);
 }
 
 .status-pill__spinner {
@@ -519,26 +612,26 @@ textarea {
   cursor: progress;
 }
 
-/* `.topbar-actions button:hover:not(:disabled) { background: #1a222b }` has
-   specificity (0,3,1); to keep the fill color and add a visible hover signal
-   we re-assert each variant's background and add a brightness + glow at
-   specificity (0,4,1). */
+/* `.topbar-actions button:hover:not(:disabled) { background: var(--surface-pill-hover-strong) }`
+   has specificity (0,3,1); to keep the fill color and add a visible hover signal
+   we re-assert each variant's background (SAME token as the resting rule, so the
+   pair can never drift) and add a brightness + glow at specificity (0,4,1). */
 .topbar-actions button.status-pill--valid:hover:not(:disabled) {
-  background: #c7ff00;
+  background: var(--accent-brand-fill);
   filter: brightness(1.1);
-  box-shadow: 0 0 0 2px rgba(199, 255, 0, 0.34);
+  box-shadow: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.34);
 }
 
 .topbar-actions button.status-pill--warning:hover:not(:disabled) {
-  background: #f2bc4b;
+  background: var(--accent-warn-fill);
   filter: brightness(1.1);
-  box-shadow: 0 0 0 2px rgba(242, 188, 75, 0.34);
+  box-shadow: 0 0 0 2px rgba(var(--accent-warn-rgb), 0.34);
 }
 
 .topbar-actions button.status-pill--error:hover:not(:disabled) {
-  background: #e34b4b;
+  background: var(--accent-danger-fill);
   filter: brightness(1.1);
-  box-shadow: 0 0 0 2px rgba(227, 75, 75, 0.34);
+  box-shadow: 0 0 0 2px rgba(var(--accent-danger-rgb), 0.34);
 }
 
 .status-pill-host {
@@ -555,25 +648,25 @@ textarea {
   max-height: min(60vh, 540px);
   display: flex;
   flex-direction: column;
-  background: rgba(16, 20, 24, 0.98);
-  border: 1px solid #2a3340;
+  background: var(--surface-glass-popover);
+  border: 1px solid var(--border-popover);
   border-radius: 14px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-popover);
   backdrop-filter: blur(14px);
   pointer-events: auto;
   overflow: hidden;
 }
 
 .diagnostics-popover--valid {
-  border-top: 3px solid #c7ff00;
+  border-top: 3px solid var(--accent-brand-fg);
 }
 
 .diagnostics-popover--warning {
-  border-top: 3px solid #f2bc4b;
+  border-top: 3px solid var(--accent-warn-fg);
 }
 
 .diagnostics-popover--error {
-  border-top: 3px solid #e34b4b;
+  border-top: 3px solid var(--accent-danger-fg);
 }
 
 .diagnostics-popover__header {
@@ -581,7 +674,7 @@ textarea {
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-  border-bottom: 1px solid #1f2731;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .diagnostics-popover__title {
@@ -595,31 +688,31 @@ textarea {
 }
 
 .diagnostics-popover--valid .diagnostics-popover__title {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .diagnostics-popover--warning .diagnostics-popover__title {
-  color: #f2bc4b;
+  color: var(--accent-warn-fg);
 }
 
 .diagnostics-popover--error .diagnostics-popover__title {
-  color: #e34b4b;
+  color: var(--accent-danger-fg);
 }
 
 .diagnostics-popover__summary {
   flex: 1;
   text-align: right;
   font-size: 11px;
-  color: #8a96a3;
+  color: var(--text-muted);
 }
 
 /* The popover is rendered inside `.topbar-actions`, so the `.topbar-actions
-   button` rule (999px radius, #101418 fill, 34px min-height) would otherwise
-   turn this X into another pill. Prefix bumps specificity to 0,2,0. */
+   button` rule (999px radius, --surface-pill-control fill, 34px min-height)
+   would otherwise turn this X into another pill. Prefix bumps specificity to 0,2,0. */
 .diagnostics-popover .diagnostics-popover__close {
   background: transparent;
   border: 0;
-  color: #6f7b86;
+  color: var(--text-icon-idle);
   cursor: pointer;
   padding: 0;
   min-height: 0;
@@ -633,8 +726,8 @@ textarea {
 }
 
 .diagnostics-popover .diagnostics-popover__close:hover {
-  color: #d7dee7;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  background: var(--surface-hover-wash);
 }
 
 .diagnostics-popover__list {
@@ -647,19 +740,19 @@ textarea {
 .diagnostics-popover__empty {
   padding: 14px;
   font-size: 12px;
-  color: #b7c2cd;
+  color: var(--text-secondary-soft);
   line-height: 1.5;
 }
 
 .diagnostics-popover__empty strong {
-  color: #d7dee7;
+  color: var(--text-secondary);
 }
 
 .diagnostics-popover__item {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
-  border-bottom: 1px solid #181e25;
+  border-bottom: 1px solid var(--border-subtle-deep);
   font-size: 12px;
 }
 
@@ -702,15 +795,15 @@ textarea {
 }
 
 .diagnostics-popover__item--error .diagnostics-popover__icon {
-  color: #e34b4b;
+  color: var(--status-error-icon);
 }
 
 .diagnostics-popover__item--warning .diagnostics-popover__icon {
-  color: #f2bc4b;
+  color: var(--status-warn-icon);
 }
 
 .diagnostics-popover__item--info .diagnostics-popover__icon {
-  color: #59b4ff;
+  color: var(--status-info-icon);
 }
 
 .diagnostics-popover__body {
@@ -722,7 +815,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #8a96a3;
+  color: var(--text-muted);
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -737,14 +830,14 @@ textarea {
   letter-spacing: 0.04em;
   padding: 2px 6px;
   border-radius: 4px;
-  background: #1a222b;
-  color: #9aa5b0;
-  border: 1px solid #2a3340;
+  background: var(--surface-control-chip);
+  color: var(--text-muted-badge);
+  border: 1px solid var(--border-popover);
 }
 
 .diagnostics-popover__path {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  color: #8a96a3;
+  color: var(--text-muted);
   font-size: 11px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -752,7 +845,7 @@ textarea {
 }
 
 .diagnostics-popover__message {
-  color: #eef2f4;
+  color: var(--text-primary);
   font-weight: 600;
   line-height: 1.45;
   word-wrap: break-word;
@@ -761,9 +854,9 @@ textarea {
 .official-check-btn {
   min-height: 34px;
   border-radius: 999px;
-  border: 1px solid #2a3340;
-  background: #101418;
-  color: #d7dee7;
+  border: 1px solid var(--border-popover);
+  background: var(--surface-control);
+  color: var(--text-secondary);
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
@@ -774,7 +867,7 @@ textarea {
 }
 
 .official-check-btn:hover:not(:disabled) {
-  background: #1a222b;
+  background: var(--surface-hover-raised);
 }
 
 .official-check-btn:disabled {
@@ -783,19 +876,19 @@ textarea {
 }
 
 .official-check-btn--valid {
-  border-color: #c7ff00;
-  color: #c7ff00;
+  border-color: var(--accent-brand-fg);
+  color: var(--accent-brand-fg);
 }
 
 .official-check-btn--warning {
-  border-color: #f2bc4b;
-  color: #f2bc4b;
+  border-color: var(--accent-warn-fg);
+  color: var(--accent-warn-fg);
 }
 
 .official-check-btn--invalid,
 .official-check-btn--error {
-  border-color: #e34b4b;
-  color: #e34b4b;
+  border-color: var(--accent-danger-fg);
+  color: var(--accent-danger-fg);
 }
 
 @keyframes status-spin {
@@ -806,10 +899,10 @@ textarea {
 
 @keyframes status-check-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(199, 255, 0, 0.5);
+    box-shadow: 0 0 0 0 rgba(var(--accent-brand-rgb), 0.5);
   }
   100% {
-    box-shadow: 0 0 0 10px rgba(199, 255, 0, 0);
+    box-shadow: 0 0 0 10px rgba(var(--accent-brand-rgb), 0);
   }
 }
 
