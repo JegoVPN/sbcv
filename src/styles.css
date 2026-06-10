@@ -822,6 +822,38 @@ textarea {
   background: transparent;
 }
 
+/* Theme segmented control inside the brand menu (T8): three equal buttons,
+   active state borrows the palette is-active language (brand fg + selected fill). */
+.brand-menu__theme {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px 4px 2px;
+  border-top: 1px solid var(--border-menu);
+  margin-top: 6px;
+}
+
+.brand-menu .brand-menu__theme button {
+  min-height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 680;
+  gap: 6px;
+}
+
+.brand-menu .brand-menu__theme button:hover:not(:disabled) {
+  background: var(--surface-pill-hover);
+}
+
+.brand-menu .brand-menu__theme button.is-active {
+  color: var(--accent-brand-fg);
+  border-color: var(--accent-brand-fg);
+  background: var(--surface-selected);
+}
+
 .brand-menu__item > svg:first-child {
   color: var(--text-primary);
 }
@@ -3470,6 +3502,26 @@ button.sbc-edge-remove:focus-visible {
   background: var(--surface-input);
   color: var(--text-primary);
   padding: 0 8px;
+}
+
+.mobile-theme-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-right: 4px;
+}
+
+.mobile-theme-buttons button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.mobile-theme-buttons button.is-active {
+  color: var(--accent-brand-fg);
+  border-color: var(--accent-brand-fg);
+  background: var(--surface-selected);
 }
 
 .mobile-menu-actions,

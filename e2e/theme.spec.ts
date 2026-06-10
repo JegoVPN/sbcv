@@ -50,3 +50,41 @@ test("stored dark preference ignores a light system", async ({ page }) => {
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", "light");
   expect(await appShellBg(page)).toBe(DARK_APP_BG);
 });
+
+test("brand-menu toggle switches, persists, and returns to system follow", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await page.locator(".brand").click();
+  await page.getByTestId("theme-light").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  expect(await appShellBg(page)).toBe(LIGHT_APP_BG);
+  // focus ring is the olive token in light (visible on light surfaces)
+  await page.getByTestId("theme-light").focus();
+  const ring = await page
+    .getByTestId("theme-light")
+    .evaluate((el) => getComputedStyle(document.documentElement).getPropertyValue("--focus-ring").trim());
+  expect(ring).toBe("#55721a");
+
+  // persists across reload
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+  // back to system: follows the emulated dark scheme again
+  await page.locator(".brand").click();
+  await page.getByTestId("theme-system").click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-theme", "light");
+  expect(await appShellBg(page)).toBe(DARK_APP_BG);
+  const stored = await page.evaluate(() => localStorage.getItem("sbcv:theme"));
+  expect(stored).toBeNull();
+});
+
+test("mobile sheet exposes the same three-state toggle", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 740 });
+  await page.goto("/");
+  await page.getByTestId("mobile-menu-toggle").click();
+  await expect(page.getByTestId("mobile-menu-sheet")).toBeVisible();
+  await page.getByTestId("mobile-theme-light").click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.getByTestId("mobile-theme-system").click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-theme", "light");
+});

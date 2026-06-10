@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
 import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
 import type { SingBoxTargetId } from "../domain/types";
+import { useTheme, type ThemePreference } from "../state/useTheme";
 import { useProjectStore } from "../state/useProjectStore";
 import { GITHUB_REPO_URL } from "./appLinks";
 import { BottomSheet } from "./BottomSheet";
@@ -18,6 +19,7 @@ interface MobileMenuSheetProps {
 }
 
 export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: MobileMenuSheetProps) {
+  const { preference: themePreference, setPreference: setThemePreference } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { channel, version, setTarget, importJson, diagnostics, runOfficialCheck, officialCheckConfigured } =
     useProjectStore(
@@ -85,6 +87,29 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: 
       </div>
 
       <div className="mobile-menu-section">
+        <div className="mobile-menu-field mobile-menu-field--theme">
+          <span>Theme</span>
+          <div className="mobile-theme-buttons" role="group" aria-label="Theme">
+            {(
+              [
+                ["system", "System"],
+                ["dark", "Dark"],
+                ["light", "Light"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={themePreference === value ? "is-active" : undefined}
+                aria-pressed={themePreference === value}
+                data-testid={`mobile-theme-${value}`}
+                onClick={() => setThemePreference(value as ThemePreference)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="mobile-menu-field">
           <span>Target</span>
           <select
