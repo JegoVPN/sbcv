@@ -75,7 +75,7 @@ Run with:
 - [x] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）— PR #331
 - [x] T2-canvas-nodes-edges-tsx（styles.css 805–1890 + TSX 三处 + xyflow 桥接变量）— PR #333
 - [x] T3-inspector-dialogs（styles.css 1880–2735 + 孤儿 var 修复）— PR #334
-- [ ] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）
+- [x] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）— PR #335
 
 #### Phase T-P2 — 受控收敛
 - [ ] T5-token-consolidation（~200 verbatim → ~85–100 语义 token；有意微调，单独 review）
@@ -236,3 +236,11 @@ Run with:
 - **Tests:** unit 1732、build ✓、e2e 37/37；ratchet 151 → **65**。
 - **视觉抽查:** inspector 全表单/rule card/placeholder/对话框——一致。
 - **偏差:** 无（中途漏 mint `--border-default` 被 equivalence 当场抓出 ×5——验证器按设计工作）。
+
+### T4-mobile-toast-and-ratchet-zero — PR #335
+- **What changed:** 移动壳/sheet/toast 段全部字面量 token 化（+29 token：sheet/toast/row 表面、六个手调 hover 中四个复用既有 token（`--surface-pill-hover`/`-strong`/`--surface-hover-chip`）二个新 mint、scrim vs shadow 拆分（rgba(0,0,0,0.4) 双义）、状态 border 的 rgba 接 `--accent-*-rgb` 三元组、toast 真绿族独立 `--accent-success-*`（不并 brand lime）、`--status-error-icon-toast: #ff8c69` 与 palette legacy 同值拆分、白 alpha `--inset-edge-light`）；equivalence 脚本补 **3/4 位 hex 展开归一**（`#fff`↔`#ffffff` 形式孪生）；**guard 切换终态**：`toEqual([])`，ratchet 史 391→301→151→65→**0**。
+- **异位词复核:** `#2f5a3a`/`#5a2f33` 双向 grep——各只存在于自己的 token 定义行（`--border-success`/`--border-toast-error`）。
+- **Equivalence:** ✓ 457 声明逐一相同。**P1 至此完成：343 hex + 57 rgb() 全部收敛，四个原子项全程机器证明 dark 零像素变化。**
+- **Tests:** unit 1732、build ✓、e2e 37/37。
+- **视觉抽查:** 移动 topbar pill/validation group/画布——一致。
+- **偏差:** 无。

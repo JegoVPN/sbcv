@@ -120,6 +120,9 @@ function normalize(css) {
       .filter((d) => d && !d.startsWith("--"))
       .map((d) =>
         d
+          .replace(/#([0-9a-fA-F]{3,4})\b/g, (m, h) =>
+            "#" + [...h].map((c) => c + c).join(""),
+          )
           .replace(/#([0-9a-fA-F]{3,8})\b/g, (m) => m.toLowerCase())
           .replace(/,(?=\S)/g, ", "),
       )
