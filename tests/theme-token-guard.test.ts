@@ -3,14 +3,14 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /**
- * Theme-token ratchet guard (T-queue, docs/goals/light-mode-theming-execution.md).
+ * Theme-token guard (T-queue, docs/goals/light-mode-theming-execution.md).
  *
  * Scope: src/styles.css + src/**\/*.{ts,tsx}. Color literals may only live inside
  * the token-definition blocks (`:root { ... }` / `[data-theme...] { ... }`) of
  * styles.css; everywhere else they must be `var(--token)` references.
  *
- * Ratchet: BASELINE only goes DOWN as T1→T4 convert each segment. T4 pins it to 0
- * and this assertion becomes toEqual([]). Raising BASELINE is never acceptable.
+ * TERMINAL STATE (T4): zero literals outside the token tables — offenders must
+ * be exactly []. Ratchet history: pre-T1 = 391 → T1 = 301 → T2 = 151 → T3 = 65 → T4 = 0.
  *
  * In-scope allowlist (each entry must carry a reason):
  * - src/components/SbcvLogo.tsx fill="#0d1116" — logo plate is a theme INVARIANT
@@ -22,10 +22,6 @@ import { describe, expect, it } from "vitest";
  * background (lands in T7, intentional literal).
  */
 
-// Ratchet history: pre-T1 = 391 → T1 = 301 → T2 = 151 → T3 = 65 (all but the mobile/toast
-// segments + both CanvasWorkspace TSX literals tokenized; remaining =
-// inspector/dialog + mobile/toast segments, owned by T3–T4).
-const BASELINE = 65;
 
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const PERCENT23 = /%23[0-9a-fA-F]{3,8}\b/g;
@@ -89,7 +85,7 @@ function scan(text: string, patterns: RegExp[], file: string): string[] {
 }
 
 describe("theme token guard (ratchet)", () => {
-  it(`color literals outside the token tables only ever decrease (baseline ${BASELINE})`, () => {
+  it("no color literals outside the :root/[data-theme] token tables", () => {
     const files = execSync("git ls-files -z -- src", { encoding: "utf8" })
       .split("\0")
       .filter((f) => f === "src/styles.css" || /\.tsx?$/.test(f));
@@ -113,10 +109,8 @@ describe("theme token guard (ratchet)", () => {
     }
 
     expect(
-      offenders.length,
-      `theme-token ratchet broken: ${offenders.length} literals > baseline ${BASELINE}.\n` +
-        `New color literals must be minted as tokens in the :root table instead.\n` +
-        offenders.slice(0, 20).join("\n"),
-    ).toBeLessThanOrEqual(BASELINE);
+      offenders,
+      "color literals must live in the :root/[data-theme] token tables as var(--token) definitions — mint a token instead",
+    ).toEqual([]);
   });
 });

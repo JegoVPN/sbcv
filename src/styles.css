@@ -268,6 +268,37 @@
   --text-reveal-idle: #b5bdc8;
   --text-reveal-hover: #ffffff;
 
+  /* -- mobile chrome / sheets / toasts -- */
+  --surface-sheet: #14181d;
+  --surface-toast: #1b2026;
+  --surface-row: #1a1f25;
+  --surface-rule-inline: #15191d;
+  --surface-validation-group: #202327;
+  --surface-toast-action: #232a32;
+  --surface-hover-brand-mobile: #232629;
+  --surface-toast-action-hover: #2b333d;
+  --surface-hover-dismiss: #2a3340;
+  --surface-grabber: #4d5663;
+  --text-rule-head: #cbd3da;
+  --text-menu-label: #b3bcc6;
+  --text-toolbar: #aab2bc;
+  --status-checking-icon: #aeb9c6;
+  --status-error-icon-mobile: #ff7777;
+  --status-error-icon-toast: #ff8c69;
+  --status-info-icon-toast: #8aa0b4;
+  --accent-success-fg: #6fcf86;
+  --border-success: #2f5a3a;
+  --border-toast-error: #5a2f33;
+  --border-rule-inline: #262d34;
+  --border-row-hover: #2d3640;
+  --border-toast-action: #3a4555;
+  --border-status-checking: rgba(137, 151, 168, 0.36);
+  --shadow-mobile-topbar: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-sheet: 0 -24px 60px rgba(0, 0, 0, 0.6);
+  --shadow-toast: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --inset-edge-light: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --scrim: rgba(0, 0, 0, 0.4);
+
   /* -- logo plate: theme INVARIANT, pairs with --logo-stroke/--logo-idle above -- */
   --logo-plate: #0d1116;
 
@@ -3057,10 +3088,10 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid #252d35;
+  border: 1px solid var(--border-pill);
   border-radius: 999px;
-  background: #1c1e20;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  background: var(--surface-pill);
+  box-shadow: var(--shadow-mobile-topbar);
   backdrop-filter: blur(14px);
   pointer-events: auto;
 }
@@ -3084,7 +3115,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .mobile-brand:hover {
-  background: #232629;
+  background: var(--surface-hover-brand-mobile);
 }
 
 .mobile-topbar__spacer {
@@ -3098,26 +3129,26 @@ button.sbc-edge-remove:focus-visible {
   height: 36px;
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid #343d48;
+  border: 1px solid var(--border-dialog-actions);
   border-radius: 999px;
-  background: #202327;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  background: var(--surface-validation-group);
+  box-shadow: var(--inset-edge-light);
 }
 
 .mobile-validation-group--valid {
-  border-color: rgba(199, 255, 0, 0.34);
+  border-color: rgba(var(--accent-brand-rgb), 0.34);
 }
 
 .mobile-validation-group--warning {
-  border-color: rgba(242, 188, 75, 0.42);
+  border-color: rgba(var(--accent-warn-rgb), 0.42);
 }
 
 .mobile-validation-group--error {
-  border-color: rgba(227, 75, 75, 0.52);
+  border-color: rgba(var(--accent-danger-rgb), 0.52);
 }
 
 .mobile-validation-group--checking {
-  border-color: rgba(137, 151, 168, 0.36);
+  border-color: var(--border-status-checking);
 }
 
 .mobile-validation-run {
@@ -3128,16 +3159,16 @@ button.sbc-edge-remove:focus-visible {
   place-items: center;
   padding: 0;
   border: 0;
-  border-right: 1px solid #333537;
+  border-right: 1px solid var(--border-menu);
   border-radius: 999px 0 0 999px;
   background: transparent;
-  color: #e6edf3;
+  color: var(--text-control);
   cursor: pointer;
 }
 
 .mobile-validation-run:hover:not(:disabled) {
-  background: #292b2d;
-  color: #ffffff;
+  background: var(--surface-pill-hover);
+  color: var(--text-hover-bright);
 }
 
 .mobile-validation-run:disabled {
@@ -3158,30 +3189,30 @@ button.sbc-edge-remove:focus-visible {
   border: 0;
   border-radius: 0 999px 999px 0;
   background: transparent;
-  color: #eef2f4;
+  color: var(--text-primary);
   /* L4-mobile-touch: ≥36px tap target (was 30px); the brand + icon buttons are already 36px. */
   min-height: 36px;
   justify-content: center;
 }
 
 .mobile-validation-status:hover:not(:disabled) {
-  background: #292b2d;
+  background: var(--surface-pill-hover);
 }
 
 .mobile-validation-status.status-pill--valid > svg {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .mobile-validation-status.status-pill--warning > svg {
-  color: #f2bc4b;
+  color: var(--status-warn-icon);
 }
 
 .mobile-validation-status.status-pill--error > svg {
-  color: #ff7777;
+  color: var(--status-error-icon-mobile);
 }
 
 .mobile-validation-status.status-pill--checking > svg {
-  color: #aeb9c6;
+  color: var(--status-checking-icon);
 }
 
 .mobile-validation-status__label {
@@ -3207,16 +3238,16 @@ button.sbc-edge-remove:focus-visible {
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: #333537;
-  color: #e6edf3;
+  background: var(--surface-pill-control);
+  color: var(--text-control);
   display: grid;
   place-items: center;
   cursor: pointer;
 }
 
 .mobile-topbar__icon-btn:hover:not(:disabled) {
-  background: #494b4d;
-  color: #fff;
+  background: var(--surface-pill-hover-strong);
+  color: var(--text-hover-bright);
 }
 
 .mobile-topbar__icon-btn:disabled {
@@ -3238,18 +3269,18 @@ button.sbc-edge-remove:focus-visible {
 .bottom-sheet-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--scrim);
   backdrop-filter: blur(3px);
   pointer-events: auto;
 }
 
 .bottom-sheet {
   position: relative;
-  background: #14181d;
+  background: var(--surface-sheet);
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
-  border-top: 1px solid #2a3340;
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.6);
+  border-top: 1px solid var(--border-popover);
+  box-shadow: var(--shadow-sheet);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -3276,7 +3307,7 @@ button.sbc-edge-remove:focus-visible {
   width: 40px;
   height: 4px;
   border-radius: 4px;
-  background: #4d5663;
+  background: var(--surface-grabber);
 }
 
 .bottom-sheet__body {
@@ -3299,14 +3330,14 @@ button.sbc-edge-remove:focus-visible {
 .mobile-sheet-header h2 {
   font-size: 16px;
   font-weight: 700;
-  color: #eef2f4;
+  color: var(--text-primary);
   margin: 0 0 4px;
 }
 
 .mobile-sheet-hint {
   margin: 0;
   font-size: 12px;
-  color: #8a96a3;
+  color: var(--text-muted);
 }
 
 .mobile-menu-section {
@@ -3320,22 +3351,22 @@ button.sbc-edge-remove:focus-visible {
   gap: 10px;
   padding: 10px 4px;
   border-radius: 10px;
-  background: #1a1f25;
+  background: var(--surface-row);
 }
 
 .mobile-menu-field > span {
   font-size: 13px;
-  color: #b3bcc6;
+  color: var(--text-menu-label);
   padding-left: 8px;
 }
 
 .mobile-menu-field select {
   min-height: 38px;
   margin-right: 4px;
-  border: 1px solid #303944;
+  border: 1px solid var(--border-input);
   border-radius: 8px;
-  background: #11161c;
-  color: #f4f7f9;
+  background: var(--surface-input);
+  color: var(--text-input);
   padding: 0 8px;
 }
 
@@ -3357,10 +3388,10 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   width: 100%;
   padding: 12px;
-  border: 1px solid #252d35;
+  border: 1px solid var(--border-pill);
   border-radius: 12px;
-  background: #1a1f25;
-  color: #eef2f4;
+  background: var(--surface-row);
+  color: var(--text-primary);
   text-align: left;
   cursor: pointer;
   justify-content: flex-start;
@@ -3371,14 +3402,14 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .mobile-row-button:hover:not(:disabled) {
-  background: #20262d;
-  border-color: #2d3640;
+  background: var(--surface-hover-chip);
+  border-color: var(--border-row-hover);
 }
 
 .mobile-row-button > svg {
   grid-row: 1 / span 2;
   flex-shrink: 0;
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .mobile-row-button__title {
@@ -3392,13 +3423,13 @@ button.sbc-edge-remove:focus-visible {
   grid-column: 2;
   grid-row: 2;
   font-size: 11px;
-  color: #8a96a3;
+  color: var(--text-muted);
 }
 
 .mobile-row-button > svg.mobile-row-button__external {
   grid-column: 3;
   grid-row: 1 / span 2;
-  color: #8a96a3;
+  color: var(--text-muted);
 }
 
 /* When mobile-row-button has no leading svg, title spans full width */
@@ -3457,23 +3488,23 @@ button.sbc-edge-remove:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #aab2bc;
+  color: var(--text-toolbar);
   font-size: 12px;
 }
 .inline-rule {
-  border: 1px solid #262d34;
+  border: 1px solid var(--border-rule-inline);
   border-radius: 8px;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #15191d;
+  background: var(--surface-rule-inline);
 }
 .inline-rule__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #cbd3da;
+  color: var(--text-rule-head);
   font-size: 12px;
   font-weight: 700;
 }
@@ -3530,20 +3561,20 @@ button.sbc-edge-remove:focus-visible {
   width: 100%;
   padding: 11px 12px;
   border-radius: 12px;
-  background: #1b2026;
-  border: 1px solid #2a3340;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  color: #eef2f4;
+  background: var(--surface-toast);
+  border: 1px solid var(--border-popover);
+  box-shadow: var(--shadow-toast);
+  color: var(--text-primary);
   font-size: 13px;
   line-height: 1.4;
 }
 
 .toast--success {
-  border-color: #2f5a3a;
+  border-color: var(--border-success);
 }
 
 .toast--error {
-  border-color: #5a2f33;
+  border-color: var(--border-toast-error);
 }
 
 .toast__icon {
@@ -3551,15 +3582,15 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .toast--success .toast__icon {
-  color: #6fcf86;
+  color: var(--accent-success-fg);
 }
 
 .toast--error .toast__icon {
-  color: #ff8c69;
+  color: var(--status-error-icon-toast);
 }
 
 .toast--info .toast__icon {
-  color: #8aa0b4;
+  color: var(--status-info-icon-toast);
 }
 
 .toast__message {
@@ -3569,9 +3600,9 @@ button.sbc-edge-remove:focus-visible {
 
 .toast__action {
   flex: 0 0 auto;
-  border: 1px solid #3a4555;
-  background: #232a32;
-  color: #c7ff00;
+  border: 1px solid var(--border-toast-action);
+  background: var(--surface-toast-action);
+  color: var(--accent-brand-fg);
   font-weight: 600;
   font-size: 12px;
   padding: 5px 10px;
@@ -3580,7 +3611,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .toast__action:hover {
-  background: #2b333d;
+  background: var(--surface-toast-action-hover);
 }
 
 .toast__dismiss {
@@ -3594,11 +3625,11 @@ button.sbc-edge-remove:focus-visible {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #8a96a3;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
 .toast__dismiss:hover {
-  background: #2a3340;
-  color: #eef2f4;
+  background: var(--surface-hover-dismiss);
+  color: var(--text-primary);
 }
