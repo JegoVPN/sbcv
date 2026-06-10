@@ -84,6 +84,50 @@ describe("U4 — Tailscale endpoint fields", () => {
     expect((screen.getByLabelText(/Relay Server Port/i) as HTMLInputElement).value).toBe("41641");
   });
 
+  describe("ssh_server (since sing-box 1.14.0)", () => {
+    // Documented as bool-or-object with `true` ≡ `{ "enabled": true }` (endpoint/tailscale.md);
+    // controls follow the udp_over_tcp precedent and edit the object form. The stable-target
+    // backstop is the data-driven field-testing-only gate (VT3) — no bespoke version diagnostic.
+    it("enables ssh_server as the documented object form and prunes the field when disabled", () => {
+      openTailscale();
+      const cb = screen.getByLabelText(/^SSH Server/) as HTMLInputElement;
+      expect(cb.type).toBe("checkbox");
+      fireEvent.click(cb);
+      expect(ep()?.ssh_server).toEqual({ enabled: true });
+      fireEvent.click(cb);
+      expect(ep()?.ssh_server).toBeUndefined();
+    });
+
+    it("edits the disable_* options inside the object (unchecking prunes the key)", () => {
+      openTailscale({ ssh_server: { enabled: true } });
+      for (const [label, key] of [
+        [/^Disable PTY/, "disable_pty"],
+        [/^Disable SFTP/, "disable_sftp"],
+        [/^Disable Forwarding/, "disable_forwarding"],
+      ] as const) {
+        const cb = screen.getByLabelText(label) as HTMLInputElement;
+        fireEvent.click(cb);
+        expect(ep()?.ssh_server).toEqual({ enabled: true, [key]: true });
+        fireEvent.click(cb);
+        expect(ep()?.ssh_server).toEqual({ enabled: true });
+      }
+    });
+
+    it("reads the bare-boolean shorthand (true) and rewrites the object form on edit", () => {
+      openTailscale({ ssh_server: true });
+      expect((screen.getByLabelText(/^SSH Server/) as HTMLInputElement).checked).toBe(true);
+      fireEvent.click(screen.getByLabelText(/^Disable SFTP/) as HTMLInputElement);
+      expect(ep()?.ssh_server).toEqual({ enabled: true, disable_sftp: true });
+    });
+
+    it("hides the disable_* options while ssh_server is off", () => {
+      openTailscale();
+      expect(screen.queryByLabelText(/^Disable PTY/)).toBeNull();
+      expect(screen.queryByLabelText(/^Disable SFTP/)).toBeNull();
+      expect(screen.queryByLabelText(/^Disable Forwarding/)).toBeNull();
+    });
+  });
+
   describe("relay_server_port version gate (since sing-box 1.13.0)", () => {
     const GATE = "endpoint-tailscale-relay-server-port-1-13-only";
     it("flags a relay_server_port on a 1.12 target, clean on 1.13", () => {
