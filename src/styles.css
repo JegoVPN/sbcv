@@ -92,6 +92,117 @@
   --shadow-menu: 0 26px 70px rgba(0, 0, 0, 0.52);
   --shadow-popover: 0 24px 60px rgba(0, 0, 0, 0.55);
 
+  /* -- canvas (two stacked dot systems: CSS radial grid + React Flow <Background>) -- */
+  --surface-canvas: #080b10;
+  --canvas-dot: rgba(147, 161, 176, 0.13);
+  --canvas-dot-rf: #1f2730;
+  --surface-minimap: #11161c;
+
+  /* -- floating panels / dark glass (base woven into rgba — light swaps the base) -- */
+  --surface-panel: #1a1d20;
+  --surface-glass-palette: rgba(15, 20, 26, 0.88);
+  --surface-glass-pill: rgba(14, 18, 23, 0.9);
+  --surface-glass-port-label: rgba(16, 20, 24, 0.97);
+  --surface-glass-chip-picker: rgba(18, 22, 27, 0.98);
+
+  /* -- node card -- */
+  --surface-card: #1a1e21;
+  --border-card: #30363d;
+  --surface-status-chip: #252b31;
+  --surface-icon-chip: #202832;
+  --text-node-title: #d8dde2;
+  --text-muted-node-meta: #8c949d;
+  --text-muted-titlebar: #808892;
+  --text-muted-titlebar-icon: #8b939d;
+  --surface-hover-node-action: #252d36;
+
+  /* -- palette / pickers (role splits of the #101418 control fill per audit ruling 2) -- */
+  --surface-input-search: #101418;
+  --surface-selected: #101418;
+  --surface-active-pill: #151a20;
+  --surface-hover-chip: #20262d;
+  --border-palette: #1e252d;
+  --border-chip-picker: #2f3944;
+  --border-overlay: #303944;
+  --border-pill-strong: #313b45;
+  --border-info-tag: #1f3a52;
+  --border-legacy: #4a2727;
+  --border-warn-deprecated: #6a5418;
+  --text-palette-soft: #a7b2bd;
+  --text-input-soft: #9ba7b3;
+  --text-chip-soft: #97a3ae;
+  --text-pill-soft: #cfd7df;
+  --text-heading-dim: #6f7b86;
+  --text-muted-group: #8d98a3;
+  --text-muted-doc: #8f9aa5;
+  --text-muted-palette-dim: #76818c;
+  --text-muted-deep: #65707b;
+  --text-disabled-palette: #707b86;
+  --text-gated-dim: #8794a0;
+  --text-panel-title: #aeb8c2;
+  --text-control: #e6edf3;
+  --text-hover-bright: #fff;
+  --text-on-brand-tint: #f6ffe8;
+
+  /* -- inverse island: engaged tool = light chip on the dark controls pill; in a
+        light theme this pair flips dark (never map to generic surface/text) -- */
+  --surface-inverse: #f3f4f6;
+  --surface-inverse-hover: #ffffff;
+  --text-inverse: #1c1e20;
+
+  /* -- ports -- */
+  --port-bg: #101418;
+  --port-fg: #aeb8c2;
+  --port-hover: #151b22;
+  --port-connected-bg: #11161c;
+  --port-input-fg: #65b0ff;
+  --border-port: #2a3139;
+  --border-port-hover: #55616d;
+  --border-port-connected: #3c4650;
+  --border-port-action: #202832;
+  --text-port-action: #dfe6ed;
+  --text-port-label: #dce4eb;
+
+  /* -- edges + selection language -- */
+  --edge-default: #c7ff00;
+  --edge-highlight: #2d99ff;
+  --edge-selected: #2d99ff;
+  --edge-dangling: #ff5470;
+  --edge-invalid: #ff5d5d;
+  --edge-connection: #e4e9ee;
+  --selection: #2d99ff;
+  --selection-rgb: 45, 153, 255;
+  --selection-handle-outline: #e7f4ff;
+
+  /* -- badge / status accents (canvas-side) -- */
+  --surface-warn-badge: #3a2a0a;
+  --surface-platform-badge: #102a3a;
+  --surface-gated-badge: #271a3a;
+  --accent-platform-fg: #6fb6e6;
+  --accent-gated-fg: #b48ef2;
+  --accent-info-fg: #6fb8ff;
+  --accent-legacy-fg: #ff8c69;
+  --accent-danger-icon: #ff7b7b;
+  --surface-danger: #2a1416;
+  --border-danger-subtle: #5a2a30;
+  --surface-danger-strong: #712d34;
+  --border-danger-strong: #a9444e;
+
+  /* -- elevation (canvas-side; composite strings may reference other tokens) -- */
+  --shadow-palette: 0 22px 70px rgba(0, 0, 0, 0.42);
+  --shadow-panel: 0 28px 90px rgba(0, 0, 0, 0.5);
+  --shadow-node: 0 22px 58px rgba(0, 0, 0, 0.34);
+  --shadow-node-selected: 0 0 0 2px var(--selection), 0 24px 70px rgba(0, 0, 0, 0.46);
+  --shadow-port: 0 12px 28px rgba(0, 0, 0, 0.34);
+  --shadow-port-active: 0 0 0 4px rgba(var(--accent-brand-rgb), 0.12), 0 14px 30px rgba(0, 0, 0, 0.38);
+  --shadow-corner-halo: 0 0 0 1px rgba(var(--selection-rgb), 0.3);
+  --shadow-chip-picker: 0 22px 70px rgba(0, 0, 0, 0.46);
+  --shadow-edge-remove: 0 10px 30px rgba(0, 0, 0, 0.36);
+  --shadow-edge-remove-hover: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.34), 0 10px 30px rgba(0, 0, 0, 0.28);
+
+  /* -- logo plate: theme INVARIANT, pairs with --logo-stroke/--logo-idle above -- */
+  --logo-plate: #0d1116;
+
   /* -- React Flow vendor bridge -- */
   /* React Flow paints a selected/focused edge via three selector arms (.selected,
      .selectable:focus, .selectable:focus-visible) whose vendor default is a #555 that
@@ -99,7 +210,15 @@
      variable, so owning it here restyles every arm at once — an owned `.selected`
      rule cannot, because the :focus arms carry higher specificity than ours. Matches
      the app's selection language (card selection blue). */
-  --xy-edge-stroke-selected: #2d99ff;
+  --xy-edge-stroke-selected: var(--edge-selected);
+  /* The remaining xyflow leak surface (audit ruling 5): minimap mask/nodes and the
+     drag-selection rect render the vendor's LIGHT defaults today. P1 takes OWNERSHIP
+     at the vendor's exact effective values — zero visual change, control moves to
+     our table; T6 retunes them per theme. */
+  --xy-minimap-mask-background-color: rgba(240, 240, 240, 0.6);
+  --xy-minimap-node-background-color: #e2e2e2;
+  --xy-selection-background-color: rgba(0, 89, 220, 0.08);
+  --xy-selection-border: 1px dotted rgba(0, 89, 220, 0.8);
 
   background: var(--surface-app);
   color: var(--text-primary);
@@ -274,6 +393,12 @@ textarea {
 
 .sbcv-logo__hexagon {
   stroke: var(--logo-stroke);
+}
+
+/* Owns the hexagon plate over the TSX presentation attribute (CSS beats
+   attributes; the attribute stays as a CSS-failure fallback). Theme invariant. */
+.sbcv-logo__hexagon {
+  fill: var(--logo-plate);
 }
 
 .sbcv-logo--animated .sbcv-logo__hexagon {
@@ -922,11 +1047,11 @@ textarea {
   max-height: calc(100% - 92px);
   min-width: 0;
   overflow: auto;
-  background: rgba(15, 20, 26, 0.88);
-  border: 1px solid #1e252d;
+  background: var(--surface-glass-palette);
+  border: 1px solid var(--border-palette);
   border-radius: 14px;
   padding: 14px;
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+  box-shadow: var(--shadow-palette);
   backdrop-filter: blur(14px);
   pointer-events: none;
 }
@@ -947,14 +1072,14 @@ textarea {
   overflow: auto;
   min-width: 0;
   padding: 18px;
-  border: 1px solid #30363d;
+  border: 1px solid var(--border-card);
   border-radius: 18px;
-  background: #1a1d20;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.5);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-panel);
 }
 
 .panel-title {
-  color: #aeb8c2;
+  color: var(--text-panel-title);
   font-size: 12px;
   font-weight: 760;
   text-transform: uppercase;
@@ -968,7 +1093,7 @@ textarea {
 }
 
 .palette-group h2 {
-  color: #6f7b86;
+  color: var(--text-heading-dim);
   font-size: 12px;
   margin: 0 0 8px;
 }
@@ -981,10 +1106,10 @@ textarea {
 .palette-search {
   min-height: 38px;
   margin-bottom: 16px;
-  border: 1px solid #29313a;
+  border: 1px solid var(--border-control);
   border-radius: 9px;
-  background: #101418;
-  color: #9ba7b3;
+  background: var(--surface-input-search);
+  color: var(--text-input-soft);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -997,7 +1122,7 @@ textarea {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #eef2f4;
+  color: var(--text-primary);
 }
 
 .palette-nav {
@@ -1019,15 +1144,15 @@ textarea {
   justify-content: flex-start;
   padding: 0 10px;
   border-radius: 999px;
-  color: #9aa5b0;
+  color: var(--text-muted-badge);
   font-size: 12px;
-  background: #101418;
+  background: var(--surface-control);
 }
 
 .palette-mode-pills button.is-active {
-  color: #c7ff00;
-  border-color: #c7ff00;
-  background: #151a20;
+  color: var(--accent-brand-fg);
+  border-color: var(--accent-brand-fg);
+  background: var(--surface-active-pill);
 }
 
 .palette-mode-pills button span {
@@ -1049,14 +1174,14 @@ textarea {
   justify-content: flex-start;
   padding: 0 8px;
   border-radius: 9px;
-  color: #8d98a3;
+  color: var(--text-muted-group);
   font-size: 11px;
 }
 
 .palette-nav button.is-active {
-  color: #c7ff00;
-  border-color: #c7ff00;
-  background: #101418;
+  color: var(--accent-brand-fg);
+  border-color: var(--accent-brand-fg);
+  background: var(--surface-selected);
 }
 
 .palette-nav button span {
@@ -1069,7 +1194,7 @@ textarea {
 
 .palette-nav button small {
   margin-left: auto;
-  color: #65707b;
+  color: var(--text-muted-deep);
   font-size: 10px;
   font-weight: 760;
 }
@@ -1128,72 +1253,72 @@ textarea {
 }
 
 .palette-add small {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
   font-size: 9px;
   font-weight: 760;
   text-transform: uppercase;
 }
 
 .palette-add.is-added {
-  border-color: #c7ff00;
-  background: rgba(199, 255, 0, 0.09);
-  color: #f6ffe8;
+  border-color: var(--accent-brand-fg);
+  background: rgba(var(--accent-brand-rgb), 0.09);
+  color: var(--text-on-brand-tint);
 }
 
 .palette-add.is-added small {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .palette-add--table small {
-  color: #6fb8ff;
+  color: var(--accent-info-fg);
 }
 
 .palette-add--setup small {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .palette-add--inspector small {
-  color: #a7b2bd;
+  color: var(--text-palette-soft);
 }
 
 .palette-add--docs small {
-  color: #76818c;
+  color: var(--text-muted-palette-dim);
 }
 
 /* gated/testing = MUTED + cool (per D2): a node is gated by the build target, not deprecated — so it
    must read distinctly from the warm, colored `Legacy` quality-bar below, not as a sibling caution. */
 .palette-add--gated small {
-  color: #8794a0;
+  color: var(--text-gated-dim);
 }
 
 .palette-add--pending small,
 .palette-add:disabled small {
-  color: #707b86;
+  color: var(--text-disabled-palette);
 }
 
 .palette-add--deprecated small {
-  color: #ff8c69;
+  color: var(--accent-legacy-fg);
 }
 
 .palette-add--deprecated {
-  border-color: #4a2727;
+  border-color: var(--border-legacy);
 }
 
 .palette-add--open small {
-  color: #6fb8ff;
+  color: var(--accent-info-fg);
 }
 
 .palette-add--open {
-  border-color: #1f3a52;
+  border-color: var(--border-info-tag);
 }
 
 .palette-doc-link {
   min-height: 38px;
   padding: 0 10px;
-  border: 1px solid #29313a;
+  border: 1px solid var(--border-control);
   border-radius: 9px;
-  background: #101418;
-  color: #8f9aa5;
+  background: var(--surface-control);
+  color: var(--text-muted-doc);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1204,9 +1329,9 @@ textarea {
 }
 
 .palette-doc-link:hover {
-  color: #eef2f4;
-  border-color: #5f6d7a;
-  background: #171d24;
+  color: var(--text-primary);
+  border-color: var(--border-control-hover);
+  background: var(--surface-hover);
 }
 
 .canvas-shell {
@@ -1216,8 +1341,8 @@ textarea {
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 1px 1px, rgba(147, 161, 176, 0.13) 1px, transparent 0),
-    #080b10;
+    radial-gradient(circle at 1px 1px, var(--canvas-dot) 1px, transparent 0),
+    var(--surface-canvas);
   background-size: 18px 18px;
 }
 
@@ -1228,16 +1353,16 @@ textarea {
   transform: translateX(-50%);
   z-index: 5;
   pointer-events: none;
-  border: 1px solid #313b45;
+  border: 1px solid var(--border-pill-strong);
   border-radius: 999px;
-  background: rgba(14, 18, 23, 0.9);
-  color: #cfd7df;
+  background: var(--surface-glass-pill);
+  color: var(--text-pill-soft);
   padding: 8px 12px;
   font-size: 12px;
 }
 
 .sbc-minimap {
-  background: #11161c;
+  background: var(--surface-minimap);
 }
 
 .react-flow__controls {
@@ -1245,10 +1370,10 @@ textarea {
   flex-direction: row;
   gap: 6px;
   padding: 6px;
-  border: 1px solid #252d35;
+  border: 1px solid var(--border-pill);
   border-radius: 999px;
-  background: #1C1E20;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.46);
+  background: var(--surface-pill);
+  box-shadow: var(--shadow-pill);
   backdrop-filter: blur(14px);
 }
 
@@ -1258,16 +1383,16 @@ textarea {
   min-height: 36px;
   border: 0;
   border-radius: 999px;
-  background: #333537;
-  color: #e6edf3;
+  background: var(--surface-pill-control);
+  color: var(--text-control);
   box-shadow: none;
 }
 
 /* :not(:disabled) 提升 specificity 以覆盖通用 `button:hover:not(:disabled)`，
-   否则 React Flow 控件的 hover 色会被深蓝黑 #171d24 覆盖。 */
+   否则 React Flow 控件的 hover 色会被深蓝黑 --surface-hover 覆盖。 */
 .react-flow__controls-button:hover:not(:disabled) {
-  background: #494B4D;
-  color: #fff;
+  background: var(--surface-pill-hover-strong);
+  color: var(--text-hover-bright);
 }
 
 .react-flow__controls-button svg {
@@ -1280,13 +1405,13 @@ textarea {
 }
 
 .react-flow__controls-button[data-active="true"] {
-  background: #f3f4f6;
-  color: #1c1e20;
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
 }
 
 .react-flow__controls-button[data-active="true"]:hover {
-  background: #ffffff;
-  color: #1c1e20;
+  background: var(--surface-inverse-hover);
+  color: var(--text-inverse);
 }
 
 /* 鼠标点击不留 focus 残留；键盘 focus 保留主色 outline 给 a11y */
@@ -1295,7 +1420,7 @@ textarea {
 }
 
 .react-flow__controls-button:focus-visible {
-  outline: 2px solid #c7ff00;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -1332,7 +1457,7 @@ textarea {
   align-items: center;
   gap: 8px;
   max-width: calc(100% - 32px);
-  color: #808892;
+  color: var(--text-muted-titlebar);
   font-size: var(--node-secondary-size);
   font-weight: var(--node-strong-weight);
   letter-spacing: 0;
@@ -1343,7 +1468,7 @@ textarea {
 .sbc-node-titlebar__icon {
   display: inline-grid;
   place-items: center;
-  color: #8b939d;
+  color: var(--text-muted-titlebar-icon);
 }
 
 .sbc-node-titlebar__badge {
@@ -1357,34 +1482,34 @@ textarea {
 
 /* Deprecated (whole-type going away): amber, matching the validation warning palette. */
 .sbc-node-titlebar__badge--deprecated {
-  background: #3a2a0a;
-  color: #f2bc4b;
+  background: var(--surface-warn-badge);
+  color: var(--accent-warn-fg);
 }
 
 /* Platform-locked (OS-restricted): neutral slate-blue — not an error, just an environment constraint. */
 .sbc-node-titlebar__badge--platform {
-  background: #102a3a;
-  color: #6fb6e6;
+  background: var(--surface-platform-badge);
+  color: var(--accent-platform-fg);
 }
 
 /* Version-gated: needs a newer sing-box than the project target — violet, distinct from the amber
    deprecated and blue platform badges. */
 .sbc-node-titlebar__badge--version {
-  background: #271a3a;
-  color: #b48ef2;
+  background: var(--surface-gated-badge);
+  color: var(--accent-gated-fg);
 }
 
 .sbc-node-shell--deprecated .sbc-node {
-  border-color: #6a5418;
+  border-color: var(--border-warn-deprecated);
   opacity: 0.78;
 }
 
 .sbc-node {
   min-height: 196px;
-  border: 1px solid #30363d;
+  border: 1px solid var(--border-card);
   border-radius: 14px;
-  background: #1a1e21;
-  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-node);
   /* Bottom padding no longer reserves space for the retired bottom toolbar. */
   padding: 38px 18px 28px;
   position: relative;
@@ -1395,21 +1520,19 @@ textarea {
 
 .sbc-node:hover,
 .sbc-node.is-selected {
-  border-color: #2d99ff;
+  border-color: var(--selection);
 }
 
 .sbc-node.is-selected {
-  box-shadow:
-    0 0 0 2px #2d99ff,
-    0 24px 70px rgba(0, 0, 0, 0.46);
+  box-shadow: var(--shadow-node-selected);
 }
 
 .sbc-node--error {
-  border-color: #e34b4b;
+  border-color: var(--accent-danger-fg);
 }
 
 .sbc-node--warning {
-  border-color: #f2bc4b;
+  border-color: var(--accent-warn-fg);
 }
 
 .sbc-node__corner {
@@ -1417,10 +1540,10 @@ textarea {
   z-index: 4;
   width: 12px;
   height: 12px;
-  border: 2px solid #e7f4ff;
+  border: 2px solid var(--selection-handle-outline);
   border-radius: 4px;
-  background: #2d99ff;
-  box-shadow: 0 0 0 1px rgba(45, 153, 255, 0.3);
+  background: var(--selection);
+  box-shadow: var(--shadow-corner-halo);
 }
 
 .sbc-node__corner--tl {
@@ -1476,40 +1599,40 @@ textarea {
   height: 40px;
   min-height: 40px;
   padding: 0;
-  border: 1px solid #2a3139;
+  border: 1px solid var(--border-port);
   border-radius: 999px;
   display: grid;
   place-items: center;
   position: relative;
-  background: #101418;
-  color: #aeb8c2;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.34);
+  background: var(--port-bg);
+  color: var(--port-fg);
+  box-shadow: var(--shadow-port);
 }
 
 .sbc-port--input {
-  color: #65b0ff;
+  color: var(--port-input-fg);
 }
 
 .sbc-port--output {
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .sbc-port:hover,
 .sbc-port.is-connected:hover {
-  background: #151b22;
-  border-color: #55616d;
+  background: var(--port-hover);
+  border-color: var(--border-port-hover);
 }
 
 .sbc-port.is-compatible,
 .sbc-port.is-pending {
-  border-color: #c7ff00;
-  color: #c7ff00;
-  box-shadow: 0 0 0 4px rgba(199, 255, 0, 0.12), 0 14px 30px rgba(0, 0, 0, 0.38);
+  border-color: var(--accent-brand-fg);
+  color: var(--accent-brand-fg);
+  box-shadow: var(--shadow-port-active);
 }
 
 .sbc-port.is-connected {
-  background: #11161c;
-  border-color: #3c4650;
+  background: var(--port-connected-bg);
+  border-color: var(--border-port-connected);
 }
 
 /* N1: by default a card shows only its CONNECTED ports (the direct children of the column, vertically
@@ -1563,7 +1686,7 @@ textarea {
 .sbc-port[data-editable="false"] {
   cursor: default;
   border-style: dashed;
-  color: #8f9aa5;
+  color: var(--text-muted-doc);
 }
 
 .sbc-port__action {
@@ -1575,12 +1698,12 @@ textarea {
   /* Override the global button{min-height:34px} tap-target floor — without this it stretched the 16px
      action into a 16×34 vertical pill that overlapped the port icon. */
   min-height: 16px;
-  border: 1px solid #202832;
+  border: 1px solid var(--border-port-action);
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: #101418;
-  color: #dfe6ed;
+  background: var(--port-bg);
+  color: var(--text-port-action);
   padding: 0;
   opacity: 0;
   transform: scale(0.86);
@@ -1601,8 +1724,8 @@ button.sbc-port__action {
 
 button.sbc-port__action:hover,
 button.sbc-port__action:focus-visible {
-  border-color: #c7ff00;
-  color: #c7ff00;
+  border-color: var(--accent-brand-fg);
+  color: var(--accent-brand-fg);
 }
 
 .sbc-port__label {
@@ -1612,12 +1735,12 @@ button.sbc-port__action:focus-visible {
   max-width: 180px;
   min-height: 26px;
   padding: 0 9px;
-  border: 1px solid #303944;
+  border: 1px solid var(--border-overlay);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  background: rgba(16, 20, 24, 0.97);
-  color: #dce4eb;
+  background: var(--surface-glass-port-label);
+  color: var(--text-port-label);
   font-size: 11px;
   font-weight: 760;
   line-height: 1;
@@ -1673,18 +1796,18 @@ button.sbc-port__action:focus-visible {
 .sbc-handle.connectingto,
 .sbc-handle.valid {
   opacity: 0.18;
-  background: #c7ff00;
+  background: var(--accent-brand-fill);
 }
 
 .react-flow__connection-path {
-  stroke: #e4e9ee;
+  stroke: var(--edge-connection);
   stroke-width: 2.4;
   stroke-dasharray: 10 14;
   stroke-linecap: round;
 }
 
 .react-flow__connection.valid .react-flow__connection-path {
-  stroke: #c7ff00;
+  stroke: var(--edge-default);
 }
 
 /* React Flow tags the in-flight connection line `valid` / `invalid` / (neutral) via getConnectionStatus.
@@ -1693,7 +1816,7 @@ button.sbc-port__action:focus-visible {
    `invalid` class) so it can still open the create picker. !important overrides the inline
    connectionLineStyle stroke RF applies to the path (the neutral white line is kept for valid/neutral). */
 .react-flow__connection.invalid .react-flow__connection-path {
-  stroke: #ff5d5d !important;
+  stroke: var(--edge-invalid) !important;
 }
 
 .canvas-shell[data-chip-picker-open="true"] .react-flow__connection,
@@ -1716,7 +1839,7 @@ button.sbc-port__action:focus-visible {
 
 .chip-picker-link__path {
   fill: none;
-  stroke: #e4e9ee;
+  stroke: var(--edge-connection);
   stroke-width: 2.4;
   stroke-dasharray: 10 14;
   stroke-linecap: round;
@@ -1730,26 +1853,26 @@ button.sbc-port__action:focus-visible {
   width: min(320px, calc(100vw - 32px));
   max-height: 360px;
   padding: 10px;
-  border: 1px solid #2f3944;
+  border: 1px solid var(--border-chip-picker);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(18, 22, 27, 0.98);
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.46);
+  background: var(--surface-glass-chip-picker);
+  box-shadow: var(--shadow-chip-picker);
 }
 
 .chip-picker__search {
   height: 44px;
   padding: 0 12px;
-  border: 1px solid #303944;
+  border: 1px solid var(--border-overlay);
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  background: #101418;
-  color: #97a3ae;
+  background: var(--surface-input-search);
+  color: var(--text-chip-soft);
 }
 
 .chip-picker__search svg {
@@ -1764,7 +1887,7 @@ button.sbc-port__action:focus-visible {
   border: 0;
   outline: 0;
   background: transparent;
-  color: #eef2f4;
+  color: var(--text-primary);
   font: inherit;
   font-size: 16px;
 }
@@ -1790,7 +1913,7 @@ button.sbc-port__action:focus-visible {
   justify-content: flex-start;
   gap: 10px;
   background: transparent;
-  color: #eef2f4;
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 760;
   text-align: left;
@@ -1803,15 +1926,15 @@ button.sbc-port__action:focus-visible {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  background: #202832;
-  color: #c7ff00;
+  background: var(--surface-icon-chip);
+  color: var(--accent-brand-fg);
 }
 
 .chip-picker__item:hover,
 .chip-picker__item:focus-visible {
   outline: 0;
-  background: #20262d;
-  color: #c7ff00;
+  background: var(--surface-hover-chip);
+  color: var(--accent-brand-fg);
 }
 
 .sbc-node__summary {
@@ -1825,23 +1948,23 @@ button.sbc-port__action:focus-visible {
   display: grid;
   place-items: center;
   margin-bottom: 18px;
-  background: #252b31;
-  color: #c7ff00;
+  background: var(--surface-status-chip);
+  color: var(--accent-brand-fg);
 }
 
 .sbc-node--error .sbc-node__status {
-  color: #e34b4b;
+  color: var(--status-error-icon);
 }
 
 .sbc-node--warning .sbc-node__status {
-  color: #f2bc4b;
+  color: var(--status-warn-icon);
 }
 
 .sbc-node__title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #d8dde2;
+  color: var(--text-node-title);
   font-size: var(--node-title-size);
   font-weight: var(--node-strong-weight);
   letter-spacing: 0;
@@ -1853,7 +1976,7 @@ button.sbc-port__action:focus-visible {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
-  color: #8c949d;
+  color: var(--text-muted-node-meta);
   margin-top: 10px;
   font-size: var(--node-secondary-size);
   line-height: 1.42;
@@ -1874,9 +1997,9 @@ button.sbc-port__action:focus-visible {
   min-height: 32px;
   padding: 0;
   border-radius: 9px;
-  border-color: #5a2a30;
-  background: #2a1416;
-  color: #ff7b7b;
+  border-color: var(--border-danger-subtle);
+  background: var(--surface-danger);
+  color: var(--accent-danger-icon);
   opacity: 0;
   pointer-events: none;
   transition:
@@ -1893,9 +2016,9 @@ button.sbc-port__action:focus-visible {
 }
 
 .sbc-node__delete:hover {
-  background: #712d34;
-  border-color: #a9444e;
-  color: #fff;
+  background: var(--surface-danger-strong);
+  border-color: var(--border-danger-strong);
+  color: var(--text-on-danger);
 }
 
 .node-icon-button,
@@ -1906,20 +2029,20 @@ button.sbc-port__action:focus-visible {
 }
 
 .node-icon-button:hover {
-  color: #fff;
-  background: #252d36;
-  border-color: #5f6d7a;
+  color: var(--text-hover-bright);
+  background: var(--surface-hover-node-action);
+  border-color: var(--border-control-hover);
 }
 
 .node-icon-button--danger:hover,
 .icon-danger:hover {
-  color: #fff;
-  background: #712d34;
-  border-color: #a9444e;
+  color: var(--text-on-danger);
+  background: var(--surface-danger-strong);
+  border-color: var(--border-danger-strong);
 }
 
 .react-flow__edge-path {
-  stroke: #c7ff00;
+  stroke: var(--edge-default);
   stroke-width: 2.2;
 }
 
@@ -1927,7 +2050,7 @@ button.sbc-port__action:focus-visible {
    its immediate up/downstream chain reads apart from the green graph. The compound selector outranks the
    bare .react-flow__edge-path color. */
 .react-flow__edge-path.sbc-edge__path--highlighted {
-  stroke: #2d99ff;
+  stroke: var(--edge-highlight);
   stroke-width: 3;
 }
 
@@ -1942,7 +2065,7 @@ button.sbc-port__action:focus-visible {
 /* V8-S2: a dangling edge (ref to a missing tag) reads as a broken red dashed line into the synthesized
    "missing reference" node, so unresolved wiring is visible on the canvas, not just in diagnostics. */
 .react-flow__edge-path.sbc-edge__path--dangling {
-  stroke: #ff5470;
+  stroke: var(--edge-dangling);
   stroke-dasharray: 5 5;
 }
 
@@ -1953,15 +2076,15 @@ button.sbc-edge-remove {
   height: 32px;
   min-height: 32px;
   padding: 0;
-  border: 1px solid rgba(199, 255, 0, 0.5);
+  border: 1px solid rgba(var(--accent-brand-rgb), 0.5);
   border-radius: 999px;
   display: grid;
   place-items: center;
   pointer-events: none;
   opacity: 0;
-  color: #151900;
-  background: #c7ff00;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.36);
+  color: var(--text-on-brand);
+  background: var(--accent-brand-fill);
+  box-shadow: var(--shadow-edge-remove);
   transition: opacity 120ms ease, filter 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
@@ -1975,10 +2098,10 @@ button.sbc-edge-remove:focus-visible {
 button.sbc-edge-remove:hover:not(:disabled),
 button.sbc-edge-remove:focus-visible {
   outline: 0;
-  border-color: rgba(199, 255, 0, 0.86);
-  background: #c7ff00;
+  border-color: rgba(var(--accent-brand-rgb), 0.86);
+  background: var(--accent-brand-fill);
   filter: brightness(1.14);
-  box-shadow: 0 0 0 2px rgba(199, 255, 0, 0.34), 0 10px 30px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-edge-remove-hover);
 }
 
 .inspector-heading {
