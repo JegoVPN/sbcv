@@ -15,13 +15,11 @@
      in T6 and overrides tokens only — never component rules. */
 
   /* -- surfaces: generic blue-gray control ramp -- */
-  --surface-app: #090b0f;
-  --surface-app-shell: #0a0d12;
+  --surface-app: #0a0d12;
   --surface-control: #101418;
   --surface-input: #11161c;
   --surface-hover: #171d24;
   --surface-hover-raised: #1a222b;
-  --surface-control-chip: #1a222b;
   --status-checking-bg: #20262d;
 
   /* -- surfaces: warmer neutral topbar-pill family -- */
@@ -38,15 +36,18 @@
 
   /* -- text -- */
   --text-primary: #eef2f4;
-  --text-input: #f4f7f9;
   --text-secondary: #d7dee7;
-  --text-secondary-soft: #b7c2cd;
+  --text-tertiary: #aeb8c2;
+  --text-dim: #6f7b86;
+  --text-disabled: #707b86;
+  --border-strong: #30363d;
+  --surface-control-hover: #303842;
+  --surface-overlay-modal: #151a20;
+  --surface-badge-chip: #1a222b;
+  --surface-chip: #252b32;
+  --text-danger-soft: #ff9a9a;
+  --shadow-floating: 0 22px 70px rgba(0, 0, 0, 0.46);
   --text-muted: #8a96a3;
-  --text-muted-pill: #8e99a4;
-  --text-muted-menu: #9aa3ad;
-  --text-muted-badge: #9aa5b0;
-  --text-muted-control: #a6b0ba;
-  --text-icon-idle: #6f7b86;
   /* hue-tinted inks on the saturated status fills — tuned WITH their fill, never generic */
   --text-on-brand: #151900;
   --text-on-warn: #1f1600;
@@ -54,14 +55,10 @@
   --status-checking-fg: #d7dee7;
 
   /* -- borders -- */
-  --border-control: #29313a;
   --border-control-hover: #5f6d7a;
   --border-input: #303944;
-  --border-pill: #252d35;
   --border-menu: #333537;
-  --border-popover: #2a3340;
   --border-subtle: #1f2731;
-  --border-subtle-deep: #181e25;
 
   /* -- brand / status accents (fill vs fg are separate roles: fills survive a
         light theme nearly as-is, foregrounds must darken — see goal ruling 4) -- */
@@ -74,10 +71,12 @@
   --focus-ring: #c7ff00;
   --status-error-icon: #e34b4b;
   --status-warn-icon: #f2bc4b;
-  --status-info-icon: #59b4ff;
 
   /* -- accent RGB triplets: drive the alpha ladders (glow rings, pulse keyframes)
         so a retuned accent re-derives every wash -- */
+  /* hover-brightness polarity: dark brightens on hover; light flips below 1 in T6 */
+  --hover-brightness: 1.1;
+  --hover-brightness-strong: 1.14;
   --accent-brand-rgb: 199, 255, 0;
   --accent-warn-rgb: 242, 188, 75;
   --accent-danger-rgb: 227, 75, 75;
@@ -99,7 +98,6 @@
   --surface-minimap: #11161c;
 
   /* -- floating panels / dark glass (base woven into rgba — light swaps the base) -- */
-  --surface-panel: #1a1d20;
   --surface-glass-palette: rgba(15, 20, 26, 0.88);
   --surface-glass-pill: rgba(14, 18, 23, 0.9);
   --surface-glass-port-label: rgba(16, 20, 24, 0.97);
@@ -107,40 +105,15 @@
 
   /* -- node card -- */
   --surface-card: #1a1e21;
-  --border-card: #30363d;
-  --surface-status-chip: #252b31;
   --surface-icon-chip: #202832;
-  --text-node-title: #d8dde2;
-  --text-muted-node-meta: #8c949d;
-  --text-muted-titlebar: #808892;
-  --text-muted-titlebar-icon: #8b939d;
-  --surface-hover-node-action: #252d36;
 
   /* -- palette / pickers (role splits of the #101418 control fill per audit ruling 2) -- */
-  --surface-input-search: #101418;
   --surface-selected: #101418;
   --surface-active-pill: #151a20;
-  --surface-hover-chip: #20262d;
-  --border-palette: #1e252d;
-  --border-chip-picker: #2f3944;
-  --border-overlay: #303944;
-  --border-pill-strong: #313b45;
   --border-info-tag: #1f3a52;
   --border-legacy: #4a2727;
   --border-warn-deprecated: #6a5418;
-  --text-palette-soft: #a7b2bd;
-  --text-input-soft: #9ba7b3;
-  --text-chip-soft: #97a3ae;
-  --text-pill-soft: #cfd7df;
-  --text-heading-dim: #6f7b86;
-  --text-muted-group: #8d98a3;
-  --text-muted-doc: #8f9aa5;
-  --text-muted-palette-dim: #76818c;
-  --text-muted-deep: #65707b;
-  --text-disabled-palette: #707b86;
   --text-gated-dim: #8794a0;
-  --text-panel-title: #aeb8c2;
-  --text-control: #e6edf3;
   --text-hover-bright: #fff;
   --text-on-brand-tint: #f6ffe8;
 
@@ -153,15 +126,7 @@
   /* -- ports -- */
   --port-bg: #101418;
   --port-fg: #aeb8c2;
-  --port-hover: #151b22;
   --port-connected-bg: #11161c;
-  --port-input-fg: #65b0ff;
-  --border-port: #2a3139;
-  --border-port-hover: #55616d;
-  --border-port-connected: #3c4650;
-  --border-port-action: #202832;
-  --text-port-action: #dfe6ed;
-  --text-port-label: #dce4eb;
 
   /* -- edges + selection language -- */
   --edge-default: #c7ff00;
@@ -189,51 +154,29 @@
   --border-danger-strong: #a9444e;
 
   /* -- elevation (canvas-side; composite strings may reference other tokens) -- */
-  --shadow-palette: 0 22px 70px rgba(0, 0, 0, 0.42);
   --shadow-panel: 0 28px 90px rgba(0, 0, 0, 0.5);
   --shadow-node: 0 22px 58px rgba(0, 0, 0, 0.34);
   --shadow-node-selected: 0 0 0 2px var(--selection), 0 24px 70px rgba(0, 0, 0, 0.46);
   --shadow-port: 0 12px 28px rgba(0, 0, 0, 0.34);
   --shadow-port-active: 0 0 0 4px rgba(var(--accent-brand-rgb), 0.12), 0 14px 30px rgba(0, 0, 0, 0.38);
   --shadow-corner-halo: 0 0 0 1px rgba(var(--selection-rgb), 0.3);
-  --shadow-chip-picker: 0 22px 70px rgba(0, 0, 0, 0.46);
   --shadow-edge-remove: 0 10px 30px rgba(0, 0, 0, 0.36);
   --shadow-edge-remove-hover: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.34), 0 10px 30px rgba(0, 0, 0, 0.28);
 
   /* -- inspector forms / panels -- */
-  --text-inspector-kind: #86919c;
-  --text-inspector-title: #dbe0e5;
-  --text-field-label: #c3c9cf;
   --surface-field-input: #262a2f;
   --border-field-idle: transparent;
-  --text-placeholder: #717c88;
-  --text-hint-error: #e79a9a;
-  --text-section-label: #8b96a1;
-  --text-summary-chevron: #96a1ac;
-  --text-count-inactive: #73808b;
-  --text-action-grid: #edf2f5;
-  --text-empty: #85909a;
-  --text-card-strong: #dbe3eb;
   --text-panel-header: #aeb7c1;
   --surface-sunken-card: #101418;
   --surface-card-inset: #11161c;
   --border-default: #2a333d;
-  --border-card-soft: #2b343e;
   --gradient-skeleton: linear-gradient(90deg, #1a1f24, #20262c, #1a1f24);
-  --border-danger-soft: #5a2b2b;
-  --surface-danger-deep: #1c1416;
   --shadow-lazy-error: 0 8px 28px rgba(0, 0, 0, 0.5);
   --surface-glass-panel: rgba(25, 29, 33, 0.96);
   --shadow-global-panel: 0 28px 80px rgba(0, 0, 0, 0.48);
 
   /* -- rule tables / diagnostics -- */
-  --text-rule-header: #d6dde3;
   --surface-rule-summary: #0c1116;
-  --border-rule-summary: #222b34;
-  --text-rule-summary: #c4ccd4;
-  --text-pager: #9faab5;
-  --text-diagnostic-dim: #8e99a3;
-  --text-diagnostic-body: #cdd5dd;
   --border-diag-warning: #a97927;
   --border-diag-valid: #7ca300;
 
@@ -241,11 +184,7 @@
   --surface-code: #090d12;
   --surface-code-editor: #0b0f14;
   --scrim-dialog: rgba(3, 6, 10, 0.68);
-  --surface-dialog: #151a20;
   --shadow-dialog: 0 32px 90px rgba(0, 0, 0, 0.58);
-  --border-dialog-actions: #343d48;
-  --surface-dialog-button: #252b32;
-  --surface-dialog-button-hover: #303842;
 
   /* -- inspector banners (alpha washes survive light backgrounds; keep trios coupled) -- */
   --surface-banner-platform: rgba(168, 91, 31, 0.12);
@@ -256,7 +195,6 @@
   --text-banner-build: #ffa264;
   --surface-banner-deprecated: rgba(178, 34, 34, 0.12);
   --border-banner-deprecated: rgba(208, 84, 84, 0.5);
-  --text-banner-deprecated: #ff9a9a;
   --surface-banner-channel: rgba(38, 87, 158, 0.18);
   --border-banner-channel: rgba(70, 132, 215, 0.5);
   --text-banner-channel: #9fc6ff;
@@ -265,33 +203,14 @@
   --border-ghost: rgba(255, 255, 255, 0.12);
   --surface-ghost: rgba(255, 255, 255, 0.04);
   --surface-ghost-hover: rgba(255, 255, 255, 0.08);
-  --text-reveal-idle: #b5bdc8;
-  --text-reveal-hover: #ffffff;
 
   /* -- mobile chrome / sheets / toasts -- */
-  --surface-sheet: #14181d;
-  --surface-toast: #1b2026;
-  --surface-row: #1a1f25;
-  --surface-rule-inline: #15191d;
-  --surface-validation-group: #202327;
-  --surface-toast-action: #232a32;
-  --surface-hover-brand-mobile: #232629;
-  --surface-toast-action-hover: #2b333d;
-  --surface-hover-dismiss: #2a3340;
   --surface-grabber: #4d5663;
-  --text-rule-head: #cbd3da;
-  --text-menu-label: #b3bcc6;
-  --text-toolbar: #aab2bc;
   --status-checking-icon: #aeb9c6;
-  --status-error-icon-mobile: #ff7777;
   --status-error-icon-toast: #ff8c69;
   --status-info-icon-toast: #8aa0b4;
   --accent-success-fg: #6fcf86;
   --border-success: #2f5a3a;
-  --border-toast-error: #5a2f33;
-  --border-rule-inline: #262d34;
-  --border-row-hover: #2d3640;
-  --border-toast-action: #3a4555;
   --border-status-checking: rgba(137, 151, 168, 0.36);
   --shadow-mobile-topbar: 0 12px 32px rgba(0, 0, 0, 0.5);
   --shadow-sheet: 0 -24px 60px rgba(0, 0, 0, 0.6);
@@ -346,7 +265,7 @@ textarea {
 }
 
 button {
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--border-default);
   background: var(--surface-control);
   color: var(--text-primary);
   min-height: 34px;
@@ -374,7 +293,7 @@ select,
 textarea {
   border: 1px solid var(--border-input);
   background: var(--surface-input);
-  color: var(--text-input);
+  color: var(--text-primary);
   border-radius: 7px;
   outline: none;
 }
@@ -408,7 +327,7 @@ textarea {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: var(--surface-app-shell);
+  background: var(--surface-app);
 }
 
 .topbar {
@@ -438,7 +357,7 @@ textarea {
   min-width: 0;
   min-height: 44px;
   padding: 4px;
-  border: 1px solid var(--border-pill);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--surface-pill);
   box-shadow: var(--shadow-pill);
@@ -618,7 +537,7 @@ textarea {
    hidden outright (rather than crowding them), so no in-pill truncation is needed. */
 .brand-tagline {
   margin: 0 14px 0 8px;
-  color: var(--text-muted-pill);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.1px;
@@ -633,7 +552,7 @@ textarea {
 
 .brand-chevron {
   margin-left: 1px;
-  color: var(--text-muted-pill);
+  color: var(--text-muted);
   transition: transform 120ms ease;
 }
 
@@ -682,7 +601,7 @@ textarea {
 
 .brand-menu__intro span {
   margin-top: 5px;
-  color: var(--text-muted-menu);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.25;
   white-space: nowrap;
@@ -728,7 +647,7 @@ textarea {
 }
 
 .brand-menu__external {
-  color: var(--text-muted-menu);
+  color: var(--text-muted);
 }
 
 .topbar-actions {
@@ -737,7 +656,7 @@ textarea {
   gap: 6px;
   min-width: 0;
   padding: 6px;
-  border: 1px solid var(--border-pill);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--surface-pill);
   box-shadow: var(--shadow-pill);
@@ -753,7 +672,7 @@ textarea {
   padding: 0 8px 0 11px;
   border-radius: 999px;
   background: var(--surface-pill-control);
-  color: var(--text-muted-control);
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 
@@ -842,19 +761,19 @@ textarea {
    pair can never drift) and add a brightness + glow at specificity (0,4,1). */
 .topbar-actions button.status-pill--valid:hover:not(:disabled) {
   background: var(--accent-brand-fill);
-  filter: brightness(1.1);
+  filter: brightness(var(--hover-brightness));
   box-shadow: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.34);
 }
 
 .topbar-actions button.status-pill--warning:hover:not(:disabled) {
   background: var(--accent-warn-fill);
-  filter: brightness(1.1);
+  filter: brightness(var(--hover-brightness));
   box-shadow: 0 0 0 2px rgba(var(--accent-warn-rgb), 0.34);
 }
 
 .topbar-actions button.status-pill--error:hover:not(:disabled) {
   background: var(--accent-danger-fill);
-  filter: brightness(1.1);
+  filter: brightness(var(--hover-brightness));
   box-shadow: 0 0 0 2px rgba(var(--accent-danger-rgb), 0.34);
 }
 
@@ -873,7 +792,7 @@ textarea {
   display: flex;
   flex-direction: column;
   background: var(--surface-glass-popover);
-  border: 1px solid var(--border-popover);
+  border: 1px solid var(--border-default);
   border-radius: 14px;
   box-shadow: var(--shadow-popover);
   backdrop-filter: blur(14px);
@@ -936,7 +855,7 @@ textarea {
 .diagnostics-popover .diagnostics-popover__close {
   background: transparent;
   border: 0;
-  color: var(--text-icon-idle);
+  color: var(--text-dim);
   cursor: pointer;
   padding: 0;
   min-height: 0;
@@ -964,7 +883,7 @@ textarea {
 .diagnostics-popover__empty {
   padding: 14px;
   font-size: 12px;
-  color: var(--text-secondary-soft);
+  color: var(--text-tertiary);
   line-height: 1.5;
 }
 
@@ -976,7 +895,7 @@ textarea {
   display: flex;
   gap: 10px;
   padding: 10px 14px;
-  border-bottom: 1px solid var(--border-subtle-deep);
+  border-bottom: 1px solid var(--border-subtle);
   font-size: 12px;
 }
 
@@ -1027,7 +946,7 @@ textarea {
 }
 
 .diagnostics-popover__item--info .diagnostics-popover__icon {
-  color: var(--status-info-icon);
+  color: var(--accent-info-fg);
 }
 
 .diagnostics-popover__body {
@@ -1054,9 +973,9 @@ textarea {
   letter-spacing: 0.04em;
   padding: 2px 6px;
   border-radius: 4px;
-  background: var(--surface-control-chip);
-  color: var(--text-muted-badge);
-  border: 1px solid var(--border-popover);
+  background: var(--surface-badge-chip);
+  color: var(--text-muted);
+  border: 1px solid var(--border-default);
 }
 
 .diagnostics-popover__path {
@@ -1078,7 +997,7 @@ textarea {
 .official-check-btn {
   min-height: 34px;
   border-radius: 999px;
-  border: 1px solid var(--border-popover);
+  border: 1px solid var(--border-default);
   background: var(--surface-control);
   color: var(--text-secondary);
   padding: 0 12px;
@@ -1147,10 +1066,10 @@ textarea {
   min-width: 0;
   overflow: auto;
   background: var(--surface-glass-palette);
-  border: 1px solid var(--border-palette);
+  border: 1px solid var(--border-subtle);
   border-radius: 14px;
   padding: 14px;
-  box-shadow: var(--shadow-palette);
+  box-shadow: var(--shadow-floating);
   backdrop-filter: blur(14px);
   pointer-events: none;
 }
@@ -1171,14 +1090,14 @@ textarea {
   overflow: auto;
   min-width: 0;
   padding: 18px;
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--border-strong);
   border-radius: 18px;
-  background: var(--surface-panel);
+  background: var(--surface-card);
   box-shadow: var(--shadow-panel);
 }
 
 .panel-title {
-  color: var(--text-panel-title);
+  color: var(--text-tertiary);
   font-size: 12px;
   font-weight: 760;
   text-transform: uppercase;
@@ -1192,7 +1111,7 @@ textarea {
 }
 
 .palette-group h2 {
-  color: var(--text-heading-dim);
+  color: var(--text-dim);
   font-size: 12px;
   margin: 0 0 8px;
 }
@@ -1205,10 +1124,10 @@ textarea {
 .palette-search {
   min-height: 38px;
   margin-bottom: 16px;
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--border-default);
   border-radius: 9px;
-  background: var(--surface-input-search);
-  color: var(--text-input-soft);
+  background: var(--surface-control);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1243,7 +1162,7 @@ textarea {
   justify-content: flex-start;
   padding: 0 10px;
   border-radius: 999px;
-  color: var(--text-muted-badge);
+  color: var(--text-muted);
   font-size: 12px;
   background: var(--surface-control);
 }
@@ -1273,7 +1192,7 @@ textarea {
   justify-content: flex-start;
   padding: 0 8px;
   border-radius: 9px;
-  color: var(--text-muted-group);
+  color: var(--text-muted);
   font-size: 11px;
 }
 
@@ -1293,7 +1212,7 @@ textarea {
 
 .palette-nav button small {
   margin-left: auto;
-  color: var(--text-muted-deep);
+  color: var(--text-dim);
   font-size: 10px;
   font-weight: 760;
 }
@@ -1377,11 +1296,11 @@ textarea {
 }
 
 .palette-add--inspector small {
-  color: var(--text-palette-soft);
+  color: var(--text-tertiary);
 }
 
 .palette-add--docs small {
-  color: var(--text-muted-palette-dim);
+  color: var(--text-dim);
 }
 
 /* gated/testing = MUTED + cool (per D2): a node is gated by the build target, not deprecated — so it
@@ -1392,7 +1311,7 @@ textarea {
 
 .palette-add--pending small,
 .palette-add:disabled small {
-  color: var(--text-disabled-palette);
+  color: var(--text-disabled);
 }
 
 .palette-add--deprecated small {
@@ -1414,10 +1333,10 @@ textarea {
 .palette-doc-link {
   min-height: 38px;
   padding: 0 10px;
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--border-default);
   border-radius: 9px;
   background: var(--surface-control);
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1452,10 +1371,10 @@ textarea {
   transform: translateX(-50%);
   z-index: 5;
   pointer-events: none;
-  border: 1px solid var(--border-pill-strong);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   background: var(--surface-glass-pill);
-  color: var(--text-pill-soft);
+  color: var(--text-secondary);
   padding: 8px 12px;
   font-size: 12px;
 }
@@ -1469,7 +1388,7 @@ textarea {
   flex-direction: row;
   gap: 6px;
   padding: 6px;
-  border: 1px solid var(--border-pill);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--surface-pill);
   box-shadow: var(--shadow-pill);
@@ -1483,7 +1402,7 @@ textarea {
   border: 0;
   border-radius: 999px;
   background: var(--surface-pill-control);
-  color: var(--text-control);
+  color: var(--text-primary);
   box-shadow: none;
 }
 
@@ -1556,7 +1475,7 @@ textarea {
   align-items: center;
   gap: 8px;
   max-width: calc(100% - 32px);
-  color: var(--text-muted-titlebar);
+  color: var(--text-dim);
   font-size: var(--node-secondary-size);
   font-weight: var(--node-strong-weight);
   letter-spacing: 0;
@@ -1567,7 +1486,7 @@ textarea {
 .sbc-node-titlebar__icon {
   display: inline-grid;
   place-items: center;
-  color: var(--text-muted-titlebar-icon);
+  color: var(--text-muted);
 }
 
 .sbc-node-titlebar__badge {
@@ -1605,7 +1524,7 @@ textarea {
 
 .sbc-node {
   min-height: 196px;
-  border: 1px solid var(--border-card);
+  border: 1px solid var(--border-strong);
   border-radius: 14px;
   background: var(--surface-card);
   box-shadow: var(--shadow-node);
@@ -1698,7 +1617,7 @@ textarea {
   height: 40px;
   min-height: 40px;
   padding: 0;
-  border: 1px solid var(--border-port);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -1709,7 +1628,7 @@ textarea {
 }
 
 .sbc-port--input {
-  color: var(--port-input-fg);
+  color: var(--accent-info-fg);
 }
 
 .sbc-port--output {
@@ -1718,8 +1637,8 @@ textarea {
 
 .sbc-port:hover,
 .sbc-port.is-connected:hover {
-  background: var(--port-hover);
-  border-color: var(--border-port-hover);
+  background: var(--surface-hover);
+  border-color: var(--border-control-hover);
 }
 
 .sbc-port.is-compatible,
@@ -1731,7 +1650,7 @@ textarea {
 
 .sbc-port.is-connected {
   background: var(--port-connected-bg);
-  border-color: var(--border-port-connected);
+  border-color: var(--border-strong);
 }
 
 /* N1: by default a card shows only its CONNECTED ports (the direct children of the column, vertically
@@ -1785,7 +1704,7 @@ textarea {
 .sbc-port[data-editable="false"] {
   cursor: default;
   border-style: dashed;
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
 }
 
 .sbc-port__action {
@@ -1797,12 +1716,12 @@ textarea {
   /* Override the global button{min-height:34px} tap-target floor — without this it stretched the 16px
      action into a 16×34 vertical pill that overlapped the port icon. */
   min-height: 16px;
-  border: 1px solid var(--border-port-action);
+  border: 1px solid var(--border-subtle);
   border-radius: 999px;
   display: grid;
   place-items: center;
   background: var(--port-bg);
-  color: var(--text-port-action);
+  color: var(--text-primary);
   padding: 0;
   opacity: 0;
   transform: scale(0.86);
@@ -1834,12 +1753,12 @@ button.sbc-port__action:focus-visible {
   max-width: 180px;
   min-height: 26px;
   padding: 0 9px;
-  border: 1px solid var(--border-overlay);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   background: var(--surface-glass-port-label);
-  color: var(--text-port-label);
+  color: var(--text-secondary);
   font-size: 11px;
   font-weight: 760;
   line-height: 1;
@@ -1952,26 +1871,26 @@ button.sbc-port__action:focus-visible {
   width: min(320px, calc(100vw - 32px));
   max-height: 360px;
   padding: 10px;
-  border: 1px solid var(--border-chip-picker);
+  border: 1px solid var(--border-strong);
   border-radius: 14px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--surface-glass-chip-picker);
-  box-shadow: var(--shadow-chip-picker);
+  box-shadow: var(--shadow-floating);
 }
 
 .chip-picker__search {
   height: 44px;
   padding: 0 12px;
-  border: 1px solid var(--border-overlay);
+  border: 1px solid var(--border-strong);
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  background: var(--surface-input-search);
-  color: var(--text-chip-soft);
+  background: var(--surface-control);
+  color: var(--text-muted);
 }
 
 .chip-picker__search svg {
@@ -2032,7 +1951,7 @@ button.sbc-port__action:focus-visible {
 .chip-picker__item:hover,
 .chip-picker__item:focus-visible {
   outline: 0;
-  background: var(--surface-hover-chip);
+  background: var(--surface-hover-raised);
   color: var(--accent-brand-fg);
 }
 
@@ -2047,7 +1966,7 @@ button.sbc-port__action:focus-visible {
   display: grid;
   place-items: center;
   margin-bottom: 18px;
-  background: var(--surface-status-chip);
+  background: var(--surface-chip);
   color: var(--accent-brand-fg);
 }
 
@@ -2063,7 +1982,7 @@ button.sbc-port__action:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-node-title);
+  color: var(--text-secondary);
   font-size: var(--node-title-size);
   font-weight: var(--node-strong-weight);
   letter-spacing: 0;
@@ -2075,7 +1994,7 @@ button.sbc-port__action:focus-visible {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
-  color: var(--text-muted-node-meta);
+  color: var(--text-muted);
   margin-top: 10px;
   font-size: var(--node-secondary-size);
   line-height: 1.42;
@@ -2129,7 +2048,7 @@ button.sbc-port__action:focus-visible {
 
 .node-icon-button:hover {
   color: var(--text-hover-bright);
-  background: var(--surface-hover-node-action);
+  background: var(--surface-hover-raised);
   border-color: var(--border-control-hover);
 }
 
@@ -2199,7 +2118,7 @@ button.sbc-edge-remove:focus-visible {
   outline: 0;
   border-color: rgba(var(--accent-brand-rgb), 0.86);
   background: var(--accent-brand-fill);
-  filter: brightness(1.14);
+  filter: brightness(var(--hover-brightness-strong));
   box-shadow: var(--shadow-edge-remove-hover);
 }
 
@@ -2216,7 +2135,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .inspector-kind {
-  color: var(--text-inspector-kind);
+  color: var(--text-muted);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -2234,7 +2153,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: var(--text-inspector-title);
+  color: var(--text-secondary);
   font-size: 18px;
   font-weight: 760;
   text-transform: capitalize;
@@ -2250,7 +2169,7 @@ button.sbc-edge-remove:focus-visible {
 
 .field span,
 .toggle-row span {
-  color: var(--text-field-label);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -2296,7 +2215,7 @@ button.sbc-edge-remove:focus-visible {
   color: var(--text-muted);
 }
 .field__hint--error {
-  color: var(--text-hint-error);
+  color: var(--text-danger-soft);
 }
 
 /* R5 — PEM/line-array editor (tls.certificate/key/ech.*): monospace so pasted PEM lines align, and
@@ -2346,7 +2265,7 @@ button.sbc-edge-remove:focus-visible {
   margin-bottom: 12px;
 }
 .field--checklist > legend {
-  color: var(--text-section-label);
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 800;
 }
@@ -2376,7 +2295,7 @@ button.sbc-edge-remove:focus-visible {
 
 .field input::placeholder,
 .field textarea::placeholder {
-  color: var(--text-placeholder);
+  color: var(--text-disabled);
   opacity: 1;
   font-size: 14px;
   line-height: 1.4;
@@ -2385,7 +2304,7 @@ button.sbc-edge-remove:focus-visible {
 
 .inspector-section-title {
   margin: 18px 0 10px;
-  color: var(--text-section-label);
+  color: var(--text-muted);
   font-size: 12px;
   font-weight: 840;
   letter-spacing: 0;
@@ -2400,7 +2319,7 @@ button.sbc-edge-remove:focus-visible {
 
 .settings-module-card,
 .advanced-fields {
-  border: 1px solid var(--border-card-soft);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
   background: var(--surface-sunken-card);
 }
@@ -2415,7 +2334,7 @@ button.sbc-edge-remove:focus-visible {
   background: var(--gradient-skeleton);
   background-size: 200% 100%;
   animation: lazy-layer-shimmer 1.2s ease-in-out infinite;
-  border-top: 1px solid var(--border-card-soft);
+  border-top: 1px solid var(--border-default);
   z-index: 60;
 }
 @keyframes lazy-layer-shimmer {
@@ -2430,9 +2349,9 @@ button.sbc-edge-remove:focus-visible {
   max-width: 420px;
   width: calc(100% - 32px);
   padding: 16px;
-  border: 1px solid var(--border-danger-soft);
+  border: 1px solid var(--border-danger-subtle);
   border-radius: 12px;
-  background: var(--surface-danger-deep);
+  background: var(--surface-danger);
   color: var(--text-primary);
   z-index: 80;
   box-shadow: var(--shadow-lazy-error);
@@ -2459,7 +2378,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: var(--text-control);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 14px;
   font-weight: 820;
@@ -2474,7 +2393,7 @@ button.sbc-edge-remove:focus-visible {
 .settings-module-card summary::before,
 .advanced-fields summary::before {
   content: "›";
-  color: var(--text-summary-chevron);
+  color: var(--text-muted);
   font-size: 18px;
   line-height: 1;
   transform: rotate(0deg);
@@ -2501,7 +2420,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .settings-module-card:not(.is-active) summary strong {
-  color: var(--text-count-inactive);
+  color: var(--text-disabled);
 }
 
 .settings-module-card__body,
@@ -2519,7 +2438,7 @@ button.sbc-edge-remove:focus-visible {
   gap: 6px;
   margin-bottom: 12px;
   padding: 12px;
-  border: 1px solid var(--border-card-soft);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
   background: var(--surface-card-inset);
 }
@@ -2533,14 +2452,14 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .reference-card span {
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .reference-card strong {
   min-width: 0;
   overflow: hidden;
-  color: var(--text-card-strong);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 760;
   text-overflow: ellipsis;
@@ -2563,7 +2482,7 @@ button.sbc-edge-remove:focus-visible {
   justify-content: flex-start;
   border-radius: 10px;
   background: var(--surface-control);
-  color: var(--text-action-grid);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 760;
 }
@@ -2602,8 +2521,8 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .empty-state {
-  color: var(--text-empty);
-  border: 1px dashed var(--border-card-soft);
+  color: var(--text-muted);
+  border: 1px dashed var(--border-default);
   border-radius: 8px;
   padding: 14px;
   line-height: 1.45;
@@ -2685,7 +2604,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .table-panel__header p {
-  color: var(--text-empty);
+  color: var(--text-muted);
   margin: 4px 0 0;
   font-size: 12px;
 }
@@ -2712,7 +2631,7 @@ button.sbc-edge-remove:focus-visible {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
-  color: var(--text-rule-header);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 760;
 }
@@ -2724,8 +2643,8 @@ button.sbc-edge-remove:focus-visible {
   padding: 4px 8px;
   border-radius: 6px;
   background: var(--surface-rule-summary);
-  border: 1px solid var(--border-rule-summary);
-  color: var(--text-rule-summary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
   font-size: 11.5px;
   font-weight: 680;
   word-break: break-word;
@@ -2733,7 +2652,7 @@ button.sbc-edge-remove:focus-visible {
 
 .rule-card__hint {
   margin: 0;
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.4;
 }
@@ -2749,7 +2668,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .rule-field span {
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 760;
   text-transform: uppercase;
@@ -2767,7 +2686,7 @@ button.sbc-edge-remove:focus-visible {
   justify-content: flex-end;
   gap: 8px;
   margin: -4px 0 10px;
-  color: var(--text-pager);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -2830,7 +2749,7 @@ button.sbc-edge-remove:focus-visible {
   grid-template-rows: auto minmax(0, 1fr);
   border: 1px solid var(--border-default);
   border-radius: 18px;
-  background: var(--surface-dialog);
+  background: var(--surface-overlay-modal);
   box-shadow: var(--shadow-dialog);
   overflow: hidden;
 }
@@ -2865,7 +2784,7 @@ button.sbc-edge-remove:focus-visible {
 
 .json-viewer-title p {
   margin: 3px 0 0;
-  color: var(--text-muted-doc);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -2878,12 +2797,12 @@ button.sbc-edge-remove:focus-visible {
 .json-viewer-actions button {
   min-height: 34px;
   border-radius: 999px;
-  border: 1px solid var(--border-dialog-actions);
-  background: var(--surface-dialog-button);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-chip);
 }
 
 .json-viewer-actions button:hover {
-  background: var(--surface-dialog-button-hover);
+  background: var(--surface-control-hover);
 }
 
 .json-viewer-close {
@@ -2932,13 +2851,13 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .diagnostic span {
-  color: var(--text-diagnostic-dim);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .diagnostic p {
   margin: 5px 0 0;
-  color: var(--text-diagnostic-body);
+  color: var(--text-secondary);
 }
 
 .diagnostic--error {
@@ -3013,7 +2932,7 @@ button.sbc-edge-remove:focus-visible {
 .inspector-banner--deprecated {
   background: var(--surface-banner-deprecated);
   border-color: var(--border-banner-deprecated);
-  color: var(--text-banner-deprecated);
+  color: var(--text-danger-soft);
 }
 
 .inspector-banner--channel {
@@ -3038,13 +2957,13 @@ button.sbc-edge-remove:focus-visible {
   border-radius: 4px;
   border: 1px solid var(--border-ghost);
   background: var(--surface-ghost);
-  color: var(--text-reveal-idle);
+  color: var(--text-tertiary);
   cursor: pointer;
 }
 
 .field--sensitive .field__reveal-button:hover {
   background: var(--surface-ghost-hover);
-  color: var(--text-reveal-hover);
+  color: var(--text-hover-bright);
 }
 
 /* =================================================================
@@ -3088,7 +3007,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid var(--border-pill);
+  border: 1px solid var(--border-default);
   border-radius: 999px;
   background: var(--surface-pill);
   box-shadow: var(--shadow-mobile-topbar);
@@ -3115,7 +3034,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .mobile-brand:hover {
-  background: var(--surface-hover-brand-mobile);
+  background: var(--surface-pill-hover);
 }
 
 .mobile-topbar__spacer {
@@ -3129,9 +3048,9 @@ button.sbc-edge-remove:focus-visible {
   height: 36px;
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid var(--border-dialog-actions);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: var(--surface-validation-group);
+  background: var(--surface-card);
   box-shadow: var(--inset-edge-light);
 }
 
@@ -3162,7 +3081,7 @@ button.sbc-edge-remove:focus-visible {
   border-right: 1px solid var(--border-menu);
   border-radius: 999px 0 0 999px;
   background: transparent;
-  color: var(--text-control);
+  color: var(--text-primary);
   cursor: pointer;
 }
 
@@ -3208,7 +3127,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .mobile-validation-status.status-pill--error > svg {
-  color: var(--status-error-icon-mobile);
+  color: var(--accent-danger-icon);
 }
 
 .mobile-validation-status.status-pill--checking > svg {
@@ -3239,7 +3158,7 @@ button.sbc-edge-remove:focus-visible {
   border: 0;
   border-radius: 999px;
   background: var(--surface-pill-control);
-  color: var(--text-control);
+  color: var(--text-primary);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -3276,10 +3195,10 @@ button.sbc-edge-remove:focus-visible {
 
 .bottom-sheet {
   position: relative;
-  background: var(--surface-sheet);
+  background: var(--surface-overlay-modal);
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
-  border-top: 1px solid var(--border-popover);
+  border-top: 1px solid var(--border-default);
   box-shadow: var(--shadow-sheet);
   display: flex;
   flex-direction: column;
@@ -3351,12 +3270,12 @@ button.sbc-edge-remove:focus-visible {
   gap: 10px;
   padding: 10px 4px;
   border-radius: 10px;
-  background: var(--surface-row);
+  background: var(--surface-card);
 }
 
 .mobile-menu-field > span {
   font-size: 13px;
-  color: var(--text-menu-label);
+  color: var(--text-tertiary);
   padding-left: 8px;
 }
 
@@ -3366,7 +3285,7 @@ button.sbc-edge-remove:focus-visible {
   border: 1px solid var(--border-input);
   border-radius: 8px;
   background: var(--surface-input);
-  color: var(--text-input);
+  color: var(--text-primary);
   padding: 0 8px;
 }
 
@@ -3388,9 +3307,9 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--border-pill);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
-  background: var(--surface-row);
+  background: var(--surface-card);
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
@@ -3402,8 +3321,8 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .mobile-row-button:hover:not(:disabled) {
-  background: var(--surface-hover-chip);
-  border-color: var(--border-row-hover);
+  background: var(--surface-hover-raised);
+  border-color: var(--border-strong);
 }
 
 .mobile-row-button > svg {
@@ -3488,23 +3407,23 @@ button.sbc-edge-remove:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-toolbar);
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 .inline-rule {
-  border: 1px solid var(--border-rule-inline);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--surface-rule-inline);
+  background: var(--surface-card);
 }
 .inline-rule__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: var(--text-rule-head);
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
 }
@@ -3561,8 +3480,8 @@ button.sbc-edge-remove:focus-visible {
   width: 100%;
   padding: 11px 12px;
   border-radius: 12px;
-  background: var(--surface-toast);
-  border: 1px solid var(--border-popover);
+  background: var(--surface-overlay-modal);
+  border: 1px solid var(--border-default);
   box-shadow: var(--shadow-toast);
   color: var(--text-primary);
   font-size: 13px;
@@ -3574,7 +3493,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .toast--error {
-  border-color: var(--border-toast-error);
+  border-color: var(--border-danger-subtle);
 }
 
 .toast__icon {
@@ -3600,8 +3519,8 @@ button.sbc-edge-remove:focus-visible {
 
 .toast__action {
   flex: 0 0 auto;
-  border: 1px solid var(--border-toast-action);
-  background: var(--surface-toast-action);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-chip);
   color: var(--accent-brand-fg);
   font-weight: 600;
   font-size: 12px;
@@ -3611,7 +3530,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .toast__action:hover {
-  background: var(--surface-toast-action-hover);
+  background: var(--surface-hover-raised);
 }
 
 .toast__dismiss {
@@ -3630,6 +3549,6 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .toast__dismiss:hover {
-  background: var(--surface-hover-dismiss);
+  background: var(--surface-hover-raised);
   color: var(--text-primary);
 }

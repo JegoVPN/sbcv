@@ -25,7 +25,9 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
 const FILE = "src/styles.css";
-const baseRef = process.argv[2] ?? "main";
+const args = process.argv.slice(2).filter((a) => a !== "--report");
+const REPORT = process.argv.includes("--report");
+const baseRef = args[0] ?? "main";
 
 // Added declarations allowed by the goal doc, with the value they must resolve to.
 const EXEMPT_ADDED = [
@@ -171,6 +173,40 @@ const unexplainedAdded = added.filter((line) => {
   }
   return true;
 });
+
+if (REPORT) {
+  // T5 consolidation review mode: print per-declaration color deltas instead of failing.
+  const colorRe = /#[0-9a-f]{6,8}\b|rgba?\([^)]*\)/g;
+  const pairs = [];
+  for (const r of removed) {
+    const sel = r.slice(0, r.indexOf("{"));
+    const a = unexplainedAdded.find((x) => x.slice(0, x.indexOf("{")) === sel);
+    if (a) pairs.push([r, a]);
+  }
+  const toRgb = (c) => {
+    const h = c.match(/^#([0-9a-f]{6})/);
+    if (h) return [0, 2, 4].map((i) => parseInt(h[1].slice(i, i + 2), 16));
+    const f = c.match(/rgba?\(([^)]*)\)/);
+    if (f) return f[1].split(",").slice(0, 3).map((x) => Math.round(parseFloat(x)));
+    return null;
+  };
+  let maxDelta = 0;
+  for (const [r, a] of pairs) {
+    const rc = r.match(colorRe) ?? [];
+    const ac = a.match(colorRe) ?? [];
+    const sel = r.slice(0, r.indexOf("{"));
+    for (let i = 0; i < Math.max(rc.length, ac.length); i += 1) {
+      if (rc[i] === ac[i]) continue;
+      const x = toRgb(rc[i] ?? ""), y = toRgb(ac[i] ?? "");
+      const d = x && y ? Math.max(...x.map((v, j) => Math.abs(v - y[j]))) : NaN;
+      if (!Number.isNaN(d)) maxDelta = Math.max(maxDelta, d);
+      console.log(`Δ${Number.isNaN(d) ? "?" : d}\t${rc[i] ?? "(none)"} → ${ac[i] ?? "(none)"}\t${sel}`);
+    }
+  }
+  const unpaired = removed.length + unexplainedAdded.length - pairs.length * 2;
+  console.log(`\n${pairs.length} changed declarations, max channel Δ = ${maxDelta}, unpaired = ${unpaired}`);
+  process.exit(unpaired > 0 ? 1 : 0);
+}
 
 if (removed.length || unexplainedAdded.length || failures.length) {
   console.error(`✗ token-equivalence FAILED vs ${baseRef}`);
