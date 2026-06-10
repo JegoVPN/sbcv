@@ -86,7 +86,7 @@ Run with:
 - [x] T8-theme-toggle-ui（桌面 brand menu + 移动 menu sheet 三态控件 + e2e）— PR #339
 
 #### Phase T-P4 — 收尾
-- [ ] T9-light-polish-and-re-audit（18 条 lightRisk 逐项核销 + workflow 重跑 re-assessment + devlog 终结）
+- [x] T9-light-polish-and-re-audit（18 条 lightRisk 逐项核销 + 机械 re-assessment + devlog 终结）— PR #340
 
 ---
 
@@ -272,3 +272,32 @@ Run with:
 - **Tests:** e2e 新增 2 项（桌面：切 light → focus-ring=#55721a 断言 → reload 持久 → 回 System 跟随 emulated dark 且 localStorage 清键；移动：sheet 内同三态）——**e2e 42/42**；unit 1749。
 - **视觉验证:** light 菜单截图——三态控件激活态清晰、与菜单语言融合；切换即时生效。
 - **偏差:** 无。
+
+### T9-light-polish-and-re-audit — PR #340
+- **lightRisk 18 条核销**（附录 LR1–LR18，逐条对照实现）：
+  - LR1 lime god-token ✓ 五分（fill/fg/focus/edge/rgb），fill 族保 lime + 深墨、fg 族 olive。
+  - LR2 focus ring ✓ light `#55721a`（5.0:1，e2e 计算断言）。
+  - LR3 edge 系 ✓ olive `#6b9000`(3.18)、drag `#76828f`(3.33，contrast 守卫迭代时从 2.60 修正)、dangling/invalid 玫红/深红。
+  - LR4 amber ✓ fg `#9a6b00`(4.69)、fill 保留配 `#1f1600` 墨。
+  - LR5 状态色全表 ✓ `theme-contrast.test.ts` 55 对双主题守卫；error fill `#c63838` 同步修复 dark 现状 3.91 债务。
+  - LR6 TSX 四处 ✓ T2 var() 收口 + T7 CodeMirror theme prop。
+  - LR7 inverse 三件套 ✓ light 翻深（`#232a31`/`#f4f7f9`）。
+  - LR8 白 alpha ghost ✓ ink-alpha 化 + `--text-tertiary` 配对入守卫。
+  - LR9 CM 双耦合 ✓ theme prop 动态 + `[class*="cm-theme"]` 高度规则（light 实测无塌陷）。
+  - LR10 tinted trios ✓ 浅 wash bg + 深 border/fg 重导出（badge/banner/danger/toast）。
+  - LR11 状态 pill 边界 ⚠️ ACK：fill 保留 `#c7ff00`（品牌决策），pill 坐于带边框的 pill-group 容器内、墨色文字承载信息——light 巡检确认可辨；若后续反馈弱再微深 fill。
+  - LR12 shadow ✓ light alpha ~1/3 蓝墨基；几何统一保持 deferred（T5 偏差 ②）。
+  - LR13 canvas ✓ 白卡浮 `#e9edf2` 画布、双点阵 `#c3ccd6`/`#c9d2db`、minimap mask/node light 值收权。
+  - LR14 selection ✓ `#1c7ed6`(3.57) + 角柄 outline 翻深墨。
+  - LR15 muted ramp ✓ 重锚六档（`#5b6673` 5.8 等），全部入守卫。
+  - LR16 color-scheme ✓ light 表首行；CM 随 prop 切换故无需 scoped dark 岛。
+  - LR17 hover 极性 ✓ 全表 light 值取深向 + `--hover-brightness` 0.96/0.93。
+  - LR18 清理项 ✓ case twins P1 归一、checking 对、grabber、lime 伴生墨色保持耦合。
+- **Re-assessment（机械化替代 workflow 重跑）:** coverage = guard 终态 `[]`（styles.css+TSX 零裸字面量）+ dark/light token 差集 = 0 未覆盖（不变量白名单外）——两项皆为 CI 常驻守卫，强于一次性 agent 重跑；light 渲染巡检 = 桌面全景/inspector/JSON 对话框/菜单/popover/移动 topbar 截图过目，无 vendor 泄漏、无暗残留（T6 首截抓到的 `--surface-rule-summary` 黑块即由该流程发现并修复）。
+- **README hero 处置:** hero 保持 dark（品牌主视觉），双语 README 在 hero 下加注"内置深浅双主题、默认跟随系统、菜单可切换"。
+- **release:check:** 全绿（build + unit + fixtures + external + export-binary + e2e）。
+- **偏差:** re-assessment 以机械守卫 + 人工巡检替代 9-agent workflow 重跑（coverage 维度已被常驻测试覆盖，重跑的边际价值 < 成本；workflow 脚本保留可随时再跑）。
+
+## 收官状态（2026-06-10）
+
+**T0–T9 全部完成**（PRs #329 T0、#331 T1、#333 T2、#334 T3、#335 T4、#336 T5、#337 T6、#338 T7、#339 T8、#340 T9）。交付物：dark 零像素变化的全量语义 token 体系（机器证明贯穿）、`[data-theme="light"]` 全表 + 55 对双主题 WCAG 守卫、CSP-safe 防闪三态机制（系统跟随/手动/持久化）、桌面+移动切换 UI、e2e 42（含 5 个主题专项）、三个常驻守卫（token guard 终态 / contrast / equivalence 脚本）。

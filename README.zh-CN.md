@@ -14,6 +14,8 @@
 
 [![sbcv —— 一份 sing-box 配置在可视化画布上的样子](docs/assets/hero.png)](https://sbcv.app)
 
+*内置深色与浅色主题——默认跟随系统，可在 sbcv 菜单中切换。*
+
 ---
 
 ## 为什么选 sbcv？
