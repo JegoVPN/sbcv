@@ -20,7 +20,7 @@
 ARG CACHE_BUST=2026-06-01-1
 ARG SB_112_VERSION=1.12.25
 ARG SB_STABLE_VERSION=1.13.12
-ARG SB_TESTING_VERSION=1.14.0-alpha.25
+ARG SB_TESTING_VERSION=1.14.0-alpha.29
 
 # ---- Stage 1: download + extract sing-box binaries
 FROM alpine:3.20 AS binaries
