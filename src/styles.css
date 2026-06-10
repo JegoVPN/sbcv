@@ -242,8 +242,188 @@
   color: var(--text-primary);
 }
 
-/* [data-theme="light"] token overrides land here in T6 (values only — no
-   component-level selectors, per the goal's specificity-war guard). */
+/* ==================== light theme ====================
+   Values only — never component selectors (specificity-war guard). Derived from
+   the audited constraints: text >= 4.5:1, UI/status >= 3:1 (tests/theme-contrast
+   .test.ts enforces both themes); brand keeps lime FILLS but all lime
+   foregrounds/edges darken to the olive family; card sits ABOVE the canvas
+   (polarity flip); hover darkens instead of brightening. --logo-* are theme
+   invariants and never appear here. */
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces */
+  --surface-app: #f2f4f7;
+  --surface-canvas: #e9edf2;
+  --canvas-dot: #c3ccd6;
+  --canvas-dot-rf: #c9d2db;
+  --surface-minimap: #dfe5eb;
+  --surface-card: #ffffff;
+  --surface-pill: #ffffff;
+  --surface-menu: #ffffff;
+  --surface-overlay-modal: #ffffff;
+  --surface-control: #eef1f5;
+  --surface-input: #f7f9fb;
+  --surface-field-input: #f3f5f8;
+  --surface-input-search: #eef1f5;
+  --surface-selected: #eff6da;
+  --surface-active-pill: #e2e8f0;
+  --surface-sunken-card: #eceff3;
+  --surface-card-inset: #f4f6f9;
+  --surface-pill-control: #e6eaf0;
+  --surface-badge-chip: #e8edf3;
+  --surface-chip: #e8ecf1;
+  --surface-icon-chip: #e2e8ef;
+  --surface-rule-summary: #eef1f5;
+  --text-panel-header: #44505c;
+  --status-checking-bg: #e2e7ee;
+  --surface-hover: #e2e7ee;
+  --surface-hover-raised: #e8edf3;
+  --surface-pill-hover: #ebeff4;
+  --surface-pill-hover-strong: #d8dfe7;
+  --surface-control-hover: #dde4ec;
+  --surface-hover-wash: rgba(13, 18, 24, 0.05);
+  --surface-grabber: #aeb8c4;
+  --surface-inverse: #232a31;
+  --surface-inverse-hover: #1b2228;
+  --text-inverse: #f4f7f9;
+  --port-bg: #ffffff;
+  --port-connected-bg: #f0f3f6;
+  --port-hover: #e2e7ee;
+  --port-fg: #44505c;
+
+  /* glass: white bases at the original alphas */
+  --surface-glass-popover: rgba(255, 255, 255, 0.98);
+  --surface-glass-palette: rgba(252, 253, 255, 0.9);
+  --surface-glass-pill: rgba(255, 255, 255, 0.92);
+  --surface-glass-port-label: rgba(255, 255, 255, 0.97);
+  --surface-glass-chip-picker: rgba(255, 255, 255, 0.98);
+  --surface-glass-panel: rgba(255, 255, 255, 0.96);
+
+  /* text ladder (anchored to white cards) */
+  --text-primary: #1b2228;
+  --text-secondary: #303a44;
+  --text-tertiary: #44505c;
+  --text-muted: #5b6673;
+  --text-dim: #6d7884;
+  --text-disabled: #828f9c;
+  --text-hover-bright: #0d1218;
+  --status-checking-fg: #44505c;
+  --text-on-brand-tint: #2a3a00;
+  --text-danger-soft: #b03030;
+
+  /* borders */
+  --border-subtle: #e3e8ee;
+  --border-default: #d0d7df;
+  --border-strong: #b9c2cc;
+  --border-control-hover: #8a96a3;
+  --border-field-idle: #d6dce3;
+  --border-menu: #d9dee5;
+  --border-input: #cdd5de;
+
+  /* brand: fills stay lime, foregrounds go olive */
+  --accent-brand-fg: #55721a;
+  --focus-ring: #55721a;
+  --accent-brand-rgb: 107, 144, 0;
+  --edge-default: #6b9000;
+  --edge-connection: #76828f;
+  --edge-highlight: #1c7ed6;
+  --edge-selected: #1c7ed6;
+  --edge-dangling: #d6336c;
+  --edge-invalid: #c92a2a;
+  --selection: #1c7ed6;
+  --selection-rgb: 28, 126, 214;
+  --selection-handle-outline: #1b2228;
+
+  /* status hues (darkened for light surfaces) */
+  --accent-warn-fg: #9a6b00;
+  --accent-warn-rgb: 154, 107, 0;
+  --status-warn-icon: #9a6b00;
+  --accent-danger-fill: #c63838;
+  --accent-danger-fg: #c63838;
+  --accent-danger-rgb: 198, 56, 56;
+  --accent-danger-icon: #c63838;
+  --status-error-icon: #c63838;
+  --status-error-icon-toast: #c63838;
+  --accent-info-fg: #1565c0;
+  --status-info-icon-toast: #4a6d8c;
+  --status-checking-icon: #5b6673;
+  --accent-success-fg: #2e7d32;
+  --border-success: #a8d5ab;
+  --border-danger-subtle: #efb9b9;
+  --surface-danger: #fdecec;
+  --surface-danger-strong: #c63838;
+  --border-danger-strong: #a82e2e;
+  --accent-legacy-fg: #b54f33;
+  --border-legacy: #e3b8ac;
+  --surface-warn-badge: #fff3d6;
+  --border-warn-deprecated: #d9b35c;
+  --surface-platform-badge: #e2eff9;
+  --accent-platform-fg: #20618f;
+  --surface-gated-badge: #f2ebfd;
+  --accent-gated-fg: #6f42c1;
+  --text-gated-dim: #6d6390;
+  --border-info-tag: #b7d3ee;
+  --border-status-checking: rgba(91, 102, 115, 0.4);
+  --border-diag-warning: #a97927;
+  --border-diag-valid: #7ca300;
+
+  /* banners: light washes with darkened inks */
+  --surface-banner-platform: rgba(207, 119, 47, 0.12);
+  --border-banner-platform: rgba(180, 95, 25, 0.45);
+  --text-banner-platform: #8c4a10;
+  --surface-banner-build: rgba(207, 87, 0, 0.12);
+  --border-banner-build: rgba(187, 73, 13, 0.5);
+  --text-banner-build: #99450a;
+  --surface-banner-deprecated: rgba(208, 84, 84, 0.12);
+  --border-banner-deprecated: rgba(208, 84, 84, 0.5);
+  --surface-banner-channel: rgba(38, 87, 158, 0.12);
+  --border-banner-channel: rgba(70, 132, 215, 0.5);
+  --text-banner-channel: #1d5a9e;
+
+  /* ghost reveal: ink-alpha (white-alpha is invisible on light) */
+  --border-ghost: rgba(13, 18, 24, 0.18);
+  --surface-ghost: rgba(13, 18, 24, 0.05);
+  --surface-ghost-hover: rgba(13, 18, 24, 0.1);
+  --inset-edge-light: inset 0 0 0 1px rgba(13, 18, 24, 0.04);
+
+  /* code surfaces (CodeMirror stays dark until T7 wires the theme prop) */
+  --surface-code: #f5f7fa;
+  --surface-code-editor: #fafbfc;
+  --gradient-skeleton: linear-gradient(90deg, #e8ecf1, #f2f5f8, #e8ecf1);
+
+  /* hover polarity flips: light presses darker instead of brightening */
+  --hover-brightness: 0.96;
+  --hover-brightness-strong: 0.93;
+
+  /* elevation: black-alpha cut to ~1/3, slightly blue-tinted ink */
+  --shadow-pill: 0 18px 42px rgba(20, 30, 45, 0.14);
+  --shadow-menu: 0 26px 70px rgba(20, 30, 45, 0.16);
+  --shadow-popover: 0 24px 60px rgba(20, 30, 45, 0.16);
+  --shadow-floating: 0 22px 70px rgba(20, 30, 45, 0.14);
+  --shadow-panel: 0 28px 90px rgba(20, 30, 45, 0.16);
+  --shadow-node: 0 22px 58px rgba(20, 30, 45, 0.1);
+  --shadow-node-selected: 0 0 0 2px var(--selection), 0 24px 70px rgba(20, 30, 45, 0.14);
+  --shadow-port: 0 12px 28px rgba(20, 30, 45, 0.1);
+  --shadow-port-active: 0 0 0 4px rgba(var(--accent-brand-rgb), 0.15), 0 14px 30px rgba(20, 30, 45, 0.12);
+  --shadow-corner-halo: 0 0 0 1px rgba(var(--selection-rgb), 0.3);
+  --shadow-edge-remove: 0 10px 30px rgba(20, 30, 45, 0.12);
+  --shadow-edge-remove-hover: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.3), 0 10px 30px rgba(20, 30, 45, 0.1);
+  --shadow-dialog: 0 32px 90px rgba(20, 30, 45, 0.2);
+  --shadow-sheet: 0 -24px 60px rgba(20, 30, 45, 0.18);
+  --shadow-toast: 0 10px 30px rgba(20, 30, 45, 0.14);
+  --shadow-mobile-topbar: 0 12px 32px rgba(20, 30, 45, 0.14);
+  --shadow-lazy-error: 0 8px 28px rgba(20, 30, 45, 0.16);
+  --shadow-global-panel: 0 28px 80px rgba(20, 30, 45, 0.16);
+  --scrim: rgba(15, 20, 30, 0.4);
+  --scrim-dialog: rgba(15, 20, 30, 0.45);
+
+  /* React Flow vendor bridge, light values */
+  --xy-minimap-mask-background-color: rgba(242, 245, 248, 0.7);
+  --xy-minimap-node-background-color: #c5cdd6;
+  --xy-selection-background-color: rgba(28, 126, 214, 0.08);
+  --xy-selection-border: 1px dotted rgba(28, 126, 214, 0.8);
+}
 
 * {
   box-sizing: border-box;
