@@ -63,7 +63,7 @@ test("brand-menu toggle switches, persists, and returns to system follow", async
   const ring = await page
     .getByTestId("theme-light")
     .evaluate((el) => getComputedStyle(document.documentElement).getPropertyValue("--focus-ring").trim());
-  expect(ring).toBe("#55721a");
+  expect(ring).toBe("#4a6418");
 
   // persists across reload
   await page.reload();

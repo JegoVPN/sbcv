@@ -260,9 +260,9 @@
 
   /* surfaces */
   --surface-app: #f2f4f7;
-  --surface-canvas: #e9edf2;
-  --canvas-dot: #c3ccd6;
-  --canvas-dot-rf: #c9d2db;
+  --surface-canvas: #e6ebf0;
+  --canvas-dot: #b6c1cd;
+  --canvas-dot-rf: #bdc7d2;
   --surface-minimap: #dfe5eb;
   --surface-card: #ffffff;
   --surface-pill: #ffffff;
@@ -310,9 +310,9 @@
   --text-primary: #1b2228;
   --text-secondary: #303a44;
   --text-tertiary: #44505c;
-  --text-muted: #5b6673;
-  --text-dim: #6d7884;
-  --text-disabled: #828f9c;
+  --text-muted: #525d6a;
+  --text-dim: #5f6a76;
+  --text-disabled: #6a7683;
   --text-hover-bright: #0d1218;
   --status-checking-fg: #44505c;
   --text-on-brand-tint: #2a3a00;
@@ -320,31 +320,31 @@
 
   /* borders */
   --border-subtle: #e3e8ee;
-  --border-default: #d0d7df;
-  --border-strong: #b9c2cc;
+  --border-default: #b8c2cc;
+  --border-strong: #a6b1be;
   --border-control-hover: #8a96a3;
-  --border-field-idle: #d6dce3;
+  --border-field-idle: #a9b4c0;
   --border-menu: #d9dee5;
-  --border-input: #cdd5de;
+  --border-input: #a0acb9;
 
   /* brand: fills stay lime, foregrounds go olive */
-  --accent-brand-fg: #55721a;
-  --focus-ring: #55721a;
-  --accent-brand-rgb: 107, 144, 0;
-  --edge-default: #6b9000;
-  --edge-connection: #76828f;
-  --edge-highlight: #1c7ed6;
-  --edge-selected: #1c7ed6;
+  --accent-brand-fg: #4a6418;
+  --focus-ring: #4a6418;
+  --accent-brand-rgb: 88, 118, 0;
+  --edge-default: #587600;
+  --edge-connection: #647280;
+  --edge-highlight: #1668b3;
+  --edge-selected: #1668b3;
   --edge-dangling: #d6336c;
   --edge-invalid: #c92a2a;
-  --selection: #1c7ed6;
-  --selection-rgb: 28, 126, 214;
+  --selection: #1668b3;
+  --selection-rgb: 22, 104, 179;
   --selection-handle-outline: #1b2228;
 
   /* status hues (darkened for light surfaces) */
-  --accent-warn-fg: #9a6b00;
+  --accent-warn-fg: #855b00;
   --accent-warn-rgb: 154, 107, 0;
-  --status-warn-icon: #9a6b00;
+  --status-warn-icon: #855b00;
   --accent-danger-fill: #c63838;
   --accent-danger-fg: #c63838;
   --accent-danger-rgb: 198, 56, 56;
@@ -360,15 +360,15 @@
   --surface-danger: #fdecec;
   --surface-danger-strong: #c63838;
   --border-danger-strong: #a82e2e;
-  --accent-legacy-fg: #b54f33;
+  --accent-legacy-fg: #a4452c;
   --border-legacy: #e3b8ac;
-  --surface-warn-badge: #fff3d6;
+  --surface-warn-badge: #fff7e3;
   --border-warn-deprecated: #d9b35c;
   --surface-platform-badge: #e2eff9;
   --accent-platform-fg: #20618f;
   --surface-gated-badge: #f2ebfd;
   --accent-gated-fg: #6f42c1;
-  --text-gated-dim: #6d6390;
+  --text-gated-dim: #5f5683;
   --border-info-tag: #b7d3ee;
   --border-status-checking: rgba(91, 102, 115, 0.4);
   --border-diag-warning: #a97927;
@@ -377,15 +377,15 @@
   /* banners: light washes with darkened inks */
   --surface-banner-platform: rgba(207, 119, 47, 0.12);
   --border-banner-platform: rgba(180, 95, 25, 0.45);
-  --text-banner-platform: #8c4a10;
+  --text-banner-platform: #7a400d;
   --surface-banner-build: rgba(207, 87, 0, 0.12);
   --border-banner-build: rgba(187, 73, 13, 0.5);
-  --text-banner-build: #99450a;
+  --text-banner-build: #853c08;
   --surface-banner-deprecated: rgba(208, 84, 84, 0.12);
   --border-banner-deprecated: rgba(208, 84, 84, 0.5);
   --surface-banner-channel: rgba(38, 87, 158, 0.12);
   --border-banner-channel: rgba(70, 132, 215, 0.5);
-  --text-banner-channel: #1d5a9e;
+  --text-banner-channel: #1a518f;
 
   /* ghost reveal: ink-alpha (white-alpha is invisible on light) */
   --border-ghost: rgba(13, 18, 24, 0.18);
