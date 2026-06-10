@@ -31,7 +31,7 @@ const baseRef = process.argv[2] ?? "main";
 const EXEMPT_ADDED = [
   // T2: CSS takes ownership of the SbcvLogo plate fill (presentation attribute
   // stays in TSX as fallback) — must resolve to the attribute's value.
-  { needle: /^\.sbcv-logo__hexagon\{fill:(.+);?\}?$/, expect: "#0d1116" },
+  { needle: /^\.sbcv-logo__hexagon\{fill:([^;}]+);?\}$/, expect: "#0d1116" },
 ];
 // Removed declarations allowed by the goal doc (orphan var cleanup in T3 keeps
 // the same resolved value, so it shows as a CHANGE not a removal — listed here

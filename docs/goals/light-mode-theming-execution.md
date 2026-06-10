@@ -73,7 +73,7 @@ Run with:
 
 #### Phase T-P1 — verbatim token 化（dark 像素零变化，equivalence 脚本背书）
 - [x] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）— PR #331
-- [ ] T2-canvas-nodes-edges-tsx（styles.css 805–1890 + TSX 三处 + xyflow 桥接变量）
+- [x] T2-canvas-nodes-edges-tsx（styles.css 805–1890 + TSX 三处 + xyflow 桥接变量）— PR #333
 - [ ] T3-inspector-dialogs（styles.css 1880–2735 + 孤儿 var 修复）
 - [ ] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）
 
@@ -222,3 +222,10 @@ Run with:
 - **Tests:** unit 1732/1732（含新 guard）、build ✓（tsc 严格索引检查通过）、e2e 37/37（16 处颜色断言原值通过 = 免费像素回归网）。
 - **视觉抽查:** topbar/brand pill/状态 pill/popover 截图与 token 化前一致。
 - **偏差:** `:root` 内 `background`/`color` 声明移至 token 表之后（值不变，声明顺序对渲染无影响）——equivalence 脚本以属性名稳定排序吸收该顺序差，同名属性保持相对顺序以保住 CSS 覆盖语义。
+
+### T2-canvas-nodes-edges-tsx — PR #333
+- **What changed:** ① 画布段（`.workspace` 起至 `button.sbc-edge-remove` 块）全部字面量 token 化（+95 个 token：canvas 双点阵、glass 四面、node 卡/badge 三件套、`#101418` 角色五拆中的四向、port 全态、edge 五态、selection 族 + `--selection-rgb`、danger/legacy/gated/platform 族、复合 whole-shadow ×10）；② TSX 两处收口（`connectionLineStyle.stroke` 与 `<Background color>` 改读 var()，连线 inline stroke 保留——删除会复活死掉的 `.valid` lime 规则）；③ `.sbcv-logo__hexagon { fill: var(--logo-plate) }` 新规则收权 TSX presentation attribute（equivalence 豁免清单带值断言 `== #0d1116`）；④ xyflow 泄漏面四变量收权（minimap mask/node、selection rect ×2，**取值 = vendor 实效值逐字，dark 零变化**，控制权移入表内）；⑤ T0 的 `--xy-edge-stroke-selected` 改读 `--edge-selected`。
+- **Equivalence:** ✓ 457 个规范化声明逐一相同（含 logo fill 豁免验证）。
+- **Tests:** unit 1732/1732、build ✓、e2e 37/37（mobile/editor 的全部 edge stroke 断言原值通过）；ratchet 301 → **151**。
+- **视觉抽查:** 选中节点蓝 ring/角柄、一级边蓝高亮、lime 默认边、端口、minimap、反白 active 控件——与 token 化前一致。
+- **偏差:** 无。

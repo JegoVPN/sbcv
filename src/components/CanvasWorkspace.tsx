@@ -47,7 +47,10 @@ const reactFlowProOptions: ProOptions = {
 };
 
 const connectionLineStyle = {
-  stroke: "#e4e9ee",
+  // Inline style beats the stylesheet, so the token must be read HERE — and the
+  // inline stroke must stay (removing it would resurrect the intentionally-dead
+  // `.valid` lime rule and change drag feedback). var() is valid in SVG inline styles.
+  stroke: "var(--edge-connection)",
   strokeWidth: 2.4,
   strokeDasharray: "10 14",
   strokeLinecap: "round",
@@ -588,7 +591,7 @@ export function CanvasWorkspace() {
         selectionOnDrag={isMobile ? false : interaction === "select"}
         deleteKeyCode={isMobile ? null : ["Backspace", "Delete"]}
       >
-        <Background color="#1f2730" gap={18} size={1} />
+        <Background color="var(--canvas-dot-rf)" gap={18} size={1} />
         {chipPicker ? (
           <ViewportPortal>
             <svg className="chip-picker-link" aria-hidden="true">
