@@ -82,7 +82,7 @@ Run with:
 
 #### Phase T-P3 — light 表与机制
 - [x] T6-light-variable-table（[data-theme="light"] + color-scheme + 对比度守卫测试）— PR #337
-- [ ] T7-theme-mechanism（theme-init.js + useTheme 模块 + CodeMirror/meta 联动 + **playwright colorScheme pin 同 PR**）
+- [x] T7-theme-mechanism（theme-init.js + useTheme 模块 + CodeMirror/meta 联动 + playwright pin 同 PR）— PR #338
 - [ ] T8-theme-toggle-ui（桌面 brand menu + 移动 menu sheet 三态控件 + e2e）
 
 #### Phase T-P4 — 收尾
@@ -259,3 +259,10 @@ Run with:
 - **Tests:** unit 1735（+3）、build ✓、e2e 37/37。
 - **视觉验证:** 桌面/移动 light 全景截图——白卡/浅画布/olive 图/深字全部成立；首截发现 `--surface-rule-summary` 漏覆盖（rule 卡黑块），机械差集排查补齐 2 个漏项后复验干净。
 - **偏差:** CodeMirror 在 light 下仍为 dark 岛（theme prop 联动属 T7，按 don't-mix 未动）。
+
+### T7-theme-mechanism — PR #338
+- **What changed:** 三态机制端到端落地——`public/theme-init.js`（CSP-safe 外部阻塞脚本，head 中先于 Vite 样式注入执行，try/catch 存储；与 store 共享真值表）；`src/state/useTheme.ts`（useViewport 模式：matchMedia singleton + listener Set + `useSyncExternalStore`、localStorage `sbcv:theme`、storage event 跨标签、缺 matchMedia/抛错存储 → system）；`App.tsx` 常驻挂载；`<meta name="theme-color">` media 对 + 手动覆盖时 JS 同步；CodeMirror `theme={resolved}` 联动且 `.cm-theme-dark` 高度规则改 `[class*="cm-theme"]`（动态类名下不再塌陷）；**`playwright.config.ts` 钉 `colorScheme: "dark"`（同 PR 硬约束）**。
+- **Tests (test-first):** `tests/use-theme.test.ts` 8 项真值表（含缺 matchMedia、抛错存储、garbage 值、setPreference 持久化/清键）；`e2e/theme.spec.ts` 3 项（theme-init 首绘路径、系统跟随双向、stored dark 压过 light 系统）。**全套 e2e 40/40：37 个既有 spec 在 dark pin 下零改动零破坏**（审计判据 6 的预言精确兑现）。
+- **Build 验证:** `dist/theme-init.js` 入产物、`dist/index.html` 引用保留。CSP 留待部署后在 sbcv.app 复核 console（`_headers` 不被本地 preview 解析——审计 IF2）。
+- **视觉验证:** light 下 JSON 查看器 = 白 chrome + light CodeMirror 语法高亮 + 编辑器高度正常。
+- **偏差:** 无。

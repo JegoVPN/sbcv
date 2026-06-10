@@ -2996,7 +2996,10 @@ button.sbc-edge-remove:focus-visible {
   overflow: hidden;
 }
 
-.json-viewer-editor > .cm-theme-dark {
+/* uiw renames the wrapper class per theme (.cm-theme-dark / .cm-theme-light /
+   .cm-theme for custom extensions) — match the prefix or the dialog loses its
+   editor height the moment the theme prop goes dynamic. */
+.json-viewer-editor > [class*="cm-theme"] {
   height: 100%;
   min-height: 0;
 }
