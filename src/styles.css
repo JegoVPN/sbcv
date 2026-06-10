@@ -200,6 +200,74 @@
   --shadow-edge-remove: 0 10px 30px rgba(0, 0, 0, 0.36);
   --shadow-edge-remove-hover: 0 0 0 2px rgba(var(--accent-brand-rgb), 0.34), 0 10px 30px rgba(0, 0, 0, 0.28);
 
+  /* -- inspector forms / panels -- */
+  --text-inspector-kind: #86919c;
+  --text-inspector-title: #dbe0e5;
+  --text-field-label: #c3c9cf;
+  --surface-field-input: #262a2f;
+  --border-field-idle: transparent;
+  --text-placeholder: #717c88;
+  --text-hint-error: #e79a9a;
+  --text-section-label: #8b96a1;
+  --text-summary-chevron: #96a1ac;
+  --text-count-inactive: #73808b;
+  --text-action-grid: #edf2f5;
+  --text-empty: #85909a;
+  --text-card-strong: #dbe3eb;
+  --text-panel-header: #aeb7c1;
+  --surface-sunken-card: #101418;
+  --surface-card-inset: #11161c;
+  --border-default: #2a333d;
+  --border-card-soft: #2b343e;
+  --gradient-skeleton: linear-gradient(90deg, #1a1f24, #20262c, #1a1f24);
+  --border-danger-soft: #5a2b2b;
+  --surface-danger-deep: #1c1416;
+  --shadow-lazy-error: 0 8px 28px rgba(0, 0, 0, 0.5);
+  --surface-glass-panel: rgba(25, 29, 33, 0.96);
+  --shadow-global-panel: 0 28px 80px rgba(0, 0, 0, 0.48);
+
+  /* -- rule tables / diagnostics -- */
+  --text-rule-header: #d6dde3;
+  --surface-rule-summary: #0c1116;
+  --border-rule-summary: #222b34;
+  --text-rule-summary: #c4ccd4;
+  --text-pager: #9faab5;
+  --text-diagnostic-dim: #8e99a3;
+  --text-diagnostic-body: #cdd5dd;
+  --border-diag-warning: #a97927;
+  --border-diag-valid: #7ca300;
+
+  /* -- JSON viewer dialog / code surfaces -- */
+  --surface-code: #090d12;
+  --surface-code-editor: #0b0f14;
+  --scrim-dialog: rgba(3, 6, 10, 0.68);
+  --surface-dialog: #151a20;
+  --shadow-dialog: 0 32px 90px rgba(0, 0, 0, 0.58);
+  --border-dialog-actions: #343d48;
+  --surface-dialog-button: #252b32;
+  --surface-dialog-button-hover: #303842;
+
+  /* -- inspector banners (alpha washes survive light backgrounds; keep trios coupled) -- */
+  --surface-banner-platform: rgba(168, 91, 31, 0.12);
+  --border-banner-platform: rgba(207, 119, 47, 0.4);
+  --text-banner-platform: #ffb274;
+  --surface-banner-build: rgba(187, 73, 13, 0.16);
+  --border-banner-build: rgba(207, 87, 0, 0.55);
+  --text-banner-build: #ffa264;
+  --surface-banner-deprecated: rgba(178, 34, 34, 0.12);
+  --border-banner-deprecated: rgba(208, 84, 84, 0.5);
+  --text-banner-deprecated: #ff9a9a;
+  --surface-banner-channel: rgba(38, 87, 158, 0.18);
+  --border-banner-channel: rgba(70, 132, 215, 0.5);
+  --text-banner-channel: #9fc6ff;
+
+  /* -- white-alpha ghost control (sensitive-field reveal; light must flip to ink-alpha) -- */
+  --border-ghost: rgba(255, 255, 255, 0.12);
+  --surface-ghost: rgba(255, 255, 255, 0.04);
+  --surface-ghost-hover: rgba(255, 255, 255, 0.08);
+  --text-reveal-idle: #b5bdc8;
+  --text-reveal-hover: #ffffff;
+
   /* -- logo plate: theme INVARIANT, pairs with --logo-stroke/--logo-idle above -- */
   --logo-plate: #0d1116;
 
@@ -2117,7 +2185,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .inspector-kind {
-  color: #86919c;
+  color: var(--text-inspector-kind);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -2135,7 +2203,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: #dbe0e5;
+  color: var(--text-inspector-title);
   font-size: 18px;
   font-weight: 760;
   text-transform: capitalize;
@@ -2151,7 +2219,7 @@ button.sbc-edge-remove:focus-visible {
 
 .field span,
 .toggle-row span {
-  color: #c3c9cf;
+  color: var(--text-field-label);
   font-size: 14px;
 }
 
@@ -2161,7 +2229,7 @@ button.sbc-edge-remove:focus-visible {
   flex-basis: 100%;
   margin-top: -6px;
   font-size: 11px;
-  color: #8a96a3;
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -2194,10 +2262,10 @@ button.sbc-edge-remove:focus-visible {
   margin: 0;
   font-size: 12px;
   line-height: 1.45;
-  color: #8a96a3;
+  color: var(--text-muted);
 }
 .field__hint--error {
-  color: #e79a9a;
+  color: var(--text-hint-error);
 }
 
 /* R5 — PEM/line-array editor (tls.certificate/key/ech.*): monospace so pasted PEM lines align, and
@@ -2216,10 +2284,10 @@ button.sbc-edge-remove:focus-visible {
 .field textarea {
   width: 100%;
   min-height: 38px;
-  border-color: transparent;
+  border-color: var(--border-field-idle);
   border-radius: 10px;
-  background: #262a2f;
-  color: #eef2f4;
+  background: var(--surface-field-input);
+  color: var(--text-primary);
   /* R1b — pin the control font explicitly: without a font-size the value inherited the (larger) inspector
      font, so values rendered bigger + heavier than their 14px labels (and didn't shrink on compact/mobile).
      Match the label size/weight, with font-family:inherit so it doesn't fall back to the UA monospace. */
@@ -2247,7 +2315,7 @@ button.sbc-edge-remove:focus-visible {
   margin-bottom: 12px;
 }
 .field--checklist > legend {
-  color: #8b96a1;
+  color: var(--text-section-label);
   font-size: 12px;
   font-weight: 800;
 }
@@ -2277,7 +2345,7 @@ button.sbc-edge-remove:focus-visible {
 
 .field input::placeholder,
 .field textarea::placeholder {
-  color: #717c88;
+  color: var(--text-placeholder);
   opacity: 1;
   font-size: 14px;
   line-height: 1.4;
@@ -2286,7 +2354,7 @@ button.sbc-edge-remove:focus-visible {
 
 .inspector-section-title {
   margin: 18px 0 10px;
-  color: #8b96a1;
+  color: var(--text-section-label);
   font-size: 12px;
   font-weight: 840;
   letter-spacing: 0;
@@ -2301,9 +2369,9 @@ button.sbc-edge-remove:focus-visible {
 
 .settings-module-card,
 .advanced-fields {
-  border: 1px solid #2b343e;
+  border: 1px solid var(--border-card-soft);
   border-radius: 12px;
-  background: #101418;
+  background: var(--surface-sunken-card);
 }
 
 /* R2 — lazy layer loading skeleton + recoverable failure UI (replaces Suspense fallback={null} + the
@@ -2313,10 +2381,10 @@ button.sbc-edge-remove:focus-visible {
   inset: auto 0 0 0;
   height: 96px;
   margin: 0;
-  background: linear-gradient(90deg, #1a1f24, #20262c, #1a1f24);
+  background: var(--gradient-skeleton);
   background-size: 200% 100%;
   animation: lazy-layer-shimmer 1.2s ease-in-out infinite;
-  border-top: 1px solid #2b343e;
+  border-top: 1px solid var(--border-card-soft);
   z-index: 60;
 }
 @keyframes lazy-layer-shimmer {
@@ -2331,12 +2399,12 @@ button.sbc-edge-remove:focus-visible {
   max-width: 420px;
   width: calc(100% - 32px);
   padding: 16px;
-  border: 1px solid #5a2b2b;
+  border: 1px solid var(--border-danger-soft);
   border-radius: 12px;
-  background: #1c1416;
-  color: #eef2f4;
+  background: var(--surface-danger-deep);
+  color: var(--text-primary);
   z-index: 80;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lazy-error);
   /* The lazy slot for the desktop "View JSON" dialog lives inside `.topbar` (pointer-events: none — a
      transparent container whose interactive children opt back in). This recoverable error toast carries
      the only interactive controls (Retry / Close), so it MUST re-enable pointer events; otherwise it
@@ -2360,7 +2428,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #e6edf3;
+  color: var(--text-control);
   cursor: pointer;
   font-size: 14px;
   font-weight: 820;
@@ -2375,7 +2443,7 @@ button.sbc-edge-remove:focus-visible {
 .settings-module-card summary::before,
 .advanced-fields summary::before {
   content: "›";
-  color: #96a1ac;
+  color: var(--text-summary-chevron);
   font-size: 18px;
   line-height: 1;
   transform: rotate(0deg);
@@ -2395,14 +2463,14 @@ button.sbc-edge-remove:focus-visible {
 .settings-module-card summary strong,
 .advanced-fields summary span {
   margin-left: auto;
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
   font-size: 12px;
   font-weight: 860;
   letter-spacing: 0;
 }
 
 .settings-module-card:not(.is-active) summary strong {
-  color: #73808b;
+  color: var(--text-count-inactive);
 }
 
 .settings-module-card__body,
@@ -2420,9 +2488,9 @@ button.sbc-edge-remove:focus-visible {
   gap: 6px;
   margin-bottom: 12px;
   padding: 12px;
-  border: 1px solid #2b343e;
+  border: 1px solid var(--border-card-soft);
   border-radius: 12px;
-  background: #11161c;
+  background: var(--surface-card-inset);
 }
 
 .reference-card div {
@@ -2434,14 +2502,14 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .reference-card span {
-  color: #8f9aa5;
+  color: var(--text-muted-doc);
   font-size: 12px;
 }
 
 .reference-card strong {
   min-width: 0;
   overflow: hidden;
-  color: #dbe3eb;
+  color: var(--text-card-strong);
   font-size: 12px;
   font-weight: 760;
   text-overflow: ellipsis;
@@ -2463,8 +2531,8 @@ button.sbc-edge-remove:focus-visible {
   min-height: 36px;
   justify-content: flex-start;
   border-radius: 10px;
-  background: #101418;
-  color: #edf2f5;
+  background: var(--surface-control);
+  color: var(--text-action-grid);
   font-size: 12px;
   font-weight: 760;
 }
@@ -2503,8 +2571,8 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .empty-state {
-  color: #85909a;
-  border: 1px dashed #2b343e;
+  color: var(--text-empty);
+  border: 1px dashed var(--border-card-soft);
   border-radius: 8px;
   padding: 14px;
   line-height: 1.45;
@@ -2522,10 +2590,10 @@ button.sbc-edge-remove:focus-visible {
   max-height: calc(100vh - 96px);
   overflow: auto;
   z-index: 45;
-  border: 1px solid #2a333d;
+  border: 1px solid var(--border-default);
   border-radius: 22px;
-  background: rgba(25, 29, 33, 0.96);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.48);
+  background: var(--surface-glass-panel);
+  box-shadow: var(--shadow-global-panel);
   padding: 18px;
 }
 
@@ -2534,7 +2602,7 @@ button.sbc-edge-remove:focus-visible {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
-  color: #aeb7c1;
+  color: var(--text-panel-header);
   font-size: 13px;
   font-weight: 820;
   letter-spacing: 0.04em;
@@ -2557,9 +2625,9 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .panel-tabs .is-active {
-  background: #101418;
-  color: #c7ff00;
-  border-color: #c7ff00;
+  background: var(--surface-selected);
+  color: var(--accent-brand-fg);
+  border-color: var(--accent-brand-fg);
 }
 
 .panel-content {
@@ -2586,7 +2654,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .table-panel__header p {
-  color: #85909a;
+  color: var(--text-empty);
   margin: 4px 0 0;
   font-size: 12px;
 }
@@ -2601,9 +2669,9 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .rule-card {
-  border: 1px solid #2a333d;
+  border: 1px solid var(--border-default);
   border-radius: 10px;
-  background: #11161c;
+  background: var(--surface-card-inset);
   padding: 10px;
 }
 
@@ -2613,7 +2681,7 @@ button.sbc-edge-remove:focus-visible {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 10px;
-  color: #d6dde3;
+  color: var(--text-rule-header);
   font-size: 12px;
   font-weight: 760;
 }
@@ -2624,9 +2692,9 @@ button.sbc-edge-remove:focus-visible {
   margin: -2px 0 10px;
   padding: 4px 8px;
   border-radius: 6px;
-  background: #0c1116;
-  border: 1px solid #222b34;
-  color: #c4ccd4;
+  background: var(--surface-rule-summary);
+  border: 1px solid var(--border-rule-summary);
+  color: var(--text-rule-summary);
   font-size: 11.5px;
   font-weight: 680;
   word-break: break-word;
@@ -2634,7 +2702,7 @@ button.sbc-edge-remove:focus-visible {
 
 .rule-card__hint {
   margin: 0;
-  color: #8f9aa5;
+  color: var(--text-muted-doc);
   font-size: 11.5px;
   line-height: 1.4;
 }
@@ -2650,7 +2718,7 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .rule-field span {
-  color: #8f9aa5;
+  color: var(--text-muted-doc);
   font-size: 11px;
   font-weight: 760;
   text-transform: uppercase;
@@ -2668,7 +2736,7 @@ button.sbc-edge-remove:focus-visible {
   justify-content: flex-end;
   gap: 8px;
   margin: -4px 0 10px;
-  color: #9faab5;
+  color: var(--text-pager);
   font-size: 12px;
 }
 
@@ -2699,7 +2767,7 @@ button.sbc-edge-remove:focus-visible {
   height: 100%;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 12px;
-  background: #090d12;
+  background: var(--surface-code);
 }
 
 .inline-actions {
@@ -2719,7 +2787,7 @@ button.sbc-edge-remove:focus-visible {
 .json-viewer-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(3, 6, 10, 0.68);
+  background: var(--scrim-dialog);
   backdrop-filter: blur(4px);
 }
 
@@ -2729,10 +2797,10 @@ button.sbc-edge-remove:focus-visible {
   height: min(760px, calc(100vh - 56px));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  border: 1px solid #2a333d;
+  border: 1px solid var(--border-default);
   border-radius: 18px;
-  background: #151a20;
-  box-shadow: 0 32px 90px rgba(0, 0, 0, 0.58);
+  background: var(--surface-dialog);
+  box-shadow: var(--shadow-dialog);
   overflow: hidden;
 }
 
@@ -2742,8 +2810,8 @@ button.sbc-edge-remove:focus-visible {
   justify-content: space-between;
   gap: 14px;
   padding: 14px 14px 12px;
-  border-bottom: 1px solid #2a333d;
-  background: #1c1e20;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--surface-pill);
 }
 
 .json-viewer-title {
@@ -2756,7 +2824,7 @@ button.sbc-edge-remove:focus-visible {
 .json-viewer-title > svg {
   flex-shrink: 0;
   margin-top: 1px;
-  color: #c7ff00;
+  color: var(--accent-brand-fg);
 }
 
 .json-viewer-title h2 {
@@ -2766,7 +2834,7 @@ button.sbc-edge-remove:focus-visible {
 
 .json-viewer-title p {
   margin: 3px 0 0;
-  color: #8f9aa5;
+  color: var(--text-muted-doc);
   font-size: 12px;
 }
 
@@ -2779,12 +2847,12 @@ button.sbc-edge-remove:focus-visible {
 .json-viewer-actions button {
   min-height: 34px;
   border-radius: 999px;
-  border: 1px solid #343d48;
-  background: #252b32;
+  border: 1px solid var(--border-dialog-actions);
+  background: var(--surface-dialog-button);
 }
 
 .json-viewer-actions button:hover {
-  background: #303842;
+  background: var(--surface-dialog-button-hover);
 }
 
 .json-viewer-close {
@@ -2794,7 +2862,7 @@ button.sbc-edge-remove:focus-visible {
 
 .json-viewer-editor {
   min-height: 0;
-  background: #0b0f14;
+  background: var(--surface-code-editor);
   overflow: hidden;
 }
 
@@ -2806,7 +2874,7 @@ button.sbc-edge-remove:focus-visible {
 .json-viewer-editor .cm-editor {
   height: 100%;
   min-height: 0;
-  background: #0b0f14;
+  background: var(--surface-code-editor);
   font-size: 12px;
 }
 
@@ -2821,10 +2889,10 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .diagnostic {
-  border: 1px solid #2a333d;
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 10px;
-  background: #11161c;
+  background: var(--surface-card-inset);
 }
 
 .diagnostic strong {
@@ -2833,25 +2901,25 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .diagnostic span {
-  color: #8e99a3;
+  color: var(--text-diagnostic-dim);
   font-size: 12px;
 }
 
 .diagnostic p {
   margin: 5px 0 0;
-  color: #cdd5dd;
+  color: var(--text-diagnostic-body);
 }
 
 .diagnostic--error {
-  border-color: #a9444e;
+  border-color: var(--border-danger-strong);
 }
 
 .diagnostic--warning {
-  border-color: #a97927;
+  border-color: var(--border-diag-warning);
 }
 
 .diagnostic--valid {
-  border-color: #7ca300;
+  border-color: var(--border-diag-valid);
 }
 
 @media (max-width: 980px) {
@@ -2900,27 +2968,27 @@ button.sbc-edge-remove:focus-visible {
 }
 
 .inspector-banner--platform {
-  background: rgba(168, 91, 31, 0.12);
-  border-color: rgba(207, 119, 47, 0.4);
-  color: #ffb274;
+  background: var(--surface-banner-platform);
+  border-color: var(--border-banner-platform);
+  color: var(--text-banner-platform);
 }
 
 .inspector-banner--build-tag {
-  background: rgba(187, 73, 13, 0.16);
-  border-color: rgba(207, 87, 0, 0.55);
-  color: #ffa264;
+  background: var(--surface-banner-build);
+  border-color: var(--border-banner-build);
+  color: var(--text-banner-build);
 }
 
 .inspector-banner--deprecated {
-  background: rgba(178, 34, 34, 0.12);
-  border-color: rgba(208, 84, 84, 0.5);
-  color: #ff9a9a;
+  background: var(--surface-banner-deprecated);
+  border-color: var(--border-banner-deprecated);
+  color: var(--text-banner-deprecated);
 }
 
 .inspector-banner--channel {
-  background: rgba(38, 87, 158, 0.18);
-  border-color: rgba(70, 132, 215, 0.5);
-  color: #9fc6ff;
+  background: var(--surface-banner-channel);
+  border-color: var(--border-banner-channel);
+  color: var(--text-banner-channel);
 }
 
 .field--sensitive .field__input-row {
@@ -2937,15 +3005,15 @@ button.sbc-edge-remove:focus-visible {
   font-size: 11px;
   padding: 0 8px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text-muted, #b5bdc8);
+  border: 1px solid var(--border-ghost);
+  background: var(--surface-ghost);
+  color: var(--text-reveal-idle);
   cursor: pointer;
 }
 
 .field--sensitive .field__reveal-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background: var(--surface-ghost-hover);
+  color: var(--text-reveal-hover);
 }
 
 /* =================================================================

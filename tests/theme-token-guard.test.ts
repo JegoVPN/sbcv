@@ -22,10 +22,10 @@ import { describe, expect, it } from "vitest";
  * background (lands in T7, intentional literal).
  */
 
-// Ratchet history: pre-T1 = 391 → T1 = 301 → T2 = 151 (global/topbar + canvas
+// Ratchet history: pre-T1 = 391 → T1 = 301 → T2 = 151 → T3 = 65 (all but the mobile/toast
 // segments + both CanvasWorkspace TSX literals tokenized; remaining =
 // inspector/dialog + mobile/toast segments, owned by T3–T4).
-const BASELINE = 151;
+const BASELINE = 65;
 
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;
 const PERCENT23 = /%23[0-9a-fA-F]{3,8}\b/g;

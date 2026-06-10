@@ -74,7 +74,7 @@ Run with:
 #### Phase T-P1 — verbatim token 化（dark 像素零变化，equivalence 脚本背书）
 - [x] T1-token-infra-and-global-topbar（基建 + styles.css 1–815）— PR #331
 - [x] T2-canvas-nodes-edges-tsx（styles.css 805–1890 + TSX 三处 + xyflow 桥接变量）— PR #333
-- [ ] T3-inspector-dialogs（styles.css 1880–2735 + 孤儿 var 修复）
+- [x] T3-inspector-dialogs（styles.css 1880–2735 + 孤儿 var 修复）— PR #334
 - [ ] T4-mobile-toast-and-ratchet-zero（styles.css 2725–3313 + guard 收紧为零）
 
 #### Phase T-P2 — 受控收敛
@@ -229,3 +229,10 @@ Run with:
 - **Tests:** unit 1732/1732、build ✓、e2e 37/37（mobile/editor 的全部 edge stroke 断言原值通过）；ratchet 301 → **151**。
 - **视觉抽查:** 选中节点蓝 ring/角柄、一级边蓝高亮、lime 默认边、端口、minimap、反白 active 控件——与 token 化前一致。
 - **偏差:** 无。
+
+### T3-inspector-dialogs — PR #334
+- **What changed:** inspector 表单/共享控件/rule 表/diagnostics/JSON 对话框/banner 段全部字面量 token 化（+70 token：表单族、`--surface-sunken-card`（`#101418` 第五向，:2306）、`--surface-card-inset`（审计纠偏的 inset 语义三卡）、`--surface-dialog`（与 active-pill 同值拆分）、banner 四组 bg/border/fg 三件套整组、白 alpha ghost 族、code 双面、whole-gradient skeleton、`--border-default`）；**孤儿 var 修复**：:2942 `var(--color-text-muted, #b5bdc8)` → `var(--text-reveal-idle)`（值=原 fallback，未 ship `--color-text-muted`）；`.cm-theme-dark` 高度规则按 don't-mix 未动（T7 处理）。
+- **Equivalence:** ✓ 457 个规范化声明逐一相同（孤儿 var 两侧解析同值，自然通过）。
+- **Tests:** unit 1732、build ✓、e2e 37/37；ratchet 151 → **65**。
+- **视觉抽查:** inspector 全表单/rule card/placeholder/对话框——一致。
+- **偏差:** 无（中途漏 mint `--border-default` 被 equivalence 当场抓出 ×5——验证器按设计工作）。
