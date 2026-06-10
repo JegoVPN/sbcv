@@ -14,6 +14,8 @@
 
 [![sbcv — a sing-box config laid out as a visual canvas](docs/assets/hero.png)](https://sbcv.app)
 
+*Ships with dark and light themes — follows your system by default, switchable from the sbcv menu.*
+
 ---
 
 ## Why sbcv?
