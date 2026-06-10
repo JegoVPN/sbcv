@@ -81,8 +81,10 @@
   --accent-warn-rgb: 242, 188, 75;
   --accent-danger-rgb: 227, 75, 75;
 
-  /* -- logo: THEME INVARIANT (user ruling 2026-06-10) — the lime artwork reads
-        against its own dark plate, not the page; never overridden by light -- */
+  /* -- logo: stroke/idle are THEME INVARIANTS (user ruling 2026-06-10); the
+        PLATE re-ruled 2026-06-10 after live review — light overrides it to the
+        official sing-box cube blue-grey (#546E7A family) because the dark plate
+        reads as a heavy black blob on light chrome -- */
   --logo-stroke: #c7ff00;
   --logo-idle: #59616a;
 
@@ -251,6 +253,10 @@
    invariants and never appear here. */
 [data-theme="light"] {
   color-scheme: light;
+
+  /* logo plate: official sing-box cube blue-grey (icon.svg #546E7A); lime
+     artwork keeps ~4.4:1 against it. stroke/idle stay invariant. */
+  --logo-plate: #546e7a;
 
   /* surfaces */
   --surface-app: #f2f4f7;

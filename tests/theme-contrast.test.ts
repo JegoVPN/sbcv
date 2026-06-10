@@ -150,6 +150,7 @@ const PAIRS: Array<[string, string, number]> = [
   ["--focus-ring", "--surface-app", 3],
   ["--focus-ring", "--surface-card", 3],
   ["--port-fg", "--port-bg", 4.5],
+  ["--logo-stroke", "--logo-plate", 3],
   ["--accent-info-fg", "--port-bg", 3],
   // toasts
   ["--text-primary", "--surface-overlay-modal", 4.5],
@@ -212,8 +213,8 @@ describe("theme contrast guard", () => {
     expect(css).toMatch(/\[data-theme="light"\]\s*\{\s*color-scheme:\s*light/);
   });
 
-  it("logo tokens are theme invariants (never overridden by light)", () => {
-    for (const t of ["--logo-plate", "--logo-stroke", "--logo-idle"]) {
+  it("logo stroke/idle are theme invariants; the plate may retheme (user re-ruling)", () => {
+    for (const t of ["--logo-stroke", "--logo-idle"]) {
       expect(lightOverrides.has(t), `${t} must not appear in the light table`).toBe(false);
     }
   });
