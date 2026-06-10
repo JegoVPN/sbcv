@@ -182,3 +182,34 @@ test("semantic validation refresh does not snap an active node drag", async ({ p
 
   await page.mouse.up();
 });
+
+test("selecting or keyboard-focusing an edge keeps the selection-blue stroke (not vendor #555)", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByTestId("node-route:main")).toBeVisible();
+
+  // Click the exact geometric midpoint of an edge's interaction path — the bbox
+  // center of a bezier <g> is not guaranteed to lie on the curve.
+  const interaction = page.locator(".react-flow__edge-interaction").first();
+  const mid = await interaction.evaluate((path) => {
+    const p = path as unknown as SVGPathElement;
+    const point = p.getPointAtLength(p.getTotalLength() / 2);
+    const screen = point.matrixTransform(p.getScreenCTM()!);
+    return { x: screen.x, y: screen.y };
+  });
+  await page.mouse.click(mid.x, mid.y);
+
+  const selectedEdge = page.locator(".react-flow__edge.selected");
+  await expect(selectedEdge).toHaveCount(1);
+  expect(
+    await selectedEdge.locator(".sbc-edge__path").evaluate((el) => getComputedStyle(el).stroke),
+  ).toBe("rgb(45, 153, 255)");
+
+  // Keyboard path: vendor styles edges via :focus/:focus-visible arms too.
+  await page.locator(".react-flow__pane").click({ position: { x: 10, y: 10 } });
+  await expect(page.locator(".react-flow__edge.selected")).toHaveCount(0);
+  const firstEdge = page.locator(".react-flow__edge").first();
+  await firstEdge.evaluate((el) => (el as HTMLElement).focus());
+  expect(
+    await firstEdge.locator(".sbc-edge__path").evaluate((el) => getComputedStyle(el).stroke),
+  ).toBe("rgb(45, 153, 255)");
+});

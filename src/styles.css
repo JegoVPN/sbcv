@@ -7,6 +7,13 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  /* React Flow paints a selected/focused edge via three selector arms (.selected,
+     .selectable:focus, .selectable:focus-visible) whose vendor default is a #555 that
+     is near-invisible on the dark canvas. All three arms resolve this mid-layer
+     variable, so owning it here restyles every arm at once — an owned `.selected`
+     rule cannot, because the :focus arms carry higher specificity than ours. Matches
+     the app's selection language (card selection blue). */
+  --xy-edge-stroke-selected: #2d99ff;
 }
 
 * {
