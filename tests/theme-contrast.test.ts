@@ -94,16 +94,19 @@ function ratio(fg: RGB, bg: RGB): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// [fg token, bg token, threshold] — threshold 4.5 = body text, 3 = UI/large/indicator.
-const PAIRS: Array<[string, string, number]> = [
+// [fg, bg, darkMin, lightMin?] — lightMin defaults to darkMin. T10 raised the
+// light side to a comfort band (body >=6, secondary >=4.5, status fg >=5.5,
+// canvas thin-lines >=4) after color-vision-deficiency feedback: thin strokes
+// and olive/amber hues read weaker than their WCAG number suggests.
+const PAIRS: Array<[string, string, number, number?]> = [
   // core text ladder on the main surfaces
   ["--text-primary", "--surface-card", 4.5],
   ["--text-secondary", "--surface-card", 4.5],
   ["--text-tertiary", "--surface-card", 4.5],
-  ["--text-muted", "--surface-card", 4.5],
-  ["--text-muted", "--surface-app", 4.5],
-  ["--text-dim", "--surface-card", 3],
-  ["--text-disabled", "--surface-card", 3],
+  ["--text-muted", "--surface-card", 4.5, 6],
+  ["--text-muted", "--surface-app", 4.5, 6],
+  ["--text-dim", "--surface-card", 3, 5],
+  ["--text-disabled", "--surface-card", 3, 4.5],
   ["--text-primary", "--surface-input", 4.5],
   ["--text-primary", "--surface-field-input", 4.5],
   ["--text-secondary", "--surface-pill", 4.5],
@@ -116,39 +119,39 @@ const PAIRS: Array<[string, string, number]> = [
   ["--text-primary", "--surface-pill-control", 4.5],
   ["--text-inverse", "--surface-inverse", 4.5],
   // brand / status accents as foregrounds
-  ["--accent-brand-fg", "--surface-card", 4.5],
-  ["--accent-brand-fg", "--surface-pill", 4.5],
+  ["--accent-brand-fg", "--surface-card", 4.5, 6],
+  ["--accent-brand-fg", "--surface-pill", 4.5, 6],
   ["--text-on-brand", "--accent-brand-fill", 4.5],
   ["--text-on-warn", "--accent-warn-fill", 4.5],
   ["--text-on-danger", "--accent-danger-fill", 4.5],
-  ["--accent-warn-fg", "--surface-card", 4.5],
-  ["--accent-danger-fg", "--surface-card", 4.5],
-  ["--accent-info-fg", "--surface-card", 4.5],
+  ["--accent-warn-fg", "--surface-card", 4.5, 6],
+  ["--accent-danger-fg", "--surface-card", 4.5, 5.2],
+  ["--accent-info-fg", "--surface-card", 4.5, 5.5],
   ["--accent-danger-icon", "--surface-card", 3],
   ["--text-danger-soft", "--surface-card", 3],
   ["--accent-success-fg", "--surface-overlay-modal", 4.5],
   ["--status-checking-fg", "--status-checking-bg", 4.5],
-  ["--accent-legacy-fg", "--surface-glass-palette", 3],
-  ["--text-gated-dim", "--surface-glass-palette", 3],
+  ["--accent-legacy-fg", "--surface-glass-palette", 3, 5.5],
+  ["--text-gated-dim", "--surface-glass-palette", 3, 6],
   // badges (fg on tinted badge surface)
-  ["--accent-warn-fg", "--surface-warn-badge", 3],
+  ["--accent-warn-fg", "--surface-warn-badge", 3, 5],
   ["--accent-platform-fg", "--surface-platform-badge", 4.5],
   ["--accent-gated-fg", "--surface-gated-badge", 4.5],
   // banners
-  ["--text-banner-platform", "--surface-banner-platform", 4.5],
-  ["--text-banner-build", "--surface-banner-build", 4.5],
+  ["--text-banner-platform", "--surface-banner-platform", 4.5, 6],
+  ["--text-banner-build", "--surface-banner-build", 4.5, 6],
   ["--text-danger-soft", "--surface-banner-deprecated", 4.5],
-  ["--text-banner-channel", "--surface-banner-channel", 4.5],
+  ["--text-banner-channel", "--surface-banner-channel", 4.5, 6],
   // canvas / edges / selection (UI indicators on the canvas surface)
-  ["--edge-default", "--surface-canvas", 3],
-  ["--edge-highlight", "--surface-canvas", 3],
-  ["--edge-selected", "--surface-canvas", 3],
+  ["--edge-default", "--surface-canvas", 3, 4],
+  ["--edge-highlight", "--surface-canvas", 3, 4.5],
+  ["--edge-selected", "--surface-canvas", 3, 4.5],
   ["--edge-dangling", "--surface-canvas", 3],
   ["--edge-invalid", "--surface-canvas", 3],
-  ["--edge-connection", "--surface-canvas", 3],
-  ["--selection", "--surface-canvas", 3],
-  ["--focus-ring", "--surface-app", 3],
-  ["--focus-ring", "--surface-card", 3],
+  ["--edge-connection", "--surface-canvas", 3, 4],
+  ["--selection", "--surface-canvas", 3, 4.5],
+  ["--focus-ring", "--surface-app", 3, 6],
+  ["--focus-ring", "--surface-card", 3, 6],
   ["--port-fg", "--port-bg", 4.5],
   ["--logo-stroke", "--logo-plate", 3],
   ["--accent-info-fg", "--port-bg", 3],
@@ -159,6 +162,16 @@ const PAIRS: Array<[string, string, number]> = [
   ["--status-info-icon-toast", "--surface-overlay-modal", 3],
   // reveal ghost control
   ["--text-tertiary", "--surface-ghost", 4.5],
+];
+
+// UI-boundary separation pairs: [a, b, darkMin, lightMin]. Light gets a visible
+// comfort floor (~2+); dark floors pin the existing design (unchanged by T10).
+const SEPARATION: Array<[string, string, number, number]> = [
+  ["--border-field-idle", "--surface-card", 1.0, 2.0],
+  ["--border-input", "--surface-app", 1.0, 2.0],
+  ["--border-default", "--surface-card", 1.1, 1.8],
+  ["--border-strong", "--surface-card", 1.15, 2.1],
+  ["--surface-card", "--surface-canvas", 1.05, 1.18],
 ];
 
 // Dark-side pairs that measured below threshold BEFORE the theme work (pinned;
@@ -183,7 +196,23 @@ function check(theme: Map<string, string>, name: "dark" | "light"): string[] {
     if (!parsed) return null;
     return composite(parsed, base);
   };
-  for (const [fgTok, bgTok, threshold] of PAIRS) {
+  for (const [aTok, bTok, dMin, lMin] of SEPARATION) {
+    if (resolve(theme, aTok).trim() === "transparent") continue; // by-design invisible (dark field borders)
+    const bb = toOpaque(bTok, appBase);
+    const aa = bb ? toOpaque(aTok, bb) : null;
+    if (!aa || !bb) {
+      failures.push(`${name}: cannot parse separation pair ${aTok}/${bTok}`);
+      continue;
+    }
+    const r = ratio(aa, bb);
+    const min = name === "dark" ? dMin : lMin;
+    if (r < min) {
+      failures.push(
+        `${name}: separation ${aTok} vs ${bTok} = ${r.toFixed(2)} < ${min}`,
+      );
+    }
+  }
+  for (const [fgTok, bgTok, threshold, lightMin] of PAIRS) {
     const bg = toOpaque(bgTok, appBase);
     if (!bg) {
       failures.push(`${name}: cannot parse bg ${bgTok}`);
@@ -197,7 +226,11 @@ function check(theme: Map<string, string>, name: "dark" | "light"): string[] {
     const r = ratio(fg, bg);
     const debtKey = `${fgTok}/${bgTok}`;
     const min =
-      name === "dark" && DARK_DEBT.has(debtKey) ? DARK_DEBT.get(debtKey)! : threshold;
+      name === "dark"
+        ? DARK_DEBT.has(debtKey)
+          ? DARK_DEBT.get(debtKey)!
+          : threshold
+        : (lightMin ?? threshold);
     if (r < min) {
       failures.push(
         `${name}: ${fgTok} on ${bgTok} = ${r.toFixed(2)} < ${min} (${resolve(theme, fgTok)} on ${resolve(theme, bgTok)})`,

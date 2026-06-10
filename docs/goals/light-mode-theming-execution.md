@@ -301,3 +301,11 @@ Run with:
 ## 收官状态（2026-06-10）
 
 **T0–T9 全部完成**（PRs #329 T0、#331 T1、#333 T2、#334 T3、#335 T4、#336 T5、#337 T6、#338 T7、#339 T8、#340 T9）。交付物：dark 零像素变化的全量语义 token 体系（机器证明贯穿）、`[data-theme="light"]` 全表 + 55 对双主题 WCAG 守卫、CSP-safe 防闪三态机制（系统跟随/手动/持久化）、桌面+移动切换 UI、e2e 42（含 5 个主题专项）、三个常驻守卫（token guard 终态 / contrast / equivalence 脚本）。
+
+### T10-light-contrast-comfort — PR #342（用户反馈追加：色弱用户 light 看不清）
+- **诊断（数据驱动）:** light 实测分布显示三个弱带——画布细线全贴 3.0 下限（olive 3.18/拖线 3.33/选中 3.57，细线+olive 为 CVD 感知衰减区）、状态前景贴 4.5–5.5（warn on badge 仅 4.25）、控件边界 1.1–1.8 几乎不可见（输入框填充差 1.09、卡-画布 1.18）。文本主梯队本就健康。
+- **What changed:** light 表 27 处加深到"舒适带"（正文 ≥6、次级 ≥4.5、状态前景 ≥5.5–6、画布细线 ≥4、控件边框 ≥1.8–2.1；全部仍在柔和浅色审美内，未追 AAA）；dark 零变化（equivalence 464 声明背书）。
+- **守卫升级:** `theme-contrast.test.ts` 配对结构升级为 per-theme 阈值（dark 维持原阈+债务表），light 侧 23 对上调至舒适带；**新增 SEPARATION 边界分离组 5 对**（light 2.0/1.8/2.1/1.18 地板，dark 锁现状，transparent 设计态跳过）——改淡即红。
+- **CVD 复核（Machado severity-1.0 protan/deutan 矩阵）:** 关键前景模拟后对比全部 ≥4.3（不退化）；olive/amber 在红绿色弱下色相趋同属物理必然，逐场景核查确认**零"仅靠色相"判定点**（状态 pill 有文字、popover/chip/toast 有图标形状、dangling 边虚线、olive vs 蓝 CVD 距离 189+）。normal/deutan 双视角截图过目。
+- **Tests:** unit 1749、theme e2e 5/5（focus-ring 断言同步 `#4a6418`）、equivalence ✓。
+- **偏差:** 把 olive/amber 在 CVD 下拉开到强可辨（距离 ≥60）需要更换色系，违背"正常即可"与品牌——以形状/文字冗余作为该轴的承载（现状已满足），记录为设计决策而非缺口。
