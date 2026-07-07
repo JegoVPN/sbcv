@@ -1,5 +1,5 @@
 source: https://github.com/SagerNet/sing-box.git
 branch: testing
 version: 1.14
-commit: 8a42af329c6f8cc2c43a142ea4eadecd5412bfce
+commit: f08082a0a8550e75ca37c4e085baaa4b49855cfb
 generated_by: scripts/sync-singbox-docs.mjs (do not edit by hand)

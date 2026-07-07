@@ -2,6 +2,120 @@
 icon: material/alert-decagram
 ---
 
+#### 1.14.0-alpha.39
+
+* Add L3 forwarding support **1**
+* Fixes and improvements
+
+**1**:
+
+Building on the ICMP proxy support introduced in sing-box 1.13.0, TCP and UDP
+traffic from L3 inbounds (TUN, WireGuard, and Tailscale) can now be forwarded
+directly to WireGuard and Tailscale endpoints at L3, without going through
+L3 to L4 translation.
+
+See [Pre-match](/configuration/shared/pre-match/).
+
+#### 1.14.0-alpha.38
+
+* Add Snell protocol support **1**
+* Fixes and improvements
+
+**1**:
+
+Surge believes that being closed-source and not proliferated can keep
+[Snell](https://kb.nssurge.com/surge-knowledge-base/release-notes/snell)
+covert, but this is already impossible in 2026; considering that Snell still
+has advantages that other random-traffic protocols do not possess, such as
+multiplexing support with complete TCP semantics and traffic-characteristic
+diversity, we [implemented it in Go](https://github.com/SagerNet/sing-snell)
+instead of reinventing the wheel, with all features except the v5 QUIC proxy,
+behavior as consistent with the official implementation as possible, and
+performance at least on par with it.
+
+See [Snell Inbound](/configuration/inbound/snell/) and
+[Snell Outbound](/configuration/outbound/snell/).
+
+#### 1.13.14
+
+* Fixes and improvements
+
+#### 1.14.0-alpha.33
+
+* Add iOS jailbreak release **1**
+* Fixes and improvements
+
+**1**:
+
+A new jailbreak build of the iOS [sing-box for Apple](/clients/apple/) client is
+available, distributed as a `.deb` for rootless iOS 15.0+ from
+[GitHub Releases](https://github.com/SagerNet/sing-box/releases)
+(`SFI-iphoneos-arm64.deb`). Unlike the App Store and TestFlight builds, it can run
+a [Tailscale SSH server](/configuration/endpoint/tailscale/#ssh_server) on the
+device and supports [process matching](/configuration/route/rule/#process_name)
+(`process_name`, `process_path`, `user`, and so on) in route and DNS rules.
+
+#### 1.14.0-alpha.32
+
+* Add dashboard support for the API service **1**
+* Add USB/IP service **2**
+* Fixes and improvements
+
+**1**:
+
+The [sing-box API service](/configuration/service/api/) can now download, update
+and serve [sing-box-dashboard](https://github.com/SagerNet/sing-box-dashboard)
+directly over its listener, configured via the new
+[`dashboard`](/configuration/service/api/#dashboard) option.
+
+**2**:
+
+New [USB/IP Server](/configuration/service/usbip-server/) and
+[USB/IP Client](/configuration/service/usbip-client/) services export and import
+USB devices over the [USB/IP](https://usbip.sourceforge.net/) protocol, built on
+[sing-usbip](https://github.com/SagerNet/sing-usbip), which adds hotplug while
+staying interoperable with standard USB/IP. Exporting config-selected local
+devices (`provider: default`) runs via the CLI on Linux, Windows, and macOS and
+requires elevated privileges (macOS additionally needs a CGO build and disabled
+System Integrity Protection). With `provider: dynamic`, devices are instead
+supplied at runtime through the API service by the graphical clients on macOS and
+Android, or the [sing-box Dashboard](https://github.com/SagerNet/sing-box-dashboard).
+
+#### 1.14.0-alpha.31
+
+* Fixes and improvements
+
+#### 1.14.0-alpha.30
+
+* Introducing sing-box API service **1**
+* Apple/Android: Introducing remote control **2**
+* Introducing sing-box Dashboard **3**
+* Fixes and improvements
+
+**1**:
+
+The new [sing-box API service](/configuration/service/api/) is a gRPC
+server for observing and controlling the running sing-box instance,
+exposing the same interface the graphical clients use locally: service
+status, logs, outbound groups (selection and URL tests), Clash mode,
+connection tracking, and tools such as network quality tests, STUN
+tests, and Tailscale operations.
+
+**2**:
+
+The graphical clients for Apple platforms and Android can now control
+remote sing-box instances running the API service. Remote servers (URL
+and secret) are managed in settings; the dashboard, logs, connections,
+groups, and tools pages can then switch between the local service and
+remote instances.
+
+**3**:
+
+[sing-box Dashboard](https://github.com/SagerNet/sing-box-dashboard) is
+a new web client for the API service, providing almost the same
+experience as the graphical clients. A public instance is available at
+http://sing-box-dashboard.sagernet.org (shortcut: dash.sing-box.app).
+
 #### 1.14.0-alpha.29
 
 * Fixes and improvements
