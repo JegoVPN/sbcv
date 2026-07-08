@@ -626,6 +626,391 @@
     "reason": "repo-fixture-cap"
   },
   {
+    "source": "huixiao666/pk-box/1.11.4优化配置.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token ']', ...\"\n    },\n  ],\n  \"rout\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.11.4完整注释.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.12.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.12修复优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.12进阶版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.13.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        //节点名称\n   \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.13优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        //节点名称\n   \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.14.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.8优化配置.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token ']', ...\"\n    },\n  ],\n  \"rout\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/1.13.9优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or ']' after array element in JSON at position 2696 (line 144 column 9)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/注释/1.13.12.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/注释/1.13.13.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ╔══════\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/注释/1.13.14.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ┌──────\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.13.xx/注释/三个版本完整注释.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.reF1nd/1.14.0-alpha.21.reF1nd.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.reF1nd/1.14.0-alpha.26.reF1nd.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected double-quoted property name in JSON at position 8134 (line 356 column 20)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.reF1nd/1.14.0-alpha.reF1nd12-21完整注释.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.15修复优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 2899 (line 114 column 45)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.18强化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or '}' after property value in JSON at position 8482 (line 395 column 29)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.20卓越版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.20精简版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or ']' after array element in JSON at position 2688 (line 136 column 5)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.21-tor版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.21优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.21版本.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.21特殊版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.22-tor版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.22优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.23.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.23优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.24.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.24优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.24修复版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.24精简版(不推荐).json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    // {\n    /\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.25修复优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.25停止使用.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.25精致优化.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.26.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"[\n        //节点名称\n   \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.26优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"[\n        // 节点名称\n  \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.26修复v4版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        // 节点名称\n  \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.27-114dns版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        // 节点名称\n  \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.27.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '端', ...\"er_port\": 端口,\n      \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.28-114版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        // 节点名称\n  \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.28.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        // 节点名称\n  \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.29.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\",\n        //节点名称\n   \"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.31.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.31优化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.31修复版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.31深度优化.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.32.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.32简化版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.33.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected ',' or ']' after array element in JSON at position 2625 (line 146 column 9)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.34.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.35.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.36.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.37.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.38.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.39.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/1.14.0-alpha.40.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', ...\"   },\n    //节点配置\n  ]\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.12-17.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.18.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.20.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.21.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.22.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.23.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"/*\n * ╔═══\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.24.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.25.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.25fakeip版.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ╔══════\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.26.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ╔══════\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.27.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.29.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ╔══════\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.31.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.32.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.33.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// =======\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.35.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Unexpected token '/', \"// ┌──────\"... is not valid JSON"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.38.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/1.14.0-alpha.xxx/对比注释/1.14.0-alpha.40.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
+    "source": "huixiao666/pk-box/订阅链接/1.14.0-alpha.21.reF1nd完整注释.json",
+    "reason": "ingest-failed",
+    "detail": "SyntaxError: Expected property name or '}' in JSON at position 4 (line 2 column 3)"
+  },
+  {
     "source": "IPTUNNELS/IPTUNNELS/sing-box/etc/sing-box/commonports.json",
     "reason": "not-sing-box-config"
   },
