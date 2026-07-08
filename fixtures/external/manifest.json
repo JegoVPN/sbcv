@@ -348,7 +348,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-stable",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-7qUoDc/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-agjXF1/config.json: dns.servers[0].address_strategy: json: unknown field \"address_strategy\""
     }
   },
   {
@@ -1912,7 +1912,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Hmotl4/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-eLGypk/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -1942,7 +1942,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-RTwOmY/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ayR1Wt/config.json: dns.servers[0]: legacy DNS server formats are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -1972,7 +1972,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-j7Xv0z/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-SSP5Ui/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2031,7 +2031,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-zSlL0m/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-36gRJS/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2061,7 +2061,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-7i1nnt/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-sfdGWe/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2091,7 +2091,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-2ChhvD/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-T3phCL/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2121,7 +2121,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-STdT6x/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Di329i/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2209,7 +2209,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-68zR33/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-LNfA44/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2239,7 +2239,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-okkusC/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-l96FQi/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2269,7 +2269,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-330CcY/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-tBc8u4/config.json: dns: legacy DNS fakeip options are deprecated in sing-box 1.12.0 and removed in sing-box 1.14.0, checkout migration: https://sing-box.sagernet.org/migration/#migrate-to-new-dns-server-formats"
     }
   },
   {
@@ -2708,7 +2708,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-RYqGu4/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Mwc2y6/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -3645,6 +3645,494 @@
       "status": "failed",
       "binary": "sing-box-1.12",
       "reason": "FATAL[0000] initialize outbound[0]: decode public_key: illegal base64 data at input byte 43"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-3fe87d44",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "订阅链接/1.14.0-alpha.21.reF1nd本地文件.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-3fe87d44.json",
+    "normalized_hash": "3fe87d4472b5ee25dddb8c8556c6286e7d7688043e19ca12740421663e8b63fd",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-JzT2ub/config.json: dns.servers[6]: unknown transport type: group"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-9c3d1b11",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "订阅链接/1.14.0-alpha.21.reF1nd修复版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-9c3d1b11.json",
+    "normalized_hash": "9c3d1b11d0aec86eba8952cc898a4baf0367cd7f4c0d95f433dff96bf44a75cf",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-QCiPsv/config.json: dns.servers[7]: unknown transport type: group"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-b34f25f1",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "订阅链接/1.14.0-alpha.21.reF1nd优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box--1.14.0-alpha.21.ref1nd-.json-b34f25f1.json",
+    "normalized_hash": "b34f25f10dd134cfafce9be5ce575bba3f3043fdf956eaaa92a8ca5a8ece73cb",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-8Z7SdA/config.json: dns.servers[6]: unknown transport type: group"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box--1.14.0-alpha.21.refnd-.json-949a0750",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "订阅链接/1.14.0-alpha.21.reFnd订阅链接.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box--1.14.0-alpha.21.refnd-.json-949a0750.json",
+    "normalized_hash": "949a07505104d85ac378532ebf574f165549c4186a9375ac9ef31907db44f63a",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-w5OOQ2/config.json: dns.servers[6]: unknown transport type: group"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.13.xx-1.13.10-11-.json-798c77ac",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.13.xx/1.13.10-11(不修改).json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.13.xx-1.13.10-11-.json-798c77ac.json",
+    "normalized_hash": "798c77ac6b5ca02aecf2ceb0a0addb5d60d161ec832f29550774a5bf1868d84e",
+    "detected_version": "1.13",
+    "channel": "stable",
+    "fixture_class": "stable",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-stable",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-stable"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.12-16-ref1nd.json-3f43b8d5",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.reF1nd/1.14.0-alpha.12-16-reF1nd.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.12-16-ref1nd.json-3f43b8d5.json",
+    "normalized_hash": "3f43b8d5f5637fc825d242ebda5477d865733bc3c32d05694c2da32ed0b3e61b",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-TtjlLi/config.json: dns.rules[5].clash_mode: json: cannot unmarshal array into Go struct field RawDefaultDNSRule.clash_mode of type string"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.17.ref1nd.json-586fb594",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.reF1nd/1.14.0-alpha.17.reF1nd.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.17.ref1nd.json-586fb594.json",
+    "normalized_hash": "586fb594e9a99204d8f72dbad7ead9d691e0322dbc564b4d5c44a00964ac4ac9",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-ThYJWG/config.json: dns.rules[5].clash_mode: json: cannot unmarshal array into Go struct field RawDefaultDNSRule.clash_mode of type string"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.27.ref1nd.json-c126df18",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.reF1nd/1.14.0-alpha.27.reF1nd.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.27.ref1nd.json-c126df18.json",
+    "normalized_hash": "c126df183052d327fb990cc916271e425ef1d3104218a361de451c6b51b6905d",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-RLI8cP/config.json: outbounds[0].providers: json: unknown field \"providers\""
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.31.ref1nd.json-eea67696",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.reF1nd/1.14.0-alpha.31.reF1nd.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.ref1nd-1.14.0-alpha.31.ref1nd.json-eea67696.json",
+    "normalized_hash": "eea676960a176d2c201bed21c1ef5d35286da837c0a782a80b7923057d23f8e6",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [
+      "fill-empty-selector-with-mock-outbounds"
+    ],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-HnSjnY/config.json: outbounds[0].providers: json: unknown field \"providers\""
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.12-.json-2eeb05f0",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.12优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.12-.json-2eeb05f0.json",
+    "normalized_hash": "2eeb05f0e30330be46bcdead41c87c8159a9e728e625d61de14b9d35dd6517a0",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.14-.json-8c2a908f",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.14优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.14-.json-8c2a908f.json",
+    "normalized_hash": "8c2a908fd8a6d31094c79b30bfc9b0a5edb94d589ae6d0ebe0759c21c82a2a2d",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.16-17-.json-1150bc0b",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.16-17(不修改).json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.16-17-.json-1150bc0b.json",
+    "normalized_hash": "1150bc0bc90303b6f8886c95f29cb32968d4a118afc388ef030a9b17fd8943c4",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-36630bef",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.18精简版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-36630bef.json",
+    "normalized_hash": "36630bef43b23e70024604d09a35a97f4151a7558b8d70e3962c1ed426c4396d",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-3a97d11a",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.18优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-3a97d11a.json",
+    "normalized_hash": "3a97d11afe9c5433a67de541f03d4b6834babf99eaacb019a2690beed3222e37",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-5f068761",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.18稳定版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.18-.json-5f068761.json",
+    "normalized_hash": "5f068761946b101b2a1aad9a810fcc4d2ee33e083e2212b67e5f24e62d44f236",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.20-.json-1a52beb4",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.20优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.20-.json-1a52beb4.json",
+    "normalized_hash": "1a52beb47c67d9cbdce6dff3a12789168001eb8ca509aa4906cd71f8932d0843",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export",
+      "official-check"
+    ],
+    "official_check": "sing-box-testing",
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "pass",
+      "binary": "sing-box-testing"
+    }
+  },
+  {
+    "id": "huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.39-.json-f8d3f44a",
+    "source_repo": "huixiao666/pk-box",
+    "source_path": "1.14.0-alpha.xxx/1.14.0-alpha.39优化版.json",
+    "source_commit": "8d8f1631686d3f0de227312e7b2c9c84ed71d679",
+    "fixture_path": "fixtures/external/huixiao666-pk-box-1.14.0-alpha.xxx-1.14.0-alpha.39-.json-f8d3f44a.json",
+    "normalized_hash": "f8d3f44acd99641b59eb06ce0f1bdf9fcde7c6661fd14b1ad926b50ce28c9ad9",
+    "detected_version": "1.14",
+    "channel": "testing",
+    "fixture_class": "testing",
+    "transformations": [],
+    "expected_gates": [
+      "json-parse",
+      "import",
+      "derive-graph",
+      "diagnostics",
+      "render",
+      "json-round-trip",
+      "export"
+    ],
+    "official_check": null,
+    "counts_toward_200": true,
+    "official_check_result": {
+      "status": "failed",
+      "binary": "sing-box-testing",
+      "reason": "ERROR[0000] legacy domain strategy options is deprecated in sing-box 1.12.0 and will be removed in sing-box 1.14.0, checkout documentation for migration: https://sing-box.sagernet.org/migration/#migrate-domain-strategy-options FATAL[0000] to continuing using this feature, set environment variable ENABLE_DEPRECATED_LEGACY_DOMAIN_STRATEGY_OPTIONS=true"
     }
   },
   {
@@ -5070,7 +5558,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-9AEz8m/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-VrEY1q/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5100,7 +5588,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-GosbH5/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-lumISa/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5130,7 +5618,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-z84nNE/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-SaEkPk/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5160,7 +5648,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-BY51jo/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-FZiegr/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5190,7 +5678,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-leLm74/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-CkKjRQ/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5278,7 +5766,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-v6E9qE/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Zu5ENG/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5308,7 +5796,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-jav4uQ/config.json: providers: json: unknown field \"providers\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-qwOuH1/config.json: providers: json: unknown field \"providers\""
     }
   },
   {
@@ -5338,7 +5826,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-hXPiw9/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-Bg6dbh/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5368,7 +5856,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-m0iNGV/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-yNWhFy/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -5398,7 +5886,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-1.12",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-H6Sat0/config.json: outbounds[14].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-OeBolm/config.json: outbounds[14].filter: json: unknown field \"filter\""
     }
   },
   {
@@ -6064,7 +6552,7 @@
     "official_check_result": {
       "status": "failed",
       "binary": "sing-box-testing",
-      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-McE5lD/config.json: outbounds[18].filter: json: unknown field \"filter\""
+      "reason": "FATAL[0000] decode config at /var/folders/40/y5v_d1m548j9ytv981cn3bjc0000gn/T/sbc-external-official-E1XRyk/config.json: outbounds[18].filter: json: unknown field \"filter\""
     }
   },
   {

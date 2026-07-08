@@ -1,9 +1,9 @@
 # External Fixture Compatibility Report
 
-Accepted fixtures: 220
-Official binary pass: 34
+Accepted fixtures: 237
+Official binary pass: 42
 Official binary warning and treated as display/template-compatible: 2
-Official binary failed and treated as display/template-compatible: 40
+Official binary failed and treated as display/template-compatible: 49
 Official binary not applicable: 144
 Official binary missing during report generation: 0
 
@@ -12,24 +12,24 @@ Official binary missing during report generation: 0
 - display: 73
 - display-extension: 29
 - legacy: 87
-- stable: 13
+- stable: 14
 - stable-extension: 1
-- testing: 1
+- testing: 17
 - testing-extension: 16
 
 ## Accepted By Detected Version
 
 - 1.11: 42
 - 1.12: 45
-- 1.13: 14
-- 1.14: 17
+- 1.13: 15
+- 1.14: 33
 - unknown: 102
 
 ## Official Check Failures By Version
 
 - 1.12: 22
 - 1.13: 4
-- 1.14: 16
+- 1.14: 25
 
 ## Notes
 
