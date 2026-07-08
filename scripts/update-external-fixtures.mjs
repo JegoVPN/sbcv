@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,11 +7,26 @@ const root = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(root, "..");
 const outputDir = join(repoRoot, "fixtures", "external");
 const fetchTimeoutMs = 15_000;
-const maxAcceptedFixtures = Number(process.env.MAX_EXTERNAL_FIXTURES ?? 240);
+// 320 comfortably covers the checked-in corpus (282 after the pk-box ingest) — a FULL refresh with a
+// cap below the committed manifest size would silently truncate the corpus back down.
+const maxAcceptedFixtures = Number(process.env.MAX_EXTERNAL_FIXTURES ?? 320);
 const maxAcceptedPerRepo = Number(process.env.MAX_EXTERNAL_FIXTURES_PER_REPO ?? 30);
+
+// CLI:
+//   node scripts/update-external-fixtures.mjs                                  # full corpus rebuild
+//   node scripts/update-external-fixtures.mjs --append --repo owner/name       # scoped: re-ingest ONLY
+//     the named repo(s), keeping every other repo's fixtures + manifest entries untouched. Use this to
+//     add or refresh a single source without churning the other ~70 upstreams (which may have moved).
+// A source may carry `maxFixtures` to override the per-repo cap (legit large curated collections).
+const cliArgs = process.argv.slice(2);
+const appendMode = cliArgs.includes("--append");
+const targetRepoNames = cliArgs.filter((arg, index) => cliArgs[index - 1] === "--repo");
 
 const sourceRepos = [
   { repo: "Toperlock/sing-box-subscribe", include: /^config_template\/.*\.json$/, exclude: /sb-config-1\.12\.json$/ },
+  // Curated per-release template collection (1.11 → 1.13.x → every 1.14 alpha, several variants each) —
+  // the per-repo cap would drop the newest alphas, so it carries an explicit higher cap.
+  { repo: "huixiao666/pk-box", include: /\.json$/, maxFixtures: 80 },
   { repo: "kj163kj/singbox_proxy_config", include: /\.json$/ },
   { repo: "CHIZI-0618/box4magisk", include: /\.json$/ },
   { repo: "malikshi/sing-box-examples", include: /\.json$/ },
@@ -132,8 +147,12 @@ function encodePath(path) {
 }
 
 async function fetchRaw(repo, commit, path) {
-  const url = `https://raw.githubusercontent.com/${repo}/${commit}/${encodePath(path)}`;
-  const response = await fetchWithTimeout(url, { headers: { "user-agent": "sbc-external-fixture-ingest" } });
+  // The contents API honors the auth token (raw.githubusercontent.com does not), so bulk ingests
+  // stop tripping the anonymous rate limit (observed 429s at ~50 unauthenticated raw fetches).
+  const url = `https://api.github.com/repos/${repo}/contents/${encodePath(path)}?ref=${commit}`;
+  const response = await fetchWithTimeout(url, {
+    headers: { ...authHeaders(), accept: "application/vnd.github.raw" },
+  });
   if (!response.ok) throw new Error(`Raw fetch failed ${response.status}: ${repo}/${path}`);
   return response.text();
 }
@@ -302,16 +321,53 @@ async function collectCandidates(source) {
 }
 
 async function main() {
-  rmSync(outputDir, { recursive: true, force: true });
-  mkdirSync(outputDir, { recursive: true });
+  const activeSources = targetRepoNames.length
+    ? sourceRepos.filter((source) => targetRepoNames.includes(source.repo))
+    : sourceRepos;
+  if (targetRepoNames.length && activeSources.length !== targetRepoNames.length) {
+    const known = new Set(sourceRepos.map((source) => source.repo));
+    const unknown = targetRepoNames.filter((name) => !known.has(name));
+    throw new Error(`--repo names not registered in sourceRepos: ${unknown.join(", ")} — register them first.`);
+  }
+  if (appendMode && targetRepoNames.length === 0) {
+    throw new Error("--append requires at least one --repo; a full rebuild must not run in append mode.");
+  }
 
   const manifest = [];
   const rejected = [];
-  const seenHashes = new Set();
-  const acceptedByRepo = new Map();
+  if (appendMode) {
+    // Scoped refresh: keep every non-targeted repo's fixtures + manifest/rejected entries verbatim,
+    // drop the targeted repos' old outputs, and re-ingest only those repos below.
+    const targeted = new Set(targetRepoNames);
+    const existingManifest = JSON.parse(readFileSync(join(outputDir, "manifest.json"), "utf8"));
+    for (const item of existingManifest) {
+      if (targeted.has(item.source_repo)) {
+        rmSync(join(repoRoot, item.fixture_path), { force: true });
+      } else {
+        manifest.push(item);
+      }
+    }
+    const rejectedPath = join(outputDir, "rejected.json");
+    if (existsSync(rejectedPath)) {
+      for (const item of JSON.parse(readFileSync(rejectedPath, "utf8"))) {
+        const repo = item.source_repo ?? String(item.source ?? "").split("/").slice(0, 2).join("/");
+        if (!targeted.has(repo)) rejected.push(item);
+      }
+    }
+  } else {
+    rmSync(outputDir, { recursive: true, force: true });
+    mkdirSync(outputDir, { recursive: true });
+  }
 
-  sourceLoop: for (const source of sourceRepos) {
+  const seenHashes = new Set(manifest.map((item) => item.normalized_hash));
+  const acceptedByRepo = new Map();
+  for (const item of manifest) {
+    acceptedByRepo.set(item.source_repo, (acceptedByRepo.get(item.source_repo) ?? 0) + 1);
+  }
+
+  sourceLoop: for (const source of activeSources) {
     if (manifest.length >= maxAcceptedFixtures) break;
+    const repoCap = source.maxFixtures ?? maxAcceptedPerRepo;
     let candidates = [];
     try {
       candidates = await collectCandidates(source);
@@ -323,7 +379,7 @@ async function main() {
     for (const candidate of candidates) {
       if (manifest.length >= maxAcceptedFixtures) break sourceLoop;
       const repoAcceptedCount = acceptedByRepo.get(candidate.repo) ?? 0;
-      if (repoAcceptedCount >= maxAcceptedPerRepo) {
+      if (repoAcceptedCount >= repoCap) {
         rejected.push({ source: `${candidate.repo}/${candidate.path}`, reason: "repo-fixture-cap" });
         continue;
       }
