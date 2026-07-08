@@ -82,7 +82,7 @@ describe("1.14 catch-up — version gates error on stable targets, clean on test
   });
 });
 
-describe("1.14 catch-up — snell required fields + v6 psk length (binary-verified FATALs)", () => {
+describe("1.14 catch-up — snell required fields + v6 psk length (inbound: check-FATAL; outbound: can never authenticate)", () => {
   it("missing psk / version → missing-required-field", () => {
     const noPsk = { inbounds: [{ type: "snell", tag: "s", listen: "127.0.0.1", listen_port: 2080, version: 5 }] } as unknown as SingBoxConfig;
     const noVersion = { outbounds: [{ type: "snell", tag: "s", server: "x", server_port: 1, psk: "fixture-psk" }] } as unknown as SingBoxConfig;
@@ -110,10 +110,19 @@ describe("1.14 catch-up — usbip-server devices requirement (binary: check-time
     const bare = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240 }] } as unknown as SingBoxConfig;
     expect(codes(bare, "testing", "1.14", "error")).toContain("usbip-server-devices-required");
   });
-  it("is silent with devices, or with the dynamic provider", () => {
-    const withDevices = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240, devices: [{ bus_id: "1-2" }] }] } as unknown as SingBoxConfig;
+  it("errors when every match is empty — zero-valued fields count as unset (binary-verified)", () => {
+    // The exact state the inspector's "Add device match" button creates before any field is filled.
+    for (const devices of [[{}], [{ bus_id: "" }], [{ vendor_id: 0 }], [{ serial: "" }, {}]]) {
+      const config = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240, devices }] } as unknown as SingBoxConfig;
+      expect(codes(config, "testing", "1.14", "error"), JSON.stringify(devices)).toContain("usbip-server-devices-required");
+    }
+  });
+  it("is silent with an effective match, or with the dynamic provider", () => {
+    const byBusId = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240, devices: [{ bus_id: "1-2" }] }] } as unknown as SingBoxConfig;
+    const byVendor = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240, devices: [{ vendor_id: 1133 }] }] } as unknown as SingBoxConfig;
     const dynamic = { services: [{ type: "usbip-server", tag: "u", listen: "127.0.0.1", listen_port: 3240, provider: "dynamic" }] } as unknown as SingBoxConfig;
-    expect(codes(withDevices, "testing", "1.14", "error")).not.toContain("usbip-server-devices-required");
+    expect(codes(byBusId, "testing", "1.14", "error")).not.toContain("usbip-server-devices-required");
+    expect(codes(byVendor, "testing", "1.14", "error")).not.toContain("usbip-server-devices-required");
     expect(codes(dynamic, "testing", "1.14", "error")).not.toContain("usbip-server-devices-required");
   });
 });
@@ -138,6 +147,14 @@ describe("1.14 catch-up — implicit HTTP client deprecation (dashboard + rule-s
     expect(codes(explicit, "testing", "1.14", "warning")).not.toContain(CODE);
     expect(codes(viaRoute, "testing", "1.14", "warning")).not.toContain(CODE);
     expect(codes(viaList, "testing", "1.14", "warning")).not.toContain(CODE);
+  });
+
+  it("an EMPTY http_client string does not suppress (doc: 'When empty, the default HTTP client is used')", () => {
+    const emptyDash = { services: [{ type: "api", tag: "a", listen: "127.0.0.1", listen_port: 9091, dashboard: { enabled: true, http_client: "" } }] } as unknown as SingBoxConfig;
+    expect(codes(emptyDash, "testing", "1.14", "warning")).toContain(CODE);
+    const RS = "rule-set-implicit-http-client-deprecated";
+    const emptyRuleSet = { route: { rule_set: [{ type: "remote", tag: "r", format: "source", url: "https://example.com/r.json", http_client: "" }] } } as unknown as SingBoxConfig;
+    expect(codes(emptyRuleSet, "testing", "1.14", "warning")).toContain(RS);
   });
 
   it("silent when the dashboard is absent or disabled", () => {

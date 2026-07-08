@@ -101,9 +101,11 @@ function isIpv6Cidr(value: string): boolean {
  *  rules that match on a rule-set's IPs without match_response (deprecated 1.14, removed 1.16). Remote/
  *  local content is opaque, so fall back to the conventional `geoip` naming; inline rule-sets are read
  *  directly. */
-// snell v6 replaces obfs with traffic shaping and enforces a 12–255 BYTE psk — out of range is a
-// check-time FATAL ("snell: psk length must be between 12 and 255 bytes", binary-verified on
-// 1.14.0-alpha.40). v4/v5 accept any non-empty psk (emptiness is the requiredFields check's job).
+// snell v6 replaces obfs with traffic shaping and enforces a 12–255 BYTE psk. On the INBOUND this is
+// a check-time FATAL ("snell: psk length must be between 12 and 255 bytes", binary-verified on
+// 1.14.0-alpha.40); the OUTBOUND passes check and starts but can never authenticate against a spec-
+// compliant server (fails as "cipher: message authentication failed"), so it is still an error on
+// both sides. v4/v5 accept any non-empty psk (emptiness is the requiredFields check's job).
 function snellV6PskOutOfRange(entity: Record<string, unknown>): boolean {
   if (entity.version !== 6 || typeof entity.psk !== "string" || entity.psk === "") return false;
   const bytes = new TextEncoder().encode(entity.psk).length;
@@ -429,7 +431,9 @@ export function validateConfig(
   ) {
     const usesImplicit = listItems(config.route?.rule_set).some((rs) => {
       const o = rs as Record<string, unknown>;
-      return o.type === "remote" && o.download_detour === undefined && o.http_client === undefined;
+      // An EMPTY http_client falls back exactly like an absent one (rule-set/index.md: "When empty,
+      // the default HTTP client is used"), so "" must not suppress the deprecation.
+      return o.type === "remote" && o.download_detour === undefined && (o.http_client === undefined || o.http_client === "");
     });
     if (usesImplicit) {
       push(
@@ -602,7 +606,7 @@ export function validateConfig(
         "error",
         "outbound-snell-v6-psk-length",
         `/outbounds/${index}/psk`,
-        `Snell outbound "${outbound.tag}" uses version 6, which requires a psk of 12 to 255 bytes; sing-box refuses to start outside that range.`,
+        `Snell outbound "${outbound.tag}" uses version 6, which requires a psk of 12 to 255 bytes; a psk outside that range can never authenticate (the server side refuses to start with it).`,
       );
     }
     // Outbound TYPE min-version gate, driven by the single-source TYPE_MIN_VERSION table (same source
@@ -855,16 +859,27 @@ export function validateConfig(
     if (service.type === "usbip-server") {
       const obj = service as Record<string, unknown>;
       // `devices` is ==Required== with the `default` provider (service/usbip-server.md); with
-      // `dynamic` the devices come from an API client at runtime, so an empty list is fine.
+      // `dynamic` the devices come from an API client at runtime, so an empty list is fine. The binary
+      // also rejects matches whose fields are all unset — empty strings and zero-valued ids count as
+      // absent ("devices[0]: at least one of busid/vendor_id/product_id/serial is required",
+      // binary-verified on 1.14.0-alpha.40) — so only an effective match satisfies the requirement.
       const provider = typeof obj.provider === "string" ? obj.provider : "";
-      const devices = Array.isArray(obj.devices) ? obj.devices : [];
-      if (provider !== "dynamic" && devices.length === 0) {
+      const devices = Array.isArray(obj.devices) ? (obj.devices as unknown[]) : [];
+      const hasEffectiveMatch = devices.some(
+        (device) =>
+          device !== null &&
+          typeof device === "object" &&
+          Object.values(device as Record<string, unknown>).some(
+            (value) => (typeof value === "string" && value !== "") || (typeof value === "number" && value !== 0),
+          ),
+      );
+      if (provider !== "dynamic" && !hasEffectiveMatch) {
         push(
           diagnostics,
           "error",
           "usbip-server-devices-required",
           `/services/${index}/devices`,
-          `USB/IP server "${service.tag}" uses the default provider, which requires at least one device match in \`devices\` (or set provider to "dynamic").`,
+          `USB/IP server "${service.tag}" uses the default provider, which requires at least one device match with a non-empty field (bus_id / vendor_id / product_id / serial) — or set provider to "dynamic".`,
         );
       }
     }
@@ -878,7 +893,8 @@ export function validateConfig(
       const dashboard = obj.dashboard;
       const dashboardObj = dashboard && typeof dashboard === "object" && !Array.isArray(dashboard) ? (dashboard as Record<string, unknown>) : undefined;
       const dashboardEnabled = dashboard === true || typeof dashboard === "string" || dashboardObj?.enabled === true;
-      const hasExplicitClient = dashboardObj?.http_client !== undefined;
+      // Empty string = fall back like absent (service/api.md mirrors the rule-set fallback wording).
+      const hasExplicitClient = dashboardObj?.http_client !== undefined && dashboardObj.http_client !== "";
       const hasDefaultClient =
         (config.route as Record<string, unknown> | undefined)?.default_http_client !== undefined ||
         listItems(config.http_clients).length > 0;
