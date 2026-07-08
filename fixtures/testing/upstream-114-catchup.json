@@ -1,0 +1,17 @@
+{
+  "http_clients": [{ "tag": "dl" }],
+  "inbounds": [
+    { "type": "snell", "tag": "snell-in", "listen": "127.0.0.1", "listen_port": 2080, "version": 5, "psk": "fixture-psk" },
+    { "type": "snell", "tag": "snell6-in", "listen": "127.0.0.1", "listen_port": 2081, "version": 6, "psk": "fixture-psk-12plus", "mode": "default", "users": [{ "name": "alice", "userkey": "alice-key" }] }
+  ],
+  "outbounds": [
+    { "type": "snell", "tag": "snell-out", "server": "127.0.0.1", "server_port": 2080, "version": 4, "psk": "fixture-psk", "obfs_mode": "http", "obfs_host": "bing.com", "reuse": true, "network": "tcp" },
+    { "type": "bridge", "tag": "bridge-out", "interface": "eth0", "bridge_name": "br-sbc", "iproute2_table_index": 2300, "iproute2_rule_index": 120 },
+    { "type": "direct", "tag": "direct" }
+  ],
+  "services": [
+    { "type": "api", "tag": "api", "listen": "127.0.0.1", "listen_port": 9091, "secret": "fixture-secret", "access_control_allow_origin": ["https://dash.example.com"], "access_control_allow_private_network": true, "dashboard": { "enabled": true, "http_client": "dl", "update_interval": "1d" } },
+    { "type": "usbip-server", "tag": "usbip-srv", "listen": "127.0.0.1", "listen_port": 3240, "devices": [{ "bus_id": "1-2", "vendor_id": 1133, "product_id": 49948 }] },
+    { "type": "usbip-client", "tag": "usbip-cli", "server": "127.0.0.1", "server_port": 3240, "detour": "direct", "devices": [{ "serial": "ABC123" }] }
+  ]
+}

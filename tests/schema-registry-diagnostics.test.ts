@@ -20,6 +20,7 @@ const PROXY_OUTBOUND_TODAY = [
   "tuic",
   "hysteria2",
   "anytls",
+  "snell",
   "ssh",
 ];
 

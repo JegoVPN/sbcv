@@ -735,6 +735,13 @@ export const DOC_FIELD_NAMES = {
           "strict_mode",
           "wildcard_sni"
         ],
+        "snell": [
+          "version",
+          "psk",
+          "users",
+          "obfs_mode",
+          "mode"
+        ],
         "socks": [
           "users"
         ],
@@ -825,6 +832,12 @@ export const DOC_FIELD_NAMES = {
           "min_idle_session",
           "tls"
         ],
+        "bridge": [
+          "interface",
+          "bridge_name",
+          "iproute2_table_index",
+          "iproute2_rule_index"
+        ],
         "direct": [
           "override_address",
           "override_port"
@@ -903,6 +916,18 @@ export const DOC_FIELD_NAMES = {
           "version",
           "password",
           "tls"
+        ],
+        "snell": [
+          "server",
+          "server_port",
+          "version",
+          "psk",
+          "userkey",
+          "reuse",
+          "network",
+          "obfs_mode",
+          "obfs_host",
+          "mode"
         ],
         "socks": [
           "server",
@@ -1176,6 +1201,13 @@ export const DOC_FIELD_NAMES = {
         ]
       },
       "service": {
+        "api": [
+          "secret",
+          "access_control_allow_origin",
+          "access_control_allow_private_network",
+          "dashboard",
+          "tls"
+        ],
         "ccm": [
           "credential_path",
           "usages_path",
@@ -1215,6 +1247,15 @@ export const DOC_FIELD_NAMES = {
           "servers",
           "cache_path",
           "tls"
+        ],
+        "usbip-client": [
+          "server",
+          "server_port",
+          "devices"
+        ],
+        "usbip-server": [
+          "provider",
+          "devices"
         ]
       }
     },
@@ -1374,6 +1415,7 @@ export const DOC_FIELD_NAMES = {
       "pre-match": [
         "reject",
         "route",
+        "sniff",
         "bypass"
       ]
     }

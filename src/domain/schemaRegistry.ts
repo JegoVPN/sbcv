@@ -138,6 +138,28 @@ const SS_METHOD_ENUM: SchemaEnumOption[] = [
 ];
 // inbound/shadowsocks.md method table lists the modern AEAD/2022 set only — no legacy stream ciphers.
 const SS_METHOD_MODERN_ENUM: SchemaEnumOption[] = SS_METHOD_ENUM.filter((option) => !option.deprecated);
+// Snell (1.14 testing): the inbound speaks 5|6 while the outbound speaks 4|6 — upstream skips the v5
+// QUIC proxy mode, so the v5 wire protocol equals v4 and the client side only offers 4 (snell.md note).
+// Every option carries channel:"testing" — the whole type is testing-only, so the cited snell.md only
+// exists in the testing docs tree (the enum-doc pin test resolves the tree per OPTION channel).
+const SNELL_INBOUND_VERSION_ENUM: SchemaEnumOption[] = [
+  { value: "5", channel: "testing" },
+  { value: "6", channel: "testing" },
+];
+const SNELL_OUTBOUND_VERSION_ENUM: SchemaEnumOption[] = [
+  { value: "4", label: "4 (= v5 wire)", channel: "testing" },
+  { value: "6", channel: "testing" },
+];
+const SNELL_OBFS_MODE_ENUM: SchemaEnumOption[] = [
+  { value: "none", channel: "testing" },
+  { value: "http", channel: "testing" },
+];
+const SNELL_SHAPING_MODE_ENUM: SchemaEnumOption[] = [
+  { value: "default", channel: "testing" },
+  { value: "unshaped", channel: "testing" },
+  { value: "unsafe-raw", channel: "testing" },
+];
+const SNELL_NETWORK_ENUM: SchemaEnumOption[] = NETWORK_ENUM.map((option) => ({ ...option, channel: "testing" as const }));
 
 const LISTEN_LOCAL = "127.0.0.1";
 
@@ -395,6 +417,24 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       tls: { enabled: true, server_name: "" },
     }),
     sharedGroups: ["listen", "tls"],
+  },
+  {
+    kind: "inbound",
+    type: "snell",
+    creatable: true,
+    paletteKind: "inbound-snell",
+    minVersion: "1.14",
+    channel: "testing",
+    // `version` + `psk` are ==Required== (inbound/snell.md); the factory defaults to v5 because the
+    // "change-me" scaffold psk is under the 12-byte minimum v6 enforces.
+    requiredFields: ["version", "psk"],
+    factory: (tag) => ({ type: "snell", tag, listen: LISTEN_LOCAL, listen_port: 2080, version: 5, psk: "change-me" }),
+    sharedGroups: ["listen"],
+    fields: [
+      { path: ["version"], type: "enum", numeric: true, doc: "inbound/snell.md", enum: SNELL_INBOUND_VERSION_ENUM, emptyLabel: "(unset — required)" },
+      { path: ["obfs_mode"], type: "enum", doc: "inbound/snell.md", enum: SNELL_OBFS_MODE_ENUM, label: "Obfs mode (v5)", emptyLabel: "(default — none)" },
+      { path: ["mode"], type: "enum", doc: "inbound/snell.md", enum: SNELL_SHAPING_MODE_ENUM, label: "Shaping mode (v6)", emptyLabel: "(default)" },
+    ],
   },
   {
     kind: "inbound",
@@ -752,6 +792,38 @@ export const SCHEMA_ROWS: SchemaRow[] = [
   },
   {
     kind: "outbound",
+    type: "snell",
+    creatable: true,
+    paletteKind: "snell-out",
+    minVersion: "1.14",
+    channel: "testing",
+    proxy: true,
+    // `version` + `psk` are ==Required== (outbound/snell.md); v4 default matches the inbound scaffold's
+    // v5 (identical wire protocol) and tolerates the short "change-me" psk that v6 would reject.
+    requiredFields: ["version", "psk"],
+    factory: (tag) => ({ type: "snell", tag, server: LISTEN_LOCAL, server_port: 1080, version: 4, psk: "change-me" }),
+    sharedGroups: ["dial"],
+    fields: [
+      { path: ["version"], type: "enum", numeric: true, doc: "outbound/snell.md", enum: SNELL_OUTBOUND_VERSION_ENUM, emptyLabel: "(unset — required)" },
+      { path: ["network"], type: "enum", enum: SNELL_NETWORK_ENUM, doc: "outbound/snell.md" },
+      { path: ["obfs_mode"], type: "enum", doc: "outbound/snell.md", enum: SNELL_OBFS_MODE_ENUM, label: "Obfs mode (v4)", emptyLabel: "(default — none)" },
+      { path: ["mode"], type: "enum", doc: "outbound/snell.md", enum: SNELL_SHAPING_MODE_ENUM, label: "Shaping mode (v6)", emptyLabel: "(default)" },
+    ],
+  },
+  {
+    kind: "outbound",
+    type: "bridge",
+    creatable: true,
+    paletteKind: "bridge-out",
+    minVersion: "1.14",
+    channel: "testing",
+    // The L3 counterpart of `direct` (outbound/bridge.md): no dial fields, no server — it egresses raw
+    // TCP/UDP/ICMP out of a network interface, fed by pre-match `route` actions from TUN/WG/Tailscale.
+    factory: (tag) => ({ type: "bridge", tag, interface: "" }),
+    sharedGroups: [],
+  },
+  {
+    kind: "outbound",
     type: "tor",
     creatable: true,
     paletteKind: "tor-out",
@@ -1072,6 +1144,53 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     sharedGroups: ["listen", "tls", "http2"],
   },
 
+  {
+    kind: "service",
+    type: "api",
+    creatable: true,
+    paletteKind: "service-api",
+    minVersion: "1.14",
+    channel: "testing",
+    // 9091 avoids colliding with the ssm-api scaffold's 9090 when both control planes coexist.
+    factory: (tag) => ({ type: "api", tag, listen: LISTEN_LOCAL, listen_port: 9091, secret: "" }),
+    sharedGroups: ["listen", "tls"],
+  },
+  {
+    kind: "service",
+    type: "usbip-server",
+    creatable: true,
+    paletteKind: "service-usbip-server",
+    minVersion: "1.14",
+    channel: "testing",
+    // listen_port defaults to 3240 upstream (service/usbip-server.md); seeded so the port is visible.
+    factory: (tag) => ({ type: "usbip-server", tag, listen: LISTEN_LOCAL, listen_port: 3240, devices: [] }),
+    sharedGroups: ["listen"],
+    fields: [
+      {
+        path: ["provider"],
+        type: "enum",
+        doc: "service/usbip-server.md",
+        enum: [
+          { value: "default", channel: "testing" },
+          { value: "dynamic", channel: "testing" },
+        ],
+        emptyLabel: "(default — config-selected devices)",
+      },
+    ],
+  },
+  {
+    kind: "service",
+    type: "usbip-client",
+    creatable: true,
+    paletteKind: "service-usbip-client",
+    minVersion: "1.14",
+    channel: "testing",
+    requiredFields: ["server"],
+    // Dial fields: only `detour` takes effect (service/usbip-client.md).
+    factory: (tag) => ({ type: "usbip-client", tag, server: "", server_port: 3240, devices: [] }),
+    sharedGroups: ["dial"],
+  },
+
   // ── Rule sets ──────────────────────────────────────────────────────────────────────────────────
   {
     kind: "rule-set",
@@ -1116,6 +1235,15 @@ export function schemaRow(kind: SchemaEntityKind, type: string): SchemaRow | und
 
 export function rowsForKind(kind: SchemaEntityKind): SchemaRow[] {
   return SCHEMA_ROWS.filter((row) => row.kind === kind);
+}
+
+/**
+ * True when the TYPE only exists on the testing channel (SchemaRow.channel === "testing"). Single
+ * source for the palette/store creation gates, so a new testing-only type is one row edit instead of
+ * another hardcoded name in useProjectStore (the old cloudflared / hysteria-realm literals).
+ */
+export function isTestingOnlyType(kind: SchemaEntityKind, type: string | null | undefined): boolean {
+  return Boolean(type && schemaRow(kind, type)?.channel === "testing");
 }
 
 /** Creatable type list for a kind, in palette/CREATABLE order (drives protocols.ts CREATABLE_*). */

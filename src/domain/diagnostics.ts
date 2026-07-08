@@ -101,6 +101,17 @@ function isIpv6Cidr(value: string): boolean {
  *  rules that match on a rule-set's IPs without match_response (deprecated 1.14, removed 1.16). Remote/
  *  local content is opaque, so fall back to the conventional `geoip` naming; inline rule-sets are read
  *  directly. */
+// snell v6 replaces obfs with traffic shaping and enforces a 12–255 BYTE psk. On the INBOUND this is
+// a check-time FATAL ("snell: psk length must be between 12 and 255 bytes", binary-verified on
+// 1.14.0-alpha.40); the OUTBOUND passes check and starts but can never authenticate against a spec-
+// compliant server (fails as "cipher: message authentication failed"), so it is still an error on
+// both sides. v4/v5 accept any non-empty psk (emptiness is the requiredFields check's job).
+function snellV6PskOutOfRange(entity: Record<string, unknown>): boolean {
+  if (entity.version !== 6 || typeof entity.psk !== "string" || entity.psk === "") return false;
+  const bytes = new TextEncoder().encode(entity.psk).length;
+  return bytes < 12 || bytes > 255;
+}
+
 function ruleSetIsIpBased(ruleSet: Record<string, unknown>): boolean {
   const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : "";
   const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
@@ -410,14 +421,19 @@ export function validateConfig(
 
   // Deprecation (run-only — `check` is clean): a remote rule-set with neither http_client nor
   // download_detour downloads via the implicit default outbound, deprecated in sing-box 1.14 and removed
-  // in 1.16. Suppressed when route.default_http_client is set. Emitted once (sing-box logs it once).
+  // in 1.16. Suppressed when route.default_http_client is set, OR when any top-level http_clients[]
+  // entry exists — since alpha.40 the docs pin the fallback order as "default_http_client, else the
+  // FIRST http_clients entry", so a config with http_clients never uses the implicit client.
   if (
     atLeast(version, "1.14") &&
-    (config.route as Record<string, unknown> | undefined)?.default_http_client === undefined
+    (config.route as Record<string, unknown> | undefined)?.default_http_client === undefined &&
+    listItems(config.http_clients).length === 0
   ) {
     const usesImplicit = listItems(config.route?.rule_set).some((rs) => {
       const o = rs as Record<string, unknown>;
-      return o.type === "remote" && o.download_detour === undefined && o.http_client === undefined;
+      // An EMPTY http_client falls back exactly like an absent one (rule-set/index.md: "When empty,
+      // the default HTTP client is used"), so "" must not suppress the deprecation.
+      return o.type === "remote" && o.download_detour === undefined && (o.http_client === undefined || o.http_client === "");
     });
     if (usesImplicit) {
       push(
@@ -584,16 +600,27 @@ export function validateConfig(
         }
       });
     }
-    // naive is Since sing-box 1.13.0 (absent in 1.12); a 1.12 binary rejects it. Type min-version comes
-    // from the shared minVersions table (same source as the canvas badge). Mirrors ccm/ocm.
-    const naiveMin = typeMinVersion("outbound", "naive");
-    if (outbound.type === "naive" && naiveMin && !atLeast(version, naiveMin)) {
+    if (outbound.type === "snell" && snellV6PskOutOfRange(outbound as Record<string, unknown>)) {
       push(
         diagnostics,
         "error",
-        "outbound-naive-version",
+        "outbound-snell-v6-psk-length",
+        `/outbounds/${index}/psk`,
+        `Snell outbound "${outbound.tag}" uses version 6, which requires a psk of 12 to 255 bytes; a psk outside that range can never authenticate (the server side refuses to start with it).`,
+      );
+    }
+    // Outbound TYPE min-version gate, driven by the single-source TYPE_MIN_VERSION table (same source
+    // as the canvas badge) — naive (1.13) plus the 1.14 testing-only types (snell, bridge). The per-type
+    // id shape keeps the historical "outbound-naive-version" the existing tests pin. anytls (1.12) is
+    // dormant: the lowest selectable target is 1.12, so its gate can never fire.
+    const outboundMin = typeof outbound.type === "string" ? typeMinVersion("outbound", outbound.type) : undefined;
+    if (outboundMin && !atLeast(version, outboundMin)) {
+      push(
+        diagnostics,
+        "error",
+        `outbound-${outbound.type}-version`,
         `/outbounds/${index}/type`,
-        `Outbound "${outbound.tag}" (naive) requires sing-box ${naiveMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
+        `Outbound "${outbound.tag}" (${outbound.type}) requires sing-box ${outboundMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
       );
     }
   });
@@ -621,12 +648,16 @@ export function validateConfig(
       );
     }
 
-    const serviceMin = typeMinVersion("service", service.type);
-    if ((service.type === "ccm" || service.type === "ocm") && serviceMin && !atLeast(version, serviceMin)) {
+    // Service TYPE min-version gate, driven by the single-source TYPE_MIN_VERSION table — ccm/ocm
+    // (1.13) plus the 1.14 testing-only services (api, usbip-server, usbip-client). ccm/ocm keep their
+    // historical shared id the existing tests pin; hysteria-realm is covered by its channel gate below
+    // (channel !== testing ⟺ version < 1.14), so it is skipped here to avoid a double diagnostic.
+    const serviceMin = service.type !== "hysteria-realm" ? typeMinVersion("service", service.type) : undefined;
+    if (serviceMin && !atLeast(version, serviceMin)) {
       push(
         diagnostics,
         "error",
-        "service-ccm-ocm-version",
+        service.type === "ccm" || service.type === "ocm" ? "service-ccm-ocm-version" : `service-${service.type}-version`,
         `/services/${index}/type`,
         `Service "${service.tag}" (${service.type}) requires sing-box ${serviceMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
       );
@@ -821,6 +852,59 @@ export function validateConfig(
           "ccm-public-listen",
           `/services/${index}/listen`,
           `CCM service "${service.tag}" listens on a public address (${obj.listen || "empty"}); bind to 127.0.0.1 or require TLS + auth tokens for exposure.`,
+        );
+      }
+    }
+
+    if (service.type === "usbip-server") {
+      const obj = service as Record<string, unknown>;
+      // `devices` is ==Required== with the `default` provider (service/usbip-server.md); with
+      // `dynamic` the devices come from an API client at runtime, so an empty list is fine. The binary
+      // also rejects matches whose fields are all unset — empty strings and zero-valued ids count as
+      // absent ("devices[0]: at least one of busid/vendor_id/product_id/serial is required",
+      // binary-verified on 1.14.0-alpha.40) — so only an effective match satisfies the requirement.
+      const provider = typeof obj.provider === "string" ? obj.provider : "";
+      const devices = Array.isArray(obj.devices) ? (obj.devices as unknown[]) : [];
+      const hasEffectiveMatch = devices.some(
+        (device) =>
+          device !== null &&
+          typeof device === "object" &&
+          Object.values(device as Record<string, unknown>).some(
+            (value) => (typeof value === "string" && value !== "") || (typeof value === "number" && value !== 0),
+          ),
+      );
+      if (provider !== "dynamic" && !hasEffectiveMatch) {
+        push(
+          diagnostics,
+          "error",
+          "usbip-server-devices-required",
+          `/services/${index}/devices`,
+          `USB/IP server "${service.tag}" uses the default provider, which requires at least one device match with a non-empty field (bus_id / vendor_id / product_id / serial) — or set provider to "dynamic".`,
+        );
+      }
+    }
+
+    if (service.type === "api") {
+      const obj = service as Record<string, unknown>;
+      // Mirror of rule-set-implicit-http-client-deprecated for the dashboard downloader (service/api.md
+      // documents the same fallback + deprecation): an enabled dashboard with no explicit http_client
+      // uses default_http_client, else the first http_clients[] entry, else the implicit default client
+      // — deprecated in 1.14, removed in 1.16. Severity stays `warning` (run-only; `check` is clean).
+      const dashboard = obj.dashboard;
+      const dashboardObj = dashboard && typeof dashboard === "object" && !Array.isArray(dashboard) ? (dashboard as Record<string, unknown>) : undefined;
+      const dashboardEnabled = dashboard === true || typeof dashboard === "string" || dashboardObj?.enabled === true;
+      // Empty string = fall back like absent (service/api.md mirrors the rule-set fallback wording).
+      const hasExplicitClient = dashboardObj?.http_client !== undefined && dashboardObj.http_client !== "";
+      const hasDefaultClient =
+        (config.route as Record<string, unknown> | undefined)?.default_http_client !== undefined ||
+        listItems(config.http_clients).length > 0;
+      if (dashboardEnabled && !hasExplicitClient && !hasDefaultClient) {
+        push(
+          diagnostics,
+          "warning",
+          "api-dashboard-implicit-http-client-deprecated",
+          `/services/${index}/dashboard`,
+          `API service "${service.tag}" downloads its dashboard via the implicit default outbound (no dashboard.http_client, no route.default_http_client, no http_clients). This is deprecated in sing-box 1.14 and removed in 1.16.`,
         );
       }
     }
@@ -1744,6 +1828,29 @@ export function validateConfig(
           `Cloudflared inbound "${tag}" requires sing-box 1.14+ (testing); the target is ${version}. sing-box ${version} rejects it ("unknown inbound type: cloudflared").`,
         );
       }
+    }
+    if (inbound.type === "snell" && snellV6PskOutOfRange(inbound as Record<string, unknown>)) {
+      push(
+        diagnostics,
+        "error",
+        "inbound-snell-v6-psk-length",
+        `/inbounds/${index}/psk`,
+        `Snell inbound "${inbound.tag ?? `inbound-${index}`}" uses version 6, which requires a psk of 12 to 255 bytes; sing-box refuses to start outside that range.`,
+      );
+    }
+    // Inbound TYPE min-version gate, driven by the single-source TYPE_MIN_VERSION table (mirrors the
+    // dns-server / outbound / service loops) — covers the 1.14 testing-only snell. cloudflared keeps its
+    // bespoke richer message above, so it is skipped here to avoid a double diagnostic.
+    const inboundMin =
+      typeof inbound.type === "string" && inbound.type !== "cloudflared" ? typeMinVersion("inbound", inbound.type) : undefined;
+    if (inboundMin && !atLeast(version, inboundMin)) {
+      push(
+        diagnostics,
+        "error",
+        `inbound-${inbound.type}-version`,
+        `/inbounds/${index}/type`,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" (${inbound.type}) requires sing-box ${inboundMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
+      );
     }
     if (inbound.type === "vmess") {
       validateVmessLikeUsers(

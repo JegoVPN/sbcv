@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   Ban,
   Bot,
+  Cable,
   Castle,
   Clock,
   Cog,
@@ -24,6 +25,7 @@ import {
   LogIn,
   MessageSquare,
   Network,
+  Plug,
   RadioTower,
   Route,
   Router,
@@ -36,6 +38,8 @@ import {
   Spline,
   Split,
   SquareTerminal,
+  TowerControl,
+  Usb,
   Waypoints,
   Webhook,
 } from "lucide-react";
@@ -95,6 +99,7 @@ const PROXY_MONOGRAM: Record<string, string> = {
   tuic: "TU",
   anytls: "AT",
   shadowtls: "ST",
+  snell: "SN",
 };
 
 // 2-letter monograms for DNS-server transport protocols, per v4 preview.
@@ -122,6 +127,7 @@ const OUTBOUND_FUNCTIONAL: Record<string, string> = {
   urltest: "gauge",
   dns: "signpost",
   ssh: "square-terminal",
+  bridge: "cable",
 };
 
 const DNS_SERVER_FUNCTIONAL: Record<string, string> = {
@@ -139,6 +145,9 @@ const SERVICE_FUNCTIONAL: Record<string, string> = {
   ccm: "message-square",
   ocm: "bot",
   "hysteria-realm": "castle",
+  api: "tower-control",
+  "usbip-server": "usb",
+  "usbip-client": "plug",
 };
 
 // Type-agnostic, kind-level default icon.
@@ -164,6 +173,7 @@ const RENDERERS: Record<string, IconRenderer> = {
   "arrow-up-right": ArrowUpRight,
   ban: Ban,
   bot: Bot,
+  cable: Cable,
   castle: Castle,
   clock: Clock,
   cog: Cog,
@@ -184,6 +194,7 @@ const RENDERERS: Record<string, IconRenderer> = {
   "log-in": LogIn,
   "message-square": MessageSquare,
   network: Network,
+  plug: Plug,
   "radio-tower": RadioTower,
   route: Route,
   router: Router,
@@ -196,6 +207,8 @@ const RENDERERS: Record<string, IconRenderer> = {
   spline: Spline,
   split: Split,
   "square-terminal": SquareTerminal,
+  "tower-control": TowerControl,
+  usb: Usb,
   waypoints: Waypoints,
   webhook: Webhook,
 };

@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const toolsDir = ".tools";
@@ -8,8 +8,8 @@ const binDir = join(toolsDir, "bin");
 
 const binaries = [
   { command: "sing-box-1.12", version: "1.12.25" },
-  { command: "sing-box-stable", version: "1.13.12" },
-  { command: "sing-box-testing", version: "1.14.0-alpha.29" },
+  { command: "sing-box-stable", version: "1.13.14" },
+  { command: "sing-box-testing", version: "1.14.0-alpha.40" },
 ];
 
 // Pinned SHA256 sums for sing-box release tarballs. Keep in sync with
@@ -18,10 +18,10 @@ const binaries = [
 const CHECKSUMS = {
   "1.12.25-linux-amd64":         "a1ec76e2b6b139eb747a1b1ebee7d14b8d4be5a833596cad8070a31ef960301f",
   "1.12.25-darwin-arm64":        "a4a06d507f3f4d951490168d1372fce4c02db7211e88af9da13f93ed98068d5e",
-  "1.13.12-linux-amd64":         "1540533adb3df24f5ad5f14b5c7ca3dbc2401b10a1c1eb278fcadcada47ec6c4",
-  "1.13.12-darwin-arm64":        "43eef86f0ea4a79c3696974f397a963c46a457ee46d1ffac9aa913944a5fc986",
-  "1.14.0-alpha.29-linux-amd64": "610be90f18ab792cafe6557ea07fe3a4b4d1a77625aca0e22b283443d6d0749e",
-  "1.14.0-alpha.29-darwin-arm64":"00705410b6dbf00c62a5ad8d298ef16f0cc051939e958a935161776618ae5ed4",
+  "1.13.14-linux-amd64":         "f48703461a15476951ac4967cdad339d986f4b8096b4eb3ff0829a500502d697",
+  "1.13.14-darwin-arm64":        "73e8967b0fc08e17bce4263ca56ebc394822401a16497a1c4e02316c888202ab",
+  "1.14.0-alpha.40-linux-amd64": "dc44780a1e0afff257f866f330d08c66615772000ade73eae35832ac59db1a37",
+  "1.14.0-alpha.40-darwin-arm64":"131fc6e7547ed425f5c2ee5e95e1b7941756345fef9a29be92055bfa622e24ff",
 };
 
 function platformName() {
@@ -54,9 +54,17 @@ function installBinary({ command, version }) {
   const binaryPath = join(targetDir, "sing-box");
   const linkPath = join(binDir, command);
 
+  // A bare existence check silently kept STALE binaries after a version bump (the pins moved but
+  // .tools/ still held the old release, so test:binaries validated against the wrong sing-box).
+  // Stamp the installed version and reinstall on mismatch.
+  const stampPath = join(targetDir, ".version");
   if (existsSync(linkPath) && existsSync(binaryPath) && !process.env.FORCE_INSTALL_SING_BOX) {
-    console.log(`${command} already installed`);
-    return;
+    const installed = existsSync(stampPath) ? readFileSync(stampPath, "utf8").trim() : "";
+    if (installed === version) {
+      console.log(`${command} ${version} already installed`);
+      return;
+    }
+    console.log(`${command} is ${installed || "unstamped"}, want ${version} — reinstalling`);
   }
 
   rmSync(targetDir, { recursive: true, force: true });
@@ -84,6 +92,7 @@ function installBinary({ command, version }) {
 
   run("tar", ["-xzf", archivePath, "-C", targetDir, "--strip-components=1"]);
   symlinkSync(join("..", command, "sing-box"), linkPath);
+  writeFileSync(stampPath, `${version}\n`);
 }
 
 mkdirSync(binDir, { recursive: true });

@@ -5,9 +5,86 @@ import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields"
 import { JsonField, PlatformBanner, SensitiveTextField } from "./controls";
 import { serviceHandledFields } from "./handledFields";
 import { endpointTags, type InspectorEntity, objectField, outboundTags, type UpdateField } from "./helpers";
+import { SchemaEnumField } from "./schemaEnumField";
 
 // C14 — the service entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "service"` branch.
+
+// USB/IP device-match rows shared by the usbip-server (export selection) and usbip-client (import
+// selection) editors. Within one row all set fields must match; rows union (service/usbip-server.md).
+function UsbipDevicesEditor({
+  devices,
+  onChange,
+  emptyHint,
+  testId,
+}: {
+  devices: Record<string, unknown>[];
+  onChange: (next: Record<string, unknown>[]) => void;
+  emptyHint: string;
+  testId: string;
+}) {
+  const patchDevice = (index: number, patch: Record<string, unknown>) =>
+    onChange(devices.map((device, i) => (i === index ? { ...device, ...patch } : device)));
+  const cleanPatch = (key: string, value: unknown) => ({ [key]: value === "" || value === undefined ? undefined : value });
+  return (
+    <fieldset className="field field--checklist" data-testid={testId}>
+      <legend>Device matches</legend>
+      {devices.length === 0 ? <p className="field__hint">{emptyHint}</p> : null}
+      {devices.map((device, index) => (
+        <div key={index} className="rule-row">
+          <label className="field">
+            <span>Bus ID</span>
+            <input
+              value={String(device.bus_id ?? "")}
+              placeholder="e.g. 1-2"
+              onChange={(event) => patchDevice(index, cleanPatch("bus_id", event.target.value))}
+            />
+          </label>
+          <label className="field">
+            <span>Vendor ID</span>
+            <input
+              type="number"
+              value={typeof device.vendor_id === "number" ? device.vendor_id : ""}
+              onChange={(event) => {
+                const parsed = Number(event.target.value);
+                patchDevice(index, cleanPatch("vendor_id", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed));
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Product ID</span>
+            <input
+              type="number"
+              value={typeof device.product_id === "number" ? device.product_id : ""}
+              onChange={(event) => {
+                const parsed = Number(event.target.value);
+                patchDevice(index, cleanPatch("product_id", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed));
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Serial</span>
+            <input
+              value={String(device.serial ?? "")}
+              onChange={(event) => patchDevice(index, cleanPatch("serial", event.target.value))}
+            />
+          </label>
+          <button
+            type="button"
+            className="icon-danger"
+            onClick={() => onChange(devices.filter((_, i) => i !== index))}
+            aria-label={`Remove device match ${index + 1}`}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button type="button" className="palette-action" onClick={() => onChange([...devices, {}])}>
+        Add device match
+      </button>
+    </fieldset>
+  );
+}
 
 export function ServiceInspector({
   entity,
@@ -583,6 +660,184 @@ export function ServiceInspector({
                   </fieldset>
                 );
               })()}
+            </>
+          ) : null}
+
+          {entityType === "api" ? (
+            <>
+              <PlatformBanner
+                kind="channel"
+                text={
+                  channel === "stable"
+                    ? "Channel gate: service api is testing-only (sing-box 1.14+). The current channel is stable; exporting this node will fail sing-box check."
+                    : "Channel gate: service api is 1.14 testing-only. Stable targets will refuse to load it."
+                }
+              />
+              <SensitiveTextField
+                label="Secret (Bearer token; empty = no auth)"
+                value={String(entity.secret ?? "")}
+                onChange={(next) => updateField(entityRef, "secret", next || undefined)}
+              />
+              <label className="field">
+                <span>CORS allowed origins</span>
+                <textarea
+                  rows={3}
+                  value={Array.isArray(entity.access_control_allow_origin) ? (entity.access_control_allow_origin as string[]).join("\n") : ""}
+                  placeholder={"one origin per line; empty = *"}
+                  onChange={(event) => {
+                    const lines = event.target.value
+                      .split(/\n/)
+                      .map((line) => line.trim())
+                      .filter(Boolean);
+                    updateField(entityRef, "access_control_allow_origin", lines.length ? lines : undefined);
+                  }}
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.access_control_allow_private_network)}
+                  onChange={(event) => updateField(entityRef, "access_control_allow_private_network", event.target.checked || undefined)}
+                />
+                <span>Allow access from private network</span>
+              </label>
+              {(() => {
+                const raw = entity.dashboard;
+                const dashboardObj = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : undefined;
+                // service/api.md: boolean ≡ { enabled }, string ≡ { enabled: true, path } — normalize the
+                // shorthand to the object form on the first structured edit so nothing is lost.
+                const base = dashboardObj ?? (raw === true ? { enabled: true } : typeof raw === "string" ? { enabled: true, path: raw } : {});
+                const enabled = raw === true || typeof raw === "string" || dashboardObj?.enabled === true;
+                const writeDashboard = (patch: Record<string, unknown>) => {
+                  const merged: Record<string, unknown> = { ...base, ...patch };
+                  const cleaned: Record<string, unknown> = {};
+                  for (const [key, value] of Object.entries(merged)) {
+                    if (value === undefined || value === "") continue;
+                    cleaned[key] = value;
+                  }
+                  updateField(entityRef, "dashboard", Object.keys(cleaned).length ? cleaned : undefined);
+                };
+                return (
+                  <fieldset className="field field--checklist" data-testid="api-dashboard">
+                    <legend>Dashboard (served at /dashboard/)</legend>
+                    <label className="toggle-row">
+                      <input
+                        type="checkbox"
+                        checked={enabled}
+                        onChange={(event) => writeDashboard({ enabled: event.target.checked || undefined })}
+                      />
+                      <span>Enable web dashboard</span>
+                    </label>
+                    {enabled ? (
+                      <>
+                        <label className="field">
+                          <span>Path</span>
+                          <input
+                            value={typeof base.path === "string" ? base.path : ""}
+                            placeholder="default ./dashboard"
+                            onChange={(event) => writeDashboard({ path: event.target.value || undefined })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Download URL</span>
+                          <input
+                            value={typeof base.download_url === "string" ? base.download_url : ""}
+                            placeholder="default sing-box-dashboard gh-pages zip"
+                            onChange={(event) => writeDashboard({ download_url: event.target.value || undefined })}
+                          />
+                        </label>
+                        <label className="field">
+                          <span>Update interval</span>
+                          <input
+                            value={typeof base.update_interval === "string" ? base.update_interval : ""}
+                            placeholder="default 1d"
+                            onChange={(event) => writeDashboard({ update_interval: event.target.value || undefined })}
+                          />
+                        </label>
+                        {base.http_client !== undefined && typeof base.http_client !== "string" ? (
+                          <JsonField
+                            label="HTTP Client (object form)"
+                            value={base.http_client}
+                            onChange={(value) => writeDashboard({ http_client: value })}
+                          />
+                        ) : (
+                          <label className="field">
+                            <span>HTTP Client (http_clients tag)</span>
+                            <input
+                              value={typeof base.http_client === "string" ? base.http_client : ""}
+                              placeholder="empty = default_http_client / first http_clients entry"
+                              onChange={(event) => writeDashboard({ http_client: event.target.value || undefined })}
+                            />
+                          </label>
+                        )}
+                      </>
+                    ) : null}
+                  </fieldset>
+                );
+              })()}
+            </>
+          ) : null}
+
+          {entityType === "usbip-server" ? (
+            <>
+              <PlatformBanner
+                kind="channel"
+                text={
+                  channel === "stable"
+                    ? "Channel gate: service usbip-server is testing-only (sing-box 1.14+). The current channel is stable; exporting this node will fail sing-box check."
+                    : "Channel gate: service usbip-server is 1.14 testing-only. Stable targets will refuse to load it."
+                }
+              />
+              <PlatformBanner
+                kind="platform"
+                text="Platform gate: the default provider runs via the CLI on Linux/Windows/macOS only and requires elevated privileges (macOS additionally needs a CGO build with SIP disabled). Not available on iOS."
+              />
+              <SchemaEnumField kind="service" type="usbip-server" field="provider" entity={entity} entityRef={entityRef} updateField={updateField} />
+              <UsbipDevicesEditor
+                devices={Array.isArray(entity.devices) ? (entity.devices as Record<string, unknown>[]) : []}
+                onChange={(next) => updateField(entityRef, "devices", next.length ? next : undefined)}
+                emptyHint="Required with the default provider: add at least one match selecting which local USB devices to export."
+                testId="usbip-server-devices"
+              />
+            </>
+          ) : null}
+
+          {entityType === "usbip-client" ? (
+            <>
+              <PlatformBanner
+                kind="channel"
+                text={
+                  channel === "stable"
+                    ? "Channel gate: service usbip-client is testing-only (sing-box 1.14+). The current channel is stable; exporting this node will fail sing-box check."
+                    : "Channel gate: service usbip-client is 1.14 testing-only. Stable targets will refuse to load it."
+                }
+              />
+              <label className="field">
+                <span>Server (usbip-server address)</span>
+                <input
+                  value={String(entity.server ?? "")}
+                  placeholder="required"
+                  onChange={(event) => updateField(entityRef, "server", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Server Port</span>
+                <input
+                  type="number"
+                  value={typeof entity.server_port === "number" ? entity.server_port : ""}
+                  placeholder="default 3240"
+                  onChange={(event) => {
+                    const parsed = Number(event.target.value);
+                    updateField(entityRef, "server_port", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed);
+                  }}
+                />
+              </label>
+              <UsbipDevicesEditor
+                devices={Array.isArray(entity.devices) ? (entity.devices as Record<string, unknown>[]) : []}
+                onChange={(next) => updateField(entityRef, "devices", next.length ? next : undefined)}
+                emptyHint="Empty = import every exported device."
+                testId="usbip-client-devices"
+              />
             </>
           ) : null}
 

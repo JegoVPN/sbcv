@@ -30,6 +30,7 @@ describe("protocols — CREATABLE_* frozen snapshots (order-preserving)", () => 
       "tuic",
       "hysteria2",
       "anytls",
+      "snell",
       "tun",
       "redirect",
       "tproxy",
@@ -52,6 +53,8 @@ describe("protocols — CREATABLE_* frozen snapshots (order-preserving)", () => 
       "tuic",
       "hysteria2",
       "anytls",
+      "snell",
+      "bridge",
       "tor",
       "ssh",
       "selector",
@@ -78,7 +81,17 @@ describe("protocols — CREATABLE_* frozen snapshots (order-preserving)", () => 
     expect([...CREATABLE_ENDPOINT_TYPES]).toEqual(["wireguard", "tailscale"]);
   });
   it("service", () => {
-    expect([...CREATABLE_SERVICE_TYPES]).toEqual(["derp", "resolved", "ssm-api", "ccm", "ocm", "hysteria-realm"]);
+    expect([...CREATABLE_SERVICE_TYPES]).toEqual([
+      "derp",
+      "resolved",
+      "ssm-api",
+      "ccm",
+      "ocm",
+      "hysteria-realm",
+      "api",
+      "usbip-server",
+      "usbip-client",
+    ]);
   });
   it("rule-set", () => {
     expect([...CREATABLE_RULE_SET_TYPES]).toEqual(["remote", "local", "inline"]);
