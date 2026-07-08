@@ -18,6 +18,9 @@ icon: material/new-box
 or other L3 endpoints via the `route` action in
 [Pre-match](/configuration/shared/pre-match/); L4 connections will be rejected.
 
+Traffic to local addresses of the machine (loopback, or addresses assigned to its
+network interfaces) will be rejected.
+
 ### Structure
 
 ```json

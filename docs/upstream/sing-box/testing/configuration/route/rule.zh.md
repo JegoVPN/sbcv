@@ -467,6 +467,7 @@ icon: material/new-box
 |-------------|--------------------------------|
 | `tailscale` | 匹配 MagicDNS 域名和对端的 allowed IPs |
 | `wireguard` | 匹配对端的 allowed IPs              |
+| `bridge`    | 匹配除本机本地地址外的所有地址               |
 
 #### source_mac_address
 
