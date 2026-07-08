@@ -2611,8 +2611,17 @@ export function validateConfig(
     push(diagnostics, "warning", "no-outbounds", "/outbounds", "No outbounds are configured.");
   }
 
-  const dialDomainStrategyMessage =
-    'Dial field "domain_strategy" is deprecated since sing-box 1.12.0 and scheduled for removal. Migrate to "domain_resolver" (per-entity) or route.default_domain_resolver.';
+  // Legacy dial domain_strategy: deprecated since 1.12; on the CURRENT 1.13/1.14 binaries the check
+  // itself fails ("to continue using this feature, set ENABLE_DEPRECATED_LEGACY_DOMAIN_STRATEGY_OPTIONS
+  // =true", exit 1 — binary-verified on 1.13.14 + 1.14.0-alpha.40; 1.12.25 still warns and passes).
+  // So on a 1.13+ target this is an export-blocking ERROR, on 1.12 it stays the historical warning.
+  // EXCEPTION: dns.servers[] dial fields keep accepting it on every binary (verified: legacy udp server
+  // with domain_strategy passes check on 1.13.14 AND alpha.40) — that emission stays a warning.
+  const dialDomainStrategyRemoved = atLeast(version, "1.13");
+  const dialDomainStrategyLevel = dialDomainStrategyRemoved ? ("error" as const) : ("warning" as const);
+  const dialDomainStrategyMessage = dialDomainStrategyRemoved
+    ? 'Dial field "domain_strategy" is deprecated since sing-box 1.12.0 and the 1.13/1.14 binaries refuse it (sing-box check fails unless ENABLE_DEPRECATED_LEGACY_DOMAIN_STRATEGY_OPTIONS=true). Migrate to "domain_resolver" (per-entity) or route.default_domain_resolver.'
+    : 'Dial field "domain_strategy" is deprecated since sing-box 1.12.0 and scheduled for removal. Migrate to "domain_resolver" (per-entity) or route.default_domain_resolver.';
   const hasDomainStrategy = (entity: unknown): boolean => {
     if (!entity || typeof entity !== "object") return false;
     const value = (entity as Record<string, unknown>).domain_strategy;
@@ -2623,7 +2632,7 @@ export function validateConfig(
     const tag = outbound.tag ?? `outbound-${index}`;
     push(
       diagnostics,
-      "warning",
+      dialDomainStrategyLevel,
       "dial-domain-strategy-deprecated",
       `/outbounds/${index}/domain_strategy`,
       `Outbound "${tag}" — ${dialDomainStrategyMessage}`,
@@ -2634,10 +2643,11 @@ export function validateConfig(
     const tag = server.tag ?? `dns-server-${index}`;
     push(
       diagnostics,
+      // DNS-server dial fields still accept domain_strategy on every pinned binary (see above).
       "warning",
       "dial-domain-strategy-deprecated",
       `/dns/servers/${index}/domain_strategy`,
-      `DNS server "${tag}" — ${dialDomainStrategyMessage}`,
+      `DNS server "${tag}" — Dial field "domain_strategy" is deprecated since sing-box 1.12.0 and scheduled for removal. Migrate to "domain_resolver" (per-entity) or route.default_domain_resolver.`,
     );
   });
   endpoints.forEach((endpoint, index) => {
@@ -2645,7 +2655,7 @@ export function validateConfig(
     const tag = endpoint.tag ?? `endpoint-${index}`;
     push(
       diagnostics,
-      "warning",
+      dialDomainStrategyLevel,
       "dial-domain-strategy-deprecated",
       `/endpoints/${index}/domain_strategy`,
       `Endpoint "${tag}" — ${dialDomainStrategyMessage}`,
@@ -2654,12 +2664,35 @@ export function validateConfig(
   if (hasDomainStrategy(config.ntp)) {
     push(
       diagnostics,
-      "warning",
+      dialDomainStrategyLevel,
       "dial-domain-strategy-deprecated",
       "/ntp/domain_strategy",
       `NTP — ${dialDomainStrategyMessage}`,
     );
   }
+
+  // clash_mode must be a single string mode — the reF1nd fork accepts arrays here, but vanilla
+  // sing-box's strict decoder rejects them at load ("cannot unmarshal array into … clash_mode of type
+  // string", binary-verified on 1.14.0-alpha.40 for both route and DNS rules). Recurses into logical
+  // sub-rules, where imported fork configs commonly carry the same shape.
+  const checkClashModeType = (rule: unknown, path: string, owner: string) => {
+    if (!rule || typeof rule !== "object") return;
+    const obj = rule as Record<string, unknown>;
+    if (obj.clash_mode !== undefined && typeof obj.clash_mode !== "string") {
+      push(
+        diagnostics,
+        "error",
+        "rule-clash-mode-type",
+        `${path}/clash_mode`,
+        `${owner} clash_mode must be a single string mode (e.g. "direct"); sing-box's strict decoder rejects other shapes ("cannot unmarshal … clash_mode of type string").`,
+      );
+    }
+    if (Array.isArray(obj.rules)) {
+      (obj.rules as unknown[]).forEach((sub, subIndex) => checkClashModeType(sub, `${path}/rules/${subIndex}`, owner));
+    }
+  };
+  listItems(config.route?.rules).forEach((rule, index) => checkClashModeType(rule, `/route/rules/${index}`, `Route rule #${index + 1}`));
+  listItems(config.dns?.rules).forEach((rule, index) => checkClashModeType(rule, `/dns/rules/${index}`, `DNS rule #${index + 1}`));
 
   if (channel === "testing") {
     const tlsAcmeMessage =
@@ -2753,6 +2786,14 @@ export function validateConfig(
     );
   });
 
+  // Legacy inbound fields (sniff*/domain_strategy): deprecated since 1.11; the 1.13.14 and
+  // 1.14.0-alpha.40 binaries hard-reject them at decode ("legacy inbound fields are deprecated…",
+  // exit 1 — binary-verified; 1.12.25 still accepts them). Error on 1.13+ targets, warning on 1.12.
+  const legacyInboundRemoved = atLeast(version, "1.13");
+  const legacyInboundLevel = legacyInboundRemoved ? ("error" as const) : ("warning" as const);
+  const legacyInboundSuffix = legacyInboundRemoved
+    ? " The 1.13/1.14 binaries reject legacy inbound fields at load (sing-box check fails)."
+    : "";
   const legacyInboundSniffFields = ["sniff", "sniff_override_destination", "sniff_timeout"] as const;
   const inboundLegacySniffMessage =
     'Inbound-level sniff/sniff_timeout/sniff_override_destination are deprecated since sing-box 1.11.0. Move sniffing to a route rule with action="sniff" (and optional timeout/override_destination).';
@@ -2765,20 +2806,20 @@ export function validateConfig(
       if (obj[field] === undefined) continue;
       push(
         diagnostics,
-        "warning",
+        legacyInboundLevel,
         "inbound-legacy-sniff-deprecated",
         `/inbounds/${index}/${field}`,
-        `Inbound "${tag}" — ${inboundLegacySniffMessage}`,
+        `Inbound "${tag}" — ${inboundLegacySniffMessage}${legacyInboundSuffix}`,
       );
       break;
     }
     if (typeof obj.domain_strategy === "string" && obj.domain_strategy.length > 0) {
       push(
         diagnostics,
-        "warning",
+        legacyInboundLevel,
         "inbound-legacy-domain-strategy-deprecated",
         `/inbounds/${index}/domain_strategy`,
-        `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}`,
+        `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}${legacyInboundSuffix}`,
       );
     }
   });
