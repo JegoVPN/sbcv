@@ -5,10 +5,10 @@ This is the implementation gate for SBC. Do not mark a Library item as writable 
 For the user-facing product interpretation of this matrix, read [sing-box Canvas Configuration Guide](sing-box-canvas-configuration-guide.md).
 For the machine-checkable implementation gap, run `pnpm audit:config-docs` and read [sing-box Config Capability Audit](sing-box-config-capability-audit.md).
 
-Sources read on 2026-05-26:
+Sources read on 2026-05-26; topped up 2026-07-08 for the 1.14.0-alpha.30..40 additions:
 
 - `SagerNet/sing-box` `stable/docs/configuration`: 94 English Markdown docs.
-- `SagerNet/sing-box` `testing/docs/configuration`: 105 English Markdown docs.
+- `SagerNet/sing-box` `testing/docs/configuration`: 111 English Markdown docs.
 - Official configuration `#fields`: `log`, `dns`, `ntp`, `certificate`, `certificate_providers`, `http_clients`, `endpoints`, `inbounds`, `outbounds`, `route`, `services`, `experimental`.
 
 Local source checkout used for this readthrough:
@@ -21,7 +21,13 @@ Testing-only docs versus stable:
 
 - `dns/server/mdns.md`
 - `inbound/cloudflared.md`
+- `inbound/snell.md`
+- `outbound/snell.md`
+- `outbound/bridge.md`
 - `service/hysteria-realm.md`
+- `service/api.md`
+- `service/usbip-server.md`
+- `service/usbip-client.md`
 - `shared/certificate-provider/index.md`
 - `shared/certificate-provider/acme.md`
 - `shared/certificate-provider/tailscale.md`
@@ -106,6 +112,7 @@ Testing-only docs versus stable:
 | `inbound/tuic.md` | stable+testing | chain-node | Inbound node type |
 | `inbound/hysteria2.md` | stable+testing | chain-node | Inbound node type |
 | `inbound/anytls.md` | stable+testing | chain-node | Inbound node type |
+| `inbound/snell.md` | testing-only | chain-node | Inbound node type, testing gated |
 | `inbound/tun.md` | stable+testing | chain-node | Inbound node type |
 | `inbound/redirect.md` | stable+testing | chain-node | Inbound node type |
 | `inbound/tproxy.md` | stable+testing | chain-node | Inbound node type |
@@ -126,6 +133,8 @@ Testing-only docs versus stable:
 | `outbound/tuic.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/hysteria2.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/anytls.md` | stable+testing | chain-node | Outbound node type |
+| `outbound/snell.md` | testing-only | chain-node | Outbound node type, testing gated |
+| `outbound/bridge.md` | testing-only | chain-node | Outbound node type (L3 egress, no dial fields), testing gated |
 | `outbound/tor.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/ssh.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/dns.md` | stable+testing | chain-node | Outbound node type |
@@ -138,6 +147,9 @@ Testing-only docs versus stable:
 | `service/ccm.md` | stable+testing | service-resource | Service type |
 | `service/ocm.md` | stable+testing | service-resource | Service type |
 | `service/hysteria-realm.md` | testing-only | service-resource | Service type, testing gated |
+| `service/api.md` | testing-only | service-resource | Service type, testing gated |
+| `service/usbip-server.md` | testing-only | service-resource | Service type, testing gated |
+| `service/usbip-client.md` | testing-only | service-resource | Service type, testing gated |
 | `shared/listen.md` | stable+testing | embedded-shared-fields | Inbound Inspector only |
 | `shared/dial.md` | stable+testing | embedded-shared-fields | Outbound/Endpoint/DNS Server Inspector only |
 | `shared/tls.md` | stable+testing | embedded-shared-fields | Inbound/Outbound/Endpoint Inspector only |
