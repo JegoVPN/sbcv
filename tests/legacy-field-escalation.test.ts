@@ -76,6 +76,26 @@ describe("legacy inbound fields escalation (decode-FATAL on 1.13+ binaries)", ()
       expect(findings(config, channel, version, "inbound-legacy-domain-strategy-deprecated")[0]?.level, `ds ${version}`).toBe("error");
     }
   });
+
+  it("zero-valued sniff fields stay warnings on 1.13+ — the binaries only reject non-zero values", () => {
+    // Binary-verified: sniff:false / sniff_override_destination:false / sniff_timeout:"0s" all pass
+    // check with exit 0 on 1.13.14 AND alpha.40 (the legacy gate keys on non-zero decoded values).
+    const zeroValued = {
+      inbounds: [
+        { type: "mixed", tag: "z1", listen: "127.0.0.1", listen_port: 1, sniff: false },
+        { type: "mixed", tag: "z2", listen: "127.0.0.1", listen_port: 2, sniff_override_destination: false },
+        { type: "mixed", tag: "z3", listen: "127.0.0.1", listen_port: 3, sniff_timeout: "0s" },
+      ],
+    } as unknown as SingBoxConfig;
+    const hits = findings(zeroValued, "stable", "1.13", "inbound-legacy-sniff-deprecated");
+    expect(hits).toHaveLength(3);
+    for (const hit of hits) expect(hit.level).toBe("warning");
+    // A non-zero timeout IS check-fatal.
+    const nonZero = {
+      inbounds: [{ type: "mixed", tag: "t", listen: "127.0.0.1", listen_port: 4, sniff_timeout: "300ms" }],
+    } as unknown as SingBoxConfig;
+    expect(findings(nonZero, "stable", "1.13", "inbound-legacy-sniff-deprecated")[0]?.level).toBe("error");
+  });
 });
 
 describe("rule clash_mode type gate (fork-style arrays are rejected by vanilla sing-box)", () => {
@@ -102,10 +122,10 @@ describe("rule clash_mode type gate (fork-style arrays are rejected by vanilla s
     for (const hit of hits) expect(hit.level).toBe("error");
   });
 
-  it("silent on string clash_mode", () => {
+  it("silent on string clash_mode — and on null, which all three binaries decode as a no-op", () => {
     const config = {
       outbounds: [{ type: "direct", tag: "direct" }],
-      route: { rules: [{ clash_mode: "direct", outbound: "direct" }] },
+      route: { rules: [{ clash_mode: "direct", outbound: "direct" }, { clash_mode: null, outbound: "direct" }] },
     } as unknown as SingBoxConfig;
     expect(validateConfig(config, "testing", "1.14").filter((d) => d.code === "rule-clash-mode-type")).toEqual([]);
   });

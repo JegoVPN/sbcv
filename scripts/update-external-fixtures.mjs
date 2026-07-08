@@ -7,7 +7,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(root, "..");
 const outputDir = join(repoRoot, "fixtures", "external");
 const fetchTimeoutMs = 15_000;
-// 320 comfortably covers the checked-in corpus (282 after the pk-box ingest) — a FULL refresh with a
+// 320 comfortably covers the checked-in corpus (237 after the pk-box ingest) — a FULL refresh with a
 // cap below the committed manifest size would silently truncate the corpus back down.
 const maxAcceptedFixtures = Number(process.env.MAX_EXTERNAL_FIXTURES ?? 320);
 const maxAcceptedPerRepo = Number(process.env.MAX_EXTERNAL_FIXTURES_PER_REPO ?? 30);
@@ -332,6 +332,10 @@ async function main() {
   if (appendMode && targetRepoNames.length === 0) {
     throw new Error("--append requires at least one --repo; a full rebuild must not run in append mode.");
   }
+  if (!appendMode && targetRepoNames.length > 0) {
+    // Without this guard, `--repo X` alone would wipe the whole corpus and rebuild only X.
+    throw new Error("--repo requires --append; a full rebuild ignores repo filters and would drop every other repo's fixtures.");
+  }
 
   const manifest = [];
   const rejected = [];
@@ -377,7 +381,12 @@ async function main() {
     }
 
     for (const candidate of candidates) {
-      if (manifest.length >= maxAcceptedFixtures) break sourceLoop;
+      if (manifest.length >= maxAcceptedFixtures) {
+        console.warn(
+          `WARN: total fixture cap (${maxAcceptedFixtures}) reached at ${candidate.repo}/${candidate.path} — remaining candidates are skipped WITHOUT rejected.json entries. Raise MAX_EXTERNAL_FIXTURES if this is a real ingest.`,
+        );
+        break sourceLoop;
+      }
       const repoAcceptedCount = acceptedByRepo.get(candidate.repo) ?? 0;
       if (repoAcceptedCount >= repoCap) {
         rejected.push({ source: `${candidate.repo}/${candidate.path}`, reason: "repo-fixture-cap" });

@@ -2678,7 +2678,9 @@ export function validateConfig(
   const checkClashModeType = (rule: unknown, path: string, owner: string) => {
     if (!rule || typeof rule !== "object") return;
     const obj = rule as Record<string, unknown>;
-    if (obj.clash_mode !== undefined && typeof obj.clash_mode !== "string") {
+    // JSON null decodes as a no-op into the Go string field (binary-verified exit 0 on all three), so
+    // only genuinely mistyped shapes (arrays/numbers/bools) are flagged.
+    if (obj.clash_mode !== undefined && obj.clash_mode !== null && typeof obj.clash_mode !== "string") {
       push(
         diagnostics,
         "error",
@@ -2786,15 +2788,20 @@ export function validateConfig(
     );
   });
 
-  // Legacy inbound fields (sniff*/domain_strategy): deprecated since 1.11; the 1.13.14 and
+  // Legacy inbound fields (sniff*/domain_strategy): deprecated since 1.11. The 1.13.14 and
   // 1.14.0-alpha.40 binaries hard-reject them at decode ("legacy inbound fields are deprecated…",
-  // exit 1 — binary-verified; 1.12.25 still accepts them). Error on 1.13+ targets, warning on 1.12.
+  // exit 1) — but ONLY for non-zero values: `sniff:false`, `sniff_override_destination:false` and
+  // `sniff_timeout:"0s"` still pass check on every binary (the Go-side gate keys on non-zero decoded
+  // values; binary-verified). So on 1.13+ a check-fatal VALUE is an error, while zero-valued presence
+  // stays the historical warning. 1.12.25 accepts all of it (warning everywhere).
   const legacyInboundRemoved = atLeast(version, "1.13");
-  const legacyInboundLevel = legacyInboundRemoved ? ("error" as const) : ("warning" as const);
-  const legacyInboundSuffix = legacyInboundRemoved
-    ? " The 1.13/1.14 binaries reject legacy inbound fields at load (sing-box check fails)."
-    : "";
+  const legacyInboundSuffix = " The 1.13/1.14 binaries reject non-zero legacy inbound fields at load (sing-box check fails).";
+  const zeroDuration = /^0+(\.0+)?[a-zµ]*$/;
   const legacyInboundSniffFields = ["sniff", "sniff_override_destination", "sniff_timeout"] as const;
+  const sniffValueIsCheckFatal = (field: (typeof legacyInboundSniffFields)[number], value: unknown): boolean => {
+    if (field === "sniff_timeout") return typeof value === "string" && value.trim() !== "" && !zeroDuration.test(value.trim());
+    return value === true;
+  };
   const inboundLegacySniffMessage =
     'Inbound-level sniff/sniff_timeout/sniff_override_destination are deprecated since sing-box 1.11.0. Move sniffing to a route rule with action="sniff" (and optional timeout/override_destination).';
   const inboundLegacyDomainStrategyMessage =
@@ -2802,24 +2809,27 @@ export function validateConfig(
   listItems(config.inbounds).forEach((inbound, index) => {
     const obj = inbound as Record<string, unknown>;
     const tag = inbound.tag ?? `inbound-${index}`;
-    for (const field of legacyInboundSniffFields) {
-      if (obj[field] === undefined) continue;
+    const present = legacyInboundSniffFields.filter((field) => obj[field] !== undefined);
+    if (present.length > 0) {
+      const fatalField = legacyInboundRemoved ? present.find((field) => sniffValueIsCheckFatal(field, obj[field])) : undefined;
+      const reportField = fatalField ?? present[0]!;
       push(
         diagnostics,
-        legacyInboundLevel,
+        fatalField ? "error" : "warning",
         "inbound-legacy-sniff-deprecated",
-        `/inbounds/${index}/${field}`,
-        `Inbound "${tag}" — ${inboundLegacySniffMessage}${legacyInboundSuffix}`,
+        `/inbounds/${index}/${reportField}`,
+        `Inbound "${tag}" — ${inboundLegacySniffMessage}${fatalField ? legacyInboundSuffix : ""}`,
       );
-      break;
     }
+    // A non-empty string is the only shape the binaries reject (`""` passes check everywhere), so the
+    // existing trigger condition doubles as the check-fatal test.
     if (typeof obj.domain_strategy === "string" && obj.domain_strategy.length > 0) {
       push(
         diagnostics,
-        legacyInboundLevel,
+        legacyInboundRemoved ? "error" : "warning",
         "inbound-legacy-domain-strategy-deprecated",
         `/inbounds/${index}/domain_strategy`,
-        `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}${legacyInboundSuffix}`,
+        `Inbound "${tag}" — ${inboundLegacyDomainStrategyMessage}${legacyInboundRemoved ? legacyInboundSuffix : ""}`,
       );
     }
   });
