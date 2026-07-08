@@ -35,7 +35,8 @@ export const SHARED_DOC_PLACEMENTS: SharedDocPlacement[] = [
   {
     doc: "shared/dial.md",
     group: "dial",
-    owners: ["outbounds[]", "endpoints[]", "dns.servers[]", "ntp", "route", "route.rule_set[]"],
+    // service[usbip-client] carries dial fields since 1.14 (only `detour` takes effect).
+    owners: ["outbounds[]", "endpoints[]", "dns.servers[]", "ntp", "route", "route.rule_set[]", "service[usbip-client]"],
     mode: "embedded-inspector",
   },
   {

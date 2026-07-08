@@ -16,6 +16,8 @@ export const OUTBOUND_PALETTE_TYPES = {
   "tuic-out": "tuic",
   "hysteria2-out": "hysteria2",
   "anytls-out": "anytls",
+  "snell-out": "snell",
+  "bridge-out": "bridge",
   "tor-out": "tor",
   "ssh-out": "ssh",
   "dns-out": "dns",
@@ -42,6 +44,7 @@ export const INBOUND_PALETTE_TYPES = {
   "inbound-tuic": "tuic",
   "inbound-hysteria2": "hysteria2",
   "inbound-anytls": "anytls",
+  "inbound-snell": "snell",
   "inbound-tun": "tun",
   "inbound-redirect": "redirect",
   "inbound-tproxy": "tproxy",
@@ -89,6 +92,9 @@ export const SERVICE_PALETTE_TYPES = {
   "service-ccm": "ccm",
   "service-ocm": "ocm",
   "service-hysteria-realm": "hysteria-realm",
+  "service-api": "api",
+  "service-usbip-server": "usbip-server",
+  "service-usbip-client": "usbip-client",
 } as const;
 
 export const CREATABLE_SERVICE_TYPES: readonly string[] = creatableTypes("service");
@@ -111,6 +117,8 @@ const preferredOutboundTags: Record<string, string> = {
   tuic: "tuic-out",
   hysteria2: "hy2-out",
   anytls: "anytls-out",
+  snell: "snell-out",
+  bridge: "bridge-out",
   tor: "tor-out",
   ssh: "ssh-out",
   dns: "dns-out",
@@ -133,6 +141,7 @@ const preferredInboundTags: Record<string, string> = {
   tuic: "tuic-in",
   hysteria2: "hy2-in",
   anytls: "anytls-in",
+  snell: "snell-in",
   tun: "tun-in",
   redirect: "redirect-in",
   tproxy: "tproxy-in",
@@ -176,6 +185,9 @@ const preferredServiceTags: Record<string, string> = {
   ccm: "ccm",
   ocm: "ocm",
   "hysteria-realm": "hy-realm",
+  api: "api",
+  "usbip-server": "usbip-server",
+  "usbip-client": "usbip-client",
 };
 
 export function outboundTypeForPaletteKind(kind: string): string | undefined {

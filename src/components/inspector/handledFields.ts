@@ -107,6 +107,10 @@ export const inboundHandledFields: ReadonlySet<string> = new Set([
   "interface_name",
   "mtu",
   "strict_route",
+  // snell (1.14 testing): psk + version-gated obfs_mode (v5) / mode (v6) controls.
+  "psk",
+  "obfs_mode",
+  "mode",
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
@@ -176,6 +180,18 @@ export const outboundHandledFields: ReadonlySet<string> = new Set([
   "hop_interval_max",
   "bbr_profile",
   "realm",
+  // snell (1.14 testing): psk / userkey / reuse + version-gated obfs_mode+obfs_host (v4) / mode (v6).
+  "psk",
+  "userkey",
+  "reuse",
+  "obfs_mode",
+  "obfs_host",
+  "mode",
+  // bridge (1.14 testing): L3 egress controls (outbound/bridge.md).
+  "interface",
+  "bridge_name",
+  "iproute2_table_index",
+  "iproute2_rule_index",
   ...dialSharedFields,
   ...quicSharedFields,
 ]);
@@ -222,6 +238,10 @@ export const INLINE_RENDERED_KEYS: ReadonlySet<string> = new Set([
   "stun", "system", "system_interface", "system_interface_name", "timeout", "timestamp", "token", "tolerance", "torrc",
   "udp_over_stream", "udp_relay_mode", "up_mbps", "update_interval", "url", "usages_path", "user", "username",
   "users", "uuid", "verify_client_endpoint", "verify_client_url", "version", "zero_rtt_handshake",
+  // 1.14 catch-up (snell / bridge / api / usbip) — all have real updateField(entityRef, …) literals.
+  "psk", "userkey", "reuse", "obfs_mode", "obfs_host", "mode", "bridge_name", "iproute2_table_index",
+  "iproute2_rule_index", "secret", "access_control_allow_origin", "access_control_allow_private_network",
+  "dashboard", "provider", "devices",
 ]);
 
 // C17: the set of keys a structured control covers for a given kind — the inline-control keys above plus
@@ -350,6 +370,16 @@ export const serviceHandledFields = new Set([
   "stream_receive_window",
   "connection_receive_window",
   "max_concurrent_streams",
+  // api service (1.14 testing): control-plane fields + the dashboard object (service/api.md).
+  "secret",
+  "access_control_allow_origin",
+  "access_control_allow_private_network",
+  "dashboard",
+  // usbip-server / usbip-client (1.14 testing): provider + device matches + client target.
+  "provider",
+  "devices",
+  "server",
+  "server_port",
   ...listenSharedFields,
 ]);
 export const ruleSetHandledFields = new Set(["tag", "type", "format", "url", "path", "update_interval", "download_detour", "http_client", "rules"]);

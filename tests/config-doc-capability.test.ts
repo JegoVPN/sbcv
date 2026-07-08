@@ -242,7 +242,8 @@ describe("shared field docs attach only to valid parent objects", () => {
 
   it.each(CREATABLE_OUTBOUND_TYPES)("outbound/%s shared sections follow the official doc links", (type) => {
     const groups = sharedGroupsForEntity({ kind: "outbound", tag: "out" }, type);
-    if (["block", "selector", "urltest"].includes(type)) {
+    // bridge carries no dial fields by design (outbound/bridge.md: pure L3 egress, no Dial Fields section).
+    if (["block", "selector", "urltest", "bridge"].includes(type)) {
       expect(groups).not.toContain("dial");
     } else {
       expect(groups).toContain("dial");

@@ -58,6 +58,7 @@ import {
   preferredServiceTag,
   serviceTypeForPaletteKind,
 } from "../domain/protocols";
+import { isTestingOnlyType } from "../domain/schemaRegistry";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "../domain/sharedFieldRegistry";
 import { defaultVersionForChannel, targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
@@ -871,9 +872,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         selectedId = "settings:experimental";
       }
       const inboundType = inboundTypeForPaletteKind(kind);
-      // cloudflared is sing-box 1.14+ — creatable on testing only (mirrors the hysteria-realm /
-      // http-client testing gates below and the palette's testing-only itemStatus). (C4 / G3)
-      if (inboundType && (inboundType !== "cloudflared" || state.channel === "testing")) {
+      // Testing-only types (SchemaRow.channel === "testing": cloudflared, snell, …) are creatable on
+      // the testing channel only — table-driven so a new 1.14 type never needs another literal here.
+      // Mirrors the http-client testing gate below and the palette's testing-only itemStatus. (C4 / G3)
+      if (inboundType && (!isTestingOnlyType("inbound", inboundType) || state.channel === "testing")) {
         config = addInbound(config, inboundType, preferredInboundTag(inboundType));
         const created = config.inbounds?.[config.inbounds.length - 1];
         if (created) selectedId = `inbound:${created.tag}`;
@@ -906,7 +908,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
       }
       const serviceType = serviceTypeForPaletteKind(kind);
-      if (serviceType && (serviceType !== "hysteria-realm" || state.channel === "testing")) {
+      if (serviceType && (!isTestingOnlyType("service", serviceType) || state.channel === "testing")) {
         config = addService(config, serviceType, preferredServiceTag(serviceType));
         const created = config.services?.[config.services.length - 1];
         if (created) selectedId = `service:${created.tag}`;
@@ -933,7 +935,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         if (created?.tag) selectedId = `certificate-provider:${created.tag}`;
       }
       const outboundType = outboundTypeForPaletteKind(kind);
-      if (outboundType && outboundType !== "wireguard" && outboundType !== "dns") {
+      if (
+        outboundType &&
+        outboundType !== "wireguard" &&
+        outboundType !== "dns" &&
+        (!isTestingOnlyType("outbound", outboundType) || state.channel === "testing")
+      ) {
         config = addOutbound(config, outboundType, preferredOutboundTag(outboundType));
         const created = config.outbounds?.[config.outbounds.length - 1];
         if (created) {

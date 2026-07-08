@@ -20,6 +20,7 @@ import {
   Server,
   Shield,
   Shuffle,
+  Usb,
   Waypoints,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -206,6 +207,7 @@ const groups: PaletteGroup[] = [
       { label: "TUIC", kind: "inbound-tuic", icon: Plug, docsUrl: docs("inbound/tuic/"), status: "setup" },
       { label: "Hysteria2", kind: "inbound-hysteria2", icon: Plug, docsUrl: docs("inbound/hysteria2/"), status: "setup" },
       { label: "AnyTLS", kind: "inbound-anytls", icon: Shield, docsUrl: docs("inbound/anytls/"), status: "setup" },
+      { label: "Snell", kind: "inbound-snell", icon: Shield, docsUrl: docs("inbound/snell/"), status: "setup" },
       { label: "TUN", kind: "inbound-tun", icon: RadioTower, docsUrl: docs("inbound/tun/"), ready: true },
       { label: "Redirect (Linux / macOS)", kind: "inbound-redirect", icon: GitBranch, docsUrl: docs("inbound/redirect/"), status: "setup" },
       { label: "TProxy (Linux only)", kind: "inbound-tproxy", icon: GitBranch, docsUrl: docs("inbound/tproxy/"), status: "setup" },
@@ -230,6 +232,8 @@ const groups: PaletteGroup[] = [
       { label: "TUIC", kind: "tuic-out", icon: Plug, docsUrl: docs("outbound/tuic/"), status: "setup" },
       { label: "Hysteria2", kind: "hysteria2-out", icon: Plug, docsUrl: docs("outbound/hysteria2/"), status: "setup" },
       { label: "AnyTLS", kind: "anytls-out", icon: Shield, docsUrl: docs("outbound/anytls/"), status: "setup" },
+      { label: "Snell", kind: "snell-out", icon: Shield, docsUrl: docs("outbound/snell/"), status: "setup" },
+      { label: "Bridge (L3)", kind: "bridge-out", icon: Cable, docsUrl: docs("outbound/bridge/"), status: "setup" },
       { label: "Tor", kind: "tor-out", icon: Network, docsUrl: docs("outbound/tor/"), status: "setup" },
       { label: "SSH", kind: "ssh-out", icon: Server, docsUrl: docs("outbound/ssh/"), status: "setup" },
       { label: "DNS", kind: "dns-out", icon: Globe2, docsUrl: docs("outbound/dns/"), status: "docs" },
@@ -263,6 +267,9 @@ const groups: PaletteGroup[] = [
       { label: "CCM", kind: "service-ccm", icon: Server, docsUrl: docs("service/ccm/"), status: "setup" },
       { label: "OCM", kind: "service-ocm", icon: Server, docsUrl: docs("service/ocm/"), status: "setup" },
       { label: "Hysteria Realm", kind: "service-hysteria-realm", icon: Plug, docsUrl: docs("service/hysteria-realm/"), status: "setup" },
+      { label: "API (gRPC control)", kind: "service-api", icon: Server, docsUrl: docs("service/api/"), status: "setup" },
+      { label: "USB/IP Server", kind: "service-usbip-server", icon: Usb, docsUrl: docs("service/usbip-server/"), status: "setup" },
+      { label: "USB/IP Client", kind: "service-usbip-client", icon: Usb, docsUrl: docs("service/usbip-client/"), status: "setup" },
     ],
   },
   {

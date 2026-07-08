@@ -282,6 +282,101 @@ export function OutboundSectionsB({
               </label>
             </fieldset>
           ) : null}
+          {entityType === "snell" ? (
+            <>
+              <SensitiveTextField
+                label="PSK (pre-shared key)"
+                value={String(entity.psk ?? "")}
+                onChange={(next) => updateField(entityRef, "psk", next || undefined)}
+              />
+              <SensitiveTextField
+                label="User Key (multi-user auth, optional)"
+                value={String(entity.userkey ?? "")}
+                onChange={(next) => updateField(entityRef, "userkey", next || undefined)}
+              />
+              <SchemaEnumField kind="outbound" type="snell" field="version" entity={entity} entityRef={entityRef} updateField={updateField} />
+              <SchemaEnumField kind="outbound" type="snell" field="network" entity={entity} entityRef={entityRef} updateField={updateField} />
+              {/* obfs_mode / obfs_host are v4-only, mode is v6-only (outbound/snell.md). */}
+              {entity.version === 4 ? (
+                <>
+                  <SchemaEnumField kind="outbound" type="snell" field="obfs_mode" entity={entity} entityRef={entityRef} updateField={updateField} />
+                  {entity.obfs_mode === "http" ? (
+                    <label className="field">
+                      <span>Obfs Host</span>
+                      <input
+                        value={typeof entity.obfs_host === "string" ? entity.obfs_host : ""}
+                        placeholder="default bing.com"
+                        onChange={(event) => updateField(entityRef, "obfs_host", event.target.value || undefined)}
+                      />
+                    </label>
+                  ) : null}
+                </>
+              ) : null}
+              {entity.version === 6 ? (
+                <>
+                  <SchemaEnumField kind="outbound" type="snell" field="mode" entity={entity} entityRef={entityRef} updateField={updateField} />
+                  <p className="field__hint">Version 6 requires a psk of 12 to 255 bytes.</p>
+                </>
+              ) : null}
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(entity.reuse)}
+                  onChange={(event) => updateField(entityRef, "reuse", event.target.checked || undefined)}
+                />
+                <span>Reuse connections (Snell v2 CONNECT)</span>
+              </label>
+            </>
+          ) : null}
+          {entityType === "bridge" ? (
+            <fieldset className="field field--checklist" data-testid="bridge-l3">
+              <legend>L3 bridge</legend>
+              <p className="field__hint">
+                Forwards TCP/UDP/ICMP at L3 from TUN / WireGuard / Tailscale via pre-match route actions;
+                L4 connections are rejected. Requires privileges.
+              </p>
+              <label className="field">
+                <span>Interface</span>
+                <input
+                  value={typeof entity.interface === "string" ? entity.interface : ""}
+                  placeholder="(default interface)"
+                  onChange={(event) => updateField(entityRef, "interface", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>Bridge TUN name prefix</span>
+                <input
+                  value={typeof entity.bridge_name === "string" ? entity.bridge_name : ""}
+                  placeholder="default bridge (not effective on Apple)"
+                  onChange={(event) => updateField(entityRef, "bridge_name", event.target.value || undefined)}
+                />
+              </label>
+              <label className="field">
+                <span>iproute2 table index (Linux)</span>
+                <input
+                  type="number"
+                  value={typeof entity.iproute2_table_index === "number" ? entity.iproute2_table_index : ""}
+                  placeholder="default 2200 + instance index"
+                  onChange={(event) => {
+                    const parsed = Number(event.target.value);
+                    updateField(entityRef, "iproute2_table_index", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed);
+                  }}
+                />
+              </label>
+              <label className="field">
+                <span>iproute2 rule index (Linux)</span>
+                <input
+                  type="number"
+                  value={typeof entity.iproute2_rule_index === "number" ? entity.iproute2_rule_index : ""}
+                  placeholder="default 100"
+                  onChange={(event) => {
+                    const parsed = Number(event.target.value);
+                    updateField(entityRef, "iproute2_rule_index", event.target.value === "" || !Number.isFinite(parsed) ? undefined : parsed);
+                  }}
+                />
+              </label>
+            </fieldset>
+          ) : null}
           {entityType === "hysteria2" ? (
             (() => {
               const obfs = objectField(entity.obfs);

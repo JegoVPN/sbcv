@@ -127,6 +127,15 @@ const INBOUND_USER_SCHEMAS: Record<string, InboundUserSchema> = {
     ],
     defaultUser: (n) => ({ name: `user${n}`, password: "" }),
   },
+  snell: {
+    // Optional multi-user mode (inbound/snell.md): each entry authenticates with its own userkey
+    // while the top-level psk stays the server key. `name` is optional (log labels only).
+    fields: [
+      { key: "name", label: "Name" },
+      { key: "userkey", label: "User Key", sensitive: true },
+    ],
+    defaultUser: (n) => ({ name: `user${n}`, userkey: "" }),
+  },
 };
 
 export type InboundSectionProps = {
@@ -192,6 +201,26 @@ export function InboundSectionsB({
             // INBOUND uses the modern method set (2022 + AEAD + none); stream ciphers are outbound-only
             // and rejected by the inbound (inbound/shadowsocks.md). The set lives in SS_METHOD_MODERN_ENUM.
             <SchemaEnumField kind="inbound" type="shadowsocks" field="method" entity={entity} entityRef={entityRef} updateField={updateField} />
+          ) : null}
+          {entityType === "snell" ? (
+            <>
+              <SensitiveTextField
+                label="PSK (pre-shared key)"
+                value={String(entity.psk ?? "")}
+                onChange={(next) => updateField(entityRef, "psk", next || undefined)}
+              />
+              <SchemaEnumField kind="inbound" type="snell" field="version" entity={entity} entityRef={entityRef} updateField={updateField} />
+              {/* obfs_mode is v5-only, mode is v6-only (inbound/snell.md) — show the arm the version selects. */}
+              {entity.version === 5 ? (
+                <SchemaEnumField kind="inbound" type="snell" field="obfs_mode" entity={entity} entityRef={entityRef} updateField={updateField} />
+              ) : null}
+              {entity.version === 6 ? (
+                <>
+                  <SchemaEnumField kind="inbound" type="snell" field="mode" entity={entity} entityRef={entityRef} updateField={updateField} />
+                  <p className="field__hint">Version 6 requires a psk of 12 to 255 bytes.</p>
+                </>
+              ) : null}
+            </>
           ) : null}
           {entityType === "mixed" || entityType === "http" || entityType === "socks" ? (
             <label className="toggle-row" data-testid="inbound-set-system-proxy">

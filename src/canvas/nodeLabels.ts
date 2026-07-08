@@ -46,6 +46,9 @@ export const typeLabels: Record<string, string> = {
   derp: "DERP",
   ccm: "CCM",
   ocm: "OCM",
+  api: "API",
+  "usbip-server": "USB/IP Server",
+  "usbip-client": "USB/IP Client",
   ntp: "NTP",
   // notice-node summary types (graph.ts) — acronym-correct so they don't read "Dns Rules".
   "route-rules": "Route Rules",
@@ -117,6 +120,9 @@ const NODE_BADGES: Record<string, NodeBadge> = {
   // the Android/iOS apps too (via the platform VPN API), so a "desktop only" badge would mislead.
   "inbound:tproxy": { label: "Linux only", tone: "platform", title: "tproxy is only supported on Linux" },
   "inbound:redirect": { label: "Linux / macOS", tone: "platform", title: "redirect is only supported on Linux and macOS" },
+  // bridge is not OS-locked like tproxy, but it always needs elevated privileges (outbound/bridge.md:
+  // Linux, macOS, rooted Android, jailbroken iOS) — surfaced as a platform-tone badge.
+  "outbound:bridge": { label: "privileged", tone: "platform", title: "bridge requires privileges (Linux, macOS, rooted Android, jailbroken iOS)" },
 };
 
 export function nodeBadge(kind: string, type: string, targetVersion?: string): NodeBadge | null {
