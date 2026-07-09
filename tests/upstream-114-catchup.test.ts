@@ -198,6 +198,31 @@ describe("1.14 catch-up — hysteria2 realm port_mapping requires IPv4 (alpha.41
       expect(codes(mk(realm, "outbounds"), "testing", "1.14", "error")).not.toContain(CODE);
     }
   });
+
+  it("realm.ip_version accepts only 4/6 — other numbers error on both sides (binary: 'invalid IP version: 5')", () => {
+    const INVALID = "hysteria2-realm-ip-version-invalid";
+    const bad = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 5 };
+    expect(codes(mk(bad, "outbounds"), "testing", "1.14", "error")).toContain(INVALID);
+    expect(codes(mk(bad, "inbounds"), "testing", "1.14", "error")).toContain(INVALID);
+    const zero = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 0 };
+    expect(codes(mk(zero, "outbounds"), "testing", "1.14", "error")).not.toContain(INVALID);
+  });
+
+  it("inbound realm.ip_version must match the listen family (binary-verified conflict FATALs)", () => {
+    const LISTEN = "hysteria2-realm-ip-version-listen-conflict";
+    const mkIn = (listen: string, ip_version: number) =>
+      ({
+        inbounds: [{ type: "hysteria2", tag: "h", listen, listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "e" }, realm: { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version } }],
+      }) as unknown as SingBoxConfig;
+    // conflicts: v4 listen + 6 (the factory default listen!), non-unspecified v6 listen + 4
+    expect(codes(mkIn("127.0.0.1", 6), "testing", "1.14", "error")).toContain(LISTEN);
+    expect(codes(mkIn("0.0.0.0", 6), "testing", "1.14", "error")).toContain(LISTEN);
+    expect(codes(mkIn("::1", 4), "testing", "1.14", "error")).toContain(LISTEN);
+    // compatible: :: covers both families; matching families are fine
+    expect(codes(mkIn("::", 6), "testing", "1.14", "error")).not.toContain(LISTEN);
+    expect(codes(mkIn("::", 4), "testing", "1.14", "error")).not.toContain(LISTEN);
+    expect(codes(mkIn("127.0.0.1", 4), "testing", "1.14", "error")).not.toContain(LISTEN);
+  });
 });
 
 describe("1.14 catch-up — factory goldens (S3 delegation guard extension)", () => {
