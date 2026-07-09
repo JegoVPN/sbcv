@@ -121,8 +121,8 @@ const NODE_BADGES: Record<string, NodeBadge> = {
   "inbound:tproxy": { label: "Linux only", tone: "platform", title: "tproxy is only supported on Linux" },
   "inbound:redirect": { label: "Linux / macOS", tone: "platform", title: "redirect is only supported on Linux and macOS" },
   // bridge is not OS-locked like tproxy, but it always needs elevated privileges (outbound/bridge.md:
-  // Linux, macOS, rooted Android, jailbroken iOS) — surfaced as a platform-tone badge.
-  "outbound:bridge": { label: "privileged", tone: "platform", title: "bridge requires privileges (Linux, macOS, rooted Android, jailbroken iOS)" },
+  // Linux, macOS, Windows since 1.14.0-alpha.41 via WinDivert, rooted Android, jailbroken iOS).
+  "outbound:bridge": { label: "privileged", tone: "platform", title: "bridge requires privileges (Linux, macOS, Windows, rooted Android, jailbroken iOS)" },
 };
 
 export function nodeBadge(kind: string, type: string, targetVersion?: string): NodeBadge | null {

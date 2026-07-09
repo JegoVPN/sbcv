@@ -101,6 +101,19 @@ function isIpv6Cidr(value: string): boolean {
  *  rules that match on a rule-set's IPs without match_response (deprecated 1.14, removed 1.16). Remote/
  *  local content is opaque, so fall back to the conventional `geoip` naming; inline rule-sets are read
  *  directly. */
+// hysteria2 realm (1.14): port_mapping maintains a UPnP/NAT-PMP mapping and requires IPv4 — enabling it
+// together with realm.ip_version 6 is a check-time FATAL ("port mapping requires IPv4", binary-verified
+// on 1.14.0-alpha.41). Symmetric on inbound and outbound.
+function hysteria2RealmPortMappingConflict(entity: Record<string, unknown>): boolean {
+  const realm = entity.realm;
+  if (!realm || typeof realm !== "object" || Array.isArray(realm)) return false;
+  const obj = realm as Record<string, unknown>;
+  const portMapping = obj.port_mapping;
+  const enabled =
+    !!portMapping && typeof portMapping === "object" && !Array.isArray(portMapping) && (portMapping as Record<string, unknown>).enabled === true;
+  return enabled && obj.ip_version === 6;
+}
+
 // snell v6 replaces obfs with traffic shaping and enforces a 12–255 BYTE psk. On the INBOUND this is
 // a check-time FATAL ("snell: psk length must be between 12 and 255 bytes", binary-verified on
 // 1.14.0-alpha.40); the OUTBOUND passes check and starts but can never authenticate against a spec-
@@ -1710,6 +1723,15 @@ export function validateConfig(
           );
         }
       }
+      if (hysteria2RealmPortMappingConflict(obj)) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-port-mapping-requires-ipv4",
+          `/outbounds/${index}/realm/port_mapping`,
+          `Hysteria2 outbound "${tag}" enables realm.port_mapping with realm.ip_version 6 — port mapping requires IPv4 and sing-box refuses to start ("port mapping requires IPv4").`,
+        );
+      }
     }
     if (channel === "stable" && outbound.type === "hysteria2") {
       const obj = outbound as Record<string, unknown>;
@@ -1926,6 +1948,15 @@ export function validateConfig(
     // outbound-only port-hopping field that testing ALSO rejects on an inbound, so it is not "testing-only";
     // the W9 unknown-field linter already errors it on every channel (gating it would double-report with a
     // misleading "valid on testing" message — an M1-class false gate).
+    if (inbound.type === "hysteria2" && hysteria2RealmPortMappingConflict(inbound as Record<string, unknown>)) {
+      push(
+        diagnostics,
+        "error",
+        "hysteria2-realm-port-mapping-requires-ipv4",
+        `/inbounds/${index}/realm/port_mapping`,
+        `Inbound "${inbound.tag ?? `inbound-${index}`}" (hysteria2) enables realm.port_mapping with realm.ip_version 6 — port mapping requires IPv4 and sing-box refuses to start ("port mapping requires IPv4").`,
+      );
+    }
     if (channel === "stable" && inbound.type === "hysteria2") {
       const obj = inbound as Record<string, unknown>;
       const label = `Inbound "${inbound.tag ?? `inbound-${index}`}"`;

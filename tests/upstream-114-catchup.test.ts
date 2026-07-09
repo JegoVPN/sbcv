@@ -173,6 +173,33 @@ describe("1.14 catch-up — implicit HTTP client deprecation (dashboard + rule-s
   });
 });
 
+describe("1.14 catch-up — hysteria2 realm port_mapping requires IPv4 (alpha.41, binary-verified FATAL)", () => {
+  const CODE = "hysteria2-realm-port-mapping-requires-ipv4";
+  const mk = (realm: Record<string, unknown>, side: "inbounds" | "outbounds") =>
+    ({
+      [side]: [
+        side === "outbounds"
+          ? { type: "hysteria2", tag: "h", password: "p", tls: { enabled: true, server_name: "e" }, realm }
+          : { type: "hysteria2", tag: "h", listen: "127.0.0.1", listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "e" }, realm },
+      ],
+    }) as unknown as SingBoxConfig;
+
+  it("errors on ip_version 6 + enabled port_mapping, both sides", () => {
+    const realm = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 6, port_mapping: { enabled: true } };
+    expect(codes(mk(realm, "outbounds"), "testing", "1.14", "error")).toContain(CODE);
+    expect(codes(mk(realm, "inbounds"), "testing", "1.14", "error")).toContain(CODE);
+  });
+
+  it("silent on ip_version 4 + port_mapping, and on port_mapping without ip_version", () => {
+    const v4 = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 4, port_mapping: { enabled: true } };
+    const noVersion = { server_url: "https://r.example.com", token: "t", realm_id: "r", port_mapping: { enabled: true } };
+    const disabled = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 6, port_mapping: { enabled: false } };
+    for (const realm of [v4, noVersion, disabled]) {
+      expect(codes(mk(realm, "outbounds"), "testing", "1.14", "error")).not.toContain(CODE);
+    }
+  });
+});
+
 describe("1.14 catch-up — factory goldens (S3 delegation guard extension)", () => {
   it("inbound snell (v5 + scaffold psk)", () => {
     expect(createInbound("snell", "x")).toEqual({ type: "snell", tag: "x", listen: "127.0.0.1", listen_port: 2080, version: 5, psk: "change-me" });
