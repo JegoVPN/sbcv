@@ -101,6 +101,49 @@ function isIpv6Cidr(value: string): boolean {
  *  rules that match on a rule-set's IPs without match_response (deprecated 1.14, removed 1.16). Remote/
  *  local content is opaque, so fall back to the conventional `geoip` naming; inline rule-sets are read
  *  directly. */
+// hysteria2 realm (1.14): port_mapping maintains a UPnP/NAT-PMP mapping and requires IPv4 — enabling it
+// together with realm.ip_version 6 is a check-time FATAL ("port mapping requires IPv4", binary-verified
+// on 1.14.0-alpha.41). Symmetric on inbound and outbound.
+function realmObject(entity: Record<string, unknown>): Record<string, unknown> | undefined {
+  const realm = entity.realm;
+  if (!realm || typeof realm !== "object" || Array.isArray(realm)) return undefined;
+  return realm as Record<string, unknown>;
+}
+
+function hysteria2RealmPortMappingConflict(entity: Record<string, unknown>): boolean {
+  const obj = realmObject(entity);
+  if (!obj) return false;
+  const portMapping = obj.port_mapping;
+  const enabled =
+    !!portMapping && typeof portMapping === "object" && !Array.isArray(portMapping) && (portMapping as Record<string, unknown>).enabled === true;
+  return enabled && obj.ip_version === 6;
+}
+
+// realm.ip_version accepts 4 or 6 only (0/unset = both); any other number is a check-time FATAL
+// ("invalid IP version: 5", binary-verified on 1.14.0-alpha.41, both sides).
+function hysteria2RealmIpVersionInvalid(entity: Record<string, unknown>): number | undefined {
+  const obj = realmObject(entity);
+  if (!obj) return undefined;
+  const value = obj.ip_version;
+  if (typeof value === "number" && value !== 0 && value !== 4 && value !== 6) return value;
+  return undefined;
+}
+
+// INBOUND realm.ip_version must be compatible with the listen address family — a v4 listen with
+// ip_version 6 (and a non-unspecified v6 listen with ip_version 4) is a check-time FATAL
+// ("realm.ip_version 6 conflicts with listen address 127.0.0.1", binary-verified on 1.14.0-alpha.41).
+// The unspecified v6 listen (::) covers both families, so the 4-arm exempts it.
+function hysteria2RealmListenConflict(entity: Record<string, unknown>): string | undefined {
+  const obj = realmObject(entity);
+  if (!obj) return undefined;
+  const listen = entity.listen;
+  if (typeof listen !== "string" || listen === "") return undefined;
+  const listenIsV6 = listen.includes(":");
+  if (obj.ip_version === 6 && !listenIsV6) return listen;
+  if (obj.ip_version === 4 && listenIsV6 && listen !== "::" && listen !== "0:0:0:0:0:0:0:0") return listen;
+  return undefined;
+}
+
 // snell v6 replaces obfs with traffic shaping and enforces a 12–255 BYTE psk. On the INBOUND this is
 // a check-time FATAL ("snell: psk length must be between 12 and 255 bytes", binary-verified on
 // 1.14.0-alpha.40); the OUTBOUND passes check and starts but can never authenticate against a spec-
@@ -1710,6 +1753,25 @@ export function validateConfig(
           );
         }
       }
+      if (hysteria2RealmPortMappingConflict(obj)) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-port-mapping-requires-ipv4",
+          `/outbounds/${index}/realm/port_mapping`,
+          `Hysteria2 outbound "${tag}" enables realm.port_mapping with realm.ip_version 6 — port mapping requires IPv4 and sing-box refuses to start ("port mapping requires IPv4").`,
+        );
+      }
+      const invalidIpVersion = hysteria2RealmIpVersionInvalid(obj);
+      if (invalidIpVersion !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-ip-version-invalid",
+          `/outbounds/${index}/realm/ip_version`,
+          `Hysteria2 outbound "${tag}" sets realm.ip_version ${invalidIpVersion}; only 4 or 6 are accepted (sing-box refuses to start: "invalid IP version: ${invalidIpVersion}").`,
+        );
+      }
     }
     if (channel === "stable" && outbound.type === "hysteria2") {
       const obj = outbound as Record<string, unknown>;
@@ -1926,6 +1988,39 @@ export function validateConfig(
     // outbound-only port-hopping field that testing ALSO rejects on an inbound, so it is not "testing-only";
     // the W9 unknown-field linter already errors it on every channel (gating it would double-report with a
     // misleading "valid on testing" message — an M1-class false gate).
+    if (inbound.type === "hysteria2") {
+      const obj = inbound as Record<string, unknown>;
+      const label = `Inbound "${inbound.tag ?? `inbound-${index}`}" (hysteria2)`;
+      if (hysteria2RealmPortMappingConflict(obj)) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-port-mapping-requires-ipv4",
+          `/inbounds/${index}/realm/port_mapping`,
+          `${label} enables realm.port_mapping with realm.ip_version 6 — port mapping requires IPv4 and sing-box refuses to start ("port mapping requires IPv4").`,
+        );
+      }
+      const invalidIpVersion = hysteria2RealmIpVersionInvalid(obj);
+      if (invalidIpVersion !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-ip-version-invalid",
+          `/inbounds/${index}/realm/ip_version`,
+          `${label} sets realm.ip_version ${invalidIpVersion}; only 4 or 6 are accepted (sing-box refuses to start: "invalid IP version: ${invalidIpVersion}").`,
+        );
+      }
+      const conflictingListen = hysteria2RealmListenConflict(obj);
+      if (conflictingListen !== undefined) {
+        push(
+          diagnostics,
+          "error",
+          "hysteria2-realm-ip-version-listen-conflict",
+          `/inbounds/${index}/realm/ip_version`,
+          `${label} sets realm.ip_version ${(realmObject(obj)!).ip_version} but listens on ${conflictingListen} — sing-box refuses to start ("realm.ip_version … conflicts with listen address"). Use a matching listen family, or :: to cover both.`,
+        );
+      }
+    }
     if (channel === "stable" && inbound.type === "hysteria2") {
       const obj = inbound as Record<string, unknown>;
       const label = `Inbound "${inbound.tag ?? `inbound-${index}`}"`;

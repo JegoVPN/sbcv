@@ -469,7 +469,7 @@ Match specified outbounds' preferred routes.
 |-------------|----------------------------------------------------|
 | `tailscale` | Match MagicDNS domains and peers' allowed IPs      |
 | `wireguard` | Match peers's allowed IPs                          |
-| `bridge`    | Match all addresses except local addresses of the machine |
+| `bridge`    | Match all addresses except local addresses of the machine, only in [pre-match](/configuration/shared/pre-match/) |
 
 #### source_mac_address
 

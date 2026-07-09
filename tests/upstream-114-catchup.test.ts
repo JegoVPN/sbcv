@@ -173,6 +173,58 @@ describe("1.14 catch-up — implicit HTTP client deprecation (dashboard + rule-s
   });
 });
 
+describe("1.14 catch-up — hysteria2 realm port_mapping requires IPv4 (alpha.41, binary-verified FATAL)", () => {
+  const CODE = "hysteria2-realm-port-mapping-requires-ipv4";
+  const mk = (realm: Record<string, unknown>, side: "inbounds" | "outbounds") =>
+    ({
+      [side]: [
+        side === "outbounds"
+          ? { type: "hysteria2", tag: "h", password: "p", tls: { enabled: true, server_name: "e" }, realm }
+          : { type: "hysteria2", tag: "h", listen: "127.0.0.1", listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "e" }, realm },
+      ],
+    }) as unknown as SingBoxConfig;
+
+  it("errors on ip_version 6 + enabled port_mapping, both sides", () => {
+    const realm = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 6, port_mapping: { enabled: true } };
+    expect(codes(mk(realm, "outbounds"), "testing", "1.14", "error")).toContain(CODE);
+    expect(codes(mk(realm, "inbounds"), "testing", "1.14", "error")).toContain(CODE);
+  });
+
+  it("silent on ip_version 4 + port_mapping, and on port_mapping without ip_version", () => {
+    const v4 = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 4, port_mapping: { enabled: true } };
+    const noVersion = { server_url: "https://r.example.com", token: "t", realm_id: "r", port_mapping: { enabled: true } };
+    const disabled = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 6, port_mapping: { enabled: false } };
+    for (const realm of [v4, noVersion, disabled]) {
+      expect(codes(mk(realm, "outbounds"), "testing", "1.14", "error")).not.toContain(CODE);
+    }
+  });
+
+  it("realm.ip_version accepts only 4/6 — other numbers error on both sides (binary: 'invalid IP version: 5')", () => {
+    const INVALID = "hysteria2-realm-ip-version-invalid";
+    const bad = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 5 };
+    expect(codes(mk(bad, "outbounds"), "testing", "1.14", "error")).toContain(INVALID);
+    expect(codes(mk(bad, "inbounds"), "testing", "1.14", "error")).toContain(INVALID);
+    const zero = { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version: 0 };
+    expect(codes(mk(zero, "outbounds"), "testing", "1.14", "error")).not.toContain(INVALID);
+  });
+
+  it("inbound realm.ip_version must match the listen family (binary-verified conflict FATALs)", () => {
+    const LISTEN = "hysteria2-realm-ip-version-listen-conflict";
+    const mkIn = (listen: string, ip_version: number) =>
+      ({
+        inbounds: [{ type: "hysteria2", tag: "h", listen, listen_port: 443, users: [{ password: "p" }], tls: { enabled: true, server_name: "e" }, realm: { server_url: "https://r.example.com", token: "t", realm_id: "r", ip_version } }],
+      }) as unknown as SingBoxConfig;
+    // conflicts: v4 listen + 6 (the factory default listen!), non-unspecified v6 listen + 4
+    expect(codes(mkIn("127.0.0.1", 6), "testing", "1.14", "error")).toContain(LISTEN);
+    expect(codes(mkIn("0.0.0.0", 6), "testing", "1.14", "error")).toContain(LISTEN);
+    expect(codes(mkIn("::1", 4), "testing", "1.14", "error")).toContain(LISTEN);
+    // compatible: :: covers both families; matching families are fine
+    expect(codes(mkIn("::", 6), "testing", "1.14", "error")).not.toContain(LISTEN);
+    expect(codes(mkIn("::", 4), "testing", "1.14", "error")).not.toContain(LISTEN);
+    expect(codes(mkIn("127.0.0.1", 4), "testing", "1.14", "error")).not.toContain(LISTEN);
+  });
+});
+
 describe("1.14 catch-up — factory goldens (S3 delegation guard extension)", () => {
   it("inbound snell (v5 + scaffold psk)", () => {
     expect(createInbound("snell", "x")).toEqual({ type: "snell", tag: "x", listen: "127.0.0.1", listen_port: 2080, version: 5, psk: "change-me" });

@@ -333,7 +333,8 @@ export function OutboundSectionsB({
               <legend>L3 bridge</legend>
               <p className="field__hint">
                 Forwards TCP/UDP/ICMP at L3 from TUN / WireGuard / Tailscale via pre-match route actions;
-                L4 connections are rejected. Requires privileges.
+                L4 connections are rejected. Requires privileges (Windows needs Administrator since
+                1.14.0-alpha.41). Gate it with a preferred_by: "bridge" route rule.
               </p>
               <label className="field">
                 <span>Interface</span>
