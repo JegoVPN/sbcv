@@ -164,6 +164,7 @@ const KIND_DEFAULT: Record<string, string> = {
   "rule-set": "layers",
   "certificate-provider": "file-key2",
   "http-client": "webhook",
+  "network-namespace": "network",
   settings: "cog",
   notice: "info",
 };

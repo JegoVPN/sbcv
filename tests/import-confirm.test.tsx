@@ -27,6 +27,9 @@ describe("A26 — import safety confirm", () => {
     expect(configHasContent({ experimental: { clash_api: {} } } as unknown as SingBoxConfig)).toBe(true);
     expect(configHasContent({ route: { final: "direct" } } as unknown as SingBoxConfig)).toBe(true);
     expect(configHasContent({ log: { level: "info" } } as unknown as SingBoxConfig)).toBe(true);
+    expect(
+      configHasContent({ network_namespaces: [{ type: "unshare", tag: "netns" }] } as SingBoxConfig),
+    ).toBe(true);
   });
 
   it("confirms before importing over a non-empty config and keeps it on cancel", async () => {

@@ -70,6 +70,10 @@ export function paletteNodeRef(kind: string): { kind: string; type: string } | n
       return { kind: "rule-set", type: "inline" };
     case "http-client":
       return { kind: "http-client", type: "http-client" };
+    case "network-namespace-default":
+      return { kind: "network-namespace", type: "default" };
+    case "network-namespace-unshare":
+      return { kind: "network-namespace", type: "unshare" };
     case "settings-log":
       return { kind: "settings", type: "log" };
     case "settings-ntp":
@@ -182,6 +186,14 @@ const groups: PaletteGroup[] = [
   {
     title: "HTTP Clients",
     items: [{ label: "HTTP Client", kind: "http-client", icon: Globe2, docsUrl: docs("shared/http-client/"), status: "setup" }],
+  },
+  {
+    title: "Network Namespaces",
+    items: [
+      { label: "Overview", kind: "network-namespace", icon: Network, docsUrl: docs("network-namespace/"), status: "docs" },
+      { label: "Default", kind: "network-namespace-default", icon: Network, docsUrl: docs("network-namespace/default/"), status: "gated" },
+      { label: "Unshare", kind: "network-namespace-unshare", icon: Network, docsUrl: docs("network-namespace/unshare/"), status: "gated" },
+    ],
   },
   {
     title: "Endpoints",
@@ -348,6 +360,7 @@ function itemStatus(item: PaletteItem, channel: string, version: string, singlet
   if (item.kind === "inbound-cloudflared" && channel !== "testing") return "gated";
   // http_clients[] is sing-box 1.14+ — creatable on testing, gated on stable.
   if (item.kind === "http-client" && channel !== "testing") return "gated";
+  if (item.kind.startsWith("network-namespace-")) return channel === "testing" ? "setup" : "gated";
   // certificate_providers[] is sing-box 1.14+ — creatable (setup) on testing, gated on stable. (C2)
   // Matches only the real palette items (certificate-provider*), not the reference-only "shared-*" set.
   if (item.kind.startsWith("certificate-provider")) return channel === "testing" ? "setup" : "gated";

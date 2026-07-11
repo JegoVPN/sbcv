@@ -6,6 +6,7 @@ import {
   addEndpoint,
   addHttpClient,
   addInbound,
+  addNetworkNamespace,
   addOutbound,
   addRouteRule,
   addRuleSet,
@@ -288,7 +289,8 @@ function nodeIdForRef(ref: EntityRef): string | null {
     ref.kind === "service" ||
     ref.kind === "rule-set" ||
     ref.kind === "certificate-provider" ||
-    ref.kind === "http-client"
+    ref.kind === "http-client" ||
+    ref.kind === "network-namespace"
   ) {
     return `${ref.kind}:${ref.tag}`;
   }
@@ -309,25 +311,26 @@ function isTaggedNodeKind(kind: string) {
     kind === "service" ||
     kind === "rule-set" ||
     kind === "certificate-provider" ||
-    kind === "http-client"
+    kind === "http-client" ||
+    kind === "network-namespace"
   );
 }
 
-function remapTaggedNodeId(id: string | null, oldTag: string, newTag: string) {
+function remapTaggedNodeId(id: string | null, kind: ReferenceKind, oldTag: string, newTag: string) {
   if (!id) return id;
   const parsed = parseNodeId(id);
-  return isTaggedNodeKind(parsed.kind) && parsed.value === oldTag ? `${parsed.kind}:${newTag}` : id;
+  return isTaggedNodeKind(parsed.kind) && parsed.kind === kind && parsed.value === oldTag ? `${parsed.kind}:${newTag}` : id;
 }
 
 function clearNodeId(id: string | null, deletedId: string | null) {
   return id && deletedId && id === deletedId ? null : id;
 }
 
-function remapTaggedLayout(layout: ProjectLayout, oldTag: string, newTag: string): ProjectLayout {
+function remapTaggedLayout(layout: ProjectLayout, kind: ReferenceKind, oldTag: string, newTag: string): ProjectLayout {
   const nextPositions: ProjectLayout["positions"] = {};
   let changed = false;
   for (const [id, position] of Object.entries(layout.positions)) {
-    const nextId = remapTaggedNodeId(id, oldTag, newTag) ?? id;
+    const nextId = remapTaggedNodeId(id, kind, oldTag, newTag) ?? id;
     if (nextId !== id) changed = true;
     nextPositions[nextId] = position;
   }
@@ -607,6 +610,9 @@ function portNodeType(config: SingBoxConfig, node: { kind: string; value: string
   if (node.kind === "rule-set") return config.route?.rule_set?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "certificate-provider") return config.certificate_providers?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "http-client") return "http-client";
+  if (node.kind === "network-namespace") {
+    return config.network_namespaces?.find((item) => item.tag === node.value)?.type ?? "default";
+  }
   if (node.kind === "route") return "route";
   if (node.kind === "route-rule") return "route-rule";
   if (node.kind === "dns") return "dns";
@@ -918,6 +924,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         config = addHttpClient(config);
         const created = config.http_clients?.[config.http_clients.length - 1];
         if (created?.tag) selectedId = `http-client:${created.tag}`;
+      }
+      const networkNamespaceType =
+        kind === "network-namespace-unshare"
+          ? "unshare"
+          : kind === "network-namespace-default"
+            ? "default"
+            : null;
+      if (networkNamespaceType && state.channel === "testing") {
+        const preferredTag = networkNamespaceType === "unshare" ? "netns-unshare" : "netns";
+        config = addNetworkNamespace(config, networkNamespaceType, preferredTag);
+        const created = config.network_namespaces?.[config.network_namespaces.length - 1];
+        if (created?.tag) selectedId = `network-namespace:${created.tag}`;
       }
       // certificate_providers[] is sing-box 1.14+ — creatable on testing only. The bare "Provider"
       // item defaults to acme so no invalid type is ever emitted. (C2)
@@ -1586,7 +1604,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         ref.kind !== "dns-server" &&
         ref.kind !== "endpoint" &&
         ref.kind !== "service" &&
-        ref.kind !== "rule-set"
+        ref.kind !== "rule-set" &&
+        ref.kind !== "network-namespace"
       ) {
         return state;
       }
@@ -1598,9 +1617,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (config === state.config) return state;
       return {
         ...sync(config, state.channel, state.version),
-        selectedId: remapTaggedNodeId(state.selectedId, oldTag, newTag),
-        focusedNodeId: remapTaggedNodeId(state.focusedNodeId, oldTag, newTag),
-        layout: remapTaggedLayout(state.layout, oldTag, newTag),
+        selectedId: remapTaggedNodeId(state.selectedId, kind, oldTag, newTag),
+        focusedNodeId: remapTaggedNodeId(state.focusedNodeId, kind, oldTag, newTag),
+        layout: remapTaggedLayout(state.layout, kind, oldTag, newTag),
       };
     }),
   deleteEntity: (ref) =>
