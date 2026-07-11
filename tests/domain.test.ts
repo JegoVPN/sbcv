@@ -46,19 +46,20 @@ type ReferenceCoverageCase = {
 function createReferenceCoverageConfig(): SingBoxConfig {
   return {
     inbounds: [
-      { type: "tun", tag: "tun-in", route_address_set: ["rs"], tls: { certificate_provider: "cert" } },
+      { type: "tun", tag: "tun-in", netns: "netns", route_address_set: ["rs"], tls: { certificate_provider: "cert" } },
       { type: "shadowsocks", tag: "managed-ss", managed: true },
       { type: "socks", tag: "socks-in", detour: "tun-in" },
       {
         type: "shadowtls",
         tag: "stls-in",
+        tls: { certificate_provider: { type: "acme", http_client: { netns: "netns" } } },
         handshake: { server: "h", server_port: 443, detour: "proxy" },
         handshake_for_server_name: { "example.com": { server: "e", server_port: 443, detour: "proxy" } },
       },
       { type: "cloudflared", tag: "cf-in", token: "cf-token", control_dialer: { detour: "proxy" }, tunnel_dialer: { detour: "proxy" } },
     ],
     outbounds: [
-      { type: "direct", tag: "proxy", tls: { certificate_provider: "cert" } },
+      { type: "direct", tag: "proxy", netns: "netns", tls: { certificate_provider: "cert" } },
       { type: "direct", tag: "backup" },
       { type: "selector", tag: "auto", outbounds: ["proxy", "backup"], default: "proxy" },
       { type: "trojan", tag: "dialer", server: "example.com", server_port: 443, password: "x", detour: "proxy", domain_resolver: "local-dns" },
@@ -78,7 +79,13 @@ function createReferenceCoverageConfig(): SingBoxConfig {
       { type: "tailscale", tag: "ts-ep" },
     ],
     services: [
-      { type: "ssm-api", tag: "ssm", servers: { "/": "tun-in", "/managed": "managed-ss" }, detour: "proxy" },
+      {
+        type: "ssm-api",
+        tag: "ssm",
+        servers: { "/": "tun-in", "/managed": "managed-ss" },
+        detour: "proxy",
+        tls: { certificate_provider: { type: "acme", http_client: { netns: "netns" } } },
+      },
       {
         type: "derp",
         tag: "derp",
@@ -108,6 +115,7 @@ function createReferenceCoverageConfig(): SingBoxConfig {
       ],
     },
     http_clients: [{ tag: "client", detour: "proxy", domain_resolver: "local-dns", tls: { certificate_provider: "cert" } }],
+    network_namespaces: [{ type: "default", tag: "netns", path: "/run/netns/sbc" }],
     certificate_providers: [{ type: "tailscale", tag: "cert", endpoint: "ts-ep", http_client: "client" }],
     ntp: { enabled: true, server: "time.example.com", server_port: 123, detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
     experimental: {
@@ -130,6 +138,7 @@ function danglingByRemoving(kind: ReferenceKind, tag: string): SingBoxConfig {
   else if (kind === "rule-set" && config.route) config.route.rule_set = drop(config.route.rule_set);
   else if (kind === "http-client") config.http_clients = drop(config.http_clients);
   else if (kind === "certificate-provider") config.certificate_providers = drop(config.certificate_providers);
+  else if (kind === "network-namespace") config.network_namespaces = drop(config.network_namespaces);
   return config;
 }
 
@@ -371,6 +380,52 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
       expect(config.http_clients?.[0]?.tls).toMatchObject({ certificate_provider: undefined });
     },
   },
+  {
+    kind: "network-namespace",
+    tag: "netns",
+    nextTag: "netns-renamed",
+    paths: [
+      "/inbounds/*/netns",
+      "/inbounds/*/tls/reality/handshake/netns",
+      "/inbounds/*/tls/certificate_provider/http_client/netns",
+      "/inbounds/*/handshake/netns",
+      "/inbounds/*/handshake_for_server_name/*/netns",
+      "/inbounds/*/control_dialer/netns",
+      "/inbounds/*/tunnel_dialer/netns",
+      "/inbounds/*/realm/http_client/netns",
+      "/outbounds/*/netns",
+      "/outbounds/*/realm/http_client/netns",
+      "/dns/servers/*/netns",
+      "/endpoints/*/netns",
+      "/services/*/netns",
+      "/services/*/tls/reality/handshake/netns",
+      "/services/*/tls/certificate_provider/http_client/netns",
+      "/services/*/mesh_with/*/netns",
+      "/services/*/verify_client_url/*/netns",
+      "/services/*/dashboard/http_client/netns",
+      "/ntp/netns",
+      "/http_clients/*/netns",
+      "/route/rule_set/*/http_client/netns",
+      "/certificate_providers/*/http_client/netns",
+    ],
+    staleDiagnosticCodes: [],
+    assertRenamed: (config) => {
+      expect(config.inbounds?.[0]?.netns).toBe("netns-renamed");
+      expect(config.outbounds?.[0]?.netns).toBe("netns-renamed");
+      const shadowTls = config.inbounds?.find((item) => item.tag === "stls-in") as Record<string, any> | undefined;
+      const ssm = config.services?.find((item) => item.tag === "ssm") as Record<string, any> | undefined;
+      expect(shadowTls?.tls?.certificate_provider?.http_client?.netns).toBe("netns-renamed");
+      expect(ssm?.tls?.certificate_provider?.http_client?.netns).toBe("netns-renamed");
+    },
+    assertDeleted: (config) => {
+      expect(config.inbounds?.[0]?.netns).toBeUndefined();
+      expect(config.outbounds?.[0]?.netns).toBeUndefined();
+      const shadowTls = config.inbounds?.find((item) => item.tag === "stls-in") as Record<string, any> | undefined;
+      const ssm = config.services?.find((item) => item.tag === "ssm") as Record<string, any> | undefined;
+      expect(shadowTls?.tls?.certificate_provider?.http_client?.netns).toBeUndefined();
+      expect(ssm?.tls?.certificate_provider?.http_client?.netns).toBeUndefined();
+    },
+  },
 ];
 
 describe("canonical sing-box domain model", () => {
@@ -389,6 +444,7 @@ describe("canonical sing-box domain model", () => {
     ["services", { services: "bad" }],
     ["certificate_providers", { certificate_providers: "bad" }],
     ["http_clients", { http_clients: "bad" }],
+    ["network_namespaces", { network_namespaces: "bad" }],
     ["route.rules", { route: { rules: "bad" } }],
     ["route.rule_set", { route: { rule_set: "bad" } }],
     ["dns.servers", { dns: { servers: "bad" } }],
@@ -468,7 +524,7 @@ describe("canonical sing-box domain model", () => {
       expect(warnings.has(code), `dangling ${testCase.kind} ref should emit warning ${code}`).toBe(true);
     }
     if (testCase.staleDiagnosticCodes.length === 0 && (testCase.staleWarningCodes?.length ?? 0) === 0) {
-      expect(["http-client", "certificate-provider"]).toContain(testCase.kind);
+      expect(["http-client", "certificate-provider", "network-namespace"]).toContain(testCase.kind);
     }
   });
 

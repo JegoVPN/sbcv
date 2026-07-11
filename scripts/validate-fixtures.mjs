@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { assertCleanSingBoxCheck } from "./singbox-check-policy.mjs";
-import { binaryForFixturePath } from "./singbox-target-policy.mjs";
+import { binaryForFixturePath, requiredFixturePlatform } from "./singbox-target-policy.mjs";
 
 const fixtureGroups = [
   { channel: "stable", dir: "fixtures/stable" },
@@ -36,6 +36,11 @@ for (const group of fixtureGroups) {
   for (const file of files) {
     const fixturePath = join(group.dir, file);
     validateJson(fixturePath);
+    const requiredPlatform = requiredFixturePlatform(fixturePath);
+    if (requiredPlatform && process.platform !== requiredPlatform) {
+      skipped.push(`${fixturePath} requires ${requiredPlatform}; host is ${process.platform}`);
+      continue;
+    }
     const expectedBinary = binaryForFixturePath(fixturePath, group.channel);
     const binary = resolveCommand(expectedBinary);
     if (binary) {

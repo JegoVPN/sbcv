@@ -271,6 +271,7 @@ export function deriveGraph(
   const ruleSets = listItems(config.route?.rule_set);
   const certificateProviders = listItems(config.certificate_providers);
   const httpClients = listItems(config.http_clients);
+  const networkNamespaces = listItems(config.network_namespaces);
   const endpointTagSet = new Set(endpoints.map((endpoint) => endpoint.tag));
   // An endpoint shares the outbound tag namespace, so a route/selector/dns-detour edge to such a tag must
   // target the `endpoint:<tag>` node rather than a phantom `outbound:<tag>`.
@@ -805,6 +806,30 @@ export function deriveGraph(
     );
   });
 
+  networkNamespaces.forEach((networkNamespace, index) => {
+    const tag = entityTag(networkNamespace.tag, "network-namespace", index);
+    const type = typeof networkNamespace.type === "string" && networkNamespace.type ? networkNamespace.type : "default";
+    // Ask for the start of the resource lane and let the shared column allocator find the nearest free
+    // slot around DNS/certificate/HTTP-client nodes. Pre-counting every prior resource pushed this node
+    // far below sparse graphs and made Fit View waste most of the viewport on empty space.
+    const desiredY = DNS_LANE_MIN_Y + index * NODE_SLOT_Y;
+    nodes.push(
+      makeNode(
+        `network-namespace:${tag}`,
+        {
+          ref: { kind: "network-namespace", tag },
+          kind: "network-namespace",
+          type,
+          title: tag,
+          subtitle: networkNamespaceSubtitle(networkNamespace),
+          status: diagnosticStatus(`/network_namespaces/${index}`, diagnostics),
+        },
+        layout,
+        { x: COLUMNS.target, y: columnLayout.reserve("target", desiredY) },
+      ),
+    );
+  });
+
   endpoints.forEach((endpoint, index) => {
     const tag = entityTag(endpoint.tag, "endpoint", index);
     const desiredY = endpointTargetY.get(tag) ?? DNS_LANE_MIN_Y + (index + dnsServers.length + certificateProviders.length + 1) * NODE_SLOT_Y;
@@ -1078,6 +1103,17 @@ function centerColumnsVertically(nodes: SbcFlowNode[], layout: ProjectLayout) {
 function hubSubtitle(ruleCount: number, final: unknown): string {
   const base = `${ruleCount} ordered rules`;
   return typeof final === "string" && final ? `${base} · final → ${final}` : base;
+}
+
+function networkNamespaceSubtitle(networkNamespace: Record<string, unknown>): string {
+  const type = typeof networkNamespace.type === "string" && networkNamespace.type ? networkNamespace.type : "default";
+  if (type === "default" && typeof networkNamespace.path === "string" && networkNamespace.path) {
+    return networkNamespace.path;
+  }
+  if (type === "unshare" && typeof networkNamespace.pid_file === "string" && networkNamespace.pid_file) {
+    return `PID file · ${networkNamespace.pid_file}`;
+  }
+  return type === "unshare" ? "rootless namespace" : "existing namespace";
 }
 
 // Outbound summary. The titlebar already names the type ("Outbound · Shadowsocks"), so the subtitle drops

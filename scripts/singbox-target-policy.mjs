@@ -19,3 +19,11 @@ export function binaryForFixturePath(file, channel) {
   if (/\b1\.12\b|legacy/i.test(file)) return targetBinaries["1.12-stable"];
   return targetBinaries["1.13-stable"];
 }
+
+// Platform-specific fixtures carry an explicit suffix so local validation never pretends a Linux-only
+// config is portable. The Ubuntu release gate still checks every `.linux.json` fixture with the real
+// matched binary; other hosts report the skip instead of weakening official validation silently.
+export function requiredFixturePlatform(file) {
+  if (/\.linux\.json$/i.test(file)) return "linux";
+  return null;
+}

@@ -9,7 +9,7 @@ const binDir = join(toolsDir, "bin");
 const binaries = [
   { command: "sing-box-1.12", version: "1.12.25" },
   { command: "sing-box-stable", version: "1.13.14" },
-  { command: "sing-box-testing", version: "1.14.0-alpha.41" },
+  { command: "sing-box-testing", version: "1.14.0-alpha.43" },
 ];
 
 // Pinned SHA256 sums for sing-box release tarballs. Keep in sync with
@@ -20,8 +20,8 @@ const CHECKSUMS = {
   "1.12.25-darwin-arm64":        "a4a06d507f3f4d951490168d1372fce4c02db7211e88af9da13f93ed98068d5e",
   "1.13.14-linux-amd64":         "f48703461a15476951ac4967cdad339d986f4b8096b4eb3ff0829a500502d697",
   "1.13.14-darwin-arm64":        "73e8967b0fc08e17bce4263ca56ebc394822401a16497a1c4e02316c888202ab",
-  "1.14.0-alpha.41-linux-amd64": "475c10fa2f0fcfd39ad1d849de40484ce779ee1737ef6b77c080de4dca43b025",
-  "1.14.0-alpha.41-darwin-arm64":"020083d1c048ed997c38cacbc3240ecd360d53723f5a86b75015231f069aaab6",
+  "1.14.0-alpha.43-linux-amd64": "fc95f43ea1b640b27996b46bbae181f2adf77f8dc217b32f4e1aef9d051b7a4d",
+  "1.14.0-alpha.43-darwin-arm64":"daae5898849fa09b49fff715a29fcb063e1568e0eb808218277f7c27838d4579",
 };
 
 function platformName() {

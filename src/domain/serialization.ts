@@ -41,6 +41,17 @@ function assertArrayField(input: Record<string, unknown>, path: string) {
   }
 }
 
+function assertObjectArrayField(input: Record<string, unknown>, path: string) {
+  assertArrayField(input, path);
+  const value = input[path];
+  if (!Array.isArray(value)) return;
+  value.forEach((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      throw new Error(`sing-box config field "${path}[${index}]" must be an object.`);
+    }
+  });
+}
+
 function assertNestedArrayField(input: Record<string, unknown>, objectPath: string, field: string) {
   const owner = input[objectPath];
   if (owner === undefined) return;
@@ -64,6 +75,7 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
   assertArrayField(root, "services");
   assertArrayField(root, "certificate_providers");
   assertArrayField(root, "http_clients");
+  assertObjectArrayField(root, "network_namespaces");
   assertObjectField(root, "route");
   assertObjectField(root, "dns");
   assertNestedArrayField(root, "route", "rules");
@@ -71,6 +83,16 @@ export function normalizeConfig(input: unknown): SingBoxConfig {
   assertNestedArrayField(root, "dns", "servers");
   assertNestedArrayField(root, "dns", "rules");
   const config = structuredClone(input) as SingBoxConfig;
+  // alpha.43 decodes omitted, null, and empty Network Namespace types as `default`. Canonicalize the
+  // accepted wire forms at the import boundary so the domain model keeps its narrower type invariant.
+  if (config.network_namespaces?.length === 0) {
+    delete config.network_namespaces;
+  } else {
+    for (const namespace of config.network_namespaces ?? []) {
+      const record = namespace as Record<string, unknown>;
+      if (record.type === undefined || record.type === null || record.type === "") record.type = "default";
+    }
+  }
   // Run the rule normalizers on import too (not just in the add/update commands), so a stale `server`
   // on a non-route/evaluate dns-rule or a stale `outbound` on a non-route route-rule is scrubbed at
   // the boundary rather than surviving invisibly on every editor surface and re-exporting. (A10d)

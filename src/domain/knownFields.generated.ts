@@ -766,6 +766,7 @@ export const DOC_FIELD_NAMES = {
         ],
         "tun": [
           "interface_name",
+          "netns",
           "address",
           "inet4_address",
           "inet6_address",
@@ -1256,6 +1257,14 @@ export const DOC_FIELD_NAMES = {
         "usbip-server": [
           "provider",
           "devices"
+        ]
+      },
+      "network-namespace": {
+        "default": [
+          "path"
+        ],
+        "unshare": [
+          "pid_file"
         ]
       }
     },

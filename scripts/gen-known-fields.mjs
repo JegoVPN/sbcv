@@ -19,6 +19,7 @@ const KIND_DIR = {
   "rule-set": "rule-set",
   endpoint: "endpoint",
   service: "service",
+  "network-namespace": "network-namespace",
 };
 // All shared-field-group docs (filenames; note dns01_challenge uses an underscore). Spans both channels
 // — channel-only groups (http2 / http-client / quic / neighbor are 1.14) simply have no stable file.

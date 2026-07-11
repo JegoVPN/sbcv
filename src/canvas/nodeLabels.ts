@@ -68,6 +68,7 @@ const kindLabels: Record<string, string> = {
   "rule-set": "Rule Set",
   "certificate-provider": "Certificate Provider",
   "http-client": "HTTP Client",
+  "network-namespace": "Network Namespace",
   settings: "Settings",
   notice: "Notice",
 };
@@ -123,6 +124,8 @@ const NODE_BADGES: Record<string, NodeBadge> = {
   // bridge is not OS-locked like tproxy, but it always needs elevated privileges (outbound/bridge.md:
   // Linux, macOS, Windows since 1.14.0-alpha.41 via WinDivert, rooted Android, jailbroken iOS).
   "outbound:bridge": { label: "privileged", tone: "platform", title: "bridge requires privileges (Linux, macOS, Windows, rooted Android, jailbroken iOS)" },
+  "network-namespace:default": { label: "Linux only", tone: "platform", title: "Network namespaces are supported on Linux only" },
+  "network-namespace:unshare": { label: "Linux only", tone: "platform", title: "Network namespaces are supported on Linux only" },
 };
 
 export function nodeBadge(kind: string, type: string, targetVersion?: string): NodeBadge | null {

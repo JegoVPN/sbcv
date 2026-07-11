@@ -23,7 +23,8 @@ export type SchemaEntityKind =
   | "dns-server"
   | "endpoint"
   | "service"
-  | "rule-set";
+  | "rule-set"
+  | "network-namespace";
 
 /** Control kind for a leaf scalar field — drives the data-driven renderer (V0-S2) and V1 validation. */
 export type ScalarFieldType = "string" | "number" | "boolean" | "enum";
@@ -1222,6 +1223,31 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     creatable: true,
     factory: (tag) => ({ type: "inline", tag, rules: [{ domain_suffix: ["example.com"] }] }),
     sharedGroups: [],
+  },
+
+  // ── Network namespaces (Linux, testing 1.14+) ─────────────────────────────────────────────────
+  {
+    kind: "network-namespace",
+    type: "default",
+    creatable: true,
+    paletteKind: "network-namespace-default",
+    channel: "testing",
+    minVersion: "1.14",
+    factory: (tag) => ({ type: "default", tag, path: "" }),
+    requiredFields: ["path"],
+    sharedGroups: [],
+    fields: [{ path: ["path"], type: "string", doc: "network-namespace/default.md" }],
+  },
+  {
+    kind: "network-namespace",
+    type: "unshare",
+    creatable: true,
+    paletteKind: "network-namespace-unshare",
+    channel: "testing",
+    minVersion: "1.14",
+    factory: (tag) => ({ type: "unshare", tag }),
+    sharedGroups: [],
+    fields: [{ path: ["pid_file"], type: "string", doc: "network-namespace/unshare.md" }],
   },
 ];
 

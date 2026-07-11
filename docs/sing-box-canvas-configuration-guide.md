@@ -7,14 +7,23 @@ This is the product-level guide for turning the official sing-box configuration 
 Read sources:
 
 - Local stable docs: `.tmp/sing-box-docs/stable/docs/configuration`, 94 English Markdown files.
-- Local testing docs: `.tmp/sing-box-docs/testing/docs/configuration`, 105 English Markdown files.
+- Local testing docs: `.tmp/sing-box-docs/testing/docs/configuration`, 114 English Markdown files.
 - Coverage matrix: [sing-box Config Document Inventory](sing-box-config-doc-inventory.md) and [sing-box Configuration Readthrough Matrix](sing-box-doc-readthrough-matrix.md).
 
 Testing-only docs compared with stable:
 
 - `dns/server/mdns.md`
 - `inbound/cloudflared.md`
+- `inbound/snell.md`
+- `network-namespace/index.md`
+- `network-namespace/default.md`
+- `network-namespace/unshare.md`
+- `outbound/bridge.md`
+- `outbound/snell.md`
+- `service/api.md`
 - `service/hysteria-realm.md`
+- `service/usbip-client.md`
+- `service/usbip-server.md`
 - `shared/certificate-provider/index.md`
 - `shared/certificate-provider/acme.md`
 - `shared/certificate-provider/tailscale.md`
@@ -33,13 +42,14 @@ Readthrough contract:
 - If a doc exists in the matrix but the Library item is `DOCS`, `PENDING`, or `GATED`, the UI must explain where that object will eventually be configured and why it is not writable yet.
 - If this guide, the matrix, the Palette, or `pnpm audit:config-docs` disagree, fix the documentation before implementing more UI.
 
-Current completeness checkpoint, from `pnpm audit:config-docs` on 2026-05-26:
+Current completeness checkpoint, from a force-refreshed `pnpm audit:config-docs` on 2026-07-11:
 
-- Official testing English docs: 105.
-- Matrix rows: 105.
-- Palette entries: 107.
-- Remaining docs without a Palette surface: 5 base docs.
-- Remaining writable docs without a complete write path: 11, including source-format/conversion helper docs that are not direct config objects.
+- Official testing English docs: 114.
+- Matrix rows: 114.
+- Palette entries: 114.
+- Docs without a Palette surface: 7 base/action docs.
+- Audit-reported writable entries without a static write status: 6; one is the Network Namespace overview whose two concrete type entries become `ADD SETUP` on the testing target, leaving 5 actual migration/helper gaps.
+- Network Namespace is a writable testing resource, not a documentation-only exception.
 
 UI review checkpoint, from [SBC Editable Node UI Reviews](index-ui-reviews.md) on 2026-05-27:
 
@@ -111,7 +121,7 @@ Users do not think in JSON sections first. They think in these workflows:
 3. "I need proxy/direct/block targets" -> add Outbounds and groups.
 4. "I need DNS behavior" -> configure DNS servers and DNS Rules.
 5. "I need global behavior" -> add settings such as Log, NTP, Certificate, Experimental.
-6. "I need advanced resources" -> add Endpoints, Rule Sets, Services, HTTP Clients, Certificate Providers.
+6. "I need advanced resources" -> add Endpoints, Rule Sets, Services, HTTP Clients, Certificate Providers, or a testing-only Linux Network Namespace.
 
 The product should present these workflows, while preserving the exact official top-level JSON structure.
 
@@ -142,7 +152,7 @@ These are real nodes because they participate in traffic or reference flow:
 - `dns.servers[]`
 - `endpoints[]`
 - `services[]` when the service has a runtime identity
-- `certificate_providers[]` and `http_clients[]` in testing targets
+- `certificate_providers[]`, `http_clients[]`, and `network_namespaces[]` in testing targets
 
 Each node has:
 
@@ -213,6 +223,7 @@ They must live inside the owning parent Inspector or ordered rule table.
 | `certificate` | Library > Settings > Certificate | Independent card | Certificate Inspector |
 | `certificate_providers[]` | Library > Certificate Providers | Testing resource nodes | Provider Inspector, target gated |
 | `http_clients[]` | Library > HTTP Clients | Testing resource nodes | HTTP Client Inspector, target gated |
+| `network_namespaces[]` | Library > Network Namespace | Standalone testing Linux resource nodes/cards; no `netns` ports/edges | Network Namespace Inspector + managed `netns` reference commands, target gated |
 | `endpoints[]` | Library > Endpoints | Resource/chain nodes | Endpoint Inspector |
 | `inbounds[]` | Library > Inbounds | Traffic source nodes | Inbound Inspector |
 | `outbounds[]` | Library > Outbounds | Traffic target/group nodes | Outbound Inspector |
@@ -364,6 +375,26 @@ Endpoint Inspector owns Dial/TLS-like shared sections where supported.
 
 Product rule: WireGuard and Tailscale endpoints are resource nodes backed by `endpoints[]`. Endpoint Dial Fields live in the Endpoint Inspector; Tailscale DNS servers and Tailscale certificate-provider flows must reference endpoint tags explicitly instead of inventing standalone shared nodes.
 
+## Network Namespaces
+
+Network Namespaces are writable resource cards backed by `network_namespaces[]`, available only when the target is `1.14 testing`. They are Linux-only at runtime. Stable and legacy targets must keep the add action gated and report existing top-level resources as blocking target conflicts rather than silently pruning them.
+
+| Type | User action | Correct UI and shape |
+| --- | --- | --- |
+| `default` (including omitted `type`) | `ADD SETUP` | Resource node/card + Inspector; required `tag` and required `path` for an existing namespace name or filesystem path |
+| `unshare` | `ADD SETUP` or type switch in the Network Namespace Inspector | Resource node/card + Inspector; required `tag`, optional `pid_file`; state the kernel prerequisite for rootless creation |
+
+`netns` values require two simultaneous editing modes:
+
+- Raw namespace names and filesystem paths remain legal strings for compatible Listen and Dial Fields from 1.12 onward.
+- On `1.14 testing`, a value can instead resolve to `network_namespaces[].tag`. The Inspector offers those managed tags and rename/delete uses domain commands to update or clear resolved references.
+- An unresolved raw name/path is not a dangling tag. SBC must not force every `netns` value into the resource registry.
+- Dial Fields should warn before selecting an `unshare` resource because that namespace normally has no route out except its sing-box-managed TUN interface.
+
+This atomic keeps `netns` relations Inspector-only. Network Namespace resource nodes have no relation ports or edges because the same string can still be a literal namespace name/path; a future canvas relation must first define a non-ambiguous resolution and disconnect contract.
+
+TUN `netns` is a separate 1.14 testing field: it accepts a raw name/path or managed tag, is Linux-only, places the interface plus `auto_route` / `auto_redirect` behavior inside the namespace, and conflicts with TUN `platform` settings.
+
 ## Services
 
 Services are runtime resources. They should not be shown as if they are route outbounds unless the official docs define a tag reference from another object.
@@ -391,6 +422,7 @@ Product rule: services are runtime resources, not route targets. A writable serv
 | V2Ray API | `INSPECTOR` | Experimental module card; fields hidden until expanded |
 | HTTP Client | `TARGET GATED` | Testing top-level resource or embedded object |
 | Certificate Provider | `TARGET GATED` | Testing top-level resource |
+| Network Namespace | `ADD SETUP` on `1.14 testing`; `TARGET GATED` otherwise | Linux resource node/card with `default` / `unshare` Inspector; managed `netns` editing remains Inspector-only |
 
 Certificate providers:
 
@@ -404,8 +436,8 @@ Product rule: Log, NTP, Certificate, and Experimental are independent settings c
 
 | Shared doc | User-facing location |
 | --- | --- |
-| Listen Fields | Inbound and Service Inspectors |
-| Dial Fields | Outbound, Endpoint, NTP, Route, Remote Rule Set, DNS Server, and some nested handshake Inspectors |
+| Listen Fields | Inbound and Service Inspectors; `netns` keeps raw name/path editing and gains managed tag choices on `1.14 testing` |
+| Dial Fields | Outbound, Endpoint, NTP, Route, Remote Rule Set, DNS Server, and some nested handshake Inspectors; `netns` keeps raw name/path editing and gains managed tag choices on `1.14 testing` |
 | TLS | Inbound, Outbound, TLS-capable DNS Server, Service, HTTP Client, and Certificate-related Inspectors |
 | HTTP2 Fields | HTTP Client and Hysteria Realm Inspectors |
 | QUIC Fields | QUIC-capable protocol Inspectors |
@@ -506,6 +538,14 @@ This is required because the official docs express these relationships through t
 3. Fill server name, certificate, ECH, Reality, or provider reference based on target support.
 4. Do not add a standalone TLS node.
 
+### Add A Network Namespace
+
+1. Switch the target to `1.14 testing` on a Linux deployment.
+2. Open `Library > Resources` and add Network Namespace.
+3. Keep `default` and enter an existing namespace name/path, or switch to `unshare` and optionally set a PID file.
+4. Give the resource a unique tag, then select that tag from a supported TUN, Listen Fields, or Dial Fields `netns` control; raw names and paths remain available in the same control.
+5. Run semantic diagnostics and `sing-box-testing check` against the exported testing config.
+
 ## Implementation Gate For Every Official Doc
 
 Before changing an item from `PENDING`, `DOCS`, or `TARGET GATED` to a writable state, complete all of this:
@@ -532,3 +572,4 @@ Before changing an item from `PENDING`, `DOCS`, or `TARGET GATED` to a writable 
 - Shared fields are numerous and nested. If they appear as standalone nodes, users will build invalid mental models.
 - Selector and URLTest can reference other group outbounds; port handles must support group-to-group membership.
 - Imported subscription templates may contain placeholders or provider extensions. They can be display-compatible without being official-check-compatible; diagnostics must distinguish these states.
+- `netns` is intentionally ambiguous between a raw Linux name/path and a managed tag. The current canvas emits no Network Namespace relation ports or edges; managed matches are handled only by Inspector suggestions and domain rename/delete commands.

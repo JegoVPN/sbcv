@@ -42,6 +42,7 @@ export function configHasContent(config: SingBoxConfig): boolean {
     len(config.services) > 0 ||
     len(c.certificate_providers) > 0 ||
     len(c.http_clients) > 0 ||
+    len(c.network_namespaces) > 0 ||
     len(config.route?.rules) > 0 ||
     len(config.route?.rule_set) > 0 ||
     has(config.route?.final) ||

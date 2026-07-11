@@ -16,6 +16,7 @@ import type {
   EndpointConfig,
   EntityRef,
   InboundConfig,
+  NetworkNamespaceConfig,
   OutboundConfig,
   RouteRule,
   ServiceConfig,
@@ -198,6 +199,28 @@ export function addHttpClient(config: SingBoxConfig, preferredTag?: string): Sin
   const tag = getUniqueTag(next, preferredTag ?? "http-client");
   // A top-level http_clients[] entry is a tag + the shared HTTP-client object (engine/tls/dial…).
   next.http_clients = [...(next.http_clients ?? []), { tag }];
+  return next;
+}
+
+export function createNetworkNamespace(type: string, tag: string): NetworkNamespaceConfig {
+  const fallback =
+    type === "unshare"
+      ? { type: "unshare" as const, tag }
+      : { type: "default" as const, tag, path: "" };
+  return (schemaRow("network-namespace", type)?.factory(tag) ?? fallback) as NetworkNamespaceConfig;
+}
+
+export function addNetworkNamespace(
+  config: SingBoxConfig,
+  type = "default",
+  preferredTag?: string,
+): SingBoxConfig {
+  const next = cloneConfig(config);
+  const tag = getUniqueTag(next, preferredTag ?? "netns");
+  next.network_namespaces = [
+    ...(next.network_namespaces ?? []),
+    createNetworkNamespace(type, tag),
+  ];
   return next;
 }
 
@@ -479,6 +502,11 @@ export function updateEntityField(
       item.tag === ref.tag ? { ...item, [field]: value } : item,
     );
   }
+  if (ref.kind === "network-namespace") {
+    next.network_namespaces = (next.network_namespaces ?? []).map((item) =>
+      item.tag === ref.tag ? { ...item, [field]: value } : item,
+    );
+  }
   if (ref.kind === "route") {
     next.route = { ...(next.route ?? {}), [field]: value };
   }
@@ -496,7 +524,7 @@ export function updateEntityField(
 
 export function changeEntityType(
   config: SingBoxConfig,
-  ref: Extract<EntityRef, { kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" }>,
+  ref: Extract<EntityRef, { kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "network-namespace" }>,
   nextType: string,
 ): SingBoxConfig {
   const next = cloneConfig(config);
@@ -563,6 +591,11 @@ export function changeEntityType(
       return nextType === "remote" && downloadDetour ? { ...replacement, download_detour: downloadDetour } : replacement;
     });
   }
+  if (ref.kind === "network-namespace") {
+    next.network_namespaces = (next.network_namespaces ?? []).map((item) =>
+      item.tag === ref.tag ? createNetworkNamespace(nextType, ref.tag) : item,
+    );
+  }
   return next;
 }
 
@@ -600,6 +633,9 @@ function renameEntityInCollection(config: SingBoxConfig, kind: ReferenceKind, ol
     case "http-client":
       config.http_clients = rename(config.http_clients);
       break;
+    case "network-namespace":
+      config.network_namespaces = rename(config.network_namespaces);
+      break;
   }
 }
 
@@ -620,8 +656,16 @@ export function renameTag(
   // Conflict guard scoped to the same namespace (cross-namespace same-name is legal).
   if (buildNamespacedTagIndex(config).get(`${namespace} ${newTag}`)?.length) return config;
   const next = cloneConfig(config);
-  renameEntityInCollection(next, kind, oldTag, newTag);
-  replaceNamespacedTagReferences(next, namespace, oldTag, newTag);
+  if (kind === "network-namespace") {
+    if (!(next.network_namespaces ?? []).some((item) => item.tag === oldTag)) return config;
+    // `netns` also accepts literal names and paths. Rewrite while the old managed tag is still present,
+    // so the reference visitor can distinguish a real tag from an equal-looking literal.
+    replaceNamespacedTagReferences(next, namespace, oldTag, newTag);
+    renameEntityInCollection(next, kind, oldTag, newTag);
+  } else {
+    renameEntityInCollection(next, kind, oldTag, newTag);
+    replaceNamespacedTagReferences(next, namespace, oldTag, newTag);
+  }
   return next;
 }
 
@@ -634,7 +678,8 @@ function referenceKindForEntity(ref: EntityRef): ReferenceKind | null {
     ref.kind === "service" ||
     ref.kind === "rule-set" ||
     ref.kind === "http-client" ||
-    ref.kind === "certificate-provider"
+    ref.kind === "certificate-provider" ||
+    ref.kind === "network-namespace"
   ) {
     return ref.kind;
   }
@@ -643,6 +688,17 @@ function referenceKindForEntity(ref: EntityRef): ReferenceKind | null {
 
 export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConfig {
   const next = cloneConfig(config);
+  if (ref.kind === "network-namespace") {
+    const exists = (next.network_namespaces ?? []).some((item) => item.tag === ref.tag);
+    if (!exists) return next;
+    // Cascade first: the network-namespace visitor intentionally ignores strings that do not resolve to
+    // an existing managed tag, because the same field also accepts raw namespace names and paths.
+    removeRegisteredTagReferences(next, "network-namespace", ref.tag);
+    const remaining = (next.network_namespaces ?? []).filter((item) => item.tag !== ref.tag);
+    if (remaining.length) next.network_namespaces = remaining;
+    else delete next.network_namespaces;
+    return next;
+  }
   if (ref.kind === "inbound") {
     next.inbounds = (next.inbounds ?? []).filter((item) => item.tag !== ref.tag);
   }

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { Trash2 } from "lucide-react";
 
 import type { SharedFieldGroupId } from "../../domain/sharedFieldRegistry";
@@ -20,7 +21,7 @@ import {
 // certificate-provider per-type fields, and their pure path/value helpers. Imported by the Inspector
 // shell + the per-family components; depends only on the leaf controls + helpers (no cycle).
 
-export type SharedFieldKind = "text" | "number" | "boolean" | "list" | "lines" | "select" | "keyvalue";
+export type SharedFieldKind = "text" | "suggest" | "number" | "boolean" | "list" | "lines" | "select" | "keyvalue";
 
 export type SharedFieldDefinition = {
   label: string;
@@ -29,6 +30,8 @@ export type SharedFieldDefinition = {
   options?: string[];
   /** Optional helper text rendered under the control. */
   hint?: string;
+  /** Keep an imported value removable, but do not allow creating it when the field is absent. */
+  requiresExistingValue?: boolean;
   /** Hide this field unless the boolean value at this path is true. */
   gatedBy?: string[];
   /**
@@ -178,6 +181,13 @@ export function sharedFieldDefinitions(
   const httpClientOptions = (config.http_clients ?? [])
     .map((client) => client.tag)
     .filter((tag): tag is string => Boolean(tag));
+  const networkNamespaceOptions = [
+    ...new Set(
+      (config.network_namespaces ?? [])
+        .map((networkNamespace) => networkNamespace.tag)
+        .filter((tag): tag is string => Boolean(tag)),
+    ),
+  ];
 
   if (group === "listen") {
     const inboundOptions = (config.inbounds ?? [])
@@ -187,13 +197,28 @@ export function sharedFieldDefinitions(
     // dedicated "API Detour" control. The listen-group inbound `detour` writes the same key, so omit it
     // here to avoid silently stomping the outbound detour with an inbound tag (C1-21 / C2-1).
     const detourIsOutbound = ref.kind === "service" && (type === "ccm" || type === "ocm");
+    const isTunNetns = ref.kind === "inbound" && type === "tun";
+    const netnsField: SharedFieldDefinition = {
+      label:
+        isTunNetns
+          ? "TUN Network Namespace (Linux, 1.14+)"
+          : "Network Namespace (Linux, 1.12+)",
+      path: ["netns"],
+      kind: channel === "testing" ? "suggest" : "text",
+      options: channel === "testing" ? networkNamespaceOptions : undefined,
+      requiresExistingValue: isTunNetns && channel !== "testing",
+      hint:
+        isTunNetns && channel !== "testing"
+          ? "Requires sing-box 1.14 testing. Clear this value to make the TUN inbound stable-compatible."
+          : undefined,
+    };
     return [
       { label: "Listen", path: ["listen"], kind: "text" },
       { label: "Listen Port", path: ["listen_port"], kind: "number" },
       { label: "Bind Interface (1.12+)", path: ["bind_interface"], kind: "text" },
       { label: "Routing Mark (Linux)", path: ["routing_mark"], kind: "text" },
       { label: "Reuse Address (1.12+)", path: ["reuse_addr"], kind: "boolean" },
-      { label: "Network Namespace (Linux, 1.12+)", path: ["netns"], kind: "text" },
+      netnsField,
       { label: "TCP Fast Open", path: ["tcp_fast_open"], kind: "boolean" },
       { label: "TCP Multi Path", path: ["tcp_multi_path"], kind: "boolean" },
       { label: "Disable TCP Keep Alive (1.13+)", path: ["disable_tcp_keep_alive"], kind: "boolean" },
@@ -244,7 +269,12 @@ export function sharedFieldDefinitions(
       { label: "Bind Address No Port (Linux, 1.13+)", path: ["bind_address_no_port"], kind: "boolean" },
       { label: "Routing Mark (Linux)", path: ["routing_mark"], kind: "text" },
       { label: "Reuse Address", path: ["reuse_addr"], kind: "boolean" },
-      { label: "Network Namespace (Linux, 1.12+)", path: ["netns"], kind: "text" },
+      {
+        label: "Network Namespace (Linux, 1.12+)",
+        path: ["netns"],
+        kind: channel === "testing" ? "suggest" : "text",
+        options: channel === "testing" ? networkNamespaceOptions : undefined,
+      },
       { label: "Connect Timeout", path: ["connect_timeout"], kind: "text" },
       { label: "TCP Fast Open", path: ["tcp_fast_open"], kind: "boolean" },
       { label: "TCP Multi Path", path: ["tcp_multi_path"], kind: "boolean" },
@@ -481,6 +511,7 @@ export function SharedFieldControl({
   // Stable action selector (no extra re-renders): wires the "Create HTTP Client" inline action without
   // prop-drilling the store action through SharedFieldCards. (U1)
   const createHttpClientForField = useProjectStore((s) => s.createHttpClientForField);
+  const suggestionListId = useId();
   const value = sharedValueAt(entity, definition.path);
   const applyValue = (nextValue: unknown) => {
     const patch = nestedPatch(entity, definition.path, nextValue);
@@ -716,11 +747,31 @@ export function SharedFieldControl({
     );
   }
 
+  if (definition.kind === "suggest") {
+    return (
+      <label className="field">
+        <span>{definition.label}</span>
+        <input
+          list={suggestionListId}
+          value={String(value ?? "")}
+          onChange={(event) => applyValue(coerceSharedFieldValue("suggest", event.target.value))}
+        />
+        <datalist id={suggestionListId}>
+          {(definition.options ?? []).map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+        {definition.hint ? <small className="shared-field-hint">{definition.hint}</small> : null}
+      </label>
+    );
+  }
+
   return (
     <label className="field">
       <span>{definition.label}</span>
       <input
         type={definition.kind === "number" ? "number" : "text"}
+        disabled={definition.requiresExistingValue && value === undefined}
         value={definition.kind === "list" ? toList(value) : String(value ?? "")}
         onChange={(event) => applyValue(coerceSharedFieldValue(definition.kind, event.target.value))}
       />
@@ -824,4 +875,3 @@ export function certificateProviderFields(
   }
   return [];
 }
-

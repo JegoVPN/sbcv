@@ -5,11 +5,11 @@ This is the implementation gate for SBC. Do not mark a Library item as writable 
 For the user-facing product interpretation of this matrix, read [sing-box Canvas Configuration Guide](sing-box-canvas-configuration-guide.md).
 For the machine-checkable implementation gap, run `pnpm audit:config-docs` and read [sing-box Config Capability Audit](sing-box-config-capability-audit.md).
 
-Sources read on 2026-05-26; topped up 2026-07-08 for the 1.14.0-alpha.30..40 additions:
+Sources read on 2026-05-26; topped up 2026-07-11 for the 1.14.0-alpha.43 Network Namespace additions:
 
 - `SagerNet/sing-box` `stable/docs/configuration`: 94 English Markdown docs.
-- `SagerNet/sing-box` `testing/docs/configuration`: 111 English Markdown docs.
-- Official configuration `#fields`: `log`, `dns`, `ntp`, `certificate`, `certificate_providers`, `http_clients`, `endpoints`, `inbounds`, `outbounds`, `route`, `services`, `experimental`.
+- `SagerNet/sing-box` `testing/docs/configuration`: 114 English Markdown docs.
+- Official testing configuration `#fields`: `log`, `dns`, `ntp`, `certificate`, `certificate_providers`, `http_clients`, `network_namespaces`, `endpoints`, `inbounds`, `outbounds`, `route`, `services`, `experimental`.
 
 Local source checkout used for this readthrough:
 
@@ -22,6 +22,9 @@ Testing-only docs versus stable:
 - `dns/server/mdns.md`
 - `inbound/cloudflared.md`
 - `inbound/snell.md`
+- `network-namespace/index.md`
+- `network-namespace/default.md`
+- `network-namespace/unshare.md`
 - `outbound/snell.md`
 - `outbound/bridge.md`
 - `service/hysteria-realm.md`
@@ -94,6 +97,9 @@ Testing-only docs versus stable:
 | `rule-set/source-format.md` | stable+testing | resource | Rule Set source editor |
 | `rule-set/headless-rule.md` | stable+testing | resource | Rule Set rule editor |
 | `rule-set/adguard.md` | stable+testing | resource | Rule Set AdGuard source editor |
+| `network-namespace/index.md` | testing-only | resource | Registry overview for the writable Linux resource; concrete Default/Unshare Library entries own creation |
+| `network-namespace/default.md` | testing-only | resource | Testing-gated `default` resource setup; required existing namespace `path` editor |
+| `network-namespace/unshare.md` | testing-only | resource | Testing-gated `unshare` resource setup; optional `pid_file` editor and rootless kernel prerequisite |
 | `endpoint/index.md` | stable+testing | chain-resource | Endpoint node base |
 | `endpoint/wireguard.md` | stable+testing | chain-resource | Endpoint node type |
 | `endpoint/tailscale.md` | stable+testing | chain-resource | Endpoint node type |
@@ -187,7 +193,7 @@ Initial product rule:
 - Top-level modules with object/array ownership may appear in Library.
 - Shared field docs appear under a collapsed "Shared Inspector Fields" area with `INSPECTOR`/`DOCS`, not as addable nodes.
 - Rule docs expose `TABLE`, because ordered tables own `route.rules`, `dns.rules`, and rule-set rules.
-- `http_clients[]` and `certificate_providers[]` are testing-only top-level resources. They may show in Library only under target `1.14 testing`, or as `GATED` in stable targets.
+- `http_clients[]`, `certificate_providers[]`, and `network_namespaces[]` are testing-only top-level resources. They may be writable in Library only under target `1.14 testing`, or appear as `GATED` in stable targets.
 
 ## Top-Level Ownership Decisions
 
@@ -199,6 +205,7 @@ Initial product rule:
 | `certificate` | yes | yes | Library > Settings > Certificate | Optional independent settings card, no ports | Certificate Inspector writes `config.certificate` |
 | `certificate_providers[]` | no | yes | Library > Resources, target `1.14 testing` | Resource node/list, no traffic flow | Certificate Provider Inspector |
 | `http_clients[]` | no | yes | Library > Resources, target `1.14 testing` | Resource node/list, referenced by route/rule-set/providers | HTTP Client Inspector |
+| `network_namespaces[]` | no | yes | Library > Resources > Network Namespace, target `1.14 testing` | Standalone Linux resource node/card; `netns` relations stay Inspector-only | Network Namespace Inspector + tag-reference commands |
 | `endpoints[]` | yes | yes | Library > Endpoint | Chain/resource node | Endpoint Inspector; embeds Dial/TLS/etc. by type |
 | `inbounds[]` | yes | yes | Library > Inbound | Traffic source node | Inbound Inspector; embeds Listen/TLS/etc. by type |
 | `outbounds[]` | yes | yes | Library > Outbound | Traffic target/group node | Outbound Inspector; embeds Dial/TLS/Mux/Transport/etc. |
@@ -206,14 +213,27 @@ Initial product rule:
 | `services[]` | yes | yes | Library > Service | Service resource card/list | Service Inspector; embeds TLS/Dial by type |
 | `experimental` | yes | yes | Library > Settings > Experimental | Optional independent settings card, no ports | Collapsed module cards; no raw field dump |
 
+## Network Namespace Ownership Decisions
+
+Network Namespace support is writable only for the `1.14 testing` target and only has runtime meaning on Linux. Stable and legacy targets must not emit `network_namespaces[]`; switching targets must surface a blocking diagnostic instead of silently pruning the resource or changing a managed reference into a raw namespace name.
+
+| Type | Canonical shape | Inspector contract |
+| --- | --- | --- |
+| `default` (also the omitted-type default) | `{ "type": "default", "tag": string, "path": string }` | `tag` and `path` are required; `path` accepts an existing namespace name or filesystem path such as `/run/netns/sing` |
+| `unshare` | `{ "type": "unshare", "tag": string, "pid_file"?: string }` | `tag` is required; `pid_file` is optional; explain that rootless use requires unprivileged user namespaces to be enabled by the kernel |
+
+`netns` is intentionally not a tag-only field. Listen and Dial Fields have accepted raw namespace names or paths since 1.12; on 1.14 testing, the same string may instead match `network_namespaces[].tag`. The Inspector must preserve a raw-text path as well as offer managed tags. Values that resolve to a managed resource participate in tag rename/delete commands, but this atomic deliberately keeps all `netns` relations Inspector-only and emits no canvas ports or edges because the string remains ambiguous with a literal namespace name/path. Unresolved raw names/paths must not be reported as dangling tags. Dial references to an `unshare` resource should warn because that namespace normally exits only through the sing-box-managed TUN interface.
+
+TUN has its own `netns` field only in 1.14 testing. It accepts a raw name/path or managed tag, places the interface and its auto-route/auto-redirect behavior inside that namespace, is Linux-only, and conflicts with TUN `platform` settings.
+
 ## Shared Field Ownership Decisions
 
 These docs were read specifically to prevent the Library from treating shared field groups as standalone nodes.
 
 | Shared doc | Channel | Field shape | Correct owner | Add behavior | Implementation note |
 | --- | --- | --- | --- | --- | --- |
-| `shared/listen.md` | stable+testing | `listen`, `listen_port`, bind/reuse/netns/TCP/UDP/deprecated sniff fields | Inbound types that listen | `INSPECTOR` only | Do not create a Listen node; expose as "Listen Fields" section in inbound Inspector |
-| `shared/dial.md` | stable+testing | detour, bind addresses, netns, timeout, TCP, `domain_resolver`, network strategy | Outbound, Endpoint, NTP, Route, remote Rule Set, DNS server detour/dialing parents | `INSPECTOR` only | `detour` and download/default HTTP client refs are tag refs; canvas edges can visualize them, but Inspector/domain command owns the field |
+| `shared/listen.md` | stable+testing | `listen`, `listen_port`, bind/reuse/netns/TCP/UDP/deprecated sniff fields | Inbound types that listen | `INSPECTOR` only | `netns` keeps raw name/path editing; 1.14 testing additionally offers managed Network Namespace tags. Do not create a Listen node |
+| `shared/dial.md` | stable+testing | detour, bind addresses, netns, timeout, TCP, `domain_resolver`, network strategy | Outbound, Endpoint, NTP, Route, remote Rule Set, DNS server detour/dialing parents | `INSPECTOR` only | `netns` keeps raw name/path editing and gains managed tags on 1.14 testing; avoid `unshare` for Dial. Inspector/domain commands own all tag fields |
 | `shared/tls.md` | stable+testing | inbound server TLS, outbound client TLS, ECH, Reality, uTLS, certificate provider refs | Inbound/Outbound/TLS-capable DNS Server/Service/HTTP Client protocol parents | `INSPECTOR` only | Testing adds provider-oriented fields; certificate provider ref must be target-gated |
 | `shared/multiplex.md` | stable+testing | inbound/outbound mux fields plus TCP Brutal subform | Protocol parents that support multiplex | `INSPECTOR` only | Outbound/endpoint Inspector subform; no mux node |
 | `shared/v2ray-transport.md` | stable+testing | transport `type`: http/ws/quic/grpc/httpupgrade plus type fields | VMess/VLESS/Trojan protocol parents | `INSPECTOR` only | Type switcher inside protocol Inspector |

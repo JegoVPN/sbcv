@@ -13,7 +13,7 @@ Supported:
 - JSON preview and advanced JSON apply flow.
 - Semantic diagnostics for duplicate tags and missing tag references.
 - Fixture validation script that runs `sing-box-stable` and `sing-box-testing` when available.
-- Stable fixture verified against sing-box 1.13.12 and testing fixture verified against sing-box 1.14.0-alpha.25 in local release validation.
+- Stable fixtures are pinned to sing-box 1.13.14 and testing fixtures to sing-box 1.14.0-alpha.43 for local release validation.
 
 Known limitations:
 

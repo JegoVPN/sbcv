@@ -9,7 +9,8 @@ export type ReferenceKind =
   | "service"
   | "rule-set"
   | "http-client"
-  | "certificate-provider";
+  | "certificate-provider"
+  | "network-namespace";
 
 export type ReferenceRegistryEntry = {
   kind: ReferenceKind;
@@ -118,6 +119,8 @@ function tlsRecords(config: SingBoxConfig): MutableRecord[] {
 // rewrites old→new; `removeOp` drops the tag. The registry's `replace`/`remove` thunks are thin wrappers,
 // so the public API and every caller/test are unchanged.
 type RefOp = {
+  /** Tag being rewritten/removed; used where a string can also be a non-reference literal. */
+  tag: string;
   /** A bare string ref: rename → new tag, delete → undefined. Applied only when the field is a string. */
   scalar: (value: string) => string | undefined;
   /** A string | string[] ref (rule.inbound / rule_set / verify_client_endpoint). */
@@ -135,6 +138,7 @@ type RefOp = {
 };
 
 const replaceOp = (oldTag: string, newTag: string): RefOp => ({
+  tag: oldTag,
   scalar: (value) => (value === oldTag ? newTag : value),
   list: (value) => replaceTagRefValue(value, oldTag, newTag),
   stringArray: (value) => replaceStringArray(value, oldTag, newTag),
@@ -146,6 +150,7 @@ const replaceOp = (oldTag: string, newTag: string): RefOp => ({
 });
 
 const removeOp = (tag: string): RefOp => ({
+  tag,
   scalar: (value) => (value === tag ? undefined : value),
   list: (value) => removeTagRefValue(value, tag),
   stringArray: (value) => removeStringArray(value, tag),
@@ -307,6 +312,77 @@ function visitCertificateProviderRefs(config: SingBoxConfig, op: RefOp) {
   tlsRecords(config).forEach((tls) => applyScalarField(tls, "certificate_provider", op));
 }
 
+function applyNetnsToHttpClient(value: unknown, op: RefOp) {
+  if (isRecord(value)) applyScalarField(value, "netns", op);
+}
+
+function applyNetnsToRealityHandshake(value: MutableRecord, op: RefOp) {
+  if (!isRecord(value.tls) || !isRecord(value.tls.reality) || !isRecord(value.tls.reality.handshake)) return;
+  applyScalarField(value.tls.reality.handshake, "netns", op);
+}
+
+function applyNetnsToInlineTlsCertificateProvider(value: MutableRecord, op: RefOp) {
+  if (!isRecord(value.tls) || !isRecord(value.tls.certificate_provider)) return;
+  applyNetnsToHttpClient(value.tls.certificate_provider.http_client, op);
+}
+
+// `netns` is deliberately not treated as an unconditional tag reference: since 1.12, Listen/Dial
+// fields also accept a raw namespace name or path. In 1.14 the same string may instead resolve to a
+// top-level network_namespaces[].tag. Only cascade a value while that managed tag exists, and enumerate
+// every documented Listen/Dial owner explicitly so unrelated same-named strings are never touched.
+function visitNetworkNamespaceRefs(config: SingBoxConfig, op: RefOp) {
+  if (!(config.network_namespaces ?? []).some((item) => item.tag === op.tag)) return;
+
+  config.inbounds?.forEach((inbound) => {
+    const obj = inbound as MutableRecord;
+    applyScalarField(obj, "netns", op); // Listen Fields, including the 1.14 TUN-specific field.
+    applyNetnsToRealityHandshake(obj, op);
+    applyNetnsToInlineTlsCertificateProvider(obj, op);
+    if (isRecord(obj.handshake)) applyScalarField(obj.handshake, "netns", op);
+    if (isRecord(obj.handshake_for_server_name)) {
+      Object.values(obj.handshake_for_server_name).forEach((value) => {
+        if (isRecord(value)) applyScalarField(value, "netns", op);
+      });
+    }
+    if (isRecord(obj.control_dialer)) applyScalarField(obj.control_dialer, "netns", op);
+    if (isRecord(obj.tunnel_dialer)) applyScalarField(obj.tunnel_dialer, "netns", op);
+    if (isRecord(obj.realm)) applyNetnsToHttpClient(obj.realm.http_client, op);
+  });
+
+  config.outbounds?.forEach((outbound) => {
+    const obj = outbound as MutableRecord;
+    applyScalarField(obj, "netns", op);
+    if (isRecord(obj.realm)) applyNetnsToHttpClient(obj.realm.http_client, op);
+  });
+  config.dns?.servers?.forEach((server) => applyScalarField(server as MutableRecord, "netns", op));
+  config.endpoints?.forEach((endpoint) => applyScalarField(endpoint as MutableRecord, "netns", op));
+  config.services?.forEach((service) => {
+    const obj = service as MutableRecord;
+    applyScalarField(obj, "netns", op); // Listen Fields; usbip-client's accepted Dial subset.
+    applyNetnsToRealityHandshake(obj, op);
+    applyNetnsToInlineTlsCertificateProvider(obj, op);
+    if (Array.isArray(obj.mesh_with)) {
+      obj.mesh_with.forEach((value) => {
+        if (isRecord(value)) applyScalarField(value, "netns", op);
+      });
+    }
+    if (Array.isArray(obj.verify_client_url)) {
+      obj.verify_client_url.forEach((value) => {
+        if (isRecord(value)) applyScalarField(value, "netns", op);
+      });
+    }
+    if (isRecord(obj.dashboard)) applyNetnsToHttpClient(obj.dashboard.http_client, op);
+  });
+  applyScalarField(config.ntp as MutableRecord | undefined, "netns", op);
+  config.http_clients?.forEach((client) => applyScalarField(client as MutableRecord, "netns", op));
+  config.route?.rule_set?.forEach((ruleSet) => {
+    applyNetnsToHttpClient((ruleSet as MutableRecord).http_client, op);
+  });
+  config.certificate_providers?.forEach((provider) => {
+    applyNetnsToHttpClient((provider as MutableRecord).http_client, op);
+  });
+}
+
 // Each entry pairs the declarative pointer catalog (`paths`, the single source the canvas
 // canonicalPath parity test binds against) with ONE traversal, exposed as rename/delete thunks.
 type ReferenceVisitor = (config: SingBoxConfig, op: RefOp) => void;
@@ -353,6 +429,34 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
     visitHttpClientRefs,
   ),
   entry("certificate-provider", ["*/tls/certificate_provider"], visitCertificateProviderRefs),
+  entry(
+    "network-namespace",
+    [
+      "/inbounds/*/netns",
+      "/inbounds/*/tls/reality/handshake/netns",
+      "/inbounds/*/tls/certificate_provider/http_client/netns",
+      "/inbounds/*/handshake/netns",
+      "/inbounds/*/handshake_for_server_name/*/netns",
+      "/inbounds/*/control_dialer/netns",
+      "/inbounds/*/tunnel_dialer/netns",
+      "/inbounds/*/realm/http_client/netns",
+      "/outbounds/*/netns",
+      "/outbounds/*/realm/http_client/netns",
+      "/dns/servers/*/netns",
+      "/endpoints/*/netns",
+      "/services/*/netns",
+      "/services/*/tls/reality/handshake/netns",
+      "/services/*/tls/certificate_provider/http_client/netns",
+      "/services/*/mesh_with/*/netns",
+      "/services/*/verify_client_url/*/netns",
+      "/services/*/dashboard/http_client/netns",
+      "/ntp/netns",
+      "/http_clients/*/netns",
+      "/route/rule_set/*/http_client/netns",
+      "/certificate_providers/*/http_client/netns",
+    ],
+    visitNetworkNamespaceRefs,
+  ),
 ];
 
 // W10/A3 — the canvas SURFACE classification of every reference path, declared ON the domain model (the
@@ -377,6 +481,28 @@ export const INSPECTOR_ONLY_REFERENCE_PATHS: Record<string, string> = {
   "/inbounds/*/handshake_for_server_name/*/detour": "shadowtls handshake_for_server_name[].detour — Inspector-only",
   "/inbounds/*/control_dialer/detour": "cloudflared control_dialer.detour — Inspector dial <select>",
   "/inbounds/*/tunnel_dialer/detour": "cloudflared tunnel_dialer.detour — Inspector dial <select>",
+  "/inbounds/*/netns": "Listen/TUN netns — Inspector tag-or-literal field; raw names and paths are not canvas references",
+  "/inbounds/*/tls/reality/handshake/netns": "Reality server handshake netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/tls/certificate_provider/http_client/netns": "inline TLS certificate-provider HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/handshake/netns": "shadowtls handshake netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/handshake_for_server_name/*/netns": "shadowtls SNI handshake netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/control_dialer/netns": "cloudflared control netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/tunnel_dialer/netns": "cloudflared tunnel netns — Inspector tag-or-literal Dial field",
+  "/inbounds/*/realm/http_client/netns": "hysteria2 realm HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/outbounds/*/netns": "outbound netns — Inspector tag-or-literal Dial field",
+  "/outbounds/*/realm/http_client/netns": "hysteria2 realm HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/dns/servers/*/netns": "DNS-server netns — Inspector tag-or-literal Dial field",
+  "/endpoints/*/netns": "endpoint netns — Inspector tag-or-literal Dial field",
+  "/services/*/netns": "service netns — Inspector tag-or-literal Listen/Dial field",
+  "/services/*/tls/reality/handshake/netns": "service Reality handshake netns — Inspector tag-or-literal Dial field",
+  "/services/*/tls/certificate_provider/http_client/netns": "service inline TLS certificate-provider HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/services/*/mesh_with/*/netns": "DERP mesh netns — Inspector tag-or-literal Dial field",
+  "/services/*/verify_client_url/*/netns": "DERP verification HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/services/*/dashboard/http_client/netns": "API dashboard HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/ntp/netns": "NTP netns — Inspector tag-or-literal Dial field",
+  "/http_clients/*/netns": "shared HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/route/rule_set/*/http_client/netns": "rule-set HTTP-client netns — Inspector tag-or-literal Dial field",
+  "/certificate_providers/*/http_client/netns": "certificate-provider HTTP-client netns — Inspector tag-or-literal Dial field",
   // inbound `detour` is NOT a field of any current sing-box inbound (verified absent from
   // docs/upstream/.../inbound/*.md, stable + testing) — the referenceRegistry entry is a legacy vestige.
   // It is correctly never edged; left here (not promoted) since the cascade still tag-tracks a legacy import.

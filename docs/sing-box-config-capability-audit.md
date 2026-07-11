@@ -15,20 +15,20 @@ The audit compares the latest local testing docs checkout at `.tmp/sing-box-docs
 
 ## Current Result
 
-Last run: 2026-05-26 against testing docs commit `b6c416b0482a2d2391470d70ce518abff3ba51f8`.
+Last run: 2026-07-11 after a forced docs refresh, against testing docs commit `4bccd6fae19526425acf76efc263333c7aea6fce`.
 
 | Metric | Count |
 | --- | ---: |
-| Official testing English docs | 105 |
-| Matrix rows | 105 |
-| Palette entries | 107 |
-| `ADD` entries | 15 |
-| `SETUP` entries | 44 |
+| Official testing English docs | 114 |
+| Matrix rows | 114 |
+| Palette entries | 114 |
+| `ADD` entries | 12 |
+| `SETUP` entries | 60 |
 | `TABLE` entries | 4 |
-| `INSPECTOR` entries | 14 |
+| `INSPECTOR` entries | 13 |
 | `GATED` entries | 15 |
 | `PENDING` entries | 0 |
-| `DOCS` entries | 15 |
+| `DOCS` entries | 10 |
 
 ## User-Facing Meaning
 
@@ -48,20 +48,23 @@ The sixth closed usability gap is Rule Set setup: users can now add a stable-saf
 
 The seventh closed usability gap is Endpoint setup and type switching: users can now add WireGuard and Tailscale endpoints from Library. SBC writes canonical `endpoints[]`, renders endpoint nodes, supports endpoint Dial `detour`, links Tailscale DNS servers to Tailscale endpoints, and validates endpoint tag references. Inbound, Outbound, DNS Server, Endpoint, and Rule Set nodes also expose target-appropriate type switching in the Inspector while preserving tags and clearing invalid references through domain commands.
 
+The eighth closed usability gap is the sing-box 1.14 Network Namespace resource. On the explicit testing target, users can create canonical `network_namespaces[]` entries, edit `default` (`tag` + required existing name/path) and `unshare` (`tag` + optional `pid_file`) shapes, and select managed tags from supported TUN, Listen, and Dial `netns` controls without losing raw namespace name/path editing. Stable and legacy targets block the top-level resource; TUN `netns` is separately testing-gated and conflicts with `platform`. Managed tag rename/delete uses domain reference commands, while unresolved raw values remain valid non-resource strings. The Linux testing fixture is assigned to `sing-box-testing` validation.
+
 Remaining chain-node gaps reported by the audit:
 
 - Outbound `wireguard` and `dns` remain documentation/migration entries until the target-specific migration policy is implemented.
 
 Remaining Palette surface gaps reported by the audit:
 
-- Base docs: `dns/server/index.md`, `endpoint/index.md`, `inbound/index.md`, `outbound/index.md`, `service/index.md`.
+- Base/action docs: `index.md`, `dns/rule_action.md`, `dns/server/index.md`, `endpoint/index.md`, `inbound/index.md`, `outbound/index.md`, and `service/index.md`.
+
+All three Network Namespace docs have Palette surfaces. The Overview item is documentation-only; the Default and Unshare items are statically `GATED` and become `ADD SETUP` when the active target is testing. Because the audit parses static source status, it reports the Overview as a writable resource without a write path even though creation is deliberately owned by the two concrete type entries.
 
 Remaining writable object gaps reported by the expanded audit:
 
 - Rule Set source-format and AdGuard conversion helpers.
-- Service resources.
+- Legacy DNS Server import/migration handling.
 - Outbound WireGuard and DNS migration/special entries.
-- Testing-only Certificate Provider and HTTP Client resource schemas.
 
 ## Release Gate
 

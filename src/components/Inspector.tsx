@@ -11,6 +11,7 @@ import {
   CREATABLE_SERVICE_TYPES,
 } from "../domain/protocols";
 import { sharedGroupsForEntity } from "../domain/sharedFieldRegistry";
+import { creatableTypes } from "../domain/schemaRegistry";
 import { PlatformBanner } from "./inspector/controls";
 import { DnsRuleInspector, RouteRuleInspector } from "./inspector/ruleInspectors";
 import { SettingsInspector } from "./inspector/settingsInspector";
@@ -23,6 +24,7 @@ import { EndpointInspector } from "./inspector/endpointInspector";
 import { ServiceInspector } from "./inspector/serviceInspector";
 import { CertificateProviderInspector } from "./inspector/certificateProviderInspector";
 import { RuleSetInspector } from "./inspector/ruleSetInspector";
+import { NetworkNamespaceInspector } from "./inspector/networkNamespaceInspector";
 import { SharedFieldCards } from "./inspector/sharedFields";
 // Preserve the public API the C17 guard test imports from this module (moved to inspector/handledFields).
 export { INLINE_RENDERED_KEYS, inboundHandledFields, outboundHandledFields, structurallyCoveredKeys } from "./inspector/handledFields";
@@ -32,6 +34,8 @@ import { useProjectStore } from "../state/useProjectStore";
 // Preserve the public API: withUniqueBlankKey moved to inspector/helpers (C14) but is imported by tests
 // from this module.
 export { withUniqueBlankKey } from "./inspector/helpers";
+
+const CREATABLE_NETWORK_NAMESPACE_TYPES = creatableTypes("network-namespace");
 
 function selectedRefFromId(id: string | null): EntityRef | null {
   if (!id) return null;
@@ -46,6 +50,7 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   if (kind === "rule-set" && value) return { kind: "rule-set", tag: value };
   if (kind === "certificate-provider" && value) return { kind: "certificate-provider", tag: value };
   if (kind === "http-client" && value) return { kind: "http-client", tag: value };
+  if (kind === "network-namespace" && value) return { kind: "network-namespace", tag: value };
   if (kind === "route") return { kind: "route", id: "main" };
   if (kind === "dns") return { kind: "dns", id: "main" };
   if (kind === "route-rule" && value) return { kind: "route-rule", index: Number(value) };
@@ -54,7 +59,7 @@ function selectedRefFromId(id: string | null): EntityRef | null {
   return null;
 }
 
-function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client") {
+function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client" | "network-namespace") {
   const prefix = `untagged-${kind}-`;
   if (!value.startsWith(prefix)) return -1;
   const index = Number(value.slice(prefix.length)) - 1;
@@ -64,7 +69,7 @@ function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-serve
 function findTaggedOrGenerated<T extends { tag?: string }>(
   items: T[] | undefined,
   tag: string,
-  kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client",
+  kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client" | "network-namespace",
 ) {
   const byTag = items?.find((item) => item.tag === tag);
   if (byTag) return byTag;
@@ -96,6 +101,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
     if (ref.kind === "rule-set") return (findTaggedOrGenerated(config.route?.rule_set, ref.tag, "rule-set") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "certificate-provider") return (findTaggedOrGenerated(config.certificate_providers, ref.tag, "certificate-provider") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "http-client") return (findTaggedOrGenerated(config.http_clients, ref.tag, "http-client") as InspectorEntity | undefined) ?? null;
+    if (ref.kind === "network-namespace") return (findTaggedOrGenerated(config.network_namespaces, ref.tag, "network-namespace") as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route") return (config.route as InspectorEntity | undefined) ?? null;
     if (ref.kind === "dns") return (config.dns as InspectorEntity | undefined) ?? null;
     if (ref.kind === "route-rule") return (config.route?.rules?.[ref.index] as InspectorEntity | undefined) ?? null;
@@ -119,7 +125,9 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
 
   if (!ref || !entity) return null;
 
-  const entityType = typeof entity.type === "string" ? entity.type : null;
+  const rawEntityType = typeof entity.type === "string" ? entity.type : null;
+  const entityType =
+    ref.kind === "network-namespace" && !rawEntityType ? "default" : rawEntityType;
   const requestTypeChange = (nextType: string) => {
     if (!ref || nextType === entityType) return;
     // Confirm before a type change discards type-specific fields the new type won't keep (W7 / T3).
@@ -146,6 +154,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
   // as the node type, so match it here to keep the header icon consistent with the node card.
   const iconType = ref.kind === "settings" ? String(ref.path) : entityType ?? "";
   const InspectorIcon = getNodeIcon(ref.kind, iconType);
+  const inspectorKindLabel = ref.kind === "network-namespace" ? "Network Namespace" : ref.kind;
   const selectedEndpointReferences =
     ref.kind === "endpoint" && tagValue ? endpointReferences(config, tagValue) : null;
   const sharedGroups = sharedGroupsForEntity(ref, entityType, channel);
@@ -155,7 +164,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       <div className="inspector__header" data-testid="inspector-header">
         <div className="inspector__title">
           <InspectorIcon size={18} />
-          <span>{ref.kind}</span>
+          <span>{inspectorKindLabel}</span>
         </div>
         <button type="button" className="node-icon-button" aria-label="Close inspector" onClick={() => setSelectedId(null)}>
           <X size={16} />
@@ -163,7 +172,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       </div>
       <div className="inspector-heading">
         <div>
-          <div className="inspector-kind">{ref.kind}</div>
+          <div className="inspector-kind">{inspectorKindLabel}</div>
           <h2>{tagValue ?? ref.kind}</h2>
         </div>
         {ref.kind !== "route" && ref.kind !== "dns" ? (
@@ -254,6 +263,14 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
                 </option>
               ))}
             </select>
+          ) : ref.kind === "network-namespace" ? (
+            <select value={entityType} onChange={(event) => requestTypeChange(event.target.value)}>
+              {CREATABLE_NETWORK_NAMESPACE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
           ) : (
             <input value={entityType} disabled />
           )}
@@ -290,6 +307,10 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
 
       {ref.kind === "certificate-provider" ? (
         <CertificateProviderInspector entity={entity} entityRef={ref} config={config} entityType={entityType} channel={channel} updateField={updateField} />
+      ) : null}
+
+      {ref.kind === "network-namespace" && entityType ? (
+        <NetworkNamespaceInspector entity={entity} entityRef={ref} entityType={entityType} updateField={updateField} />
       ) : null}
 
       {(() => {

@@ -88,6 +88,7 @@ describe("VT3 — data-driven testing-only field gate", () => {
             "dns_mode",
             "exclude_mac_address",
             "include_mac_address",
+            "netns",
           ],
         },
         "outbound": {
