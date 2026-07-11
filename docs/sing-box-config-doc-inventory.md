@@ -19,6 +19,7 @@
 | `certificate` | Certificate | https://sing-box.sagernet.org/configuration/certificate/ | 独立 Settings 节点 + Inspector |
 | `certificate_providers` | Certificate Provider | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | 资源列表/节点 |
 | `http_clients` | HTTP Client | https://sing-box.sagernet.org/configuration/shared/http-client/ | 资源列表/节点 |
+| `network_namespaces` | Network Namespace | https://sing-box.sagernet.org/configuration/network-namespace/ | `1.14 testing` Linux 资源列表/节点；stable gated |
 | `endpoints` | Endpoint | https://sing-box.sagernet.org/configuration/endpoint/ | Endpoint 节点 |
 | `inbounds` | Inbound | https://sing-box.sagernet.org/configuration/inbound/ | Inbound 节点 |
 | `outbounds` | Outbound | https://sing-box.sagernet.org/configuration/outbound/ | Outbound 节点 |
@@ -116,6 +117,14 @@
 | WireGuard | https://sing-box.sagernet.org/configuration/endpoint/wireguard/ | Endpoint 类型 |
 | Tailscale | https://sing-box.sagernet.org/configuration/endpoint/tailscale/ | Endpoint 类型 |
 
+## Network Namespace
+
+| Entry | 官方入口 | SBC 表达方式 |
+| --- | --- | --- |
+| Network Namespace | https://sing-box.sagernet.org/configuration/network-namespace/ | `network_namespaces[]` testing-only Linux 资源列表/节点；公共 `type` / 必填 `tag` Inspector |
+| Network Namespace / Default | https://sing-box.sagernet.org/configuration/network-namespace/default/ | `default` 类型；附加到现有 namespace，Inspector 必填 `path`（name 或 path） |
+| Network Namespace / Unshare | https://sing-box.sagernet.org/configuration/network-namespace/unshare/ | `unshare` 类型；创建 namespace，Inspector 可选 `pid_file`，并提示 rootless kernel 前提 |
+
 ## Inbound
 
 | Entry | 官方入口 | SBC 表达方式 |
@@ -211,3 +220,9 @@ These fields are used by the first release template, fixtures, Inspector, and E2
 | `http_clients[].tag`, `engine` | https://sing-box.sagernet.org/configuration/shared/http-client/ | testing channel fixture only |
 | `route.rule_set[].http_client` | https://sing-box.sagernet.org/configuration/rule-set/ | Remote rule-set HTTP client reference |
 | `certificate_providers[].http_client`, `certificate_providers[].endpoint` | https://sing-box.sagernet.org/configuration/shared/certificate-provider/ | Certificate Provider resource references |
+| `network_namespaces[].type`, `network_namespaces[].tag` | https://sing-box.sagernet.org/configuration/network-namespace/ | `1.14 testing` Linux resource identity and type switch; stable export blocked |
+| `network_namespaces[type=default].path` | https://sing-box.sagernet.org/configuration/network-namespace/default/ | `default` Network Namespace Inspector; required existing namespace name/path |
+| `network_namespaces[type=unshare].pid_file` | https://sing-box.sagernet.org/configuration/network-namespace/unshare/ | `unshare` Network Namespace Inspector; optional holder-process PID output path |
+| Listen Fields `netns` | https://sing-box.sagernet.org/configuration/shared/listen/ | Raw namespace name/path remains editable; on `1.14 testing`, managed tags reference `network_namespaces[].tag` and participate in rename/delete commands |
+| Dial Fields `netns` | https://sing-box.sagernet.org/configuration/shared/dial/ | Raw namespace name/path remains editable; on `1.14 testing`, managed tags reference `network_namespaces[].tag`; warn for `unshare` targets |
+| `inbounds[type=tun].netns` | https://sing-box.sagernet.org/configuration/inbound/tun/ | `1.14 testing` Linux-only TUN namespace name/path/tag; conflicts with `platform` |
