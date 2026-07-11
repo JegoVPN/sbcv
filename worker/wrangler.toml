@@ -18,7 +18,7 @@ routes = [
 ALLOWED_ORIGIN = "https://sbcv.app,https://www.sbcv.app"
 MAX_BODY_BYTES = "524288"
 CHECK_TIMEOUT_MS = "30000"
-VALIDATOR_VERSION = "v2"
+VALIDATOR_VERSION = "1.12.25+1.13.14+1.14.0-alpha.43+2026-07-12-1"
 RATE_LIMIT_PER_MIN = "30"
 
 # KV cache binding (created via `wrangler kv namespace create CHECK_CACHE`).
@@ -39,6 +39,8 @@ class_name = "ValidatorContainer"
 image = "../container/Dockerfile"
 instance_type = "lite"
 max_instances = 3
+# The validator is stateless; mixed binary versions make official checks lie.
+rollout_step_percentage = 100
 
 [[durable_objects.bindings]]
 class_name = "ValidatorContainer"
@@ -73,7 +75,7 @@ routes = [
 ALLOWED_ORIGIN = "https://staging.sbcv.app"
 MAX_BODY_BYTES = "524288"
 CHECK_TIMEOUT_MS = "30000"
-VALIDATOR_VERSION = "v2"
+VALIDATOR_VERSION = "1.12.25+1.13.14+1.14.0-alpha.43+2026-07-12-1"
 RATE_LIMIT_PER_MIN = "60"
 
 [[env.staging.kv_namespaces]]
@@ -85,6 +87,7 @@ class_name = "ValidatorContainer"
 image = "../container/Dockerfile"
 instance_type = "lite"
 max_instances = 1
+rollout_step_percentage = 100
 
 [[env.staging.durable_objects.bindings]]
 class_name = "ValidatorContainer"
