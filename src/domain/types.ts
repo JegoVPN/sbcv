@@ -21,9 +21,21 @@ export type TaggedResourceConfig = {
   [key: string]: unknown;
 };
 
+export type NetworkNamespaceType = "default" | "unshare";
+
+export type NetworkNamespaceConfig = {
+  type?: NetworkNamespaceType;
+  tag: string;
+  path?: string;
+  pid_file?: string;
+  [key: string]: unknown;
+};
+
 export type InboundConfig = TaggedConfig & {
   address?: string[];
   auto_route?: boolean;
+  netns?: string;
+  platform?: Record<string, unknown>;
 };
 
 export type OutboundConfig = TaggedConfig & {
@@ -33,6 +45,7 @@ export type OutboundConfig = TaggedConfig & {
   default?: string;
   url?: string;
   interval?: string;
+  netns?: string;
 };
 
 export type DnsServerConfig = TaggedConfig & {
@@ -44,12 +57,14 @@ export type DnsServerConfig = TaggedConfig & {
   path?: string | string[];
   predefined?: Record<string, string[]>;
   headers?: Record<string, string>;
+  netns?: string;
 };
 
 export type EndpointConfig = TaggedConfig & {
   detour?: string;
   address?: string[];
   private_key?: string;
+  netns?: string;
 };
 
 export type ServiceConfig = TaggedConfig & {
@@ -58,6 +73,7 @@ export type ServiceConfig = TaggedConfig & {
   detour?: string;
   verify_client_endpoint?: string | string[];
   servers?: Record<string, string>;
+  netns?: string;
 };
 
 export type RouteRule = {
@@ -114,6 +130,7 @@ export type SingBoxConfig = {
   certificate?: Record<string, unknown>;
   certificate_providers?: TaggedConfig[];
   http_clients?: TaggedResourceConfig[];
+  network_namespaces?: NetworkNamespaceConfig[];
   endpoints?: EndpointConfig[];
   inbounds?: InboundConfig[];
   outbounds?: OutboundConfig[];
@@ -148,6 +165,7 @@ export type EntityRef =
   | { kind: "rule-set"; tag: string }
   | { kind: "certificate-provider"; tag: string }
   | { kind: "http-client"; tag: string }
+  | { kind: "network-namespace"; tag: string }
   | { kind: "route"; id: "main" }
   | { kind: "route-rule"; index: number }
   | { kind: "dns"; id: "main" }

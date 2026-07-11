@@ -1,0 +1,33 @@
+{
+  "network_namespaces": [
+    {
+      "type": "default",
+      "tag": "host-netns",
+      "path": "/proc/self/ns/net"
+    },
+    {
+      "type": "unshare",
+      "tag": "isolated-netns"
+    }
+  ],
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "netns": "isolated-netns"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct",
+      "netns": "host-netns"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

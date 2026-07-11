@@ -2,6 +2,7 @@ import type {
   DnsServerConfig,
   EndpointConfig,
   InboundConfig,
+  NetworkNamespaceConfig,
   OutboundConfig,
   ServiceConfig,
   SingBoxConfig,
@@ -17,7 +18,8 @@ export type TaggedEntityKind =
   | "service"
   | "certificate-provider"
   | "http-client"
-  | "rule-set";
+  | "rule-set"
+  | "network-namespace";
 
 export type TaggedEntityRef = {
   kind: TaggedEntityKind;
@@ -29,11 +31,12 @@ export type TaggedEntityRef = {
 function pushTagged(
   result: TaggedEntityRef[],
   kind: TaggedEntityKind,
-  item: TaggedConfig | TaggedResourceConfig | InboundConfig | OutboundConfig | DnsServerConfig | ServiceConfig,
+  item: TaggedConfig | TaggedResourceConfig | InboundConfig | OutboundConfig | DnsServerConfig | ServiceConfig | NetworkNamespaceConfig,
   path: string,
 ) {
   if (item.tag) {
-    result.push({ kind, tag: item.tag, type: typeof item.type === "string" ? item.type : kind, path });
+    const defaultType = kind === "network-namespace" ? "default" : kind;
+    result.push({ kind, tag: item.tag, type: typeof item.type === "string" && item.type ? item.type : defaultType, path });
   }
 }
 
@@ -63,6 +66,9 @@ export function getTaggedEntities(config: SingBoxConfig): TaggedEntityRef[] {
   );
   listItems(config.http_clients).forEach((item, index) =>
     pushTagged(result, "http-client", item, `/http_clients/${index}`),
+  );
+  listItems(config.network_namespaces).forEach((item, index) =>
+    pushTagged(result, "network-namespace", item, `/network_namespaces/${index}`),
   );
   listItems(config.route?.rule_set).forEach((item, index) =>
     pushTagged(result, "rule-set", item, `/route/rule_set/${index}`),
@@ -131,6 +137,14 @@ export function getHttpClientTags(config: SingBoxConfig): Set<string> {
   );
 }
 
+export function getNetworkNamespaceTags(config: SingBoxConfig): Set<string> {
+  return new Set(
+    listItems(config.network_namespaces)
+      .map((item) => item.tag)
+      .filter((tag): tag is string => Boolean(tag)),
+  );
+}
+
 export function getUniqueTag(config: SingBoxConfig, base: string): string {
   const tags = buildTagIndex(config);
   if (!tags.has(base)) return base;
@@ -149,9 +163,10 @@ function tagIsBlank(tag: unknown): boolean {
  * V3 import dedup: repair tags on an imported config IN PLACE (the caller passes a fresh parse).
  * Namespace-aware (matches the duplicate-tag diagnostic): within each reference namespace the first
  * use of a tag wins and every later collision gets a `-N` suffix. Blank tags are only assigned for the
- * kinds sing-box *requires* a tag (rule_set / http_clients) — tagless inbounds/outbounds/etc. are valid
- * and left untouched. Renaming a duplicate never breaks a reference: refs already resolved to the first
- * holder, and the newly-suffixed entity was previously unreachable-as-distinct. Returns the repair tally.
+ * kinds sing-box *requires* a tag (rule_set / http_clients / network_namespaces) — tagless
+ * inbounds/outbounds/etc. are valid and left untouched. Renaming a duplicate never breaks a reference:
+ * refs already resolved to the first holder, and the newly-suffixed entity was previously
+ * unreachable-as-distinct. Returns the repair tally.
  */
 export function dedupeTags(config: SingBoxConfig): { renamed: number; assigned: number } {
   const used = new Map<string, Set<string>>();
@@ -176,6 +191,7 @@ export function dedupeTags(config: SingBoxConfig): { renamed: number; assigned: 
     { items: listItems(config.services), kind: "service", base: "service", required: false },
     { items: listItems(config.certificate_providers), kind: "certificate-provider", base: "cert", required: false },
     { items: listItems(config.http_clients), kind: "http-client", base: "http-client", required: true },
+    { items: listItems(config.network_namespaces), kind: "network-namespace", base: "netns", required: true },
     { items: listItems(config.route?.rule_set), kind: "rule-set", base: "rule-set", required: true },
   ];
 

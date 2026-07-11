@@ -11,6 +11,7 @@ export const PORT_NODE_KINDS = [
   "rule-set",
   "certificate-provider",
   "http-client",
+  "network-namespace",
   "settings",
   "notice",
 ] as const;

@@ -10,6 +10,11 @@ import {
   type SchemaEnumOption,
   type SchemaFieldMeta,
 } from "./schemaRegistry";
+import {
+  supportsDialFields,
+  supportsDnsServerDialFields,
+  supportsOutboundDialFields,
+} from "./sharedFieldRegistry";
 import { atLeast, defaultVersionForChannel } from "./targets";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 import { testingOnlyFields } from "./versionFieldGate";
@@ -317,11 +322,23 @@ function validateScalarFields(
     { kind: "endpoint", items: listItems(config.endpoints), collection: "endpoints" },
     { kind: "service", items: listItems(config.services), collection: "services" },
     { kind: "rule-set", items: listItems(config.route?.rule_set), collection: "route/rule_set" },
+    {
+      kind: "network-namespace",
+      items: listItems(config.network_namespaces),
+      collection: "network_namespaces",
+      legacyType: "default",
+    },
   ];
   for (const { kind, items, collection, legacyType } of collections) {
     items.forEach((entity, index) => {
       const rawType = (entity as { type?: unknown }).type;
-      const type = typeof rawType === "string" ? rawType : legacyType;
+      const usesDefaultNetworkNamespaceType =
+        kind === "network-namespace" && (rawType === undefined || rawType === null || rawType === "");
+      const type = usesDefaultNetworkNamespaceType
+        ? "default"
+        : typeof rawType === "string"
+          ? rawType
+          : legacyType;
       if (!type) return;
       for (const meta of fieldMetaFor(kind, type)) {
         const result = validateFieldMeta(meta, getAtPath(entity, meta.path), target);
@@ -357,8 +374,9 @@ function validateScalarFields(
       // ∪ a binary-verified supplement (knownFieldsRegistry); only entities with a real string type are
       // linted (typeless legacy forms are caught by their own diagnostic). Validated zero-false-positive
       // against the binary-valid fixtures + real configs.
-      if (typeof rawType === "string" && rawType && entity && typeof entity === "object") {
-        const known = knownFieldsFor(kind, rawType);
+      const lintType = usesDefaultNetworkNamespaceType ? "default" : rawType;
+      if (typeof lintType === "string" && lintType && entity && typeof entity === "object") {
+        const known = knownFieldsFor(kind, lintType);
         if (known) {
           const tag = (entity as { tag?: unknown }).tag;
           const owner = `${kind[0]!.toUpperCase()}${kind.slice(1)} "${typeof tag === "string" && tag ? tag : `${kind}-${index}`}"`;
@@ -369,7 +387,7 @@ function validateScalarFields(
                 "error",
                 "unknown-field",
                 `/${collection}/${index}/${key}`,
-                `${owner} (${rawType}) has unrecognized field \`${key}\` — sing-box's strict decoder rejects it ("unknown field"). Remove it, or it may belong under a nested object.`,
+                `${owner} (${lintType}) has unrecognized field \`${key}\` — sing-box's strict decoder rejects it ("unknown field"). Remove it, or it may belong under a nested object.`,
               );
             }
           }
@@ -389,11 +407,11 @@ function tagIsBlank(tag: unknown): boolean {
 }
 
 /**
- * V3: entity-missing-tag. `sing-box check` rejects a MISSING tag only for `route.rule_set[]`
- * ("missing tag") and `http_clients[]` ("missing http client tag") — verified against the real binary.
+ * V3: entity-missing-tag. `sing-box check` rejects a MISSING tag for `route.rule_set[]`,
+ * `http_clients[]`, and 1.14 `network_namespaces[]` — verified against the real binaries.
  * Tagless inbounds/outbounds/dns-servers/endpoints/certificate-providers are ACCEPTED by sing-box (and
  * common in real-world configs), so flagging them would block a valid export and break the done-bar
- * ("保证能过 sing-box check"). The error is therefore scoped to exactly the two kinds sing-box rejects,
+ * ("保证能过 sing-box check"). The error is therefore scoped to exactly the three kinds sing-box rejects,
  * and feeds the V2 export hard gate. (GUI create/rename never produces a blank tag — getUniqueTag — so
  * this bites imported / hand-edited JSON, and import dedup auto-repairs it.)
  */
@@ -401,6 +419,7 @@ function validateRequiredTags(config: SingBoxConfig, diagnostics: Diagnostic[]):
   const required: Array<{ items: unknown[]; collection: string; label: string }> = [
     { items: listItems(config.route?.rule_set), collection: "route/rule_set", label: "Rule-set" },
     { items: listItems(config.http_clients), collection: "http_clients", label: "HTTP client" },
+    { items: listItems(config.network_namespaces), collection: "network_namespaces", label: "Network namespace" },
   ];
   for (const { items, collection, label } of required) {
     items.forEach((entity, index) => {
@@ -415,6 +434,218 @@ function validateRequiredTags(config: SingBoxConfig, diagnostics: Diagnostic[]):
       }
     });
   }
+}
+
+function validateNetworkNamespacesAndTunNetns(
+  config: SingBoxConfig,
+  channel: SingBoxChannel,
+  diagnostics: Diagnostic[],
+): void {
+  if (config.network_namespaces !== undefined && channel !== "testing") {
+    push(
+      diagnostics,
+      "error",
+      "network-namespaces-testing-only",
+      "/network_namespaces",
+      "network_namespaces is available only for the 1.14 testing target; stable builds reject the top-level field.",
+    );
+  }
+
+  listItems(config.network_namespaces).forEach((namespace, index) => {
+    const obj = namespace as Record<string, unknown>;
+    const rawType = obj.type;
+    const type = rawType === undefined || rawType === null || rawType === "" ? "default" : rawType;
+    if (type !== "default" && type !== "unshare") {
+      push(
+        diagnostics,
+        "error",
+        "network-namespace-type-invalid",
+        `/network_namespaces/${index}/type`,
+        `Network namespace "${typeof obj.tag === "string" && obj.tag ? obj.tag : index}" has unsupported type "${String(rawType)}"; use "default" or "unshare".`,
+      );
+      return;
+    }
+  });
+
+  listItems(config.inbounds).forEach((inbound, index) => {
+    if (inbound.type !== "tun") return;
+    const obj = inbound as Record<string, unknown>;
+    const hasNetnsField = obj.netns !== undefined;
+    if (hasNetnsField && obj.netns !== null && typeof obj.netns !== "string") {
+      push(
+        diagnostics,
+        "error",
+        "type-invalid",
+        `/inbounds/${index}/netns`,
+        `TUN inbound "${inbound.tag}" netns must be a string, got ${typeof obj.netns}.`,
+      );
+    }
+    if (hasNetnsField && channel !== "testing") {
+      push(
+        diagnostics,
+        "error",
+        "tun-netns-testing-only",
+        `/inbounds/${index}/netns`,
+        `TUN inbound "${inbound.tag}" sets netns, which is supported only by sing-box 1.14 testing; stable builds reject the field.`,
+      );
+    }
+    const hasNetns = typeof obj.netns === "string" && obj.netns.trim() !== "";
+    if (hasNetns && obj.platform !== undefined && obj.platform !== null) {
+      push(
+        diagnostics,
+        "error",
+        "tun-netns-platform-conflict",
+        `/inbounds/${index}/netns`,
+        `TUN inbound "${inbound.tag}" cannot set netns together with platform settings.`,
+      );
+    }
+  });
+
+  const unshareTags = new Set(
+    listItems(config.network_namespaces)
+      .filter((namespace) => namespace.type === "unshare" && !tagIsBlank(namespace.tag))
+      .map((namespace) => namespace.tag),
+  );
+  if (unshareTags.size === 0) return;
+
+  const warnDialRef = (value: unknown, path: string, label: string) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return;
+    const netns = (value as Record<string, unknown>).netns;
+    if (typeof netns !== "string" || !unshareTags.has(netns)) return;
+    push(
+      diagnostics,
+      "warning",
+      "network-namespace-unshare-dial",
+      `${path}/netns`,
+      `${label} dials through unshare network namespace "${netns}"; avoid this because its only route out is the TUN interface managed by sing-box itself.`,
+    );
+  };
+  const warnHttpClient = (value: unknown, path: string, label: string) =>
+    warnDialRef(value, path, `${label} HTTP client`);
+  const warnInlineTlsCertificateProvider = (value: Record<string, unknown>, path: string, label: string) => {
+    if (!value.tls || typeof value.tls !== "object" || Array.isArray(value.tls)) return;
+    const provider = (value.tls as Record<string, unknown>).certificate_provider;
+    if (!provider || typeof provider !== "object" || Array.isArray(provider)) return;
+    warnHttpClient(
+      (provider as Record<string, unknown>).http_client,
+      `${path}/tls/certificate_provider/http_client`,
+      `${label} inline certificate provider`,
+    );
+  };
+
+  // Dial owners only. Top-level inbounds/TUN and listening services intentionally stay out: the
+  // upstream warning applies to dialing through an unshare namespace, not listening inside one.
+  listItems(config.outbounds).forEach((outbound, index) => {
+    const obj = outbound as Record<string, unknown>;
+    if (supportsOutboundDialFields(outbound.type)) {
+      warnDialRef(obj, `/outbounds/${index}`, `Outbound "${outbound.tag}"`);
+    }
+    if (obj.realm && typeof obj.realm === "object" && !Array.isArray(obj.realm)) {
+      warnHttpClient(
+        (obj.realm as Record<string, unknown>).http_client,
+        `/outbounds/${index}/realm/http_client`,
+        `Outbound "${outbound.tag}" realm`,
+      );
+    }
+  });
+  listItems(config.dns?.servers).forEach((server, index) => {
+    if (supportsDnsServerDialFields(server.type)) {
+      warnDialRef(server, `/dns/servers/${index}`, `DNS server "${server.tag}"`);
+    }
+  });
+  listItems(config.endpoints).forEach((endpoint, index) => {
+    if (supportsDialFields("endpoint", endpoint.type)) {
+      warnDialRef(endpoint, `/endpoints/${index}`, `Endpoint "${endpoint.tag}"`);
+    }
+  });
+  warnDialRef(config.ntp, "/ntp", "NTP");
+  listItems(config.http_clients).forEach((client, index) =>
+    warnDialRef(client, `/http_clients/${index}`, `HTTP client "${client.tag}"`),
+  );
+  listItems(config.inbounds).forEach((inbound, index) => {
+    const obj = inbound as Record<string, unknown>;
+    const realityHandshake =
+      obj.tls && typeof obj.tls === "object" && !Array.isArray(obj.tls)
+        ? (obj.tls as Record<string, unknown>).reality
+        : undefined;
+    const realityHandshakeDialer =
+      realityHandshake && typeof realityHandshake === "object" && !Array.isArray(realityHandshake)
+        ? (realityHandshake as Record<string, unknown>).handshake
+        : undefined;
+    warnDialRef(
+      realityHandshakeDialer,
+      `/inbounds/${index}/tls/reality/handshake`,
+      `Inbound "${inbound.tag}" Reality handshake`,
+    );
+    warnInlineTlsCertificateProvider(obj, `/inbounds/${index}`, `Inbound "${inbound.tag}"`);
+    if (inbound.type === "shadowtls") {
+      warnDialRef(obj.handshake, `/inbounds/${index}/handshake`, `Inbound "${inbound.tag}" handshake`);
+    }
+    if (inbound.type === "shadowtls" && obj.handshake_for_server_name && typeof obj.handshake_for_server_name === "object" && !Array.isArray(obj.handshake_for_server_name)) {
+      Object.entries(obj.handshake_for_server_name as Record<string, unknown>).forEach(([name, value]) =>
+        warnDialRef(value, `/inbounds/${index}/handshake_for_server_name/${name}`, `Inbound "${inbound.tag}" SNI handshake`),
+      );
+    }
+    if (inbound.type === "cloudflared") {
+      warnDialRef(obj.control_dialer, `/inbounds/${index}/control_dialer`, `Inbound "${inbound.tag}" control dialer`);
+      warnDialRef(obj.tunnel_dialer, `/inbounds/${index}/tunnel_dialer`, `Inbound "${inbound.tag}" tunnel dialer`);
+    }
+    if (inbound.type === "hysteria2" && obj.realm && typeof obj.realm === "object" && !Array.isArray(obj.realm)) {
+      warnHttpClient(
+        (obj.realm as Record<string, unknown>).http_client,
+        `/inbounds/${index}/realm/http_client`,
+        `Inbound "${inbound.tag}" realm`,
+      );
+    }
+  });
+  listItems(config.services).forEach((service, index) => {
+    const obj = service as Record<string, unknown>;
+    const realityHandshake =
+      obj.tls && typeof obj.tls === "object" && !Array.isArray(obj.tls)
+        ? (obj.tls as Record<string, unknown>).reality
+        : undefined;
+    const realityHandshakeDialer =
+      realityHandshake && typeof realityHandshake === "object" && !Array.isArray(realityHandshake)
+        ? (realityHandshake as Record<string, unknown>).handshake
+        : undefined;
+    warnDialRef(
+      realityHandshakeDialer,
+      `/services/${index}/tls/reality/handshake`,
+      `Service "${service.tag}" Reality handshake`,
+    );
+    warnInlineTlsCertificateProvider(obj, `/services/${index}`, `Service "${service.tag}"`);
+    if (service.type === "derp" && Array.isArray(obj.mesh_with)) {
+      obj.mesh_with.forEach((peer, peerIndex) =>
+        warnDialRef(peer, `/services/${index}/mesh_with/${peerIndex}`, `Service "${service.tag}" mesh peer`),
+      );
+    }
+    if (service.type === "derp" && Array.isArray(obj.verify_client_url)) {
+      obj.verify_client_url.forEach((entry, entryIndex) =>
+        warnDialRef(entry, `/services/${index}/verify_client_url/${entryIndex}`, `Service "${service.tag}" verification client`),
+      );
+    }
+    if (service.type === "api" && obj.dashboard && typeof obj.dashboard === "object" && !Array.isArray(obj.dashboard)) {
+      warnHttpClient(
+        (obj.dashboard as Record<string, unknown>).http_client,
+        `/services/${index}/dashboard/http_client`,
+        `Service "${service.tag}" dashboard`,
+      );
+    }
+  });
+  listItems(config.route?.rule_set).forEach((ruleSet, index) =>
+    warnHttpClient(
+      (ruleSet as Record<string, unknown>).http_client,
+      `/route/rule_set/${index}/http_client`,
+      `Rule-set "${ruleSet.tag}"`,
+    ),
+  );
+  listItems(config.certificate_providers).forEach((provider, index) =>
+    warnHttpClient(
+      (provider as Record<string, unknown>).http_client,
+      `/certificate_providers/${index}/http_client`,
+      `Certificate provider "${provider.tag}"`,
+    ),
+  );
 }
 
 export function validateConfig(
@@ -3014,9 +3245,10 @@ export function validateConfig(
     }
   });
 
+  validateNetworkNamespacesAndTunNetns(config, channel, diagnostics);
   // V1: data-driven enum/type validation of scalar fields (last, so its errors join the export gate).
   validateScalarFields(config, diagnostics, { channel, version });
-  // V3: structurally-required tags (rule_set / http_clients) — sing-box rejects these when blank.
+  // V3: structurally-required tags (rule_set / http_clients / network_namespaces).
   validateRequiredTags(config, diagnostics);
   // VT3: data-driven testing-only field backstop (runs last so it can dedup against the hand-written gates).
   checkTestingOnlyFields(config, channel, diagnostics);

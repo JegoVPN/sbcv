@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error -- .mjs policy script has no type declarations
 import { assertCleanSingBoxCheck } from "../scripts/singbox-check-policy.mjs";
 // @ts-expect-error -- .mjs policy script has no type declarations
-import { binaryForFixturePath } from "../scripts/singbox-target-policy.mjs";
+import { binaryForFixturePath, requiredFixturePlatform } from "../scripts/singbox-target-policy.mjs";
 import { createConfigExport, parseConfigJson } from "../src/domain/serialization";
 
 // C15 (P2#12): feed the EXACT bytes the app downloads — createConfigExport(parseConfigJson(fixture)).contents,
@@ -48,6 +48,12 @@ describe("export-binary-check — pruned app export is accepted by the matched s
         // The app's real download path: parse → export (prunes noise) → these bytes.
         const exported = createConfigExport(parseConfigJson(raw));
         if (exported.contents.trim() !== raw.trim()) prunedDiffersFromRaw += 1;
+
+        const requiredPlatform = requiredFixturePlatform(fixturePath);
+        if (requiredPlatform && process.platform !== requiredPlatform) {
+          console.warn(`export-binary-check: skipped ${fixturePath}; requires ${requiredPlatform}, host is ${process.platform}.`);
+          return;
+        }
 
         const expectedBinary = binaryForFixturePath(fixturePath, group.channel);
         const binary = resolveCommand(expectedBinary);

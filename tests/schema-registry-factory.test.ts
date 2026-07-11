@@ -4,6 +4,7 @@ import {
   createDnsServer,
   createEndpoint,
   createInbound,
+  createNetworkNamespace,
   createOutbound,
   createRuleSet,
   createService,
@@ -17,6 +18,7 @@ const create: Record<SchemaEntityKind, (type: string, tag: string) => unknown> =
   endpoint: createEndpoint,
   service: createService,
   "rule-set": createRuleSet,
+  "network-namespace": createNetworkNamespace,
 };
 
 describe("schemaRegistry — factory output is byte-identical to commands.create*()", () => {

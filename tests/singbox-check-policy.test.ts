@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 // @ts-expect-error Policy script is a Node ESM validation helper without TS declarations.
 import { assertCleanSingBoxCheck, evaluateSingBoxCheck, findSingBoxWarningLines } from "../scripts/singbox-check-policy.mjs";
 // @ts-expect-error Policy script is a Node ESM validation helper without TS declarations.
-import { binaryForDetectedVersion, binaryForFixturePath, targetBinaries } from "../scripts/singbox-target-policy.mjs";
+import { binaryForDetectedVersion, binaryForFixturePath, requiredFixturePlatform, targetBinaries } from "../scripts/singbox-target-policy.mjs";
 
 describe("sing-box official check policy", () => {
   it("accepts a zero-exit check with clean output", () => {
@@ -66,5 +66,12 @@ describe("sing-box official check policy", () => {
     expect(binaryForFixturePath("fixtures/stable/template-1.12-legacy-mixed-split.json", "stable")).toBe("sing-box-1.12");
     expect(binaryForFixturePath("fixtures/stable/tun-route-selector.json", "stable")).toBe("sing-box-stable");
     expect(binaryForFixturePath("fixtures/testing/template-1.14-http-client.json", "testing")).toBe("sing-box-testing");
+  });
+
+  it("marks Linux-only fixtures explicitly without changing their binary target", () => {
+    const fixture = "fixtures/testing/network-namespace.linux.json";
+    expect(requiredFixturePlatform(fixture)).toBe("linux");
+    expect(requiredFixturePlatform("fixtures/testing/testing-channel.json")).toBeNull();
+    expect(binaryForFixturePath(fixture, "testing")).toBe("sing-box-testing");
   });
 });
