@@ -46,7 +46,7 @@ Keep these versions in sync with `scripts/install-sing-box-binaries.mjs` at the 
 | `BIN_DIR` | Root holding each per-version `<name>/sing-box` (+ `libcronet.so` sidecar) | `/app/bin` |
 | `INTERNAL_TOKEN` | Shared secret with the Worker; required header `x-internal-token` if set | unset (open) |
 | `MAX_BODY_BYTES` | Reject larger bodies with 413 | `524288` (512 KB) |
-| `CHECK_TIMEOUT_MS` | Kill `sing-box check` after N ms | `5000` |
+| `CHECK_TIMEOUT_MS` | Kill `sing-box check` after N ms | `20000` |
 
 ## Deployment
 

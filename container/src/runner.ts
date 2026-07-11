@@ -20,11 +20,16 @@ export interface CheckResult {
   durationMs: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 5000;
+// Leave enough headroom for the Worker gateway's 30s request timeout.
+const DEFAULT_TIMEOUT_MS = 20_000;
+
+export function resolveTimeoutMs(value: string | undefined): number {
+  const raw = Number(value);
+  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+}
 
 function timeoutMs(): number {
-  const raw = Number(process.env.CHECK_TIMEOUT_MS);
-  return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
+  return resolveTimeoutMs(process.env.CHECK_TIMEOUT_MS);
 }
 
 const SENSITIVE_PATTERN = /\b(password|private_key|secret|token|key|uuid)\s*[:=]\s*\S+/gi;

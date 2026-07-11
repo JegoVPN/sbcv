@@ -267,7 +267,7 @@ Runtime behavior (enforced in `runner.ts`):
 
 - Never call through a shell.
 - `spawn(binary, ["check", "-c", tempFile])`; pass config via temp file under `/tmp`, never as a CLI argument.
-- Kill the child after 3-5 seconds; treat timeout as `invalid` with a clear reason.
+- Kill the child after 20 seconds; treat timeout as `invalid` with a clear reason. The Worker gateway keeps a separate 30-second deadline so the Container can return a structured timeout result.
 - Delete temp files in `finally`.
 - Capture stdout + stderr; classify into `valid` / `warning` / `invalid` per the status rules in "API Contract".
 - Redact sensitive substrings (`password`, `private_key`, `uuid`, `secret`, `token`, `key`) from any returned diagnostic text.
@@ -301,7 +301,7 @@ id = "<KV id>"
 [vars]
 ALLOWED_ORIGIN = "https://sbcv.app"
 MAX_BODY_BYTES = "524288"
-CHECK_TIMEOUT_MS = "5000"
+CHECK_TIMEOUT_MS = "30000"
 
 # Secrets (set via `wrangler secret put`):
 # - INTERNAL_TOKEN          shared with the container
@@ -420,7 +420,7 @@ The container runs the official binary:
 - Never call through a shell.
 - Use `spawn(binary, ["check", "-c", tempFile])`.
 - Write config to a temp file under `/tmp`.
-- Kill the process after 3-5 seconds.
+- Kill the process after 20 seconds; keep the Worker gateway deadline at 30 seconds.
 - Run as non-root.
 - Delete temp files in `finally`.
 - Return sanitized diagnostics only.

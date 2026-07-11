@@ -36,7 +36,11 @@ pnpm typecheck
 In production, deploys are driven by Cloudflare Workers Builds on every push
 to `main` that touches `worker/**`, `container/**`, or
 `scripts/cf-deploy-validator-gw.sh`. The smart deploy script verifies the
-container image tag and runs an end-to-end probe before exiting.
+exact testing binary version and a testing-only feature through the public API
+before exiting. `VALIDATOR_VERSION` is the three Dockerfile binary pins plus
+`CACHE_BUST`; it rotates the KV cache keys for every container image release.
+Container changes use an immediate rollout because validator instances are
+stateless and mixed binary versions would make official checks inconsistent.
 
 One-time setup (locally, when you first stand up a fresh environment):
 

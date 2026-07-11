@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { classify, redactSensitive } from "../src/runner.js";
+import { classify, redactSensitive, resolveTimeoutMs } from "../src/runner.js";
+
+describe("resolveTimeoutMs", () => {
+  it("defaults to 20 seconds for missing or invalid values", () => {
+    expect(resolveTimeoutMs(undefined)).toBe(20_000);
+    expect(resolveTimeoutMs("invalid")).toBe(20_000);
+    expect(resolveTimeoutMs("0")).toBe(20_000);
+  });
+
+  it("accepts a positive override", () => {
+    expect(resolveTimeoutMs("12000")).toBe(12_000);
+  });
+});
 
 describe("redactSensitive", () => {
   it("redacts password fields", () => {
