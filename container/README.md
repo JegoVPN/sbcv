@@ -31,9 +31,9 @@ The `Dockerfile` build args override the pinned versions:
 ```bash
 docker build \
   --build-arg SB_112_VERSION=1.12.25 \
-  --build-arg SB_STABLE_VERSION=1.13.12 \
-  --build-arg SB_TESTING_VERSION=1.14.0-alpha.29 \
-  -t sbc-validator:1.12.25-1.13.12-1.14.0a29 .
+  --build-arg SB_STABLE_VERSION=1.13.14 \
+  --build-arg SB_TESTING_VERSION=1.14.0-alpha.43 \
+  -t sbc-validator:1.12.25-1.13.14-1.14.0a43 .
 ```
 
 Keep these versions in sync with `scripts/install-sing-box-binaries.mjs` at the repo root.

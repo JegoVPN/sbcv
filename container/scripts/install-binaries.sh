@@ -11,7 +11,7 @@ set -eux
 
 SB_112_VERSION="${SB_112_VERSION:-1.12.25}"
 SB_STABLE_VERSION="${SB_STABLE_VERSION:-1.13.14}"
-SB_TESTING_VERSION="${SB_TESTING_VERSION:-1.14.0-alpha.41}"
+SB_TESTING_VERSION="${SB_TESTING_VERSION:-1.14.0-alpha.43}"
 TARGETOS="${TARGETOS:-linux}"
 TARGETARCH="${TARGETARCH:-amd64}"
 
@@ -25,7 +25,7 @@ expected_sha256() {
   case "$1-${TARGETOS}-${TARGETARCH}" in
     1.12.25-linux-amd64)        echo "a1ec76e2b6b139eb747a1b1ebee7d14b8d4be5a833596cad8070a31ef960301f" ;;
     1.13.14-linux-amd64)        echo "f48703461a15476951ac4967cdad339d986f4b8096b4eb3ff0829a500502d697" ;;
-    1.14.0-alpha.41-linux-amd64) echo "475c10fa2f0fcfd39ad1d849de40484ce779ee1737ef6b77c080de4dca43b025" ;;
+    1.14.0-alpha.43-linux-amd64) echo "fc95f43ea1b640b27996b46bbae181f2adf77f8dc217b32f4e1aef9d051b7a4d" ;;
     *) echo "" ;;
   esac
 }
