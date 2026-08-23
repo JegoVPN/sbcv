@@ -54,6 +54,16 @@ describe("L4-rule-field-scrub — dns-rule action-exclusive fields", () => {
     expect(rule.answer).toEqual(["a"]);
     expect(rule).not.toHaveProperty("server"); // predefined does not allow server
   });
+
+  it("keeps DNS query options on route/evaluate/route-options and scrubs them from other actions", () => {
+    const options = { disable_cache: true, disable_optimistic_cache: true, rewrite_ttl: 30, timeout: "5s", client_subnet: "10.0.0.0/8", remove_client_subnet: false };
+    for (const action of ["route", "evaluate", "route-options"]) {
+      const rule = importConfig({ dns: { rules: [{ action, ...options }] } }).dns?.rules?.[0] as Record<string, unknown>;
+      expect(rule).toMatchObject(options);
+    }
+    const reject = importConfig({ dns: { rules: [{ action: "reject", ...options }] } }).dns?.rules?.[0] as Record<string, unknown>;
+    for (const field of Object.keys(options)) expect(reject).not.toHaveProperty(field);
+  });
 });
 
 describe("L4-rule-field-scrub — route-rule action-exclusive fields", () => {

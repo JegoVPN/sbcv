@@ -317,6 +317,11 @@ export function dnsRuleAllowsServer(rule: Pick<DnsRule, "action"> | undefined): 
   return action === "" || action === "route" || action === "evaluate";
 }
 
+export function dnsRuleAllowsQueryOptions(rule: Pick<DnsRule, "action"> | undefined): boolean {
+  const action = typeof rule?.action === "string" ? rule.action : "";
+  return action === "" || action === "route" || action === "evaluate" || action === "route-options";
+}
+
 export function normalizeDnsRule(rule: DnsRule): DnsRule {
   const action = typeof rule.action === "string" ? rule.action : "";
   const drop = dnsRuleAllowsServer(rule) ? [] : ["server"];
@@ -324,6 +329,9 @@ export function normalizeDnsRule(rule: DnsRule): DnsRule {
   // (sing-box dns rule_action). Scrub each when the action is anything else.
   if (action !== "reject") drop.push("method", "no_drop");
   if (action !== "predefined") drop.push("rcode", "answer", "ns", "extra");
+  if (!dnsRuleAllowsQueryOptions(rule)) {
+    drop.push("disable_cache", "disable_optimistic_cache", "rewrite_ttl", "timeout", "client_subnet", "remove_client_subnet");
+  }
   return dropRuleKeys(rule, drop);
 }
 
