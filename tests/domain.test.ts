@@ -72,7 +72,10 @@ function createReferenceCoverageConfig(): SingBoxConfig {
         { type: "tailscale", tag: "ts-dns", endpoint: "ts-ep", detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
         { type: "resolved", tag: "resolved-dns", service: "resolved-svc" },
       ],
-      rules: [{ inbound: ["tun-in"], server: "local-dns", rule_set: ["rs"] }],
+      rules: [
+        { inbound: ["tun-in"], server: "local-dns", rule_set: ["rs"], preferred_by: ["local-dns"] },
+        { type: "logical", mode: "and", rules: [{ preferred_by: ["local-dns"] }] },
+      ],
     },
     endpoints: [
       { type: "wireguard", tag: "wg-ep", detour: "proxy", domain_resolver: { server: "local-dns", strategy: "ipv4_only" } },
@@ -261,18 +264,20 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     kind: "dns-server",
     tag: "local-dns",
     nextTag: "dns-renamed",
-    paths: ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
+    paths: ["/dns/final", "/dns/rules/*/server", "/dns/rules/*/preferred_by", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
     // A11: removing local-dns leaves route.default_domain_resolver={server:"local-dns"} dangling, and the
     // config has domain consumers (the "dialer" outbound + the ts-ep tailscale endpoint), so
     // missing-default-domain-resolver fires (error) — binding the new ref check to the W7 catalog.
     staleDiagnosticCodes: ["missing-dns-final", "missing-default-domain-resolver"],
-    // A3: a dangling dns-rule `server` (legacy form + `action:"route"` form) is check+run clean — the rule
-    // just never matches — so it warns instead of erroring. NOTE: `server` only; `missing-dns-rule-set` stays
-    // an error (1.14 `check` DOES resolve dns rule_set — § Coverage 1).
-    staleWarningCodes: ["missing-dns-rule-server"],
+    // A3: dangling dns-rule server-style match refs are check+run clean — the rule just never matches —
+    // so `server` and testing-only `preferred_by` warn instead of erroring. `missing-dns-rule-set` stays an
+    // error (1.14 `check` DOES resolve dns rule_set — § Coverage 1).
+    staleWarningCodes: ["missing-dns-rule-server", "missing-dns-rule-preferred-by"],
     assertRenamed: (config) => {
       expect(config.dns?.final).toBe("dns-renamed");
       expect(config.dns?.rules?.[0]?.server).toBe("dns-renamed");
+      expect(config.dns?.rules?.[0]?.preferred_by).toEqual(["dns-renamed"]);
+      expect((config.dns?.rules?.[1]?.rules as Array<Record<string, unknown>>)?.[0]?.preferred_by).toEqual(["dns-renamed"]);
       expect(config.route?.default_domain_resolver).toMatchObject({ server: "dns-renamed" });
       expect(config.outbounds?.find((item) => item.tag === "dialer")?.domain_resolver).toBe("dns-renamed");
       expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.domain_resolver).toMatchObject({ server: "dns-renamed" });
@@ -285,6 +290,8 @@ const referenceCoverageCases: ReferenceCoverageCase[] = [
     assertDeleted: (config) => {
       expect(config.dns?.final).toBeUndefined();
       expect(config.dns?.rules?.[0]?.server).toBeUndefined();
+      expect(config.dns?.rules?.[0]?.preferred_by).toEqual([]);
+      expect((config.dns?.rules?.[1]?.rules as Array<Record<string, unknown>>)?.[0]?.preferred_by).toEqual([]);
       expect(config.route?.default_domain_resolver).toBeUndefined();
       expect(config.outbounds?.find((item) => item.tag === "dialer")?.domain_resolver).toBeUndefined();
       expect(config.dns?.servers?.find((item) => item.tag === "ts-dns")?.domain_resolver).toBeUndefined();
@@ -2181,7 +2188,7 @@ describe("canonical sing-box domain model", () => {
         rules: [
           ...(((base.dns as Record<string, unknown>)?.rules as Record<string, unknown>[]) ?? []),
           { source_mac_address: ["aa:bb:cc:dd:ee:ff"], source_hostname: ["host.local"], server: "x" },
-          { preferred_by: ["best-server"], match_response: true, package_name_regex: ["^com\\.example$"], server: "x" },
+          { query_client_subnet: ["10.0.0.0/8"], query_dnssec: true, preferred_by: ["best-server"], match_response: true, package_name_regex: ["^com\\.example$"], server: "x" },
         ],
       },
     } as typeof base;
@@ -2191,6 +2198,8 @@ describe("canonical sing-box domain model", () => {
     expect(stable).toContain("route-default-http-client-testing-only");
     expect(stable).toContain("dns-rule-source-mac-address-testing-only");
     expect(stable).toContain("dns-rule-source-hostname-testing-only");
+    expect(stable).toContain("dns-rule-query-client-subnet-testing-only");
+    expect(stable).toContain("dns-rule-query-dnssec-testing-only");
     expect(stable).toContain("dns-rule-preferred-by-testing-only");
     expect(stable).toContain("dns-rule-match-response-testing-only");
     expect(stable).toContain("dns-rule-package-name-regex-testing-only");

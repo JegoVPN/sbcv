@@ -189,6 +189,20 @@ function collectDnsRuleSetRefs(rule: Record<string, unknown>): string[] {
   return out;
 }
 
+function collectDnsPreferredByRefs(rule: Record<string, unknown>): string[] {
+  const out = typeof rule.preferred_by === "string"
+    ? [rule.preferred_by]
+    : Array.isArray(rule.preferred_by)
+      ? rule.preferred_by.filter((item): item is string => typeof item === "string")
+      : [];
+  if (Array.isArray(rule.rules)) {
+    for (const sub of rule.rules) {
+      if (sub && typeof sub === "object") out.push(...collectDnsPreferredByRefs(sub as Record<string, unknown>));
+    }
+  }
+  return out;
+}
+
 const DNS_RESPONSE_MATCH_FIELDS = ["response_rcode", "response_answer", "response_ns", "response_extra"] as const;
 
 function collectDnsMatchResponses(rule: Record<string, unknown>): Array<true | string> {
@@ -1285,6 +1299,16 @@ export function validateConfig(
         `DNS rule ${index + 1} references missing server "${rule.server}" — the rule will never match (it falls through to dns.final). Fix the tag or remove the rule.`,
       );
     }
+    collectDnsPreferredByRefs(rule as Record<string, unknown>).forEach((tag) => {
+      if (dnsServerTags.has(tag)) return;
+      push(
+        diagnostics,
+        "warning",
+        "missing-dns-rule-preferred-by",
+        `/dns/rules/${index}/preferred_by`,
+        `DNS rule ${index + 1} references missing preferred DNS server "${tag}"; this matcher cannot select that server's preferred domains.`,
+      );
+    });
     const ruleSets = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
     ruleSets.forEach((tag) => {
       if (!ruleSetTags.has(tag)) {
@@ -2772,6 +2796,8 @@ export function validateConfig(
     const stableDnsRules = config.dns?.rules;
     if (Array.isArray(stableDnsRules)) {
       const testingRuleFields = [
+        "query_client_subnet",
+        "query_dnssec",
         "source_mac_address",
         "source_hostname",
         "preferred_by",
