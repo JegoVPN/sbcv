@@ -1322,6 +1322,30 @@ export function validateConfig(
       }
     });
     const ruleObj = rule as Record<string, unknown>;
+    if (
+      ruleObj.rewrite_ttl != null &&
+      (typeof ruleObj.rewrite_ttl !== "number" ||
+        !Number.isInteger(ruleObj.rewrite_ttl) ||
+        ruleObj.rewrite_ttl < 0 ||
+        ruleObj.rewrite_ttl > 4_294_967_295)
+    ) {
+      push(
+        diagnostics,
+        "error",
+        "dns-rule-rewrite-ttl-invalid",
+        `/dns/rules/${index}/rewrite_ttl`,
+        `DNS rule ${index + 1} rewrite_ttl must be a non-negative integer (uint32).`,
+      );
+    }
+    if (ruleObj.client_subnet != null && ruleObj.remove_client_subnet === true) {
+      push(
+        diagnostics,
+        "error",
+        "dns-rule-client-subnet-conflict",
+        `/dns/rules/${index}/remove_client_subnet`,
+        `DNS rule ${index + 1} cannot set client_subnet and remove_client_subnet together.`,
+      );
+    }
     if (ruleObj.outbound !== undefined) {
       push(
         diagnostics,
@@ -2798,6 +2822,9 @@ export function validateConfig(
       const testingRuleFields = [
         "query_client_subnet",
         "query_dnssec",
+        "disable_optimistic_cache",
+        "timeout",
+        "remove_client_subnet",
         "source_mac_address",
         "source_hostname",
         "preferred_by",

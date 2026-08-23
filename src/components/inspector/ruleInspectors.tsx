@@ -1,7 +1,7 @@
-import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../../domain/commands";
+import { dnsRuleAllowsQueryOptions, dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../../domain/commands";
 import type { SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
-import type { InspectorEntity } from "./helpers";
+import { parseOptionalInt, type InspectorEntity } from "./helpers";
 import {
   dnsRuleAdvancedFields,
   dnsRulePrimaryFields,
@@ -378,6 +378,9 @@ export function DnsRuleInspector({
   const hasTestingMatchField = ["query_client_subnet", "query_dnssec", "package_name_regex", "preferred_by"].some(
     (field) => rule[field] !== undefined,
   );
+  const hasTestingQueryOption = ["disable_optimistic_cache", "timeout", "remove_client_subnet"].some(
+    (field) => rule[field] !== undefined,
+  );
 
   return (
     <div className="rule-inspector" aria-label={`DNS rule ${index + 1} inspector`}>
@@ -500,6 +503,77 @@ export function DnsRuleInspector({
             ))}
           </select>
         </label>
+      ) : null}
+      {dnsRuleAllowsQueryOptions(rule) ? (
+        <fieldset className="field field--checklist" data-testid="dns-rule-query-options">
+          <legend>DNS query options</legend>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={Boolean(rule.disable_cache)}
+              onChange={(event) => patch({ disable_cache: event.target.checked || undefined })}
+            />
+            <span>Disable cache</span>
+          </label>
+          <label className="field">
+            <span>Rewrite TTL</span>
+            <input
+              type="number"
+              min="0"
+              max="4294967295"
+              step="1"
+              value={typeof rule.rewrite_ttl === "number" ? rule.rewrite_ttl : ""}
+              onChange={(event) => {
+                const value = parseOptionalInt(event.target.value);
+                patch({ rewrite_ttl: value !== undefined && value <= 4_294_967_295 ? value : undefined });
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Client subnet</span>
+            <input
+              value={typeof rule.client_subnet === "string" ? rule.client_subnet : ""}
+              placeholder="e.g. 192.168.0.0/24"
+              onChange={(event) => {
+                const value = event.target.value || undefined;
+                patch({ client_subnet: value, ...(value ? { remove_client_subnet: undefined } : {}) });
+              }}
+            />
+          </label>
+          {channel === "testing" || hasTestingQueryOption ? (
+            <>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(rule.disable_optimistic_cache)}
+                  onChange={(event) => patch({ disable_optimistic_cache: event.target.checked || undefined })}
+                />
+                <span>Disable optimistic cache (1.14+)</span>
+              </label>
+              <label className="field">
+                <span>Query timeout (1.14+)</span>
+                <input
+                  value={typeof rule.timeout === "string" ? rule.timeout : ""}
+                  placeholder="e.g. 5s"
+                  onChange={(event) => patch({ timeout: event.target.value || undefined })}
+                />
+              </label>
+              <label className="toggle-row">
+                <input
+                  type="checkbox"
+                  checked={Boolean(rule.remove_client_subnet)}
+                  onChange={(event) =>
+                    patch({
+                      remove_client_subnet: event.target.checked || undefined,
+                      ...(event.target.checked ? { client_subnet: undefined } : {}),
+                    })
+                  }
+                />
+                <span>Remove client subnet (1.14+)</span>
+              </label>
+            </>
+          ) : null}
+        </fieldset>
       ) : null}
       {String(rule.action) === "reject" ? (
         <>

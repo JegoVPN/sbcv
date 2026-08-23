@@ -1,0 +1,34 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "local",
+        "tag": "local"
+      }
+    ],
+    "rules": [
+      {
+        "action": "route",
+        "server": "local",
+        "disable_cache": true,
+        "disable_optimistic_cache": true,
+        "rewrite_ttl": 300,
+        "timeout": "5s",
+        "remove_client_subnet": true
+      }
+    ],
+    "final": "local"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

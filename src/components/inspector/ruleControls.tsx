@@ -89,6 +89,12 @@ export const dnsRulePrimaryFields = new Set([
   "answer",
   "ns",
   "extra",
+  "disable_cache",
+  "disable_optimistic_cache",
+  "rewrite_ttl",
+  "timeout",
+  "client_subnet",
+  "remove_client_subnet",
 ]);
 
 export const routeRuleAdvancedFields = [
@@ -151,9 +157,6 @@ export const dnsRuleAdvancedFields = [
   "network_is_constrained",
   "rule_set_ip_cidr_match_source",
   "rule_set_ip_cidr_accept_empty",
-  "disable_cache",
-  "rewrite_ttl",
-  "client_subnet",
 ];
 
 // Common headless-rule match fields surfaced as structured inputs (headless-rule.md). Anything outside
