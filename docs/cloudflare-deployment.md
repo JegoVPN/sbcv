@@ -276,7 +276,7 @@ Runtime behavior (enforced in `runner.ts`):
 Container deployment:
 
 - Built and pushed by Wrangler from the `container/` package.
-- Tag image with the resolved binary versions (currently `sbc-validator:1.12.25-1.13.14-1.14.0a43`) so rolling forward is explicit.
+- Tag image with the resolved binary versions (currently `sbc-validator:1.12.25-1.13.19-1.14.0b17`) so rolling forward is explicit.
 - Instantiated by the Worker via a Cloudflare Containers binding declared in `worker/wrangler.toml`.
 
 ## Worker Gateway
@@ -379,7 +379,7 @@ Response:
   "status": "valid",
   "target": "1.13 stable",
   "binary": "sing-box-stable",
-  "binaryVersion": "1.13.14",
+  "binaryVersion": "1.13.19",
   "warnings": [],
   "errors": [],
   "durationMs": 120
@@ -565,9 +565,9 @@ Run from the local checkout, in the `worker/` directory.
    ```bash
    docker build \
      --build-arg SB_112_VERSION=1.12.25 \
-     --build-arg SB_STABLE_VERSION=1.13.14 \
-     --build-arg SB_TESTING_VERSION=1.14.0-alpha.43 \
-     -t sbc-validator:1.12.25-1.13.14-1.14.0a43 .
+     --build-arg SB_STABLE_VERSION=1.13.19 \
+     --build-arg SB_TESTING_VERSION=1.14.0-beta.17 \
+     -t sbc-validator:1.12.25-1.13.19-1.14.0b17 .
    ```
 6. **Deploy the container to Cloudflare Containers**
    When using the Cloudflare Containers binding (recommended):

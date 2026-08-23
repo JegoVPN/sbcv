@@ -17,10 +17,10 @@
 # through stage 1 forces the binaries stage to actually re-run install-binaries.sh
 # instead of reusing a cached layer.
 
-ARG CACHE_BUST=2026-07-12-1
+ARG CACHE_BUST=2026-08-23-1
 ARG SB_112_VERSION=1.12.25
-ARG SB_STABLE_VERSION=1.13.14
-ARG SB_TESTING_VERSION=1.14.0-alpha.43
+ARG SB_STABLE_VERSION=1.13.19
+ARG SB_TESTING_VERSION=1.14.0-beta.17
 
 # ---- Stage 1: download + extract sing-box binaries
 FROM alpine:3.20 AS binaries

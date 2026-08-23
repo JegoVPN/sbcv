@@ -8,8 +8,8 @@ const binDir = join(toolsDir, "bin");
 
 const binaries = [
   { command: "sing-box-1.12", version: "1.12.25" },
-  { command: "sing-box-stable", version: "1.13.14" },
-  { command: "sing-box-testing", version: "1.14.0-alpha.43" },
+  { command: "sing-box-stable", version: "1.13.19" },
+  { command: "sing-box-testing", version: "1.14.0-beta.17" },
 ];
 
 // Pinned SHA256 sums for sing-box release tarballs. Keep in sync with
@@ -18,10 +18,10 @@ const binaries = [
 const CHECKSUMS = {
   "1.12.25-linux-amd64":         "a1ec76e2b6b139eb747a1b1ebee7d14b8d4be5a833596cad8070a31ef960301f",
   "1.12.25-darwin-arm64":        "a4a06d507f3f4d951490168d1372fce4c02db7211e88af9da13f93ed98068d5e",
-  "1.13.14-linux-amd64":         "f48703461a15476951ac4967cdad339d986f4b8096b4eb3ff0829a500502d697",
-  "1.13.14-darwin-arm64":        "73e8967b0fc08e17bce4263ca56ebc394822401a16497a1c4e02316c888202ab",
-  "1.14.0-alpha.43-linux-amd64": "fc95f43ea1b640b27996b46bbae181f2adf77f8dc217b32f4e1aef9d051b7a4d",
-  "1.14.0-alpha.43-darwin-arm64":"daae5898849fa09b49fff715a29fcb063e1568e0eb808218277f7c27838d4579",
+  "1.13.19-linux-amd64":         "ef88a9e577d474210867bd708933d042e9b70106529df2656182c9db90106aa1",
+  "1.13.19-darwin-arm64":        "23bf191906f2dfc9f00e9f0092f274f3426ba9377327e903ff94e636b64d0997",
+  "1.14.0-beta.17-linux-amd64":  "ecb0055e3b7f236191db41a9c23988b558796104cd231246a4fd12a193a1a933",
+  "1.14.0-beta.17-darwin-arm64": "7990d08ca63110df7a1f3fcf2d26e9430a9db2126e85dc2a723601956df9b458",
 };
 
 function platformName() {
