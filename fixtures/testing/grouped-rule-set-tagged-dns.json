@@ -1,0 +1,62 @@
+{
+  "dns": {
+    "servers": [
+      {
+        "type": "local",
+        "tag": "local"
+      }
+    ],
+    "rules": [
+      {
+        "action": "evaluate",
+        "server": "local",
+        "tag": "evaluated-local"
+      },
+      {
+        "match_response": "evaluated-local",
+        "response_rcode": "NOERROR",
+        "action": "reject",
+        "race": true
+      },
+      {
+        "domain_suffix": [
+          ".local"
+        ],
+        "action": "route",
+        "server": "local",
+        "speculative": true
+      }
+    ],
+    "final": "local"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "rule_set": "geosite-private",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": "geoip-private",
+        "outbound": "direct"
+      }
+    ],
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": [
+          "geosite-private",
+          "geoip-private"
+        ],
+        "format": "binary",
+        "url": "https://example.com/{tag}.srs"
+      }
+    ],
+    "final": "direct"
+  }
+}

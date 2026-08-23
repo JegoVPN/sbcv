@@ -103,6 +103,10 @@ export type DnsRule = {
   rule_set?: string | string[];
   server?: string;
   action?: string;
+  match_response?: boolean | string;
+  tag?: string;
+  race?: boolean;
+  speculative?: boolean;
   [key: string]: unknown;
 };
 
