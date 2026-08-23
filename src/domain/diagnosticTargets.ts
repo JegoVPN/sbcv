@@ -1,4 +1,5 @@
 import { generatedEntityTag } from "./portRelationRegistry";
+import { primaryRuleSetTag } from "./ruleSetTags";
 import type { SingBoxConfig } from "./types";
 
 function taggedNodeId(
@@ -27,7 +28,7 @@ export function nodeIdForDiagnosticPath(path: string, config: SingBoxConfig): st
   if (ruleSetMatch) {
     const idx = Number(ruleSetMatch[1]);
     const item = config.route?.rule_set?.[idx];
-    if (item) return taggedNodeId("rule-set", item.tag, idx);
+    if (item) return taggedNodeId("rule-set", primaryRuleSetTag(item.tag), idx);
     return "route:main";
   }
 

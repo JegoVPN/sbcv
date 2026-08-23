@@ -11,6 +11,7 @@ import {
   CREATABLE_SERVICE_TYPES,
 } from "../domain/protocols";
 import { sharedGroupsForEntity } from "../domain/sharedFieldRegistry";
+import { ruleSetHasTag, ruleSetTagLabel } from "../domain/ruleSetTags";
 import { creatableTypes } from "../domain/schemaRegistry";
 import { PlatformBanner } from "./inspector/controls";
 import { DnsRuleInspector, RouteRuleInspector } from "./inspector/ruleInspectors";
@@ -66,12 +67,14 @@ function generatedIndex(value: string, kind: "inbound" | "outbound" | "dns-serve
   return Number.isInteger(index) && index >= 0 ? index : -1;
 }
 
-function findTaggedOrGenerated<T extends { tag?: string }>(
+function findTaggedOrGenerated<T extends { tag?: unknown }>(
   items: T[] | undefined,
   tag: string,
   kind: "inbound" | "outbound" | "dns-server" | "endpoint" | "service" | "rule-set" | "certificate-provider" | "http-client" | "network-namespace",
 ) {
-  const byTag = items?.find((item) => item.tag === tag);
+  const byTag = items?.find((item) =>
+    kind === "rule-set" ? ruleSetHasTag(item.tag, tag) : item.tag === tag,
+  );
   if (byTag) return byTag;
   const index = generatedIndex(tag, kind);
   return index >= 0 ? items?.[index] : undefined;
@@ -117,6 +120,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
   const [tagDraft, setTagDraft] = useState("");
   const [tagDraftFocused, setTagDraftFocused] = useState(false);
   const tagValue = typeof entity?.tag === "string" ? entity.tag : null;
+  const headingTag = ref?.kind === "rule-set" ? ruleSetTagLabel(entity?.tag) : tagValue;
 
   useEffect(() => {
     if (tagDraftFocused) return;
@@ -173,7 +177,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       <div className="inspector-heading">
         <div>
           <div className="inspector-kind">{inspectorKindLabel}</div>
-          <h2>{tagValue ?? ref.kind}</h2>
+          <h2>{headingTag ?? ref.kind}</h2>
         </div>
         {ref.kind !== "route" && ref.kind !== "dns" ? (
           <button type="button" className="icon-danger" onClick={() => deleteEntity(ref)}>

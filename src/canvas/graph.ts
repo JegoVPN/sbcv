@@ -12,6 +12,7 @@ import {
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound, routeRuleAllowsServer } from "../domain/commands";
 import { adapterIsConnected, domainResolverTag, httpClientRefTag } from "../domain/portReferenceAdapter";
 import { ruleActionLabel, ruleMatchSummary } from "../domain/ruleSummary";
+import { primaryRuleSetTag, ruleSetTagLabel, ruleSetTags } from "../domain/ruleSetTags";
 import { supportsDialFields, supportsDnsServerDialFields } from "../domain/sharedFieldRegistry";
 import type { Diagnostic, DnsServerConfig, EndpointConfig, EntityRef, InboundConfig, OutboundConfig, ServiceConfig, SingBoxConfig, TaggedConfig, TaggedResourceConfig } from "../domain/types";
 import type { ProjectLayout } from "../domain/types";
@@ -277,6 +278,19 @@ export function deriveGraph(
   // target the `endpoint:<tag>` node rather than a phantom `outbound:<tag>`.
   const outboundTargetNodeId = (tag: string) => (endpointTagSet.has(tag) ? `endpoint:${tag}` : `outbound:${tag}`);
   const visualizeRuleSets = ruleSets.length <= MAX_VISUAL_RULE_SET_NODES;
+  // One canonical 1.14 rule-set object may declare several tags. Project it as one canvas node, keyed by
+  // the first tag, while resolving every alias edge back to that node instead of inventing phantom nodes.
+  const ruleSetNodeTags = ruleSets.map(
+    (ruleSet, index) => primaryRuleSetTag(ruleSet.tag) ?? generatedEntityTag("rule-set", index),
+  );
+  const ruleSetNodeTagByAlias = new Map<string, string>();
+  ruleSets.forEach((ruleSet, index) => {
+    const nodeTag = ruleSetNodeTags[index]!;
+    ruleSetTags(ruleSet.tag).forEach((tag) => {
+      if (!ruleSetNodeTagByAlias.has(tag)) ruleSetNodeTagByAlias.set(tag, nodeTag);
+    });
+  });
+  const ruleSetNodeTagFor = (tag: string) => ruleSetNodeTagByAlias.get(tag) ?? tag;
   let visualCandidateEdges = 0;
   const routeTargetY = new Map<string, number>();
   const ruleSetTargetY = new Map<string, number>();
@@ -389,7 +403,7 @@ export function deriveGraph(
         }
         const inboundRefs = stringRefs(rule.inbound);
         const ruleSetRefs = stringRefs(rule.rule_set);
-        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
+        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, ruleSetNodeTagFor(tag), y));
         const matchSummary = ruleMatchSummary(rule as unknown as Record<string, unknown>);
         const match = matchSummary ? truncateLabel(matchSummary) : undefined;
         nodes.push(
@@ -422,7 +436,7 @@ export function deriveGraph(
         }
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
-            edges.push(makeEdge(formatEdgeId("route-rule-set", index, tag), id, `rule-set:${tag}`, "rule-set", "route-rule"));
+            edges.push(makeEdge(formatEdgeId("route-rule-set", index, tag), id, `rule-set:${ruleSetNodeTagFor(tag)}`, "rule-set", "route-rule"));
           });
         }
       });
@@ -657,10 +671,10 @@ export function deriveGraph(
         }
         // DF5 — collect rule_set refs from nested logical rules too, not just the top-level field.
         const ruleSetRefs = [...new Set(collectRuleSetRefs(rule as unknown as Record<string, unknown>))];
-        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, tag, y));
+        ruleSetRefs.forEach((tag) => rememberMinY(ruleSetTargetY, ruleSetNodeTagFor(tag), y));
         if (visualizeRuleSets) {
           ruleSetRefs.forEach((tag) => {
-            edges.push(makeEdge(formatEdgeId("dns-rule-set", index, tag), id, `rule-set:${tag}`, "rule-set", "dns-rule"));
+            edges.push(makeEdge(formatEdgeId("dns-rule-set", index, tag), id, `rule-set:${ruleSetNodeTagFor(tag)}`, "rule-set", "dns-rule"));
           });
         }
       });
@@ -690,7 +704,8 @@ export function deriveGraph(
 
   if (visualizeRuleSets) {
     ruleSets.forEach((ruleSet, index) => {
-      const tag = entityTag(ruleSet.tag, "rule-set", index);
+      const tag = ruleSetNodeTags[index]!;
+      const title = ruleSetTagLabel(ruleSet.tag) ?? tag;
       nodes.push(
         makeNode(
           `rule-set:${tag}`,
@@ -698,7 +713,7 @@ export function deriveGraph(
             ref: { kind: "rule-set", tag },
             kind: "rule-set",
             type: ruleSet.type,
-            title: tag,
+            title: truncateLabel(title),
             subtitle:
               ruleSet.type === "remote" && typeof ruleSet.url === "string"
                 ? ruleSet.url
@@ -989,8 +1004,9 @@ export function deriveGraph(
       ruleSets.forEach((ruleSet, index) => {
         if (ruleSet.type !== "remote") return;
         const tag = httpClientRefTag((ruleSet as Record<string, unknown>).http_client);
+        const nodeTag = ruleSetNodeTags[index]!;
         if (tag && httpClientTagSet.has(tag)) {
-          edges.push(makeEdge(formatEdgeId("rule-set-http-client", entityTag(ruleSet.tag, "rule-set", index), tag), `rule-set:${entityTag(ruleSet.tag, "rule-set", index)}`, `http-client:${tag}`, "http-client", "http-client-ref"));
+          edges.push(makeEdge(formatEdgeId("rule-set-http-client", nodeTag, tag), `rule-set:${nodeTag}`, `http-client:${tag}`, "http-client", "http-client-ref"));
         }
       });
     }

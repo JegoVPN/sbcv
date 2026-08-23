@@ -16,6 +16,7 @@ import {
   supportsOutboundDialFields,
 } from "./sharedFieldRegistry";
 import { atLeast, defaultVersionForChannel } from "./targets";
+import { ruleSetTagLabel, ruleSetTags as normalizedRuleSetTags } from "./ruleSetTags";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 import { testingOnlyFields } from "./versionFieldGate";
 
@@ -53,7 +54,9 @@ function checkTestingOnlyFields(config: SingBoxConfig, channel: SingBoxChannel, 
         if (!onlyTesting.has(field)) continue;
         const path = `${base}/${field}`;
         if (flagged.has(path)) continue; // a hand gate already owns this path with a friendlier message
-        const tag = typeof obj.tag === "string" ? obj.tag : `${section.kind}-${index}`;
+        const tag = section.kind === "rule-set"
+          ? ruleSetTagLabel(obj.tag) ?? `${section.kind}-${index}`
+          : typeof obj.tag === "string" ? obj.tag : `${section.kind}-${index}`;
         push(
           diagnostics,
           "error",
@@ -161,7 +164,7 @@ function snellV6PskOutOfRange(entity: Record<string, unknown>): boolean {
 }
 
 function ruleSetIsIpBased(ruleSet: Record<string, unknown>): boolean {
-  const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : "";
+  const tag = normalizedRuleSetTags(ruleSet.tag).join(" ");
   const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
   if (/geoip/i.test(tag) || /geoip/i.test(url)) return true;
   const inlineRules = Array.isArray(ruleSet.rules) ? ruleSet.rules : [];
@@ -403,6 +406,9 @@ function validateScalarFields(
  * and import dedup self-heals it. Matches getUniqueTag/taggedNodeId blank-handling elsewhere.)
  */
 function tagIsBlank(tag: unknown): boolean {
+  if (Array.isArray(tag)) {
+    return tag.length === 0 || tag.some((item) => typeof item !== "string" || item.trim() === "");
+  }
   return typeof tag !== "string" || tag.trim() === "";
 }
 
@@ -636,7 +642,7 @@ function validateNetworkNamespacesAndTunNetns(
     warnHttpClient(
       (ruleSet as Record<string, unknown>).http_client,
       `/route/rule_set/${index}/http_client`,
-      `Rule-set "${ruleSet.tag}"`,
+      `Rule-set "${ruleSetTagLabel(ruleSet.tag) ?? `rule-set-${index}`}"`,
     ),
   );
   listItems(config.certificate_providers).forEach((provider, index) =>
@@ -689,8 +695,7 @@ export function validateConfig(
   const ipBasedRuleSetTags = new Set<string>();
   for (const rs of listItems(config.route?.rule_set)) {
     const o = rs as Record<string, unknown>;
-    const t = typeof o.tag === "string" ? o.tag : "";
-    if (t && ruleSetIsIpBased(o)) ipBasedRuleSetTags.add(t);
+    if (ruleSetIsIpBased(o)) normalizedRuleSetTags(o.tag).forEach((tag) => ipBasedRuleSetTags.add(tag));
   }
 
   // Deprecation (run-only — `check` is clean): a remote rule-set with neither http_client nor
@@ -2826,8 +2831,41 @@ export function validateConfig(
   }
 
   listItems(config.route?.rule_set).forEach((ruleSet, index) => {
-    const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : `rule-set-${index}`;
+    const tags = normalizedRuleSetTags(ruleSet.tag);
+    const tag = ruleSetTagLabel(ruleSet.tag) ?? `rule-set-${index}`;
     const type = typeof ruleSet.type === "string" ? ruleSet.type : undefined;
+    if (Array.isArray(ruleSet.tag) && !atLeast(version, "1.14")) {
+      push(
+        diagnostics,
+        "error",
+        "rule-set-multi-tag-testing-only",
+        `/route/rule_set/${index}/tag`,
+        `Rule-set "${tag}" uses the tag-list form introduced in sing-box 1.14; ${version} accepts only one string tag.`,
+      );
+    }
+    if (Array.isArray(ruleSet.tag)) {
+      const validEntries = ruleSet.tag.filter((entry) => typeof entry === "string" && entry.trim() !== "");
+      if (new Set(validEntries).size !== validEntries.length) {
+        push(diagnostics, "error", "rule-set-duplicate-tag-in-group", `/route/rule_set/${index}/tag`, `Rule-set "${tag}" declares a tag more than once.`);
+      }
+    }
+    if (tags.length > 1 && type === "inline") {
+      push(diagnostics, "error", "rule-set-multi-tag-inline-conflict", `/route/rule_set/${index}/tag`, `Rule-set "${tag}" combines multiple tags with type "inline", which sing-box does not allow.`);
+    }
+    if (tags.length > 1) {
+      for (const field of ["path", "url", "initial_path"] as const) {
+        const value = ruleSet[field];
+        if (typeof value === "string" && value && !value.includes("{tag}")) {
+          push(
+            diagnostics,
+            "error",
+            "rule-set-multi-tag-placeholder-missing",
+            `/route/rule_set/${index}/${field}`,
+            `Rule-set "${tag}" declares multiple tags, so ${field} must contain the \`{tag}\` placeholder.`,
+          );
+        }
+      }
+    }
     if (type === "remote") {
       const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
       if (!url) {

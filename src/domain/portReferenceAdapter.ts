@@ -20,6 +20,7 @@ import {
   relationForId,
 } from "./portRelationRegistry";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "./sharedFieldRegistry";
+import { ruleSetHasTag } from "./ruleSetTags";
 import type { SingBoxConfig } from "./types";
 
 type PortNode = { kind: string; value: string };
@@ -90,6 +91,10 @@ function isRecord(value: unknown): value is MutableRecord {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function taggedOwnerMatches(ownerKind: string | undefined, item: MutableRecord, value: string): boolean {
+  return ownerKind === "rule-set" ? ruleSetHasTag(item.tag, value) : item.tag === value;
+}
+
 // Walk a slash-path (no `*`) into a live nested object on the (already-cloned) config, returning the parent
 // of the final segment so the caller can mutate the leaf. Returns undefined if any hop is absent.
 function resolveContainer(root: MutableRecord, segments: string[]): MutableRecord | undefined {
@@ -152,9 +157,11 @@ export function adapterDisconnect(next: SingBoxConfig, relationId: string, parts
     const array = arrayContainer?.[arrayKey];
     if (!Array.isArray(array)) return;
     const selector = parts[0];
+    if (selector === undefined) return;
+    const ownerKind = ownerKindForPath(canonicalPath);
     const item = INDEX_BOUND_ARRAYS.has(arrayPath.join("/"))
       ? (Number.isInteger(Number(selector)) ? array[Number(selector)] : undefined)
-      : array.find((entry) => isRecord(entry) && entry.tag === selector);
+      : array.find((entry) => isRecord(entry) && taggedOwnerMatches(ownerKind, entry, selector));
     if (!isRecord(item)) return;
     // Descend any segments between `*` and the leaf (none today, but keeps the walker general).
     leafParent = resolveContainer(item, segments.slice(starIndex + 1, -1));
@@ -273,7 +280,7 @@ export function adapterConnect(
   // rule-set / http-client).
   if (shape === "tag-array") {
     const owners = collectionFor(config, ownerKind);
-    const current = (owners?.find((item) => (item as Record<string, unknown>).tag === owner.value) as Record<string, unknown> | undefined)?.[leafField];
+    const current = (owners?.find((item) => taggedOwnerMatches(ownerKind, item as MutableRecord, owner.value)) as Record<string, unknown> | undefined)?.[leafField];
     return updateEntityField(config, { kind: ownerKind, tag: owner.value } as never, leafField, addTagRef(current as string | string[] | undefined, ref));
   }
   return updateEntityField(config, { kind: ownerKind, tag: owner.value } as never, leafField, ref);
@@ -448,7 +455,7 @@ function forwardConnected(config: SingBoxConfig, relation: PortRelation, value: 
   const indexBound = ownerKind === "route-rule" || ownerKind === "dns-rule";
   const owner = indexBound
     ? ownerCollection(config, ownerKind!)?.[Number(value)]
-    : ownerCollection(config, ownerKind!)?.find((item) => item.tag === value);
+    : ownerCollection(config, ownerKind!)?.find((item) => taggedOwnerMatches(ownerKind, item, value));
   if (!owner) return false;
 
   if (DOMAIN_RESOLVER_RELATIONS.has(relationId)) return Boolean(domainResolverTag(owner.domain_resolver));

@@ -61,6 +61,7 @@ import {
 } from "../domain/protocols";
 import { isTestingOnlyType } from "../domain/schemaRegistry";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "../domain/sharedFieldRegistry";
+import { primaryRuleSetTag, ruleSetHasTag } from "../domain/ruleSetTags";
 import { defaultVersionForChannel, targetById, targetFromVersion } from "../domain/targets";
 import { createTemplatePreset } from "../domain/templates";
 import type { TemplatePresetId } from "../domain/templates";
@@ -477,7 +478,11 @@ function firstRuleSetDownloadingThrough(config: SingBoxConfig, outboundTag: stri
 }
 
 function firstRuleSetTag(config: SingBoxConfig) {
-  return config.route?.rule_set?.find((ruleSet) => typeof ruleSet.tag === "string" && ruleSet.tag)?.tag;
+  for (const ruleSet of config.route?.rule_set ?? []) {
+    const tag = primaryRuleSetTag(ruleSet.tag);
+    if (tag) return tag;
+  }
+  return undefined;
 }
 
 function firstTailscaleEndpointTag(config: SingBoxConfig) {
@@ -588,7 +593,7 @@ function connectCreatedOutboundForSelection(
   }
 
   if (selected.kind === "rule-set") {
-    const ruleSet = config.route?.rule_set?.find((item) => item.tag === selected.value);
+    const ruleSet = config.route?.rule_set?.find((item) => ruleSetHasTag(item.tag, selected.value));
     return ruleSet?.type === "remote"
       ? updateEntityField(config, { kind: "rule-set", tag: selected.value }, "download_detour", createdTag)
       : config;
@@ -607,7 +612,7 @@ function portNodeType(config: SingBoxConfig, node: { kind: string; value: string
   if (node.kind === "dns-server") return config.dns?.servers?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "endpoint") return config.endpoints?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "service") return config.services?.find((item) => item.tag === node.value)?.type;
-  if (node.kind === "rule-set") return config.route?.rule_set?.find((item) => item.tag === node.value)?.type;
+  if (node.kind === "rule-set") return config.route?.rule_set?.find((item) => ruleSetHasTag(item.tag, node.value))?.type;
   if (node.kind === "certificate-provider") return config.certificate_providers?.find((item) => item.tag === node.value)?.type;
   if (node.kind === "http-client") return "http-client";
   if (node.kind === "network-namespace") {
@@ -693,7 +698,8 @@ function createNodeForConnectCandidate(config: SingBoxConfig, candidate: CreateN
     const insertIndex = next.route?.rule_set?.length ?? 0;
     next = addRuleSet(next, candidate.nodeType, preferredRuleSetTag(candidate.nodeType));
     const created = next.route?.rule_set?.[insertIndex];
-    return created?.tag ? { config: next, nodeId: `rule-set:${created.tag}` } : null;
+    const createdTag = primaryRuleSetTag(created?.tag);
+    return createdTag ? { config: next, nodeId: `rule-set:${createdTag}` } : null;
   }
   if (candidate.nodeKind === "inbound") {
     const insertIndex = next.inbounds?.length ?? 0;
@@ -899,7 +905,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       if (ruleSetType) {
         config = addRuleSet(config, ruleSetType, preferredRuleSetTag(ruleSetType));
         const created = config.route?.rule_set?.[config.route.rule_set.length - 1];
-        if (created) selectedId = `rule-set:${created.tag}`;
+        const createdTag = primaryRuleSetTag(created?.tag);
+        if (createdTag) selectedId = `rule-set:${createdTag}`;
       }
       const endpointType = endpointTypeForPaletteKind(kind);
       if (endpointType) {
@@ -1265,13 +1272,14 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
         if (node.kind === "outbound" && port.key === "rule-set-download") {
           const ruleSet = firstRuleSetDownloadingThrough(config, node.value);
-          if (ruleSet?.tag) {
-            config = updateEntityField(config, { kind: "rule-set", tag: ruleSet.tag }, "download_detour", undefined);
+          const connectedRuleSetTag = primaryRuleSetTag(ruleSet?.tag);
+          if (connectedRuleSetTag) {
+            config = updateEntityField(config, { kind: "rule-set", tag: connectedRuleSetTag }, "download_detour", undefined);
           } else {
             let ruleSetTag = firstRuleSetTag(config);
             if (!ruleSetTag) {
               config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
-              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+              ruleSetTag = primaryRuleSetTag(config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag);
             }
             if (ruleSetTag) config = updateEntityField(config, { kind: "rule-set", tag: ruleSetTag }, "download_detour", node.value);
           }
@@ -1408,7 +1416,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             let ruleSetTag = firstRuleSetTag(config);
             if (!ruleSetTag) {
               config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
-              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+              ruleSetTag = primaryRuleSetTag(config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag);
             }
             if (ruleSetTag) config = updateRouteRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
           }
@@ -1480,7 +1488,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
             let ruleSetTag = firstRuleSetTag(config);
             if (!ruleSetTag) {
               config = addRuleSet(config, "remote", preferredRuleSetTag("remote"));
-              ruleSetTag = config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag;
+              ruleSetTag = primaryRuleSetTag(config.route?.rule_set?.[config.route.rule_set.length - 1]?.tag);
             }
             if (ruleSetTag) config = updateDnsRule(config, index, { rule_set: addTagRef(current?.rule_set, ruleSetTag) });
           }
@@ -1488,7 +1496,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         }
 
         if (node.kind === "rule-set" && port.key === "download-detour") {
-          const ruleSet = config.route?.rule_set?.find((item) => item.tag === node.value);
+          const ruleSet = config.route?.rule_set?.find((item) => ruleSetHasTag(item.tag, node.value));
           if (ruleSet?.type !== "remote") return state;
           if (ruleSet?.download_detour) {
             config = updateEntityField(config, { kind: "rule-set", tag: node.value }, "download_detour", undefined);
