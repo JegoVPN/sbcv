@@ -1,0 +1,40 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "local",
+        "tag": "local"
+      }
+    ],
+    "rules": [
+      {
+        "query_client_subnet": [
+          "10.0.0.0/24",
+          "192.168.0.1"
+        ],
+        "query_dnssec": true,
+        "package_name_regex": [
+          "^com\\.example$"
+        ],
+        "preferred_by": [
+          "local"
+        ],
+        "action": "route",
+        "server": "local"
+      }
+    ],
+    "final": "local"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

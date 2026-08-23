@@ -175,6 +175,17 @@ function applyResolverField(record: MutableRecord | undefined, field: string, op
   record[field] = op.resolver(record[field]);
 }
 
+// DNS `preferred_by` is a list of DNS-server tags and can live inside logical sub-rules. Keep it in
+// the same canonical rename/delete cascade as the rule's action `server` reference.
+function applyDnsPreferredByRefsDeep(rule: MutableRecord, op: RefOp) {
+  if (rule.preferred_by !== undefined) rule.preferred_by = op.stringArray(rule.preferred_by);
+  if (Array.isArray(rule.rules)) {
+    rule.rules.forEach((subRule) => {
+      if (isRecord(subRule)) applyDnsPreferredByRefsDeep(subRule, op);
+    });
+  }
+}
+
 function visitInboundRefs(config: SingBoxConfig, op: RefOp) {
   config.route?.rules?.forEach((rule) => {
     rule.inbound = op.list(rule.inbound);
@@ -242,7 +253,10 @@ function visitInlineHttpClientOutboundRefs(config: SingBoxConfig, op: RefOp) {
 
 function visitDnsServerRefs(config: SingBoxConfig, op: RefOp) {
   applyScalarField(config.dns as MutableRecord | undefined, "final", op);
-  config.dns?.rules?.forEach((rule) => applyScalarField(rule as MutableRecord, "server", op));
+  config.dns?.rules?.forEach((rule) => {
+    applyScalarField(rule as MutableRecord, "server", op);
+    applyDnsPreferredByRefsDeep(rule as MutableRecord, op);
+  });
   config.route?.rules?.forEach((rule) => applyScalarField(rule as MutableRecord, "server", op));
   // W4 (m1): legacy DNS server `address_resolver` is a dns-server tag (resolves the server's own domain
   // address; dns/server/legacy.md). Track it in the rename/delete cascade so renaming the referenced
@@ -409,7 +423,7 @@ export const referenceRegistry: ReferenceRegistryEntry[] = [
   ),
   entry(
     "dns-server",
-    ["/dns/final", "/dns/rules/*/server", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
+    ["/dns/final", "/dns/rules/*/server", "/dns/rules/*/preferred_by", "/route/rules/*/server", "/route/default_domain_resolver", "*/domain_resolver", "/dns/servers/*/address_resolver"],
     visitDnsServerRefs,
   ),
   entry(
@@ -470,6 +484,7 @@ export const INSPECTOR_ONLY_REFERENCE_PATHS: Record<string, string> = {
   "/outbounds/*/default": "selector default — a <select> of the node's own candidates, not a cross-node edge",
   "/route/default_domain_resolver": "route default domain resolver — Inspector dial <select>",
   "/dns/servers/*/address_resolver": "legacy DNS server address_resolver — a dns-server tag (legacy.md); cascade-tracked for rename/delete but Inspector-only (no canvas edge), like other legacy fields",
+  "/dns/rules/*/preferred_by": "DNS rule preferred_by — testing-only DNS-server tag list edited in the rule Inspector",
   "*/tls/certificate_provider": "tls.certificate_provider — Inspector TLS <select>",
   "/inbounds/*/route_address_set": "tun route_address_set — Inspector CSV of rule-set tags",
   "/inbounds/*/route_exclude_address_set": "tun route_exclude_address_set — Inspector CSV of rule-set tags",

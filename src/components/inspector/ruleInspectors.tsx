@@ -375,6 +375,9 @@ export function DnsRuleInspector({
 }) {
   const isLogical = rule.type === "logical";
   const patch = (next: Record<string, unknown>) => updateDnsRule(index, next);
+  const hasTestingMatchField = ["query_client_subnet", "query_dnssec", "package_name_regex", "preferred_by"].some(
+    (field) => rule[field] !== undefined,
+  );
 
   return (
     <div className="rule-inspector" aria-label={`DNS rule ${index + 1} inspector`}>
@@ -416,6 +419,36 @@ export function DnsRuleInspector({
           <RuleListField label="Domain" value={rule.domain} onChange={(value) => patch({ domain: value })} />
           <RuleListField label="Domain regex" value={rule.domain_regex} onChange={(value) => patch({ domain_regex: value })} />
           <RuleListField label="Match rule-set" value={rule.rule_set} onChange={(value) => patch({ rule_set: value })} />
+          {channel === "testing" || hasTestingMatchField ? (
+            <details className="advanced-fields" data-testid="dns-rule-testing-match-fields">
+              <summary>Testing match fields <span>4</span></summary>
+              <div className="advanced-fields__body">
+                <RuleListField
+                  label="Query client subnet"
+                  value={rule.query_client_subnet}
+                  onChange={(value) => patch({ query_client_subnet: value })}
+                />
+                <label className="toggle-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(rule.query_dnssec)}
+                    onChange={(event) => patch({ query_dnssec: event.target.checked || undefined })}
+                  />
+                  <span>Query DNSSEC OK bit</span>
+                </label>
+                <RuleListField
+                  label="Package name regex"
+                  value={rule.package_name_regex}
+                  onChange={(value) => patch({ package_name_regex: value })}
+                />
+                <RuleListField
+                  label="Preferred DNS server tags"
+                  value={rule.preferred_by}
+                  onChange={(value) => patch({ preferred_by: value })}
+                />
+              </div>
+            </details>
+          ) : null}
         </>
       )}
 
