@@ -1,0 +1,19 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "outbounds": [
+    {
+      "type": "anytls",
+      "tag": "anytls-out",
+      "server": "127.0.0.1",
+      "server_port": 443,
+      "password": "fixture-password",
+      "client_metadata": "compat-client",
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com"
+      }
+    }
+  ]
+}

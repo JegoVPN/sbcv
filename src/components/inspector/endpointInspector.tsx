@@ -377,6 +377,16 @@ export function EndpointInspector({
                 />
               </label>
               <label className="field">
+                <span>Listen Port (since sing-box 1.14.0)</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={typeof entity.listen_port === "number" ? entity.listen_port : ""}
+                  placeholder="auto"
+                  onChange={(event) => updateField(entityRef, "listen_port", parseOptionalPort(event.target.value))}
+                />
+              </label>
+              <label className="field">
                 <span>Relay Server Port (since sing-box 1.13.0)</span>
                 <input
                   type="number"
@@ -421,6 +431,14 @@ export function EndpointInspector({
                     </label>
                   ))
                 : null}
+              <label className="field">
+                <span>Taildrop Directory (since sing-box 1.14.0)</span>
+                <input
+                  value={typeof entity.taildrop_directory === "string" ? entity.taildrop_directory : ""}
+                  placeholder="Taildrop"
+                  onChange={(event) => updateField(entityRef, "taildrop_directory", event.target.value || undefined)}
+                />
+              </label>
             </>
           ) : null}
           <AdvancedScalarFields entity={entity} handledFields={endpointHandledFields} entityRef={entityRef} updateField={updateField} />

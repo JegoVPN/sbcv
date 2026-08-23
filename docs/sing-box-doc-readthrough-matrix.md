@@ -103,7 +103,7 @@ Testing-only docs versus stable:
 | `route/sniff.md` | stable+testing | reference-data-or-subform | Route rule action/sniff subform |
 | `route/geoip.md` | stable+testing | reference-data-or-subform | Deprecated/version warning + rule data |
 | `route/geosite.md` | stable+testing | reference-data-or-subform | Deprecated/version warning + rule data |
-| `rule-set/index.md` | stable+testing | resource | Rule Set resource table/node |
+| `rule-set/index.md` | stable+testing | resource | Rule Set resource table/node; testing remote `initial_path` is Inspector-owned |
 | `rule-set/source-format.md` | stable+testing | resource | Rule Set source editor |
 | `rule-set/headless-rule.md` | stable+testing | resource | Rule Set rule editor |
 | `rule-set/adguard.md` | stable+testing | resource | Rule Set AdGuard source editor |
@@ -112,7 +112,7 @@ Testing-only docs versus stable:
 | `network-namespace/unshare.md` | testing-only | resource | Testing-gated `unshare` resource setup; optional `pid_file` editor and rootless kernel prerequisite |
 | `endpoint/index.md` | stable+testing | chain-resource | Endpoint node base |
 | `endpoint/wireguard.md` | stable+testing | chain-resource | Endpoint node type |
-| `endpoint/tailscale.md` | stable+testing | chain-resource | Endpoint node type |
+| `endpoint/tailscale.md` | stable+testing | chain-resource | Endpoint node type; testing `listen_port` / `taildrop_directory` are Inspector-owned |
 | `endpoint/openconnect.md` | testing-only | chain-resource | Pending OpenConnect Client Endpoint type |
 | `endpoint/openvpn-client.md` | testing-only | chain-resource | Pending OpenVPN Client Endpoint type |
 | `endpoint/openvpn-server.md` | testing-only | chain-resource | Pending OpenVPN Server Endpoint type |
@@ -150,8 +150,8 @@ Testing-only docs versus stable:
 | `outbound/shadowtls.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/vless.md` | stable+testing | chain-node | Outbound node type |
 | `outbound/tuic.md` | stable+testing | chain-node | Outbound node type |
-| `outbound/hysteria2.md` | stable+testing | chain-node | Outbound node type |
-| `outbound/anytls.md` | stable+testing | chain-node | Outbound node type |
+| `outbound/hysteria2.md` | stable+testing | chain-node | Outbound node type; testing `disable_chrome_parrot` is Inspector-owned |
+| `outbound/anytls.md` | stable+testing | chain-node | Outbound node type; stable `client_metadata` (since 1.13.16) is Inspector-owned and 1.12-gated |
 | `outbound/snell.md` | testing-only | chain-node | Outbound node type, testing gated |
 | `outbound/bridge.md` | testing-only | chain-node | Outbound node type (L3 egress, no dial fields), testing gated |
 | `outbound/tor.md` | stable+testing | chain-node | Outbound node type |
