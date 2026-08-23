@@ -320,7 +320,7 @@ const groups: PaletteGroup[] = [
       { label: "Multiplex", kind: "shared-multiplex", icon: Shuffle, docsUrl: docs("shared/multiplex/"), status: "inspector" },
       { label: "V2Ray Transport", kind: "shared-v2ray-transport", icon: Network, docsUrl: docs("shared/v2ray-transport/"), status: "inspector" },
       { label: "UDP over TCP", kind: "shared-udp-over-tcp", icon: Network, docsUrl: docs("shared/udp-over-tcp/"), status: "inspector" },
-      { label: "UDP NAT Fields", kind: "shared-udp-nat", icon: Network, docsUrl: docs("shared/udp-nat/"), status: "pending" },
+      { label: "UDP NAT Fields", kind: "shared-udp-nat", icon: Network, docsUrl: docs("shared/udp-nat/"), status: "inspector" },
       { label: "TCP Brutal", kind: "shared-tcp-brutal", icon: Cable, docsUrl: docs("shared/tcp-brutal/"), status: "inspector" },
       { label: "Wi-Fi State", kind: "shared-wifi-state", icon: RadioTower, docsUrl: docs("shared/wifi-state/"), status: "table" },
       { label: "Neighbor Resolution", kind: "shared-neighbor", icon: Waypoints, docsUrl: docs("shared/neighbor/"), status: "gated" },

@@ -175,7 +175,7 @@ Testing-only docs versus stable:
 | `shared/multiplex.md` | stable+testing | embedded-shared-fields | Outbound/Endpoint Inspector only |
 | `shared/v2ray-transport.md` | stable+testing | embedded-shared-fields | Protocol Inspector only |
 | `shared/udp-over-tcp.md` | stable+testing | embedded-shared-fields | Protocol Inspector only |
-| `shared/udp-nat.md` | testing-only | embedded-shared-fields | Pending Endpoint/Inbound UDP NAT Inspector fields |
+| `shared/udp-nat.md` | testing-only | embedded-shared-fields | TUN/TProxy/WireGuard Inspector; OpenConnect/OpenVPN attach when those Endpoint types land |
 | `shared/tcp-brutal.md` | stable+testing | embedded-shared-fields | Transport Inspector only |
 | `shared/pre-match.md` | stable+testing | embedded-shared-fields | Route/DNS Rule Inspector only |
 | `shared/wifi-state.md` | stable+testing | embedded-shared-fields | Route/DNS Rule Inspector only |

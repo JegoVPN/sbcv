@@ -1,9 +1,9 @@
 import { Trash2 } from "lucide-react";
 
-import type { EntityRef } from "../../domain/types";
+import type { EntityRef, SingBoxChannel } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { JsonField, SensitiveTextField } from "./controls";
-import { inboundHandledFields } from "./handledFields";
+import { inboundHandledFieldsForChannel } from "./handledFields";
 import { type InspectorEntity, objectField, parseOptionalNumber, type UpdateField } from "./helpers";
 import { SchemaEnumField } from "./schemaEnumField";
 
@@ -142,6 +142,7 @@ export type InboundSectionProps = {
   entity: InspectorEntity;
   entityRef: EntityRef;
   entityType: string | null;
+  channel: SingBoxChannel;
   updateField: UpdateField;
 };
 
@@ -149,6 +150,7 @@ export function InboundSectionsB({
   entity,
   entityRef,
   entityType,
+  channel,
   updateField,
 }: InboundSectionProps) {
   return (
@@ -721,8 +723,8 @@ export function InboundSectionsB({
               </fieldset>
             );
           })()}
-          <AdvancedScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={entityRef} updateField={updateField} />
-          <AdvancedNonScalarFields entity={entity} handledFields={inboundHandledFields} entityRef={entityRef} updateField={updateField} />
+          <AdvancedScalarFields entity={entity} handledFields={inboundHandledFieldsForChannel(channel)} entityRef={entityRef} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={inboundHandledFieldsForChannel(channel)} entityRef={entityRef} updateField={updateField} />
     </>
   );
 }

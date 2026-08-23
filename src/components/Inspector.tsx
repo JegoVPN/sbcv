@@ -286,7 +286,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       ) : null}
 
       {ref.kind === "inbound" ? (
-        <InboundInspector entity={entity} entityRef={ref} entityType={entityType} updateField={updateField} />
+        <InboundInspector entity={entity} entityRef={ref} entityType={entityType} channel={channel} updateField={updateField} />
       ) : null}
 
       {ref.kind === "outbound" ? (
@@ -298,7 +298,7 @@ export function Inspector({ compact = false }: { compact?: boolean } = {}) {
       ) : null}
 
       {ref.kind === "endpoint" ? (
-        <EndpointInspector entity={entity} entityRef={ref} entityType={entityType} tagValue={tagValue} selectedEndpointReferences={selectedEndpointReferences} updateField={updateField} />
+        <EndpointInspector entity={entity} entityRef={ref} entityType={entityType} tagValue={tagValue} selectedEndpointReferences={selectedEndpointReferences} channel={channel} updateField={updateField} />
       ) : null}
 
       {ref.kind === "service" ? (

@@ -282,7 +282,7 @@ export function validateFieldMeta(
   meta: SchemaFieldMeta,
   value: unknown,
   target: ValidationTarget,
-): { code: "enum-invalid" | "type-invalid" | "version-invalid"; message: string } | null {
+): { code: "enum-invalid" | "number-invalid" | "type-invalid" | "version-invalid"; message: string } | null {
   if (value === undefined || value === null || value === "") return null;
   const fieldName = meta.path.join(".");
 
@@ -328,15 +328,24 @@ export function validateFieldMeta(
     (meta.type === "number" && actual === "number" && Number.isFinite(value as number)) ||
     (meta.type === "boolean" && actual === "boolean") ||
     (meta.type === "string" && actual === "string");
-  if (typeOk) return null;
-  return { code: "type-invalid", message: `${fieldName} must be a ${meta.type}, got ${actual}.` };
+  if (!typeOk) return { code: "type-invalid", message: `${fieldName} must be a ${meta.type}, got ${actual}.` };
+  if (meta.type === "number") {
+    const number = value as number;
+    if (meta.integer && !Number.isInteger(number)) {
+      return { code: "number-invalid", message: `${fieldName} must be an integer.` };
+    }
+    if (meta.min !== undefined && number < meta.min) {
+      return { code: "number-invalid", message: `${fieldName} must be at least ${meta.min}.` };
+    }
+  }
+  return null;
 }
 
 /**
  * Per-entity scalar enum/type validation over every typed collection (feeds V2's export hard gate; the
- * errors are already live in the existing export prompt + node badges, not just V2). Today only
- * inbound/outbound rows define `fields`, so the dns-server/endpoint/service/rule-set passes (and the
- * dns-server `legacyType` fallback) are deliberate no-ops, ready for future field metadata.
+ * errors are already live in the existing export prompt + node badges, not just V2). Inbound, outbound,
+ * and selected endpoint rows define `fields`; the dns-server/service/rule-set passes (and the dns-server
+ * `legacyType` fallback) are deliberate no-ops, ready for future field metadata.
  */
 function validateScalarFields(
   config: SingBoxConfig,

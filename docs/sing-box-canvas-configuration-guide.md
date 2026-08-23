@@ -56,7 +56,7 @@ Current completeness checkpoint, from a force-refreshed `pnpm audit:config-docs`
 - Palette entries: 121.
 - Docs without a Palette surface: 7 base/action docs.
 - Audit-reported writable entries without a static write status: 11; one is the Network Namespace overview whose two concrete type entries become `ADD SETUP` on the testing target, leaving 10 actual object migration/helper gaps.
-- Six beta.17 surfaces are explicitly `PENDING`: five OpenConnect/OpenVPN Endpoint or DNS Server objects plus the shared UDP NAT Inspector field group. JSON Schema is a `DOCS` reference.
+- Five beta.17 surfaces are explicitly `PENDING`: the OpenConnect/OpenVPN Endpoint or DNS Server objects. Shared UDP NAT is an `INSPECTOR` field group on the already-supported TUN, TProxy, and WireGuard parents; JSON Schema is a `DOCS` reference.
 - Network Namespace is a writable testing resource, not a documentation-only exception.
 
 UI review checkpoint, from [SBC Editable Node UI Reviews](index-ui-reviews.md) on 2026-05-27:
@@ -96,7 +96,7 @@ Use this decision tree for every official configuration doc before writing UI or
 1. If the doc owns a top-level object or array, expose it from Library or Templates, but keep the canonical JSON key as the write owner.
 2. If the doc is a protocol/object under `inbounds[]`, `outbounds[]`, `dns.servers[]`, `endpoints[]`, or `services[]`, make it an addable setup node only after a domain create command, Inspector schema, graph derivation, fixture, and target binary check exist.
 3. If the doc is an ordered list item, such as `route.rules`, `dns.rules`, or headless rule-set rules, edit it in an ordered table in the right Inspector. Canvas rule nodes are visual shortcuts only.
-4. If the doc is a shared field group, such as Listen, Dial, TLS, Multiplex, V2Ray Transport, HTTP2, QUIC, DNS01, Wi-Fi State, or Neighbor Resolution, never add it as a standalone node. Put it inside the owning parent Inspector.
+4. If the doc is a shared field group, such as Listen, Dial, TLS, Multiplex, V2Ray Transport, HTTP2, QUIC, UDP NAT, DNS01, Wi-Fi State, or Neighbor Resolution, never add it as a standalone node. Put it inside the owning parent Inspector.
 5. If the doc is a base/index page, use it as a Library group, hub node, or table entry. Do not create duplicate "base" objects when the concrete child types own the JSON.
 6. If the doc is deprecated, removed, or superseded in the target, support import diagnostics and migration help first. Fresh creation stays `DOCS` or `MIGRATION/DOCS`.
 7. If the doc is testing-only, mark it `TARGET GATED` outside `1.14 testing`.
