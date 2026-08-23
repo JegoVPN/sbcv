@@ -2,7 +2,12 @@ import { Braces, Download, ExternalLink, FolderOpen, Github, LayoutTemplate } fr
 import { useRef } from "react";
 import { useShallow } from "zustand/react/shallow";
 import type { ChangeEvent } from "react";
-import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
+import {
+  SING_BOX_TARGETS,
+  TARGET_SELECTOR_TITLE,
+  targetDisplayLabel,
+  targetFromVersion,
+} from "../domain/targets";
 import type { SingBoxTargetId } from "../domain/types";
 import { useTheme, type ThemePreference } from "../state/useTheme";
 import { useProjectStore } from "../state/useProjectStore";
@@ -114,12 +119,13 @@ export function MobileMenuSheet({ open, onClose, onOpenTemplates, onOpenJson }: 
           <span>Target</span>
           <select
             aria-label="Sing-box target"
+            title={TARGET_SELECTOR_TITLE}
             value={target.id}
             onChange={(event) => setTarget(event.target.value as SingBoxTargetId)}
           >
             {SING_BOX_TARGETS.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.label}
+                {targetDisplayLabel(item)}
               </option>
             ))}
           </select>

@@ -3,16 +3,44 @@ import type { SingBoxBinaryName, SingBoxChannel, SingBoxTargetId } from "./types
 export type SingBoxTargetOption = {
   id: SingBoxTargetId;
   label: string;
+  binaryVersion: string;
   channel: SingBoxChannel;
   version: string;
   binaryName: SingBoxBinaryName;
 };
 
 export const SING_BOX_TARGETS: SingBoxTargetOption[] = [
-  { id: "1.13-stable", label: "1.13 stable", channel: "stable", version: "1.13", binaryName: "sing-box-stable" },
-  { id: "1.12-stable", label: "1.12 Legacy", channel: "stable", version: "1.12", binaryName: "sing-box-1.12" },
-  { id: "1.14-testing", label: "1.14 testing", channel: "testing", version: "1.14", binaryName: "sing-box-testing" },
+  {
+    id: "1.13-stable",
+    label: "1.13 stable",
+    binaryVersion: "1.13.19",
+    channel: "stable",
+    version: "1.13",
+    binaryName: "sing-box-stable",
+  },
+  {
+    id: "1.12-stable",
+    label: "1.12 Legacy",
+    binaryVersion: "1.12.25",
+    channel: "stable",
+    version: "1.12",
+    binaryName: "sing-box-1.12",
+  },
+  {
+    id: "1.14-testing",
+    label: "1.14 testing",
+    binaryVersion: "1.14.0-beta.17",
+    channel: "testing",
+    version: "1.14",
+    binaryName: "sing-box-testing",
+  },
 ];
+
+export function targetDisplayLabel(target: SingBoxTargetOption): string {
+  return `${target.label} (${target.binaryVersion})`;
+}
+
+export const TARGET_SELECTOR_TITLE = `Which sing-box build to validate against: ${SING_BOX_TARGETS.map(targetDisplayLabel).join(", ")}.`;
 
 export function targetFromVersion(channel: SingBoxChannel, version: string): SingBoxTargetOption {
   const target =
@@ -30,9 +58,9 @@ export function targetById(id: SingBoxTargetId): SingBoxTargetOption {
 }
 
 // The default version when a channel (Stable / Testing) is selected — the NEWEST configured target on
-// that channel. SING_BOX_TARGETS is the single place the concrete version numbers live, so an upstream
-// release is a one-line edit there and every channel→version default (store setChannel, diagnostics
-// default) follows. The labels (stable/testing/legacy) stay constant; only the numbers move.
+// that channel. `version` is the schema/diagnostic compatibility line; `binaryVersion` is the exact
+// official-checker release shown to users. Keep both in this registry so desktop/mobile labels cannot
+// disagree while target IDs and API labels remain stable.
 export function defaultVersionForChannel(channel: SingBoxChannel): string {
   const onChannel = SING_BOX_TARGETS.filter((target) => target.channel === channel);
   if (onChannel.length === 0) throw new Error(`No sing-box target configured for channel "${channel}".`);

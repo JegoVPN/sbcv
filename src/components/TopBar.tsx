@@ -18,7 +18,12 @@ import { blockingExportErrors, exportConfigGated } from "./exportConfig";
 import { LazyLayerBoundary } from "./LazyLayerBoundary";
 import { summarizeDiagnostics } from "../domain/diagnostics";
 import { nodeIdForDiagnosticPath } from "../domain/diagnosticTargets";
-import { SING_BOX_TARGETS, targetFromVersion } from "../domain/targets";
+import {
+  SING_BOX_TARGETS,
+  TARGET_SELECTOR_TITLE,
+  targetDisplayLabel,
+  targetFromVersion,
+} from "../domain/targets";
 import { useProjectStore } from "../state/useProjectStore";
 import type { Diagnostic, SingBoxConfig, SingBoxTargetId } from "../domain/types";
 import { GITHUB_REPO_URL } from "./appLinks";
@@ -347,13 +352,13 @@ export function TopBar() {
           <span>Target</span>
           <select
             aria-label="Sing-box target"
-            title="Which sing-box build to validate against. Stable (1.13) is the released version; testing (1.14) has newer features not yet in stable — pick the one your sing-box binary runs."
+            title={TARGET_SELECTOR_TITLE}
             value={target.id}
             onChange={(event) => setTarget(event.target.value as SingBoxTargetId)}
           >
             {SING_BOX_TARGETS.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.label}
+                {targetDisplayLabel(item)}
               </option>
             ))}
           </select>

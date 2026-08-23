@@ -23,9 +23,9 @@ describe("SBC editor shell", () => {
     expect(screen.getByLabelText("Node inspector")).toBeInTheDocument();
     expect(screen.queryByLabelText("Rules, JSON, and diagnostics")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Route rules")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "1.13 stable" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "1.12 Legacy" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "1.14 testing" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "1.13 stable (1.13.19)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "1.12 Legacy (1.12.25)" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "1.14 testing (1.14.0-beta.17)" })).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("brand-menu-toggle"));
     expect(screen.getByRole("menuitem", { name: /Import JSON/i })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: /View JSON/i })).toBeInTheDocument();
