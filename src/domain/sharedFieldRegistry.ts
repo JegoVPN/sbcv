@@ -14,6 +14,7 @@ export type SharedFieldGroupId =
   | "multiplex"
   | "v2ray-transport"
   | "udp-over-tcp"
+  | "udp-nat"
   | "tcp-brutal"
   | "wifi-state"
   | "neighbor";
@@ -116,6 +117,12 @@ export const SHARED_DOC_PLACEMENTS: SharedDocPlacement[] = [
     group: "udp-over-tcp",
     owners: ["outbounds[socks|shadowsocks|naive]"],
     mode: "embedded-inspector",
+  },
+  {
+    doc: "shared/udp-nat.md",
+    group: "udp-nat",
+    owners: ["inbounds[tun|tproxy]", "endpoints[wireguard|openconnect|openvpn-client|openvpn-server]"],
+    mode: "target-gated",
   },
   {
     doc: "shared/tcp-brutal.md",

@@ -152,6 +152,7 @@ export const DOC_FIELD_NAMES = {
           "idle_session_check_interval",
           "idle_session_timeout",
           "min_idle_session",
+          "client_metadata",
           "tls"
         ],
         "direct": [
@@ -795,7 +796,6 @@ export const DOC_FIELD_NAMES = {
           "route_address_set",
           "route_exclude_address_set",
           "endpoint_independent_nat",
-          "udp_timeout",
           "stack",
           "include_interface",
           "exclude_interface",
@@ -831,6 +831,7 @@ export const DOC_FIELD_NAMES = {
           "idle_session_check_interval",
           "idle_session_timeout",
           "min_idle_session",
+          "client_metadata",
           "tls"
         ],
         "bridge": [
@@ -881,6 +882,7 @@ export const DOC_FIELD_NAMES = {
           "tls",
           "bbr_profile",
           "brutal_debug",
+          "disable_chrome_parrot",
           "realm"
         ],
         "naive": [
@@ -1072,6 +1074,16 @@ export const DOC_FIELD_NAMES = {
         "mdns": [
           "interface"
         ],
+        "openconnect": [
+          "endpoint",
+          "accept_default_resolvers",
+          "accept_search_domain"
+        ],
+        "openvpn": [
+          "endpoint",
+          "accept_default_resolvers",
+          "accept_search_domain"
+        ],
         "quic": [
           "server",
           "server_port",
@@ -1142,6 +1154,7 @@ export const DOC_FIELD_NAMES = {
           "format",
           "path",
           "url",
+          "initial_path",
           "http_client",
           "update_interval",
           "download_detour"
@@ -1153,6 +1166,7 @@ export const DOC_FIELD_NAMES = {
           "format",
           "path",
           "url",
+          "initial_path",
           "http_client",
           "update_interval",
           "download_detour"
@@ -1164,6 +1178,7 @@ export const DOC_FIELD_NAMES = {
           "format",
           "path",
           "url",
+          "initial_path",
           "http_client",
           "update_interval",
           "download_detour"
@@ -1182,13 +1197,15 @@ export const DOC_FIELD_NAMES = {
           "advertise_routes",
           "advertise_exit_node",
           "advertise_tags",
+          "listen_port",
           "relay_server_port",
           "relay_server_static_endpoints",
           "system_interface",
           "system_interface_name",
           "system_interface_mtu",
           "udp_timeout",
-          "ssh_server"
+          "ssh_server",
+          "taildrop_directory"
         ],
         "wireguard": [
           "system",
@@ -1197,7 +1214,6 @@ export const DOC_FIELD_NAMES = {
           "address",
           "private_key",
           "peers",
-          "udp_timeout",
           "workers"
         ]
       },
@@ -1408,6 +1424,12 @@ export const DOC_FIELD_NAMES = {
       "udp-over-tcp": [
         "enabled",
         "version"
+      ],
+      "udp-nat": [
+        "udp_timeout",
+        "udp_mapping",
+        "udp_filtering",
+        "udp_nat_max"
       ],
       "tcp-brutal": [
         "enabled",

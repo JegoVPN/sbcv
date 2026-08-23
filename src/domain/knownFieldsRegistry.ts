@@ -47,6 +47,7 @@ const SHARED_GROUP_DOC_KEY: Record<string, string> = {
   multiplex: "multiplex",
   "v2ray-transport": "v2ray-transport",
   "udp-over-tcp": "udp-over-tcp",
+  "udp-nat": "udp-nat",
   "tcp-brutal": "tcp-brutal",
   "wifi-state": "wifi-state",
   neighbor: "neighbor",

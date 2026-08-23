@@ -4,7 +4,9 @@ icon: material/new-box
 
 !!! quote "Changes in sing-box 1.14.0"
 
-    :material-plus: [ssh_server](#ssh_server)
+    :material-plus: [listen_port](#listen_port)  
+    :material-plus: [ssh_server](#ssh_server)  
+    :material-plus: [taildrop_directory](#taildrop_directory)
 
 !!! quote "Changes in sing-box 1.13.0"
 
@@ -34,6 +36,7 @@ icon: material/new-box
   "advertise_routes": [],
   "advertise_exit_node": false,
   "advertise_tags": [],
+  "listen_port": 0,
   "relay_server_port": 0,
   "relay_server_static_endpoints": [],
   "system_interface": false,
@@ -41,6 +44,7 @@ icon: material/new-box
   "system_interface_mtu": 0,
   "udp_timeout": "5m",
   "ssh_server": false,
+  "taildrop_directory": "",
 
   ... // Dial Fields
 }
@@ -60,7 +64,7 @@ Example: `$HOME/.tailscale`
 
 !!! note
     
-    Auth key is not required. By default, sing-box will log the login URL (or popup a notification on graphical clients).
+    Auth key is not required. By default, sing-box will log the login URL.
 
 The auth key to create the node. If the node is already created (from state previously stored), then this field is not
 used.
@@ -121,6 +125,14 @@ Tags to advertise for this node, for ACL enforcement purposes.
 
 Example: `["tag:server"]`
 
+#### listen_port
+
+!!! question "Since sing-box 1.14.0"
+
+The UDP port to listen on for WireGuard and peer-to-peer traffic.
+
+A port is automatically selected by default.
+
 #### relay_server_port
 
 !!! question "Since sing-box 1.13.0"
@@ -166,9 +178,9 @@ Run a Tailscale SSH server on tailnet port 22.
 Access is controlled by the SSH ACL in the Tailscale admin console, which maps each connection to a local user. How that user is resolved, and which users are allowed, depends on the platform:
 
 - **Linux** and **macOS**: the user is resolved from the system user database. Switching to a user other than the one sing-box runs as requires running as root; without root, sessions are limited to the current user.
-- **Windows**: sessions run as the sing-box process identity; the mapped user is not impersonated, so a session mapped to a different local account is refused.
+- **Windows**: in the command line client, sessions run as the sing-box process identity; the mapped user is not impersonated, so a session mapped to a different local account is refused. In the graphical client, there is no such restriction.
 - **Android**: the user is resolved by the app rather than the system user database. `root` is the superuser (UID 0) and `shell` is the ADB shell user (UID 2000); every other name is resolved as the package name of an installed application, running as that application's UID with its data directory as the home directory, so the target application must be installed. `termux` is a shortcut for `com.termux`, and `sing-box` for the app's own package name; when Termux is installed, the `root` and `termux` users load the Termux environment. Running as the sing-box application itself requires no root, while any other user requires granted root access; without root, sessions are limited to the sing-box user.
-- **macOS**: the SSH server is only available in the standalone version and requires the Root Helper; the App Store version is not supported.
+- **macOS**: the SSH server is only available in the standalone version and requires the Helper Service; the App Store version is not supported.
 - **iOS**: the SSH server is only available in the jailbreak build; the App Store and TestFlight versions are not supported.
 - **tvOS**: not yet supported.
 
@@ -201,6 +213,17 @@ Refuse the SFTP subsystem.
 
 Refuse local and remote TCP and Unix-socket forwarding, including SSH agent forwarding.
 
+#### taildrop_directory
+
+!!! question "Since sing-box 1.14.0"
+
+The directory where files received from tailnet peers are stored.
+
+Relative paths are resolved against the working directory, as [state_directory](#state_directory)
+is.
+
+`Taildrop` is used by default.
+
 ### Dial Fields
 
 !!! note
@@ -208,3 +231,7 @@ Refuse local and remote TCP and Unix-socket forwarding, including SSH agent forw
     Dial Fields in Tailscale endpoints only control how it connects to the control plane and have nothing to do with actual connections.
 
 See [Dial Fields](/configuration/shared/dial/) for details.
+
+### Interactive authentication
+
+Use `Tools` > `Endpoints` in the sing-box dashboard or any sing-box graphical client to authenticate and manage the endpoint.

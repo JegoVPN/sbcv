@@ -10,7 +10,7 @@ test("network namespaces are testing-gated and editable on the canvas", async ({
   });
 
   await page.goto("/");
-  await page.getByRole("button", { name: "Library 14", exact: true }).click();
+  await page.getByRole("button", { name: /^Library \d+$/ }).click();
   await page.getByRole("button", { name: "Network Namespaces 3", exact: true }).click();
 
   await expect(page.getByRole("button", { name: "Default: Needs 1.14", exact: true })).toBeDisabled();

@@ -7,12 +7,18 @@ This is the product-level guide for turning the official sing-box configuration 
 Read sources:
 
 - Local stable docs: `.tmp/sing-box-docs/stable/docs/configuration`, 94 English Markdown files.
-- Local testing docs: `.tmp/sing-box-docs/testing/docs/configuration`, 114 English Markdown files.
+- Local testing docs: `.tmp/sing-box-docs/testing/docs/configuration`, 121 English Markdown files.
 - Coverage matrix: [sing-box Config Document Inventory](sing-box-config-doc-inventory.md) and [sing-box Configuration Readthrough Matrix](sing-box-doc-readthrough-matrix.md).
 
 Testing-only docs compared with stable:
 
+- `schema.md`
 - `dns/server/mdns.md`
+- `dns/server/openconnect.md`
+- `dns/server/openvpn.md`
+- `endpoint/openconnect.md`
+- `endpoint/openvpn-client.md`
+- `endpoint/openvpn-server.md`
 - `inbound/cloudflared.md`
 - `inbound/snell.md`
 - `network-namespace/index.md`
@@ -32,6 +38,7 @@ Testing-only docs compared with stable:
 - `shared/http2.md`
 - `shared/neighbor.md`
 - `shared/quic.md`
+- `shared/udp-nat.md`
 
 The UI must target `1.13 stable` by default, keep `1.12 Legacy` explicit, and require an explicit switch for `1.14 testing`.
 
@@ -42,13 +49,14 @@ Readthrough contract:
 - If a doc exists in the matrix but the Library item is `DOCS`, `PENDING`, or `GATED`, the UI must explain where that object will eventually be configured and why it is not writable yet.
 - If this guide, the matrix, the Palette, or `pnpm audit:config-docs` disagree, fix the documentation before implementing more UI.
 
-Current completeness checkpoint, from a force-refreshed `pnpm audit:config-docs` on 2026-07-11:
+Current completeness checkpoint, from a force-refreshed `pnpm audit:config-docs` on 2026-08-23:
 
-- Official testing English docs: 114.
-- Matrix rows: 114.
-- Palette entries: 114.
+- Official testing English docs: 121.
+- Matrix rows: 121.
+- Palette entries: 121.
 - Docs without a Palette surface: 7 base/action docs.
-- Audit-reported writable entries without a static write status: 6; one is the Network Namespace overview whose two concrete type entries become `ADD SETUP` on the testing target, leaving 5 actual migration/helper gaps.
+- Audit-reported writable entries without a static write status: 11; one is the Network Namespace overview whose two concrete type entries become `ADD SETUP` on the testing target, leaving 10 actual object migration/helper gaps.
+- Six beta.17 surfaces are explicitly `PENDING`: five OpenConnect/OpenVPN Endpoint or DNS Server objects plus the shared UDP NAT Inspector field group. JSON Schema is a `DOCS` reference.
 - Network Namespace is a writable testing resource, not a documentation-only exception.
 
 UI review checkpoint, from [SBC Editable Node UI Reviews](index-ui-reviews.md) on 2026-05-27:

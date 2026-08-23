@@ -13,6 +13,7 @@
 
 | Key | Format | 官方入口 | SBC 表达方式 |
 | --- | --- | --- | --- |
+| `$schema` | JSON Schema | https://sing-box.sagernet.org/configuration/schema/ | testing 文档/编辑器提示引用；无独立节点，canonical JSON 原样保留 |
 | `log` | Log | https://sing-box.sagernet.org/configuration/log/ | 独立 Settings 节点 + Inspector |
 | `dns` | DNS | https://sing-box.sagernet.org/configuration/dns/ | DNS Hub 节点 + DNS 表格 |
 | `ntp` | NTP | https://sing-box.sagernet.org/configuration/ntp/ | 独立 Settings 节点 + Inspector |
@@ -47,6 +48,8 @@
 | DNS Server / FakeIP | https://sing-box.sagernet.org/configuration/dns/server/fakeip/ | DNS Server 类型 |
 | DNS Server / Tailscale | https://sing-box.sagernet.org/configuration/dns/server/tailscale/ | DNS Server 类型 |
 | DNS Server / Resolved | https://sing-box.sagernet.org/configuration/dns/server/resolved/ | DNS Server 类型 |
+| DNS Server / OpenConnect | https://sing-box.sagernet.org/configuration/dns/server/openconnect/ | `1.14 testing` Endpoint 引用类型；`PENDING`，尚不可创建 |
+| DNS Server / OpenVPN | https://sing-box.sagernet.org/configuration/dns/server/openvpn/ | `1.14 testing` Endpoint 引用类型；`PENDING`，尚不可创建 |
 | DNS Rule | https://sing-box.sagernet.org/configuration/dns/rule/ | DNS Rules 表 |
 | DNS Rule Action | https://sing-box.sagernet.org/configuration/dns/rule_action/ | DNS Rule action editor |
 | DNS FakeIP | https://sing-box.sagernet.org/configuration/dns/fakeip/ | DNS / FakeIP 子表单 |
@@ -105,6 +108,7 @@
 | Multiplex | https://sing-box.sagernet.org/configuration/shared/multiplex/ | Outbound/Endpoint Inspector 嵌入字段族 |
 | V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | VMess/VLESS/Trojan 等协议子表单 |
 | UDP over TCP | https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/ | Outbound/Inbound 协议子表单字段族 |
+| UDP NAT Fields | https://sing-box.sagernet.org/configuration/shared/udp-nat/ | `1.14 testing` Endpoint/Inbound 嵌入字段族；`PENDING`，不生成独立节点 |
 | TCP Brutal | https://sing-box.sagernet.org/configuration/shared/tcp-brutal/ | Outbound/Endpoint 传输子表单字段族 |
 | Wi-Fi State | https://sing-box.sagernet.org/configuration/shared/wifi-state/ | Route Rule / DNS Rule 条件字段族 |
 | Neighbor Resolution | https://sing-box.sagernet.org/configuration/shared/neighbor/ | Route/DNS rule 或 testing route 邻居解析字段族 |
@@ -116,6 +120,9 @@
 | Endpoint | https://sing-box.sagernet.org/configuration/endpoint/ | Endpoint 节点基类 |
 | WireGuard | https://sing-box.sagernet.org/configuration/endpoint/wireguard/ | Endpoint 类型 |
 | Tailscale | https://sing-box.sagernet.org/configuration/endpoint/tailscale/ | Endpoint 类型 |
+| OpenConnect Client | https://sing-box.sagernet.org/configuration/endpoint/openconnect/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
+| OpenVPN Client | https://sing-box.sagernet.org/configuration/endpoint/openvpn-client/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
+| OpenVPN Server | https://sing-box.sagernet.org/configuration/endpoint/openvpn-server/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
 
 ## Network Namespace
 

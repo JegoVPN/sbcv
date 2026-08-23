@@ -15,20 +15,28 @@ The audit compares the latest local testing docs checkout at `.tmp/sing-box-docs
 
 ## Current Result
 
-Last run: 2026-07-11 after a forced docs refresh, against testing docs commit `4bccd6fae19526425acf76efc263333c7aea6fce`.
+Last run: 2026-08-23 after a forced docs refresh, against testing docs commit `712046a26d12bf132568476c14c5b717584d1ac0`.
 
 | Metric | Count |
 | --- | ---: |
-| Official testing English docs | 114 |
-| Matrix rows | 114 |
-| Palette entries | 114 |
+| Official testing English docs | 121 |
+| Matrix rows | 121 |
+| Palette entries | 121 |
 | `ADD` entries | 12 |
 | `SETUP` entries | 60 |
 | `TABLE` entries | 4 |
 | `INSPECTOR` entries | 13 |
 | `GATED` entries | 15 |
-| `PENDING` entries | 0 |
-| `DOCS` entries | 10 |
+| `PENDING` entries | 6 |
+| `DOCS` entries | 11 |
+
+## Upstream Delta Classification
+
+The stable snapshot adds AnyTLS outbound `client_metadata` (available since `1.13.16`). The testing snapshot adds seven English configuration docs: JSON Schema; OpenConnect/OpenVPN DNS servers; OpenConnect, OpenVPN Client, and OpenVPN Server endpoints; and shared UDP NAT fields.
+
+The five new VPN-backed object types and the shared UDP NAT field group are deliberately `PENDING`: the docs are discoverable, but the Library cannot emit them until canonical commands, Inspector schemas, tests, and `sing-box-testing check` fixtures exist. JSON Schema is `DOCS` because `$schema` is editor metadata, not a standalone runtime object or canvas node.
+
+Existing testing docs also gained compatibility-relevant shapes: Rule Set `tag` may be a string array and remote Rule Sets add `initial_path`; DNS rules/actions add tagged evaluated responses, `race`, `speculative`, client-subnet controls, and query matchers; Tailscale adds `listen_port` and `taildrop_directory`; Hysteria2 adds `disable_chrome_parrot`; and WireGuard/OpenVPN/OpenConnect parents share the new UDP NAT fields. These remain tracked work rather than being inferred as implemented from the docs sync.
 
 ## User-Facing Meaning
 
@@ -62,9 +70,14 @@ All three Network Namespace docs have Palette surfaces. The Overview item is doc
 
 Remaining writable object gaps reported by the expanded audit:
 
+- OpenConnect/OpenVPN Endpoint and DNS Server creation/editing (five testing-only object docs).
 - Rule Set source-format and AdGuard conversion helpers.
 - Legacy DNS Server import/migration handling.
 - Outbound WireGuard and DNS migration/special entries.
+
+Remaining embedded-field gap from the beta.17 docs:
+
+- Shared UDP NAT `udp_mapping`, `udp_filtering`, and `udp_nat_max` controls on the documented Endpoint/Inbound parents.
 
 ## Release Gate
 

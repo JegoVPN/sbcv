@@ -141,6 +141,10 @@ const groups: PaletteGroup[] = [
     })),
   },
   {
+    title: "Schema",
+    items: [{ label: "JSON Schema", kind: "schema-json", icon: Braces, docsUrl: docs("schema/"), status: "docs" }],
+  },
+  {
     title: "Log",
     items: [{ label: "Log Settings", kind: "settings-log", icon: Braces, docsUrl: docs("log/"), ready: true }],
   },
@@ -164,6 +168,8 @@ const groups: PaletteGroup[] = [
       { label: "mDNS Server", kind: "dns-mdns", icon: Globe2, docsUrl: docs("dns/server/mdns/"), status: "gated" },
       { label: "Tailscale Server", kind: "dns-tailscale", icon: Waypoints, docsUrl: docs("dns/server/tailscale/"), status: "setup" },
       { label: "Resolved Server (Linux only)", kind: "dns-resolved", icon: Server, docsUrl: docs("dns/server/resolved/"), status: "setup" },
+      { label: "OpenConnect Server", kind: "dns-openconnect", icon: Shield, docsUrl: docs("dns/server/openconnect/"), status: "pending" },
+      { label: "OpenVPN Server", kind: "dns-openvpn", icon: Shield, docsUrl: docs("dns/server/openvpn/"), status: "pending" },
     ],
   },
   {
@@ -200,6 +206,9 @@ const groups: PaletteGroup[] = [
     items: [
       { label: "WireGuard", kind: "endpoint-wireguard", icon: Waypoints, docsUrl: docs("endpoint/wireguard/"), status: "setup" },
       { label: "Tailscale", kind: "endpoint-tailscale", icon: Waypoints, docsUrl: docs("endpoint/tailscale/"), status: "setup" },
+      { label: "OpenConnect Client", kind: "endpoint-openconnect", icon: Shield, docsUrl: docs("endpoint/openconnect/"), status: "pending" },
+      { label: "OpenVPN Client", kind: "endpoint-openvpn-client", icon: Shield, docsUrl: docs("endpoint/openvpn-client/"), status: "pending" },
+      { label: "OpenVPN Server", kind: "endpoint-openvpn-server", icon: Shield, docsUrl: docs("endpoint/openvpn-server/"), status: "pending" },
     ],
   },
   {
@@ -311,6 +320,7 @@ const groups: PaletteGroup[] = [
       { label: "Multiplex", kind: "shared-multiplex", icon: Shuffle, docsUrl: docs("shared/multiplex/"), status: "inspector" },
       { label: "V2Ray Transport", kind: "shared-v2ray-transport", icon: Network, docsUrl: docs("shared/v2ray-transport/"), status: "inspector" },
       { label: "UDP over TCP", kind: "shared-udp-over-tcp", icon: Network, docsUrl: docs("shared/udp-over-tcp/"), status: "inspector" },
+      { label: "UDP NAT Fields", kind: "shared-udp-nat", icon: Network, docsUrl: docs("shared/udp-nat/"), status: "pending" },
       { label: "TCP Brutal", kind: "shared-tcp-brutal", icon: Cable, docsUrl: docs("shared/tcp-brutal/"), status: "inspector" },
       { label: "Wi-Fi State", kind: "shared-wifi-state", icon: RadioTower, docsUrl: docs("shared/wifi-state/"), status: "table" },
       { label: "Neighbor Resolution", kind: "shared-neighbor", icon: Waypoints, docsUrl: docs("shared/neighbor/"), status: "gated" },
