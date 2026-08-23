@@ -52,6 +52,16 @@ export function RuleSetInspector({
                   onChange={(event) => updateField(entityRef, "url", event.target.value)}
                 />
               </label>
+              {channel === "testing" || entity.initial_path !== undefined ? (
+                <label className="field">
+                  <span>Initial Path (since sing-box 1.14.0)</span>
+                  <input
+                    value={typeof entity.initial_path === "string" ? entity.initial_path : ""}
+                    placeholder="bootstrap/rules.srs"
+                    onChange={(event) => updateField(entityRef, "initial_path", event.target.value || undefined)}
+                  />
+                </label>
+              ) : null}
               <label className="field">
                 <span>Update Interval</span>
                 <input

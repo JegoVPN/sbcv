@@ -236,6 +236,14 @@ export function OutboundSectionsB({
                 />
                 <span>Brutal Debug (verbose congestion-control logging)</span>
               </label>
+              <label className="toggle-row" data-testid="hysteria2-disable-chrome-parrot">
+                <input
+                  type="checkbox"
+                  checked={entity.disable_chrome_parrot === true}
+                  onChange={(event) => updateField(entityRef, "disable_chrome_parrot", event.target.checked || undefined)}
+                />
+                <span>Disable Chrome QUIC fingerprint parroting (since sing-box 1.14.0)</span>
+              </label>
               <JsonField
                 label="Realm (object, 1.14 — conflicts with server/server_port)"
                 value={entity.realm}
@@ -279,6 +287,15 @@ export function OutboundSectionsB({
                     updateField(entityRef, "min_idle_session", Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined);
                   }}
                 />
+              </label>
+              <label className="field">
+                <span>Client Metadata (since sing-box 1.13.16)</span>
+                <input
+                  value={typeof entity.client_metadata === "string" ? entity.client_metadata : ""}
+                  placeholder="empty by default"
+                  onChange={(event) => updateField(entityRef, "client_metadata", event.target.value || undefined)}
+                />
+                <small className="field__hint">Leave empty unless an older server requires a compatibility value.</small>
               </label>
             </fieldset>
           ) : null}

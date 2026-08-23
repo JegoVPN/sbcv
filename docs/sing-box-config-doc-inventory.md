@@ -69,7 +69,7 @@
 
 | Entry | 官方入口 | SBC 表达方式 |
 | --- | --- | --- |
-| Rule Set | https://sing-box.sagernet.org/configuration/rule-set/ | Rule Set 资源列表/节点 |
+| Rule Set | https://sing-box.sagernet.org/configuration/rule-set/ | Rule Set 资源列表/节点；`1.14 testing` remote `initial_path` 由 Inspector 编辑 |
 | Source Format | https://sing-box.sagernet.org/configuration/rule-set/source-format/ | Rule Set source editor |
 | Headless Rule | https://sing-box.sagernet.org/configuration/rule-set/headless-rule/ | Rule Set rule editor |
 | AdGuard DNS Filer | https://sing-box.sagernet.org/configuration/rule-set/adguard/ | Rule Set source type |
@@ -119,7 +119,7 @@
 | --- | --- | --- |
 | Endpoint | https://sing-box.sagernet.org/configuration/endpoint/ | Endpoint 节点基类 |
 | WireGuard | https://sing-box.sagernet.org/configuration/endpoint/wireguard/ | Endpoint 类型 |
-| Tailscale | https://sing-box.sagernet.org/configuration/endpoint/tailscale/ | Endpoint 类型 |
+| Tailscale | https://sing-box.sagernet.org/configuration/endpoint/tailscale/ | Endpoint 类型；`1.14 testing` `listen_port` / `taildrop_directory` 由 Inspector 编辑 |
 | OpenConnect Client | https://sing-box.sagernet.org/configuration/endpoint/openconnect/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
 | OpenVPN Client | https://sing-box.sagernet.org/configuration/endpoint/openvpn-client/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
 | OpenVPN Server | https://sing-box.sagernet.org/configuration/endpoint/openvpn-server/ | `1.14 testing` Endpoint 类型；`PENDING`，尚不可创建 |
@@ -174,8 +174,8 @@
 | ShadowTLS | https://sing-box.sagernet.org/configuration/outbound/shadowtls/ | Outbound 类型 |
 | VLESS | https://sing-box.sagernet.org/configuration/outbound/vless/ | Outbound 类型 |
 | TUIC | https://sing-box.sagernet.org/configuration/outbound/tuic/ | Outbound 类型 |
-| Hysteria2 | https://sing-box.sagernet.org/configuration/outbound/hysteria2/ | Outbound 类型 |
-| AnyTLS | https://sing-box.sagernet.org/configuration/outbound/anytls/ | Outbound 类型 |
+| Hysteria2 | https://sing-box.sagernet.org/configuration/outbound/hysteria2/ | Outbound 类型；`1.14 testing` `disable_chrome_parrot` 由 Inspector 编辑 |
+| AnyTLS | https://sing-box.sagernet.org/configuration/outbound/anytls/ | Outbound 类型；stable `client_metadata`（since `1.13.16`）由 Inspector 编辑，1.12 gated |
 | Tor | https://sing-box.sagernet.org/configuration/outbound/tor/ | Outbound 类型 |
 | SSH | https://sing-box.sagernet.org/configuration/outbound/ssh/ | Outbound 类型 |
 | DNS | https://sing-box.sagernet.org/configuration/outbound/dns/ | Outbound 类型 |

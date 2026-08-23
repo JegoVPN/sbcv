@@ -308,8 +308,8 @@ Outbounds are the clearest source of the current usability gap. Users expect eve
 | `shadowtls` | `ADD SETUP` | Target node | Server, port, version, password, TLS |
 | `vless` | `ADD SETUP` | Target node | Server, port, UUID, flow, network, TLS, packet encoding, transport, multiplex |
 | `tuic` | `ADD SETUP` | Target node | Server, port, UUID, password, congestion, relay mode, TLS/QUIC |
-| `hysteria2` | `ADD SETUP` | Target node | Server/realm, password, bandwidth, obfs, TLS/QUIC |
-| `anytls` | `ADD SETUP` | Target node | Server, port, password, idle-session fields, TLS |
+| `hysteria2` | `ADD SETUP` | Target node | Server/realm, password, bandwidth, obfs, TLS/QUIC; testing `disable_chrome_parrot` |
+| `anytls` | `ADD SETUP` | Target node | Server, port, password, idle-session fields, stable `client_metadata` (1.13.16+), TLS |
 | `tor` | `ADD SETUP` | Target node | Executable/data directory/torrc, build-support warning |
 | `ssh` | `ADD SETUP` | Target node | Server, port, user/password/key/host key, algorithms |
 | `dns` | `MIGRATION/DOCS` by default | Legacy special outbound | Prefer rule actions; deprecated in 1.11+ |
@@ -344,7 +344,7 @@ Route rules must support common first-match fields first:
 
 Advanced route fields such as `auto_detect_interface`, default network strategy, default domain resolver, and target-specific fields belong on the Route Inspector.
 
-Product rule: Rule Set creates entries under `route.rule_set[]`; route rules, DNS rules, and TUN route-set fields reference those entries by tag. Remote rule-sets own `url`, `format`, `download_detour`, and `update_interval`; local rule-sets own `path` and `format`; inline rule-sets own structured Headless Rule rows. When an imported config has many rule sets, the canvas may suppress individual resource cards and leave editing to the Route/DNS rule tables plus Inspector so large subscription configs remain renderable. AdGuard filter docs are conversion guidance, not direct source-format editing.
+Product rule: Rule Set creates entries under `route.rule_set[]`; route rules, DNS rules, and TUN route-set fields reference those entries by tag. Remote rule-sets own `url`, `format`, `download_detour`, `update_interval`, and testing-only `initial_path`; local rule-sets own `path` and `format`; inline rule-sets own structured Headless Rule rows. When an imported config has many rule sets, the canvas may suppress individual resource cards and leave editing to the Route/DNS rule tables plus Inspector so large subscription configs remain renderable. AdGuard filter docs are conversion guidance, not direct source-format editing.
 
 ## DNS
 
@@ -381,7 +381,7 @@ Endpoints are resource/chain nodes, not ordinary outbounds.
 
 Endpoint Inspector owns Dial/TLS-like shared sections where supported.
 
-Product rule: WireGuard and Tailscale endpoints are resource nodes backed by `endpoints[]`. Endpoint Dial Fields live in the Endpoint Inspector; Tailscale DNS servers and Tailscale certificate-provider flows must reference endpoint tags explicitly instead of inventing standalone shared nodes.
+Product rule: WireGuard and Tailscale endpoints are resource nodes backed by `endpoints[]`. Endpoint Dial Fields live in the Endpoint Inspector; Tailscale's testing-only `listen_port` and `taildrop_directory` also stay on that Inspector. Tailscale DNS servers and Tailscale certificate-provider flows must reference endpoint tags explicitly instead of inventing standalone shared nodes.
 
 ## Network Namespaces
 

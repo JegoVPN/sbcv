@@ -1,0 +1,47 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "http_clients": [
+    {
+      "tag": "rule-download",
+      "engine": "go"
+    }
+  ],
+  "endpoints": [
+    {
+      "type": "tailscale",
+      "tag": "ts-ep",
+      "state_directory": "tailscale",
+      "listen_port": 41641,
+      "taildrop_directory": "Taildrop"
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "hysteria2",
+      "tag": "hy2-out",
+      "server": "127.0.0.1",
+      "server_port": 443,
+      "password": "fixture-password",
+      "disable_chrome_parrot": true,
+      "tls": {
+        "enabled": true,
+        "server_name": "example.com"
+      }
+    }
+  ],
+  "route": {
+    "default_http_client": "rule-download",
+    "rule_set": [
+      {
+        "type": "remote",
+        "tag": "bootstrap-rules",
+        "format": "source",
+        "url": "https://example.com/rules.json",
+        "initial_path": "bootstrap/rules.json",
+        "http_client": "rule-download"
+      }
+    ]
+  }
+}

@@ -927,6 +927,15 @@ export function validateConfig(
         `Outbound "${outbound.tag}" (${outbound.type}) requires sing-box ${outboundMin}+, but the target is ${version}. sing-box ${version} rejects it.`,
       );
     }
+    if (outbound.type === "anytls" && (outbound as Record<string, unknown>).client_metadata !== undefined && !atLeast(version, "1.13")) {
+      push(
+        diagnostics,
+        "error",
+        "outbound-anytls-client-metadata-1-13-only",
+        `/outbounds/${index}/client_metadata`,
+        `AnyTLS outbound "${outbound.tag}" sets client_metadata, introduced in sing-box 1.13.16; the ${version} target rejects it as an unknown field.`,
+      );
+    }
   });
 
   endpoints.forEach((endpoint, index) => {
