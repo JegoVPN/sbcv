@@ -4,6 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { dnsRuleAllowsServer, routeRuleAllowsOutbound } from "../domain/commands";
 import { isLogicalRule, ruleSummaryLine } from "../domain/ruleSummary";
 import { useProjectStore } from "../state/useProjectStore";
+import { ruleSetTags } from "../domain/ruleSetTags";
 
 const RULE_PAGE_SIZE = 100;
 
@@ -186,9 +187,9 @@ export function RouteRulesTable() {
         })}
       </div>
       <datalist id="route-rule-set-tags">
-        {routeRuleSets.map((ruleSet, index) => (
-          <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
-        ))}
+        {routeRuleSets.flatMap((ruleSet, index) =>
+          ruleSetTags(ruleSet.tag).map((tag) => <option key={`${tag}-${index}`} value={tag} />),
+        )}
       </datalist>
     </section>
   );
@@ -327,9 +328,9 @@ export function DnsRulesTable() {
         })}
       </div>
       <datalist id="dns-rule-set-tags">
-        {dnsRuleSets.map((ruleSet, index) => (
-          <option key={`${ruleSet.tag ?? "untagged"}-${index}`} value={ruleSet.tag ?? ""} />
-        ))}
+        {dnsRuleSets.flatMap((ruleSet, index) =>
+          ruleSetTags(ruleSet.tag).map((tag) => <option key={`${tag}-${index}`} value={tag} />),
+        )}
       </datalist>
     </section>
   );

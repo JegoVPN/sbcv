@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 import { deriveGraph } from "../src/canvas/graph";
+import { primaryRuleSetTag } from "../src/domain/ruleSetTags";
 import {
   addDnsRule,
   addDnsServer,
@@ -434,7 +435,7 @@ describe("implemented docs create editable nodes and references", () => {
 
   it.each(CREATABLE_RULE_SET_TYPES)("rule-set %s creates editable resource nodes and rule refs", (type) => {
     let config = addRuleSet(createMinimalConfig(), type, preferredRuleSetTag(type));
-    const tag = assertTag(config.route?.rule_set?.at(-1)?.tag, `rule-set/${type}`);
+    const tag = assertTag(primaryRuleSetTag(config.route?.rule_set?.at(-1)?.tag), `rule-set/${type}`);
     config = addRouteRule(config, { domain_keyword: ["test"], rule_set: [tag] });
     assertNode(config, `rule-set:${tag}`, type);
     expect(deriveGraph(config, emptyLayout, []).edges.some((edge) => edge.target === `rule-set:${tag}`)).toBe(true);

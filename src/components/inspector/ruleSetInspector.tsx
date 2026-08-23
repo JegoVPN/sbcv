@@ -4,6 +4,7 @@ import { PlatformBanner } from "./controls";
 import { ruleSetHandledFields } from "./handledFields";
 import { type InspectorEntity, outboundTags, type UpdateField } from "./helpers";
 import { InlineRuleSetEditor } from "./ruleControls";
+import { ruleSetTags } from "../../domain/ruleSetTags";
 
 // C14 — the rule-set entity inspector extracted from the Inspector monolith. Behaviour-frozen move:
 // rendered unchanged by the shell's `ref.kind === "rule-set"` branch.
@@ -21,8 +22,15 @@ export function RuleSetInspector({
   channel: SingBoxChannel;
   updateField: UpdateField;
 }) {
+  const tags = ruleSetTags(entity.tag);
   return (
         <>
+          {tags.length > 1 ? (
+            <label className="field">
+              <span>Tags</span>
+              <input value={tags.join(", ")} disabled aria-label="Rule-set tags" />
+            </label>
+          ) : null}
           {entity.type === "remote" || entity.type === "local" ? (
             <label className="field">
               <span>Format</span>

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { App } from "../src/App";
 import { deriveGraph } from "../src/canvas/graph";
 import { createSbcvFileName } from "../src/components/TopBar";
+import { primaryRuleSetTag } from "../src/domain/ruleSetTags";
 import { useProjectStore } from "../src/state/useProjectStore";
 
 describe("SBC editor shell", () => {
@@ -1776,10 +1777,11 @@ describe("SBC editor shell", () => {
     act(() => {
       const ruleSets = useProjectStore.getState().config.route?.rule_set ?? [];
       const created = ruleSets[ruleSets.length - 1];
-      if (created?.tag) {
-        useProjectStore.getState().changeEntityType({ kind: "rule-set", tag: created.tag }, "inline");
+      const createdTag = primaryRuleSetTag(created?.tag);
+      if (createdTag) {
+        useProjectStore.getState().changeEntityType({ kind: "rule-set", tag: createdTag }, "inline");
         useProjectStore.getState().updateField(
-          { kind: "rule-set", tag: created.tag },
+          { kind: "rule-set", tag: createdTag },
           "rules",
           [{ domain: ["example.com"] }],
         );

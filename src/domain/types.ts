@@ -21,6 +21,14 @@ export type TaggedResourceConfig = {
   [key: string]: unknown;
 };
 
+// sing-box 1.14 allows one rule-set definition to declare multiple tags that share the same
+// path/url/options. Keep that grouping canonical; the canvas projects it as one node.
+export type RuleSetConfig = {
+  type: string;
+  tag: string | string[];
+  [key: string]: unknown;
+};
+
 export type NetworkNamespaceType = "default" | "unshare";
 
 export type NetworkNamespaceConfig = {
@@ -95,12 +103,16 @@ export type DnsRule = {
   rule_set?: string | string[];
   server?: string;
   action?: string;
+  match_response?: boolean | string;
+  tag?: string;
+  race?: boolean;
+  speculative?: boolean;
   [key: string]: unknown;
 };
 
 export type RouteConfig = {
   rules?: RouteRule[];
-  rule_set?: TaggedConfig[];
+  rule_set?: RuleSetConfig[];
   final?: string;
   auto_detect_interface?: boolean;
   override_android_vpn?: boolean;

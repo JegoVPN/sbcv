@@ -16,6 +16,7 @@ import {
   supportsOutboundDialFields,
 } from "./sharedFieldRegistry";
 import { atLeast, defaultVersionForChannel } from "./targets";
+import { ruleSetTagLabel, ruleSetTags as normalizedRuleSetTags } from "./ruleSetTags";
 import type { Diagnostic, SingBoxChannel, SingBoxConfig } from "./types";
 import { testingOnlyFields } from "./versionFieldGate";
 
@@ -53,7 +54,9 @@ function checkTestingOnlyFields(config: SingBoxConfig, channel: SingBoxChannel, 
         if (!onlyTesting.has(field)) continue;
         const path = `${base}/${field}`;
         if (flagged.has(path)) continue; // a hand gate already owns this path with a friendlier message
-        const tag = typeof obj.tag === "string" ? obj.tag : `${section.kind}-${index}`;
+        const tag = section.kind === "rule-set"
+          ? ruleSetTagLabel(obj.tag) ?? `${section.kind}-${index}`
+          : typeof obj.tag === "string" ? obj.tag : `${section.kind}-${index}`;
         push(
           diagnostics,
           "error",
@@ -161,7 +164,7 @@ function snellV6PskOutOfRange(entity: Record<string, unknown>): boolean {
 }
 
 function ruleSetIsIpBased(ruleSet: Record<string, unknown>): boolean {
-  const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : "";
+  const tag = normalizedRuleSetTags(ruleSet.tag).join(" ");
   const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
   if (/geoip/i.test(tag) || /geoip/i.test(url)) return true;
   const inlineRules = Array.isArray(ruleSet.rules) ? ruleSet.rules : [];
@@ -184,6 +187,31 @@ function collectDnsRuleSetRefs(rule: Record<string, unknown>): string[] {
     }
   }
   return out;
+}
+
+const DNS_RESPONSE_MATCH_FIELDS = ["response_rcode", "response_answer", "response_ns", "response_extra"] as const;
+
+function collectDnsMatchResponses(rule: Record<string, unknown>): Array<true | string> {
+  const out: Array<true | string> = [];
+  if (rule.match_response === true) out.push(true);
+  else if (typeof rule.match_response === "string" && rule.match_response.trim()) out.push(rule.match_response);
+  if (Array.isArray(rule.rules)) {
+    for (const sub of rule.rules) {
+      if (sub && typeof sub === "object") out.push(...collectDnsMatchResponses(sub as Record<string, unknown>));
+    }
+  }
+  return out;
+}
+
+function hasOwnDnsMatchResponse(rule: Record<string, unknown>): boolean {
+  return rule.match_response === true || (typeof rule.match_response === "string" && rule.match_response.trim() !== "");
+}
+
+function hasDnsResponseFieldsWithoutMatchResponse(rule: Record<string, unknown>): boolean {
+  if (DNS_RESPONSE_MATCH_FIELDS.some((field) => rule[field] !== undefined) && !hasOwnDnsMatchResponse(rule)) return true;
+  return Array.isArray(rule.rules) && rule.rules.some(
+    (sub) => sub && typeof sub === "object" && hasDnsResponseFieldsWithoutMatchResponse(sub as Record<string, unknown>),
+  );
 }
 
 function push(
@@ -403,6 +431,9 @@ function validateScalarFields(
  * and import dedup self-heals it. Matches getUniqueTag/taggedNodeId blank-handling elsewhere.)
  */
 function tagIsBlank(tag: unknown): boolean {
+  if (Array.isArray(tag)) {
+    return tag.length === 0 || tag.some((item) => typeof item !== "string" || item.trim() === "");
+  }
   return typeof tag !== "string" || tag.trim() === "";
 }
 
@@ -636,7 +667,7 @@ function validateNetworkNamespacesAndTunNetns(
     warnHttpClient(
       (ruleSet as Record<string, unknown>).http_client,
       `/route/rule_set/${index}/http_client`,
-      `Rule-set "${ruleSet.tag}"`,
+      `Rule-set "${ruleSetTagLabel(ruleSet.tag) ?? `rule-set-${index}`}"`,
     ),
   );
   listItems(config.certificate_providers).forEach((provider, index) =>
@@ -689,8 +720,7 @@ export function validateConfig(
   const ipBasedRuleSetTags = new Set<string>();
   for (const rs of listItems(config.route?.rule_set)) {
     const o = rs as Record<string, unknown>;
-    const t = typeof o.tag === "string" ? o.tag : "";
-    if (t && ruleSetIsIpBased(o)) ipBasedRuleSetTags.add(t);
+    if (ruleSetIsIpBased(o)) normalizedRuleSetTags(o.tag).forEach((tag) => ipBasedRuleSetTags.add(tag));
   }
 
   // Deprecation (run-only — `check` is clean): a remote rule-set with neither http_client nor
@@ -1205,9 +1235,12 @@ export function validateConfig(
     );
   }
 
-  // C0-4: evaluate/respond ordering. `respond` and `match_response` each require a PRECEDING top-level
-  // `evaluate` rule (a rule's own evaluate runs after matching, so it does not count for itself).
-  let precedingTopLevelEvaluate = false;
+  // 1.14 response identity is split: `match_response: true` reads only the latest untagged evaluate,
+  // while a string reads only a preceding evaluate carrying that exact tag. Keep race ordering alongside
+  // it because speculative actions depend on a preceding race rule, not merely any response.
+  let precedingUntaggedEvaluate = false;
+  const precedingTaggedEvaluates = new Set<string>();
+  let precedingRace = false;
   dnsRules.forEach((rule, index) => {
     const inbounds = Array.isArray(rule.inbound) ? rule.inbound : rule.inbound ? [rule.inbound] : [];
     inbounds.forEach((tag) => {
@@ -1258,13 +1291,14 @@ export function validateConfig(
     }
     const hasIpCidr = Array.isArray(ruleObj.ip_cidr) && ruleObj.ip_cidr.length > 0;
     const hasIpIsPrivate = ruleObj.ip_is_private !== undefined;
-    const matchResponse = ruleObj.match_response === true;
+    const matchResponses = collectDnsMatchResponses(ruleObj);
+    const hasMatchResponse = matchResponses.length > 0;
     // Legacy address-filter: matching on response IPs — via ip_cidr / ip_is_private OR via an IP-based
     // (geoip) rule-set, including inside `logical` sub-rules — without match_response. Deprecated in 1.14,
     // removed in 1.16. run-only (check is clean) and NOT deprecated pre-1.14, so gate to 1.14+ to avoid a
     // false positive on the 1.12/1.13 targets where this is the normal form.
     const refsIpRuleSet = collectDnsRuleSetRefs(ruleObj).some((t) => ipBasedRuleSetTags.has(t));
-    if (atLeast(version, "1.14") && (hasIpCidr || hasIpIsPrivate || refsIpRuleSet) && !matchResponse) {
+    if (atLeast(version, "1.14") && (hasIpCidr || hasIpIsPrivate || refsIpRuleSet) && !hasMatchResponse) {
       const via =
         hasIpCidr || hasIpIsPrivate
           ? "address-filter fields (ip_cidr / ip_is_private)"
@@ -1313,36 +1347,79 @@ export function validateConfig(
         `DNS rule ${index + 1} uses action "${action}", which is sing-box 1.14+; ${version} rejects it ("unknown DNS rule action").`,
       );
     }
-    // respond/match_response + response-match ORDERING checks are 1.14-only features; gate them to 1.14+
-    // (on pre-1.14 the action itself is already errored above).
+    // Tagged response lookup, response-match requirements, and race/speculative constraints are 1.14-only.
     if (atLeast(version, "1.14")) {
-      const usesResponseMatch =
-        matchResponse ||
-        ruleObj.response_rcode !== undefined ||
-        ruleObj.response_answer !== undefined ||
-        ruleObj.response_ns !== undefined ||
-        ruleObj.response_extra !== undefined;
-      if (action === "respond" && !precedingTopLevelEvaluate) {
+      const hasResponseFieldsWithoutMatchResponse = hasDnsResponseFieldsWithoutMatchResponse(ruleObj);
+      const evaluateUsesResponseIpFields =
+        action === "evaluate" &&
+        (hasIpCidr || hasIpIsPrivate || ruleObj.ip_accept_any !== undefined);
+      const missingUntaggedResponse = matchResponses.includes(true) && !precedingUntaggedEvaluate;
+      const missingTaggedResponses = matchResponses.filter(
+        (response): response is string => typeof response === "string" && !precedingTaggedEvaluates.has(response),
+      );
+      if (hasResponseFieldsWithoutMatchResponse || (evaluateUsesResponseIpFields && !hasOwnDnsMatchResponse(ruleObj))) {
         push(
           diagnostics,
           "error",
-          "dns-rule-respond-without-evaluate",
-          `/dns/rules/${index}/action`,
-          `DNS rule ${index + 1} uses \`action: "respond"\` but no preceding top-level rule has \`action: "evaluate"\`. \`respond\` returns the response saved by an earlier evaluate; without one the request fails at runtime.`,
+          "dns-rule-response-fields-without-match-response",
+          `/dns/rules/${index}/match_response`,
+          `DNS rule ${index + 1} uses fields that require response matching without \`match_response\`. Set it to \`true\` for the latest untagged evaluate response, or to an evaluate tag.`,
         );
       }
-      if (usesResponseMatch && !precedingTopLevelEvaluate) {
+      if (missingUntaggedResponse) {
         push(
           diagnostics,
           "error",
           "dns-rule-match-response-without-evaluate",
           `/dns/rules/${index}/match_response`,
-          `DNS rule ${index + 1} matches on a DNS response (match_response / response_* fields) but no preceding top-level rule has \`action: "evaluate"\`. Response matching requires an earlier evaluate — a rule's own evaluate runs after matching, so it does not count.`,
+          `DNS rule ${index + 1} uses \`match_response: true\` but no preceding untagged \`evaluate\` response exists. Tagged evaluates do not satisfy \`true\`, and a rule's own action runs too late.`,
         );
       }
+      if (missingTaggedResponses.length > 0) {
+        push(
+          diagnostics,
+          "error",
+          "dns-rule-match-response-tag-missing",
+          `/dns/rules/${index}/match_response`,
+          `DNS rule ${index + 1} references missing preceding evaluate response tag${missingTaggedResponses.length > 1 ? "s" : ""}: ${missingTaggedResponses.map((tag) => `"${tag}"`).join(", ")}.`,
+        );
+      }
+      if (action === "respond" && !hasMatchResponse && !precedingUntaggedEvaluate) {
+        push(
+          diagnostics,
+          "error",
+          "dns-rule-respond-without-evaluate",
+          `/dns/rules/${index}/action`,
+          `DNS rule ${index + 1} uses \`action: "respond"\` without \`match_response\`, but no preceding untagged \`evaluate\` response exists.`,
+        );
+      }
+
+      const race = ruleObj.race === true;
+      const speculative = ruleObj.speculative === true;
+      const effectiveAction = action || "route";
+      if (race && !hasMatchResponse) {
+        push(diagnostics, "error", "dns-rule-race-without-match-response", `/dns/rules/${index}/race`, `DNS rule ${index + 1} enables \`race\` without \`match_response\`; race rules must wait on a referenced evaluate response.`);
+      }
+      if (race && !["route", "respond", "reject", "predefined"].includes(effectiveAction)) {
+        push(diagnostics, "error", "dns-rule-race-action-conflict", `/dns/rules/${index}/race`, `DNS rule ${index + 1} enables \`race\` with action "${effectiveAction}"; race is available only for route, respond, reject, and predefined actions.`);
+      }
+      if (race && speculative) {
+        push(diagnostics, "error", "dns-rule-race-speculative-conflict", `/dns/rules/${index}/speculative`, `DNS rule ${index + 1} enables both \`race\` and \`speculative\`, which conflict.`);
+      }
+      if (speculative && !["route", "evaluate"].includes(effectiveAction)) {
+        push(diagnostics, "error", "dns-rule-speculative-action-conflict", `/dns/rules/${index}/speculative`, `DNS rule ${index + 1} enables \`speculative\` with action "${effectiveAction}"; speculative is available only for route and evaluate actions.`);
+      }
+      if (speculative && !precedingRace) {
+        push(diagnostics, "warning", "dns-rule-speculative-without-race", `/dns/rules/${index}/speculative`, `DNS rule ${index + 1} enables \`speculative\` without a preceding race rule, so it has no effect.`);
+      }
+      if (race) precedingRace = true;
     }
-    // Update AFTER the checks so a rule's own evaluate never satisfies its own precondition.
-    if (action === "evaluate") precedingTopLevelEvaluate = true;
+    // Update AFTER the checks so a rule's own evaluate never satisfies its own match precondition.
+    if (action === "evaluate") {
+      const evaluateTag = typeof ruleObj.tag === "string" && ruleObj.tag.trim() ? ruleObj.tag : undefined;
+      if (evaluateTag) precedingTaggedEvaluates.add(evaluateTag);
+      else precedingUntaggedEvaluate = true;
+    }
   });
 
   listItems(config.dns?.servers).forEach((server, index) => {
@@ -2674,27 +2751,44 @@ export function validateConfig(
         );
       }
     });
-    const dnsRules = config.dns?.rules;
-    if (Array.isArray(dnsRules)) {
-      const testingMatchers = [
+    const stableDnsRules = config.dns?.rules;
+    if (Array.isArray(stableDnsRules)) {
+      const testingRuleFields = [
         "source_mac_address",
         "source_hostname",
         "preferred_by",
         "match_response",
+        "response_rcode",
+        "response_answer",
+        "response_ns",
+        "response_extra",
         "package_name_regex",
+        "race",
+        "speculative",
       ];
-      dnsRules.forEach((rule, ruleIndex) => {
-        if (!rule || typeof rule !== "object") return;
-        for (const field of testingMatchers) {
-          if ((rule as Record<string, unknown>)[field] !== undefined) {
+      const visitStableRule = (rule: Record<string, unknown>, path: string, label: string) => {
+        for (const field of testingRuleFields) {
+          if (rule[field] !== undefined) {
             push(
               diagnostics,
-              "warning",
+              "error",
               `dns-rule-${field.replace(/_/g, "-")}-testing-only`,
-              `/dns/rules/${ruleIndex}/${field}`,
-              `DNS rule ${ruleIndex + 1} uses ${field}; this matcher is testing-only (sing-box 1.14+).`,
+              `${path}/${field}`,
+              `${label} uses ${field}; this field is testing-only (sing-box 1.14+) and stable rejects it at decode.`,
             );
           }
+        }
+        if (Array.isArray(rule.rules)) {
+          rule.rules.forEach((subRule, subIndex) => {
+            if (subRule && typeof subRule === "object" && !Array.isArray(subRule)) {
+              visitStableRule(subRule as Record<string, unknown>, `${path}/rules/${subIndex}`, `${label} nested rule ${subIndex + 1}`);
+            }
+          });
+        }
+      };
+      stableDnsRules.forEach((rule, ruleIndex) => {
+        if (rule && typeof rule === "object") {
+          visitStableRule(rule as Record<string, unknown>, `/dns/rules/${ruleIndex}`, `DNS rule ${ruleIndex + 1}`);
         }
       });
     }
@@ -2826,8 +2920,41 @@ export function validateConfig(
   }
 
   listItems(config.route?.rule_set).forEach((ruleSet, index) => {
-    const tag = typeof ruleSet.tag === "string" ? ruleSet.tag : `rule-set-${index}`;
+    const tags = normalizedRuleSetTags(ruleSet.tag);
+    const tag = ruleSetTagLabel(ruleSet.tag) ?? `rule-set-${index}`;
     const type = typeof ruleSet.type === "string" ? ruleSet.type : undefined;
+    if (Array.isArray(ruleSet.tag) && !atLeast(version, "1.14")) {
+      push(
+        diagnostics,
+        "error",
+        "rule-set-multi-tag-testing-only",
+        `/route/rule_set/${index}/tag`,
+        `Rule-set "${tag}" uses the tag-list form introduced in sing-box 1.14; ${version} accepts only one string tag.`,
+      );
+    }
+    if (Array.isArray(ruleSet.tag)) {
+      const validEntries = ruleSet.tag.filter((entry) => typeof entry === "string" && entry.trim() !== "");
+      if (new Set(validEntries).size !== validEntries.length) {
+        push(diagnostics, "error", "rule-set-duplicate-tag-in-group", `/route/rule_set/${index}/tag`, `Rule-set "${tag}" declares a tag more than once.`);
+      }
+    }
+    if (tags.length > 1 && type === "inline") {
+      push(diagnostics, "error", "rule-set-multi-tag-inline-conflict", `/route/rule_set/${index}/tag`, `Rule-set "${tag}" combines multiple tags with type "inline", which sing-box does not allow.`);
+    }
+    if (tags.length > 1) {
+      for (const field of ["path", "url", "initial_path"] as const) {
+        const value = ruleSet[field];
+        if (typeof value === "string" && value && !value.includes("{tag}")) {
+          push(
+            diagnostics,
+            "error",
+            "rule-set-multi-tag-placeholder-missing",
+            `/route/rule_set/${index}/${field}`,
+            `Rule-set "${tag}" declares multiple tags, so ${field} must contain the \`{tag}\` placeholder.`,
+          );
+        }
+      }
+    }
     if (type === "remote") {
       const url = typeof ruleSet.url === "string" ? ruleSet.url : "";
       if (!url) {

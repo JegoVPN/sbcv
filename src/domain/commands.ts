@@ -7,6 +7,7 @@ import {
 } from "./referenceRegistry";
 import { adapterDisconnect } from "./portReferenceAdapter";
 import { parseEdgeId, relationIsDisconnectable } from "./portRelationRegistry";
+import { primaryRuleSetTag, renameRuleSetTagValue, ruleSetHasTag, ruleSetTags } from "./ruleSetTags";
 import { schemaRow } from "./schemaRegistry";
 import { supportsDnsServerDialFields, supportsOutboundDialFields } from "./sharedFieldRegistry";
 import { cloneConfig, STABLE_MINIMAL_CONFIG, STABLE_TUN_SPLIT_CONFIG } from "./templates";
@@ -489,7 +490,7 @@ export function updateEntityField(
   if (ref.kind === "rule-set") {
     next.route = next.route ?? {};
     next.route.rule_set = (next.route.rule_set ?? []).map((item) =>
-      item.tag === ref.tag ? { ...item, [field]: value } : item,
+      ruleSetHasTag(item.tag, ref.tag) ? { ...item, [field]: value } : item,
     );
   }
   if (ref.kind === "certificate-provider") {
@@ -585,8 +586,8 @@ export function changeEntityType(
   if (ref.kind === "rule-set") {
     next.route = next.route ?? {};
     next.route.rule_set = (next.route.rule_set ?? []).map((item) => {
-      if (item.tag !== ref.tag) return item;
-      const replacement = createRuleSet(nextType, ref.tag);
+      if (!ruleSetHasTag(item.tag, ref.tag)) return item;
+      const replacement = { ...createRuleSet(nextType, primaryRuleSetTag(item.tag) ?? ref.tag), tag: item.tag };
       const downloadDetour = item.download_detour;
       return nextType === "remote" && downloadDetour ? { ...replacement, download_detour: downloadDetour } : replacement;
     });
@@ -625,7 +626,16 @@ function renameEntityInCollection(config: SingBoxConfig, kind: ReferenceKind, ol
       config.services = rename(config.services);
       break;
     case "rule-set":
-      if (config.route) config.route = { ...config.route, rule_set: rename(config.route.rule_set) };
+      if (config.route) {
+        config.route = {
+          ...config.route,
+          rule_set: config.route.rule_set?.map((item) =>
+            ruleSetHasTag(item.tag, oldTag)
+              ? { ...item, tag: renameRuleSetTagValue(item.tag, oldTag, newTag) as typeof item.tag }
+              : item,
+          ),
+        };
+      }
       break;
     case "certificate-provider":
       config.certificate_providers = rename(config.certificate_providers);
@@ -653,6 +663,9 @@ export function renameTag(
 ): SingBoxConfig {
   if (!newTag.trim() || oldTag === newTag) return config;
   const namespace = namespaceForKind(kind);
+  if (kind === "rule-set" && !(config.route?.rule_set ?? []).some((item) => ruleSetHasTag(item.tag, oldTag))) {
+    return config;
+  }
   // Conflict guard scoped to the same namespace (cross-namespace same-name is legal).
   if (buildNamespacedTagIndex(config).get(`${namespace} ${newTag}`)?.length) return config;
   const next = cloneConfig(config);
@@ -717,9 +730,12 @@ export function deleteEntity(config: SingBoxConfig, ref: EntityRef): SingBoxConf
     next.services = (next.services ?? []).filter((item) => item.tag !== ref.tag);
   }
   if (ref.kind === "rule-set") {
-    if (next.route?.rule_set) {
-      next.route.rule_set = next.route.rule_set.filter((item) => item.tag !== ref.tag);
-    }
+    const removed = next.route?.rule_set?.find((item) => ruleSetHasTag(item.tag, ref.tag));
+    if (!removed) return next;
+    const removedTags = ruleSetTags(removed.tag);
+    next.route!.rule_set = next.route!.rule_set!.filter((item) => item !== removed);
+    removedTags.forEach((tag) => removeRegisteredTagReferences(next, "rule-set", tag));
+    return next;
   }
   if (ref.kind === "certificate-provider") {
     next.certificate_providers = (next.certificate_providers ?? []).filter((item) => item.tag !== ref.tag);

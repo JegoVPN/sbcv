@@ -4,11 +4,13 @@ import type {
   InboundConfig,
   NetworkNamespaceConfig,
   OutboundConfig,
+  RuleSetConfig,
   ServiceConfig,
   SingBoxConfig,
   TaggedConfig,
   TaggedResourceConfig,
 } from "./types";
+import { ruleSetTags } from "./ruleSetTags";
 
 export type TaggedEntityKind =
   | "inbound"
@@ -37,6 +39,12 @@ function pushTagged(
   if (item.tag) {
     const defaultType = kind === "network-namespace" ? "default" : kind;
     result.push({ kind, tag: item.tag, type: typeof item.type === "string" && item.type ? item.type : defaultType, path });
+  }
+}
+
+function pushRuleSet(result: TaggedEntityRef[], item: RuleSetConfig, path: string) {
+  for (const tag of ruleSetTags(item.tag)) {
+    result.push({ kind: "rule-set", tag, type: item.type || "rule-set", path });
   }
 }
 
@@ -71,7 +79,7 @@ export function getTaggedEntities(config: SingBoxConfig): TaggedEntityRef[] {
     pushTagged(result, "network-namespace", item, `/network_namespaces/${index}`),
   );
   listItems(config.route?.rule_set).forEach((item, index) =>
-    pushTagged(result, "rule-set", item, `/route/rule_set/${index}`),
+    pushRuleSet(result, item, `/route/rule_set/${index}`),
   );
   return result;
 }
@@ -126,7 +134,7 @@ export function getEndpointTags(config: SingBoxConfig): Set<string> {
 }
 
 export function getRuleSetTags(config: SingBoxConfig): Set<string> {
-  return new Set(listItems(config.route?.rule_set).map((item) => item.tag));
+  return new Set(listItems(config.route?.rule_set).flatMap((item) => ruleSetTags(item.tag)));
 }
 
 export function getHttpClientTags(config: SingBoxConfig): Set<string> {
@@ -156,6 +164,7 @@ export function getUniqueTag(config: SingBoxConfig, base: string): string {
 }
 
 function tagIsBlank(tag: unknown): boolean {
+  if (Array.isArray(tag)) return ruleSetTags(tag).length === 0;
   return typeof tag !== "string" || tag.trim() === "";
 }
 
@@ -201,6 +210,33 @@ export function dedupeTags(config: SingBoxConfig): { renamed: number; assigned: 
     const ns = namespaceForKind(kind);
     for (const raw of items) {
       const item = raw as { tag?: unknown };
+      if (kind === "rule-set" && Array.isArray(item.tag)) {
+        const nextTags = item.tag.map((rawTag) => {
+          if (typeof rawTag !== "string" || rawTag.trim() === "") {
+            const assignedTag = uniqueIn(ns, base);
+            markUsed(ns, assignedTag);
+            assigned += 1;
+            return assignedTag;
+          }
+          if (isUsed(ns, rawTag)) {
+            const next = uniqueIn(ns, rawTag);
+            markUsed(ns, next);
+            renamed += 1;
+            return next;
+          }
+          markUsed(ns, rawTag);
+          return rawTag;
+        });
+        if (nextTags.length === 0) {
+          const assignedTag = uniqueIn(ns, base);
+          item.tag = assignedTag;
+          markUsed(ns, assignedTag);
+          assigned += 1;
+        } else {
+          item.tag = nextTags;
+        }
+        continue;
+      }
       if (tagIsBlank(item.tag)) {
         if (required) {
           const tag = uniqueIn(ns, base);
