@@ -25,7 +25,7 @@ const KIND_DIR = {
 // — channel-only groups (http2 / http-client / quic / neighbor are 1.14) simply have no stable file.
 const SHARED_DOCS = [
   "dial", "listen", "tls", "http-client", "http2", "quic", "multiplex",
-  "v2ray-transport", "udp-over-tcp", "tcp-brutal", "wifi-state", "neighbor",
+  "v2ray-transport", "udp-over-tcp", "udp-nat", "tcp-brutal", "wifi-state", "neighbor",
   "dns01_challenge", "pre-match",
 ];
 

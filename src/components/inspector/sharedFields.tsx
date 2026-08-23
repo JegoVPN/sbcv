@@ -75,6 +75,7 @@ const sharedGroupTitles: Record<SharedFieldGroupId, string> = {
   "v2ray-transport": "V2Ray Transport",
   "udp-over-tcp": "UDP over TCP",
   "tcp-brutal": "TCP Brutal",
+  "udp-nat": "UDP NAT",
   "wifi-state": "Wi-Fi State",
   neighbor: "Neighbor Resolution",
 };

@@ -5,11 +5,11 @@ This is the implementation gate for SBC. Do not mark a Library item as writable 
 For the user-facing product interpretation of this matrix, read [sing-box Canvas Configuration Guide](sing-box-canvas-configuration-guide.md).
 For the machine-checkable implementation gap, run `pnpm audit:config-docs` and read [sing-box Config Capability Audit](sing-box-config-capability-audit.md).
 
-Sources read on 2026-05-26; topped up 2026-07-11 for the 1.14.0-alpha.43 Network Namespace additions:
+Sources read on 2026-05-26; refreshed 2026-08-23 for sing-box `1.13.19` / `1.14.0-beta.17`:
 
 - `SagerNet/sing-box` `stable/docs/configuration`: 94 English Markdown docs.
-- `SagerNet/sing-box` `testing/docs/configuration`: 114 English Markdown docs.
-- Official testing configuration `#fields`: `log`, `dns`, `ntp`, `certificate`, `certificate_providers`, `http_clients`, `network_namespaces`, `endpoints`, `inbounds`, `outbounds`, `route`, `services`, `experimental`.
+- `SagerNet/sing-box` `testing/docs/configuration`: 121 English Markdown docs.
+- Official testing configuration `#fields`: `$schema`, `log`, `dns`, `ntp`, `certificate`, `certificate_providers`, `http_clients`, `network_namespaces`, `endpoints`, `inbounds`, `outbounds`, `route`, `services`, `experimental`.
 
 Local source checkout used for this readthrough:
 
@@ -19,7 +19,13 @@ pnpm docs:install
 
 Testing-only docs versus stable:
 
+- `schema.md`
 - `dns/server/mdns.md`
+- `dns/server/openconnect.md`
+- `dns/server/openvpn.md`
+- `endpoint/openconnect.md`
+- `endpoint/openvpn-client.md`
+- `endpoint/openvpn-server.md`
 - `inbound/cloudflared.md`
 - `inbound/snell.md`
 - `network-namespace/index.md`
@@ -39,6 +45,7 @@ Testing-only docs versus stable:
 - `shared/http2.md`
 - `shared/neighbor.md`
 - `shared/quic.md`
+- `shared/udp-nat.md`
 
 ## Product Mapping Rules
 
@@ -61,6 +68,7 @@ Testing-only docs versus stable:
 | Doc | Channel | Class | SBC implementation |
 | --- | --- | --- | --- |
 | `index.md` | stable+testing | top-level-schema | Domain root, target selector, import/export |
+| `schema.md` | testing-only | top-level-schema | JSON Schema reference; canonical import/export preserves `$schema`, no standalone node |
 | `log/index.md` | stable+testing | independent-settings | Settings node + Log Inspector |
 | `ntp/index.md` | stable+testing | independent-settings | Settings node + NTP Inspector |
 | `certificate/index.md` | stable+testing | independent-settings | Settings node + Certificate Inspector |
@@ -87,6 +95,8 @@ Testing-only docs versus stable:
 | `dns/server/tailscale.md` | stable+testing | chain-resource | DNS Server type |
 | `dns/server/resolved.md` | stable+testing | chain-resource | DNS Server type |
 | `dns/server/mdns.md` | testing-only | chain-resource | DNS Server type, testing gated |
+| `dns/server/openconnect.md` | testing-only | chain-resource | Pending OpenConnect Endpoint-backed DNS Server type |
+| `dns/server/openvpn.md` | testing-only | chain-resource | Pending OpenVPN Client Endpoint-backed DNS Server type |
 | `route/index.md` | stable+testing | chain-hub | Route hub node + Route Inspector |
 | `route/rule.md` | stable+testing | ordered-rule | Route Rules table + compact visual rule nodes |
 | `route/rule_action.md` | stable+testing | inspector-subform | Route Rule action editor |
@@ -103,6 +113,9 @@ Testing-only docs versus stable:
 | `endpoint/index.md` | stable+testing | chain-resource | Endpoint node base |
 | `endpoint/wireguard.md` | stable+testing | chain-resource | Endpoint node type |
 | `endpoint/tailscale.md` | stable+testing | chain-resource | Endpoint node type |
+| `endpoint/openconnect.md` | testing-only | chain-resource | Pending OpenConnect Client Endpoint type |
+| `endpoint/openvpn-client.md` | testing-only | chain-resource | Pending OpenVPN Client Endpoint type |
+| `endpoint/openvpn-server.md` | testing-only | chain-resource | Pending OpenVPN Server Endpoint type |
 | `inbound/index.md` | stable+testing | chain-node | Inbound node base |
 | `inbound/direct.md` | stable+testing | chain-node | Inbound node type |
 | `inbound/mixed.md` | stable+testing | chain-node | Inbound node type |
@@ -162,6 +175,7 @@ Testing-only docs versus stable:
 | `shared/multiplex.md` | stable+testing | embedded-shared-fields | Outbound/Endpoint Inspector only |
 | `shared/v2ray-transport.md` | stable+testing | embedded-shared-fields | Protocol Inspector only |
 | `shared/udp-over-tcp.md` | stable+testing | embedded-shared-fields | Protocol Inspector only |
+| `shared/udp-nat.md` | testing-only | embedded-shared-fields | Pending Endpoint/Inbound UDP NAT Inspector fields |
 | `shared/tcp-brutal.md` | stable+testing | embedded-shared-fields | Transport Inspector only |
 | `shared/pre-match.md` | stable+testing | embedded-shared-fields | Route/DNS Rule Inspector only |
 | `shared/wifi-state.md` | stable+testing | embedded-shared-fields | Route/DNS Rule Inspector only |

@@ -75,7 +75,9 @@ describe("VT3 — data-driven testing-only field gate", () => {
         },
         "endpoint": {
           "tailscale": [
+            "listen_port",
             "ssh_server",
+            "taildrop_directory",
           ],
         },
         "inbound": {
@@ -94,6 +96,7 @@ describe("VT3 — data-driven testing-only field gate", () => {
         "outbound": {
           "hysteria2": [
             "bbr_profile",
+            "disable_chrome_parrot",
             "hop_interval_max",
             "realm",
           ],
@@ -109,12 +112,15 @@ describe("VT3 — data-driven testing-only field gate", () => {
           ],
           "inline": [
             "http_client",
+            "initial_path",
           ],
           "local": [
             "http_client",
+            "initial_path",
           ],
           "remote": [
             "http_client",
+            "initial_path",
           ],
         },
       }
