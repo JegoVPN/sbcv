@@ -25,18 +25,18 @@ Last run: 2026-08-23 after a forced docs refresh, against testing docs commit `7
 | `ADD` entries | 12 |
 | `SETUP` entries | 60 |
 | `TABLE` entries | 4 |
-| `INSPECTOR` entries | 13 |
+| `INSPECTOR` entries | 14 |
 | `GATED` entries | 15 |
-| `PENDING` entries | 6 |
+| `PENDING` entries | 5 |
 | `DOCS` entries | 11 |
 
 ## Upstream Delta Classification
 
 The stable snapshot adds AnyTLS outbound `client_metadata` (available since `1.13.16`). The testing snapshot adds seven English configuration docs: JSON Schema; OpenConnect/OpenVPN DNS servers; OpenConnect, OpenVPN Client, and OpenVPN Server endpoints; and shared UDP NAT fields.
 
-The five new VPN-backed object types and the shared UDP NAT field group are deliberately `PENDING`: the docs are discoverable, but the Library cannot emit them until canonical commands, Inspector schemas, tests, and `sing-box-testing check` fixtures exist. JSON Schema is `DOCS` because `$schema` is editor metadata, not a standalone runtime object or canvas node.
+The five new VPN-backed object types remain deliberately `PENDING`: the docs are discoverable, but the Library cannot emit them until canonical commands, Inspector schemas, tests, and `sing-box-testing check` fixtures exist. Shared UDP NAT is now an `INSPECTOR` group for the already-supported TUN, TProxy, and WireGuard parents. JSON Schema is `DOCS` because `$schema` is editor metadata, not a standalone runtime object or canvas node.
 
-Existing testing docs also gained compatibility-relevant shapes. Grouped Rule Set tags and tagged DNS response/race semantics are now canonical and target-gated. Remote Rule Set `initial_path`, Tailscale `listen_port` / `taildrop_directory`, and Hysteria2 `disable_chrome_parrot` now have first-class Inspector controls with the data-driven stable export gate. The stable AnyTLS `client_metadata` field is writable and blocked on the 1.12 legacy target. Shared UDP NAT fields and the larger OpenVPN/OpenConnect object families remain tracked work rather than being inferred as implemented from the docs sync.
+Existing testing docs also gained compatibility-relevant shapes. Grouped Rule Set tags and tagged DNS response/race semantics are now canonical and target-gated. Remote Rule Set `initial_path`, Tailscale `listen_port` / `taildrop_directory`, and Hysteria2 `disable_chrome_parrot` now have first-class Inspector controls with the data-driven stable export gate. The stable AnyTLS `client_metadata` field is writable and blocked on the 1.12 legacy target. Shared UDP NAT `udp_mapping`, `udp_filtering`, and `udp_nat_max` now have testing-only controls on TUN, TProxy, and WireGuard; the larger OpenVPN/OpenConnect object families remain tracked work.
 
 ## User-Facing Meaning
 
@@ -60,6 +60,8 @@ The eighth closed usability gap is the sing-box 1.14 Network Namespace resource.
 
 The ninth closed usability gap is the small stable/testing field delta from the current upstream snapshots. AnyTLS outbounds expose `client_metadata` for explicit legacy-server compatibility while recommending the privacy-preserving empty default; the 1.12 target blocks the field. On testing, Tailscale endpoints expose `listen_port` and `taildrop_directory`, Hysteria2 outbounds expose `disable_chrome_parrot`, and remote Rule Sets expose `initial_path`. All changes write the canonical object directly, remain visible on import, and are covered by channel-matched binary fixtures.
 
+The tenth closed usability gap is shared UDP NAT on existing parents. On `1.14 testing`, TUN and TProxy inbounds and WireGuard endpoints expose the documented mapping/filtering enums and non-negative integer session limit in a shared Inspector card; WireGuard also owns `udp_timeout` there while inbound timeout remains in Listen Fields. Stable hides the testing card, keeps imported values reachable in Advanced fields, and blocks the new keys before export. A target-matched testing fixture covers all three parents.
+
 Remaining chain-node gaps reported by the audit:
 
 - Outbound `wireguard` and `dns` remain documentation/migration entries until the target-specific migration policy is implemented.
@@ -77,9 +79,7 @@ Remaining writable object gaps reported by the expanded audit:
 - Legacy DNS Server import/migration handling.
 - Outbound WireGuard and DNS migration/special entries.
 
-Remaining embedded-field gap from the beta.17 docs:
-
-- Shared UDP NAT `udp_mapping`, `udp_filtering`, and `udp_nat_max` controls on the documented Endpoint/Inbound parents.
+The shared UDP NAT group is complete for current creatable parents. OpenConnect/OpenVPN attachment remains part of those pending Endpoint atomics rather than a separate embedded-field gap.
 
 ## Release Gate
 

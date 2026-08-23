@@ -2,6 +2,7 @@ import { useId } from "react";
 import { Trash2 } from "lucide-react";
 
 import type { SharedFieldGroupId } from "../../domain/sharedFieldRegistry";
+import { UDP_NAT_BEHAVIOR_ENUM } from "../../domain/schemaRegistry";
 import type { EntityRef, SingBoxChannel, SingBoxConfig } from "../../domain/types";
 import { useProjectStore } from "../../state/useProjectStore";
 import { JsonField, ModuleCard } from "./controls";
@@ -34,6 +35,10 @@ export type SharedFieldDefinition = {
   requiresExistingValue?: boolean;
   /** Hide this field unless the boolean value at this path is true. */
   gatedBy?: string[];
+  /** Inclusive lower bound for numeric controls. */
+  min?: number;
+  /** Render a whole-number step for numeric controls. */
+  integer?: boolean;
   /**
    * Show this field only when the value at `path` equals one of `in` (value-equality gating, e.g.
    * a V2Ray transport sub-field that applies only to `transport.type === "ws"`). Distinct from
@@ -480,6 +485,37 @@ export function sharedFieldDefinitions(
     }
   }
 
+  if (group === "udp-nat") {
+    const behaviorOptions = UDP_NAT_BEHAVIOR_ENUM.map((option) => option.value);
+    return [
+      ...(ref.kind === "endpoint"
+        ? ([{ label: "UDP Timeout", path: ["udp_timeout"], kind: "text" }] as SharedFieldDefinition[])
+        : []),
+      {
+        label: "UDP Mapping",
+        path: ["udp_mapping"],
+        kind: "select",
+        options: behaviorOptions,
+        hint: "Mapping behavior for UDP NAT sessions (since sing-box 1.14.0).",
+      },
+      {
+        label: "UDP Filtering",
+        path: ["udp_filtering"],
+        kind: "select",
+        options: behaviorOptions,
+        hint: "Filtering behavior for UDP NAT sessions (since sing-box 1.14.0).",
+      },
+      {
+        label: "UDP NAT Max",
+        path: ["udp_nat_max"],
+        kind: "number",
+        min: 0,
+        integer: true,
+        hint: "Maximum sessions; 0 or unset lets sing-box choose the platform default.",
+      },
+    ];
+  }
+
   return [];
 }
 
@@ -772,6 +808,8 @@ export function SharedFieldControl({
       <span>{definition.label}</span>
       <input
         type={definition.kind === "number" ? "number" : "text"}
+        min={definition.kind === "number" ? definition.min : undefined}
+        step={definition.kind === "number" && definition.integer ? 1 : undefined}
         disabled={definition.requiresExistingValue && value === undefined}
         value={definition.kind === "list" ? toList(value) : String(value ?? "")}
         onChange={(event) => applyValue(coerceSharedFieldValue(definition.kind, event.target.value))}

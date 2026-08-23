@@ -108,7 +108,7 @@
 | Multiplex | https://sing-box.sagernet.org/configuration/shared/multiplex/ | Outbound/Endpoint Inspector 嵌入字段族 |
 | V2Ray Transport | https://sing-box.sagernet.org/configuration/shared/v2ray-transport/ | VMess/VLESS/Trojan 等协议子表单 |
 | UDP over TCP | https://sing-box.sagernet.org/configuration/shared/udp-over-tcp/ | Outbound/Inbound 协议子表单字段族 |
-| UDP NAT Fields | https://sing-box.sagernet.org/configuration/shared/udp-nat/ | `1.14 testing` Endpoint/Inbound 嵌入字段族；`PENDING`，不生成独立节点 |
+| UDP NAT Fields | https://sing-box.sagernet.org/configuration/shared/udp-nat/ | `1.14 testing` TUN/TProxy/WireGuard Inspector 嵌入字段族；新字段在 stable 阻断导出，不生成独立节点；OpenConnect/OpenVPN 接入随对应 Endpoint 原子完成 |
 | TCP Brutal | https://sing-box.sagernet.org/configuration/shared/tcp-brutal/ | Outbound/Endpoint 传输子表单字段族 |
 | Wi-Fi State | https://sing-box.sagernet.org/configuration/shared/wifi-state/ | Route Rule / DNS Rule 条件字段族 |
 | Neighbor Resolution | https://sing-box.sagernet.org/configuration/shared/neighbor/ | Route/DNS rule 或 testing route 邻居解析字段族 |

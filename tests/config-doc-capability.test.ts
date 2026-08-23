@@ -276,7 +276,7 @@ describe("shared field docs attach only to valid parent objects", () => {
     expect(sharedGroupsForEntity({ kind: "route", id: "main" }, "route")).toEqual(["dial", "http-client", "neighbor"]);
     expect(sharedGroupsForEntity({ kind: "route-rule", index: 0 }, "route-rule")).toEqual(["pre-match", "wifi-state", "neighbor"]);
     expect(sharedGroupsForEntity({ kind: "dns-rule", index: 0 }, "dns-rule")).toEqual(["wifi-state", "neighbor"]);
-    expect(sharedGroupsForEntity({ kind: "endpoint", tag: "wg" }, "wireguard")).toEqual(["dial"]);
+    expect(sharedGroupsForEntity({ kind: "endpoint", tag: "wg" }, "wireguard")).toEqual(["dial", "udp-nat"]);
     expect(sharedGroupsForEntity({ kind: "service", tag: "derp" }, "derp")).toEqual(["listen", "tls"]);
     expect(sharedGroupsForEntity({ kind: "service", tag: "resolved" }, "resolved")).toEqual(["listen"]);
     expect(sharedGroupsForEntity({ kind: "service", tag: "realm" }, "hysteria-realm")).toEqual(["listen", "tls", "http2"]);
@@ -284,10 +284,11 @@ describe("shared field docs attach only to valid parent objects", () => {
     expect(sharedGroupsForEntity({ kind: "rule-set", tag: "remote" }, "remote")).toEqual(["http-client"]);
   });
 
-  it("hides testing-only shared groups (http-client / neighbor) on stable channel", () => {
+  it("hides testing-only shared groups (http-client / neighbor / udp-nat) on stable channel", () => {
     expect(sharedGroupsForEntity({ kind: "route", id: "main" }, "route", "stable")).toEqual(["dial"]);
     expect(sharedGroupsForEntity({ kind: "route-rule", index: 0 }, "route-rule", "stable")).toEqual(["pre-match", "wifi-state"]);
     expect(sharedGroupsForEntity({ kind: "dns-rule", index: 0 }, "dns-rule", "stable")).toEqual(["wifi-state"]);
+    expect(sharedGroupsForEntity({ kind: "endpoint", tag: "wg" }, "wireguard", "stable")).toEqual(["dial"]);
   });
 });
 

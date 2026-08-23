@@ -1,0 +1,62 @@
+{
+  "log": {
+    "disabled": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "udp_mapping": "address_dependent",
+      "udp_filtering": "address_and_port_dependent",
+      "udp_nat_max": 8192
+    },
+    {
+      "type": "tproxy",
+      "tag": "tproxy-in",
+      "listen": "127.0.0.1",
+      "listen_port": 7893,
+      "udp_mapping": "endpoint_independent",
+      "udp_filtering": "address_dependent",
+      "udp_nat_max": 4096
+    }
+  ],
+  "endpoints": [
+    {
+      "type": "wireguard",
+      "tag": "wg-ep",
+      "system": false,
+      "name": "wg0",
+      "mtu": 1408,
+      "address": [
+        "172.16.0.2/32"
+      ],
+      "private_key": "EEKlAzKfS87ShJPnvEF3AiJjGS9JHEzgn2jB3J7yMkY=",
+      "peers": [
+        {
+          "address": "127.0.0.1",
+          "port": 51820,
+          "public_key": "tM4NaeCZrzxQ6BfhyeuQMy5jDReji4o8h5LVAGpI1HQ=",
+          "allowed_ips": [
+            "0.0.0.0/0"
+          ]
+        }
+      ],
+      "udp_timeout": "5m",
+      "udp_mapping": "address_dependent",
+      "udp_filtering": "endpoint_independent",
+      "udp_nat_max": 8192
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

@@ -54,6 +54,7 @@ const dialSharedFields = [
   "domain_strategy",
 ];
 const quicSharedFields = ["initial_packet_size", "disable_path_mtu_discovery", "idle_timeout", "keep_alive_period"];
+const udpNatTestingFields = ["udp_mapping", "udp_filtering", "udp_nat_max"];
 export const inboundHandledFields: ReadonlySet<string> = new Set([
   "tag",
   "type",
@@ -114,6 +115,10 @@ export const inboundHandledFields: ReadonlySet<string> = new Set([
   ...listenSharedFields,
   ...quicSharedFields,
 ]);
+const inboundHandledFieldsTesting = new Set([...inboundHandledFields, ...udpNatTestingFields]);
+export function inboundHandledFieldsForChannel(channel: SingBoxChannel): ReadonlySet<string> {
+  return channel === "testing" ? inboundHandledFieldsTesting : inboundHandledFields;
+}
 export const outboundHandledFields: ReadonlySet<string> = new Set([
   "tag",
   "type",
@@ -347,6 +352,14 @@ export const endpointHandledFields = new Set([
   "workers",
   ...dialSharedFields,
 ]);
+const endpointHandledFieldsTesting = new Set([
+  ...endpointHandledFields,
+  "udp_timeout",
+  ...udpNatTestingFields,
+]);
+export function endpointHandledFieldsForChannel(channel: SingBoxChannel): ReadonlySet<string> {
+  return channel === "testing" ? endpointHandledFieldsTesting : endpointHandledFields;
+}
 export const serviceHandledFields = new Set([
   "tag",
   "type",

@@ -4,13 +4,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   INLINE_RENDERED_KEYS,
-  inboundHandledFields,
   outboundHandledFields,
   structurallyCoveredKeys,
 } from "../src/components/Inspector";
 import {
   dnsServerHandledFieldsForChannel,
-  endpointHandledFields,
+  endpointHandledFieldsForChannel,
+  inboundHandledFieldsForChannel,
   serviceHandledFields,
   type C17CoverageKind,
 } from "../src/components/inspector/handledFields";
@@ -38,11 +38,17 @@ function coveredOnAnyChannel(kind: C17CoverageKind): Set<string> {
 function handledFieldsForKind(kind: C17CoverageKind): Set<string> {
   switch (kind) {
     case "inbound":
-      return new Set(inboundHandledFields);
+      return new Set([
+        ...inboundHandledFieldsForChannel("stable"),
+        ...inboundHandledFieldsForChannel("testing"),
+      ]);
     case "outbound":
       return new Set(outboundHandledFields);
     case "endpoint":
-      return new Set(endpointHandledFields);
+      return new Set([
+        ...endpointHandledFieldsForChannel("stable"),
+        ...endpointHandledFieldsForChannel("testing"),
+      ]);
     case "dns-server":
       return new Set([
         ...dnsServerHandledFieldsForChannel("stable"),

@@ -70,6 +70,10 @@ export interface SchemaFieldMeta {
   emptyLabel?: string;
   /** Coerce the chosen value to a Number on write (e.g. shadowtls `version` is a numeric enum). */
   numeric?: boolean;
+  /** Require an integer when type==="number" (e.g. an unsigned session-count limit). */
+  integer?: boolean;
+  /** Inclusive lower bound when type==="number". */
+  min?: number;
 }
 
 export interface SchemaRow {
@@ -161,6 +165,38 @@ const SNELL_SHAPING_MODE_ENUM: SchemaEnumOption[] = [
   { value: "unsafe-raw", channel: "testing" },
 ];
 const SNELL_NETWORK_ENUM: SchemaEnumOption[] = NETWORK_ENUM.map((option) => ({ ...option, channel: "testing" as const }));
+export const UDP_NAT_BEHAVIOR_ENUM: SchemaEnumOption[] = [
+  { value: "endpoint_independent", channel: "testing" },
+  { value: "address_dependent", channel: "testing" },
+  { value: "address_and_port_dependent", channel: "testing" },
+];
+const UDP_NAT_SCHEMA_FIELDS: SchemaFieldMeta[] = [
+  {
+    path: ["udp_mapping"],
+    type: "enum",
+    enum: UDP_NAT_BEHAVIOR_ENUM,
+    since: "1.14",
+    channel: "testing",
+    doc: "shared/udp-nat.md",
+  },
+  {
+    path: ["udp_filtering"],
+    type: "enum",
+    enum: UDP_NAT_BEHAVIOR_ENUM,
+    since: "1.14",
+    channel: "testing",
+    doc: "shared/udp-nat.md",
+  },
+  {
+    path: ["udp_nat_max"],
+    type: "number",
+    integer: true,
+    min: 0,
+    since: "1.14",
+    channel: "testing",
+    doc: "shared/udp-nat.md",
+  },
+];
 
 const LISTEN_LOCAL = "127.0.0.1";
 
@@ -449,7 +485,9 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       auto_route: true,
     }),
     sharedGroups: ["listen"],
+    testingSharedGroups: ["udp-nat"],
     fields: [
+      ...UDP_NAT_SCHEMA_FIELDS,
       {
         path: ["stack"],
         type: "enum",
@@ -473,7 +511,11 @@ export const SCHEMA_ROWS: SchemaRow[] = [
     paletteKind: "inbound-tproxy",
     factory: (tag) => ({ type: "tproxy", tag, listen: LISTEN_LOCAL, listen_port: 2080 }),
     sharedGroups: ["listen"],
-    fields: [{ path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/tproxy.md" }],
+    testingSharedGroups: ["udp-nat"],
+    fields: [
+      { path: ["network"], type: "enum", enum: NETWORK_ENUM, doc: "inbound/tproxy.md" },
+      ...UDP_NAT_SCHEMA_FIELDS,
+    ],
   },
   {
     kind: "inbound",
@@ -1043,6 +1085,8 @@ export const SCHEMA_ROWS: SchemaRow[] = [
       udp_timeout: "5m",
     }),
     sharedGroups: ["dial"],
+    testingSharedGroups: ["udp-nat"],
+    fields: [...UDP_NAT_SCHEMA_FIELDS],
   },
   {
     kind: "endpoint",

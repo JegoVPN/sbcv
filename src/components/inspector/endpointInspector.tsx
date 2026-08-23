@@ -1,9 +1,9 @@
 import { Trash2 } from "lucide-react";
 
-import type { EntityRef } from "../../domain/types";
+import type { EntityRef, SingBoxChannel } from "../../domain/types";
 import { AdvancedNonScalarFields, AdvancedScalarFields } from "./advancedFields";
 import { PlatformBanner, SensitiveTextField } from "./controls";
-import { endpointHandledFields } from "./handledFields";
+import { endpointHandledFieldsForChannel } from "./handledFields";
 import { type EndpointReferences, fromList, type InspectorEntity, parseOptionalInt, parseOptionalPort, toList, type UpdateField } from "./helpers";
 
 // endpoint/tailscale.md ssh_server (since 1.14.0) is bool-or-object with `true` ≡ `{ "enabled": true }`.
@@ -56,6 +56,7 @@ export function EndpointInspector({
   entityType,
   tagValue,
   selectedEndpointReferences,
+  channel,
   updateField,
 }: {
   entity: InspectorEntity;
@@ -63,6 +64,7 @@ export function EndpointInspector({
   entityType: string | null;
   tagValue: string | null;
   selectedEndpointReferences: EndpointReferences | null;
+  channel: SingBoxChannel;
   updateField: UpdateField;
 }) {
   return (
@@ -441,8 +443,8 @@ export function EndpointInspector({
               </label>
             </>
           ) : null}
-          <AdvancedScalarFields entity={entity} handledFields={endpointHandledFields} entityRef={entityRef} updateField={updateField} />
-          <AdvancedNonScalarFields entity={entity} handledFields={endpointHandledFields} entityRef={entityRef} updateField={updateField} />
+          <AdvancedScalarFields entity={entity} handledFields={endpointHandledFieldsForChannel(channel)} entityRef={entityRef} updateField={updateField} />
+          <AdvancedNonScalarFields entity={entity} handledFields={endpointHandledFieldsForChannel(channel)} entityRef={entityRef} updateField={updateField} />
         </>
   );
 }
