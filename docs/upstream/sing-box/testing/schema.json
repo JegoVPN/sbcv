@@ -334,11 +334,22 @@
         "store_fakeip": {
           "type": "boolean"
         },
-        "rdrc_timeout": {
-          "$ref": "#/$defs/Duration"
-        },
         "store_dns": {
           "type": "boolean"
+        },
+        "buffer_size": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "flush_interval": {
+          "$ref": "#/$defs/Duration"
         }
       },
       "additionalProperties": false
@@ -3685,6 +3696,9 @@
               "items": {
                 "$ref": "#/$defs/OpenConnectFormEntryOptions"
               }
+            },
+            "on_demand": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -4111,6 +4125,9 @@
             },
             "udp_timeout": {
               "$ref": "#/$defs/UDPTimeout"
+            },
+            "on_demand": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -4591,6 +4608,9 @@
             },
             "taildrop_directory": {
               "type": "string"
+            },
+            "on_demand": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -4673,6 +4693,9 @@
             },
             "workers": {
               "type": "integer"
+            },
+            "on_demand": {
+              "type": "boolean"
             },
             "detour": {
               "type": "string",
@@ -6634,9 +6657,6 @@
               "type": "string",
               "enum": [
                 "bbr",
-                "bbr_standard",
-                "bbr2",
-                "bbr2_variant",
                 "cubic",
                 "reno"
               ]
@@ -7660,6 +7680,18 @@
               ]
             },
             "auto_redirect_reset_mark": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "auto_redirect_tproxy_mark": {
               "anyOf": [
                 {
                   "type": "integer",
