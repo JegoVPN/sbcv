@@ -2,7 +2,70 @@
 icon: material/arrange-bring-forward
 ---
 
+## 1.15.0
+
+### Migrate TUN stack
+
+Since 1.15.0, sing-tun uses its own TCP/IP stack, with substantial improvements over all previous
+implementations in peak performance, energy efficiency, and memory usage.
+Remove the `stack` option to use it.
+
+The `stack` option is deprecated in sing-box 1.15.0 and will be removed in sing-box 1.17.0.
+
+Starting with sing-box 1.16.0, the command-line client requires `ENABLE_DEPRECATED_TUN_STACK=true`
+to continue using this option.
+
+=== ":material-card-remove: Deprecated"
+
+    ```json
+    {
+      "inbounds": [
+        {
+          "type": "tun",
+          "address": ["172.18.0.1/30"],
+          "stack": "system"
+        }
+      ]
+    }
+    ```
+
+=== ":material-card-multiple: Migrated"
+
+    ```json
+    {
+      "inbounds": [
+        {
+          "type": "tun",
+          "address": ["172.18.0.1/30"]
+        }
+      ]
+    }
+    ```
+
 ## 1.14.0
+
+### Migrate the macOS standalone client data
+
+Apple platform clients migrated to a new Apple developer account, so the macOS standalone client
+is a new application, and profiles and settings are not inherited.
+
+Before starting sing-box 1.14.0-rc.2 or later, they can be migrated using the following commands:
+
+```bash
+mv ~/Library/Group\ Containers/287TTNZF8L.io.nekohasekai.sfavt \
+  ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+xattr -c ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+rm ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt/.com.apple.containermanagerd.metadata.plist
+```
+
+If you have already migrated using an earlier version of this command and a permission prompt
+appears at startup, run the following commands and restart the application:
+
+```bash
+xattr -c ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+rm ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt/.com.apple.containermanagerd.metadata.plist
+tccutil reset All io.nekohasekai.sfamt.standalone
+```
 
 ### Migrate inline ACME to certificate provider
 

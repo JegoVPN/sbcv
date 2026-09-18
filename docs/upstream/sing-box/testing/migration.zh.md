@@ -2,7 +2,67 @@
 icon: material/arrange-bring-forward
 ---
 
+## 1.15.0
+
+### 迁移 TUN stack
+
+自 1.15.0 起，sing-tun 使用自有 TCP/IP stack，极限性能、能效以及内存占用均大幅领先于所有旧实现。
+移除 `stack` 参数以使用。
+
+`stack` 参数自 sing-box 1.15.0 起废弃，并将在 sing-box 1.17.0 中被移除。
+
+自 sing-box 1.16.0 起，命令行客户端需要设置 `ENABLE_DEPRECATED_TUN_STACK=true` 才能继续使用此参数。
+
+=== ":material-card-remove: 已废弃"
+
+    ```json
+    {
+      "inbounds": [
+        {
+          "type": "tun",
+          "address": ["172.18.0.1/30"],
+          "stack": "system"
+        }
+      ]
+    }
+    ```
+
+=== ":material-card-multiple: 已迁移"
+
+    ```json
+    {
+      "inbounds": [
+        {
+          "type": "tun",
+          "address": ["172.18.0.1/30"]
+        }
+      ]
+    }
+    ```
+
 ## 1.14.0
+
+### 迁移 macOS standalone 客户端数据
+
+Apple 平台客户端已迁移至新的 Apple 开发者账户，因此 macOS standalone 客户端是一个新应用，
+配置文件与设置不会被继承。
+
+在启动 sing-box 1.14.0-rc.2 或更高版本之前，可使用以下命令迁移：
+
+```bash
+mv ~/Library/Group\ Containers/287TTNZF8L.io.nekohasekai.sfavt \
+  ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+xattr -c ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+rm ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt/.com.apple.containermanagerd.metadata.plist
+```
+
+如果您已使用此命令的早期版本迁移，且启动时出现权限弹窗，请执行以下命令并重新启动应用：
+
+```bash
+xattr -c ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt
+rm ~/Library/Group\ Containers/P8XK3KHB48.io.nekohasekai.sfamt/.com.apple.containermanagerd.metadata.plist
+tccutil reset All io.nekohasekai.sfamt.standalone
+```
 
 ### 迁移内联 ACME 到证书提供者
 
