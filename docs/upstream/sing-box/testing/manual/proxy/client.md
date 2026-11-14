@@ -62,11 +62,9 @@ flowchart TB
     tun[TUN interface]
     windows -. route .-> tun
     linux -. iproute2 route/rule .-> tun
-    tun --> gvisor[gVisor TUN stack]
-    tun --> system[system TUN stack]
+    tun --> stack[sing-tun TCP/IP stack]
     assemble([L3 to L4 assemble])
-    gvisor --> assemble
-    system --> assemble
+    stack --> assemble
     assemble --> conn[TCP and UDP connections]
     conn --> router[sing-box Router]
     router --> direct[Direct outbound]
@@ -215,7 +213,7 @@ flowchart TB
             "tag": "remote",
             "type": "fakeip",
             "inet4_range": "198.18.0.0/15",
-            "inet6_range": "fc00::/18"
+            "inet6_range": "2001:2::/48"
           }
         ],
         "rules": [

@@ -120,7 +120,7 @@ icon: material/new-box
 设置网络命名空间，名称或路径。
 
 自 sing-box 1.14.0 起，也可以使用[网络命名空间](/zh/configuration/network-namespace/)的标签。
-应避免引用 `unshare` 类型的网络命名空间，因为其唯一出口是由 sing-box 自身管理的 tun 接口。
+应避免引用 `unshare` 类型的网络命名空间。
 
 #### connect_timeout
 
@@ -260,7 +260,7 @@ TCP keep alive 间隔。
 
 如果设置，域名将在请求发出之前解析为 IP。
 
-| 出站       | 受影响的域名    | 默认回退值                     |
-|----------|-----------|---------------------------|
-| `direct` | 请求中的域名    | `inbound.domain_strategy` | 
-| others   | 服务器地址中的域名 | /                         |
+| 出站       | 受影响的域名    |
+|----------|-----------|
+| `direct` | 请求中的域名    |
+| others   | 服务器地址中的域名 |
