@@ -2,6 +2,11 @@
 icon: material/new-box
 ---
 
+!!! quote "sing-box 1.14.0 中的更改"
+
+    :material-alert: [domain_resolver](#domain_resolver)  
+    :material-alert: [netns](#netns)
+
 !!! quote "sing-box 1.13.0 中的更改"
 
     :material-plus: [disable_tcp_keep_alive](#disable_tcp_keep_alive)  
@@ -114,6 +119,9 @@ icon: material/new-box
 
 设置网络命名空间，名称或路径。
 
+自 sing-box 1.14.0 起，也可以使用[网络命名空间](/zh/configuration/network-namespace/)的标签。
+应避免引用 `unshare` 类型的网络命名空间。
+
 #### connect_timeout
 
 连接超时，采用 golang 的 Duration 格式。
@@ -180,7 +188,7 @@ TCP keep alive 间隔。
 | 出站/端点       | 受影响的域名                |
 |----------------|---------------------------|
 | `direct`       | 请求中的域名                | 
-| 其他类型        | 服务器地址中的域名           |
+| 其他类型        | 服务器地址中的域名、ECH 配置查询的域名 |
 
 #### network_strategy
 
@@ -252,7 +260,7 @@ TCP keep alive 间隔。
 
 如果设置，域名将在请求发出之前解析为 IP。
 
-| 出站       | 受影响的域名    | 默认回退值                     |
-|----------|-----------|---------------------------|
-| `direct` | 请求中的域名    | `inbound.domain_strategy` | 
-| others   | 服务器地址中的域名 | /                         |
+| 出站       | 受影响的域名    |
+|----------|-----------|
+| `direct` | 请求中的域名    |
+| others   | 服务器地址中的域名 |
