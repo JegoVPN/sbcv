@@ -2,6 +2,11 @@
 icon: material/new-box
 ---
 
+!!! quote "Changes in sing-box 1.14.0"
+
+    :material-alert: [domain_resolver](#domain_resolver)  
+    :material-alert: [netns](#netns)
+
 !!! quote "Changes in sing-box 1.13.0"
 
     :material-plus: [disable_tcp_keep_alive](#disable_tcp_keep_alive)  
@@ -114,6 +119,9 @@ Reuse listener address.
 
 Set network namespace, name or path.
 
+Since sing-box 1.14.0, the tag of a [network namespace](/configuration/network-namespace/) can also be used.
+Referencing an `unshare` network namespace should be avoided.
+
 #### connect_timeout
 
 Connect timeout, in golang's Duration format.
@@ -182,7 +190,7 @@ Setting this option directly to a string is equivalent to setting `server` of th
 | Outbound/Endpoints | Effected domains         |
 |--------------------|--------------------------|
 | `direct`           | Domain in request        | 
-| others             | Domain in server address |
+| others             | Domain in server address, domain of the ECH config query |
 
 #### network_strategy
 
@@ -263,8 +271,8 @@ Available values: `prefer_ipv4`, `prefer_ipv6`, `ipv4_only`, `ipv6_only`.
 
 If set, the requested domain name will be resolved to IP before connect.
 
-| Outbound | Effected domains         | Fallback Value                            |
-|----------|--------------------------|-------------------------------------------|
-| `direct` | Domain in request        | Take `inbound.domain_strategy` if not set | 
-| others   | Domain in server address | /                                         |
+| Outbound | Effected domains         |
+|----------|--------------------------|
+| `direct` | Domain in request        |
+| others   | Domain in server address |
 
