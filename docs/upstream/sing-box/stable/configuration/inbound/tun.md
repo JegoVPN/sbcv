@@ -4,8 +4,14 @@ icon: material/new-box
 
 !!! quote "Changes in sing-box 1.14.0"
 
-    :material-plus: [include_mac_address](#include_mac_address)
-    :material-plus: [exclude_mac_address](#exclude_mac_address)
+    :material-plus: [include_mac_address](#include_mac_address)  
+    :material-plus: [exclude_mac_address](#exclude_mac_address)  
+    :material-plus: [dns_mode](#dns_mode)  
+    :material-plus: [dns_address](#dns_address)  
+    :material-plus: [netns](#netns)  
+    :material-plus: [udp_mapping](/configuration/shared/udp-nat/#udp_mapping)  
+    :material-plus: [udp_filtering](/configuration/shared/udp-nat/#udp_filtering)  
+    :material-plus: [udp_nat_max](/configuration/shared/udp-nat/#udp_nat_max)
 
 !!! quote "Changes in sing-box 1.13.3"
 
@@ -73,13 +79,18 @@ icon: material/new-box
     "fdfe:dcba:9876::1/126"
   ],
   "mtu": 9000,
+  "dns_mode": "hijack",
+  "dns_address": [
+    "172.18.0.2",
+    "fdfe:dcba:9876::2"
+  ],
   "auto_route": true,
   "iproute2_table_index": 2022,
   "iproute2_rule_index": 9000,
   "auto_redirect": true,
-  "auto_redirect_input_mark": "0x2023",
-  "auto_redirect_output_mark": "0x2024",
-  "auto_redirect_reset_mark": "0x2025",
+  "auto_redirect_input_mark": "0x04000000",
+  "auto_redirect_output_mark": "0x08000000",
+  "auto_redirect_reset_mark": "0x10000000",
   "auto_redirect_nfqueue": 100,
   "auto_redirect_iproute2_fallback_rule_index": 32768,
   "exclude_mptcp": false,
@@ -104,7 +115,9 @@ icon: material/new-box
     "geoip-cn"
   ],
   "endpoint_independent_nat": false,
-  "udp_timeout": "5m",
+
+  ... // UDP NAT Fields
+
   "stack": "system",
   "include_interface": [
     "lan0"
@@ -133,6 +146,12 @@ icon: material/new-box
   ],
   "exclude_package": [
     "com.android.captiveportallogin"
+  ],
+  "include_mac_address": [
+    "00:11:22:33:44:55"
+  ],
+  "exclude_mac_address": [
+    "66:77:88:99:aa:bb"
   ],
   "platform": {
     "http_proxy": {
@@ -164,9 +183,7 @@ icon: material/new-box
   ],
   "inet6_route_exclude_address": [
     "fc00::/7"
-  ],
-  ...
-  // Listen Fields
+  ]
 }
 ```
 
@@ -183,6 +200,22 @@ icon: material/new-box
 #### interface_name
 
 Virtual device name, automatically selected if empty.
+
+#### netns
+
+!!! question "Since sing-box 1.14.0"
+
+!!! quote ""
+
+    Only supported on Linux.
+
+Create the tun interface in the specified network namespace, name, path, or the tag of a
+[network namespace](/configuration/network-namespace/).
+
+When set, `auto_route` and `auto_redirect` operate inside the namespace, and no root privilege is
+required if the namespace is owned by the current user.
+
+Conflict with `platform`.
 
 #### address
 
@@ -209,6 +242,46 @@ IPv6 prefix for the tun interface.
 #### mtu
 
 The maximum transmission unit.
+
+#### dns_mode
+
+!!! question "Since sing-box 1.14.0"
+
+How DNS is handled on the TUN interface.
+
+| Mode       | Description                                                                                                                                                |
+|------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `disabled` | Do not configure native DNS and do not hijack DNS traffic.                                                                                                 |
+| `native`   | Set the platform's native interface DNS where possible: per-interface DNS on Windows and Apple platforms, and `systemd-resolved` interface DNS on Linux.   |
+| `hijack`   | Same as `native`, with additional port 53 hijacking described below.                                                                                       |
+
+`hijack` is used by default when [`auto_route`](#auto_route) is enabled, otherwise `disabled` is used by default.
+
+`hijack` adds the following on top of `native`:
+
+*On Linux*: DNS sent to addresses on the host's own interfaces (such as
+`127.0.0.53` or the host's LAN-side IP) is not hijacked.
+
+- Without `auto_redirect`, port 53 traffic to directly-attached subnets is
+  also routed through the TUN.
+- With `auto_redirect`, port 53 traffic is redirected to
+  [`dns_address`](#dns_address).
+
+*On Windows with [`strict_route`](#strict_route)*: port 53 traffic going
+through interfaces other than the TUN is blocked.
+
+#### dns_address
+
+!!! question "Since sing-box 1.14.0"
+
+List of DNS server addresses used by [`dns_mode`](#dns_mode).
+
+When unset, the next address after the first IPv4 and IPv6 entry in
+[`address`](#address) is used, and connections to it are handled as a
+[`hijack-dns`](/configuration/route/rule_action/#hijack-dns) route action.
+
+When set, configure a [`hijack-dns`](/configuration/route/rule_action/#hijack-dns)
+route rule to handle DNS traffic to these addresses.
 
 #### gso
 
@@ -288,7 +361,7 @@ Conflict with `route.default_mark` and `[dialOptions].routing_mark`.
 
 Connection input mark used by `auto_redirect`.
 
-`0x2023` is used by default.
+`0x04000000` is used by default.
 
 #### auto_redirect_output_mark
 
@@ -296,7 +369,7 @@ Connection input mark used by `auto_redirect`.
 
 Connection output mark used by `auto_redirect`.
 
-`0x2024` is used by default.
+`0x08000000` is used by default.
 
 #### auto_redirect_reset_mark
 
@@ -304,7 +377,7 @@ Connection output mark used by `auto_redirect`.
 
 Connection reset mark used by `auto_redirect` pre-matching.
 
-`0x2025` is used by default.
+`0x10000000` is used by default.
 
 #### auto_redirect_nfqueue
 
@@ -439,9 +512,9 @@ Exclude custom routes when `auto_route` is enabled.
     Add the destination IP CIDR rules in the specified rule-sets to routes, equivalent to adding to `route_address`.
     Unmatched traffic will bypass the sing-box routes.
 
-    Note that it **doesn't work on the Android graphical client** due to
-    the Android VpnService not being able to handle a large number of routes (DeadSystemException),
-    but otherwise it works fine on all command line clients and Apple platforms.
+    Note that it **doesn't work on the Android and Apple graphical clients**
+    as they cannot handle a large number of routes,
+    but otherwise it works fine on all command line clients and the Linux and Windows graphical clients.
 
 #### route_exclude_address_set
 
@@ -463,25 +536,16 @@ Exclude custom routes when `auto_route` is enabled.
     Add the destination IP CIDR rules in the specified rule-sets to routes, equivalent to adding to `route_exclude_address`.
     Matched traffic will bypass the sing-box routes.
 
-    Note that it **doesn't work on the Android graphical client** due to
-    the Android VpnService not being able to handle a large number of routes (DeadSystemException),
-    but otherwise it works fine on all command line clients and Apple platforms.
+    Note that it **doesn't work on the Android and Apple graphical clients**
+    as they cannot handle a large number of routes,
+    but otherwise it works fine on all command line clients and the Linux and Windows graphical clients.
 
 #### endpoint_independent_nat
 
-!!! info ""
+This option has had no effect since sing-box 1.11.0 and can be removed from the configuration.
 
-    This item is only available on the gvisor stack, other stacks are endpoint-independent NAT by default.
-
-Enable endpoint-independent NAT.
-
-Performance may degrade slightly, so it is not recommended to enable on when it is not needed.
-
-#### udp_timeout
-
-UDP NAT expiration time.
-
-`5m` will be used by default.
+Since sing-box 1.14.0, use [UDP NAT fields](/configuration/shared/udp-nat/)
+to customize the mapping and filtering behavior.
 
 #### stack
 
@@ -560,6 +624,30 @@ Limit android packages in route.
 
 Exclude android packages in route.
 
+#### include_mac_address
+
+!!! question "Since sing-box 1.14.0"
+
+!!! quote ""
+
+    Only supported on Linux with `auto_route` and `auto_redirect` enabled.
+
+Limit MAC addresses in route. Not limited by default.
+
+Conflict with `exclude_mac_address`.
+
+#### exclude_mac_address
+
+!!! question "Since sing-box 1.14.0"
+
+!!! quote ""
+
+    Only supported on Linux with `auto_route` and `auto_redirect` enabled.
+
+Exclude MAC addresses in route.
+
+Conflict with `include_mac_address`.
+
 #### platform
 
 Platform-specific settings, provided by client applications.
@@ -600,6 +688,6 @@ Hostnames that bypass the HTTP proxy.
 
 Hostnames that use the HTTP proxy.
 
-### Listen Fields
+### UDP NAT Fields
 
-See [Listen Fields](/configuration/shared/listen/) for details.
+See [UDP NAT Fields](/configuration/shared/udp-nat/) for details.

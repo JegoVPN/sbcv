@@ -1,10 +1,10 @@
 ---
-icon: material/delete-clock
+icon: material/note-remove
 ---
 
-!!! failure "已在 sing-box 1.12.0 废弃"
+!!! failure "已在 sing-box 1.14.0 移除"
 
-    旧的 fake-ip 配置已废弃且将在 sing-box 1.14.0 中被移除，参阅 [迁移指南](/zh/migration/#迁移到新的-dns-服务器格式)。
+    旧的 fake-ip 配置已在 sing-box 1.12.0 废弃且已在 sing-box 1.14.0 中被移除，参阅 [迁移指南](/zh/migration/#迁移到新的-dns-服务器格式)。
 
 ### 结构
 
@@ -12,7 +12,7 @@ icon: material/delete-clock
 {
   "enabled": true,
   "inet4_range": "198.18.0.0/15",
-  "inet6_range": "fc00::/18"
+  "inet6_range": "2001:2::/48"
 }
 ```
 
